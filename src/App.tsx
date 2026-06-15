@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { 
   Instagram, 
-  MessageSquare,
   X
 } from "lucide-react";
 
@@ -10,17 +9,17 @@ import Home from "./components/Home";
 import CakesPage from "./components/CakesPage";
 import CateringPage from "./components/CateringPage";
 import LiveCountersPage from "./components/LiveCountersPage";
+import GiftingPage from "./components/GiftingPage";
 import MenuPage from "./components/MenuPage";
 import AboutPage from "./components/AboutPage";
 
 // Modals
 import InquiryWizard from "./components/InquiryWizard";
-import BakerModal from "./components/BakerModal";
+
 
 export default function App() {
   const [activeTab, setActiveTab] = useState("Home");
   const [isWizardOpen, setIsWizardOpen] = useState(false);
-  const [isBakerOpen, setIsBakerOpen] = useState(false);
   
   // Custom wizard preselects
   const [wizardFlavor, setWizardFlavor] = useState("");
@@ -36,6 +35,10 @@ export default function App() {
     setWizardFlavor(flavor);
     setWizardCategory(category);
     setIsWizardOpen(true);
+  };
+
+  const handleOpenBaker = () => {
+    window.open("https://wa.me/19455274566", "_blank");
   };
 
   const handleNewsletterSubmit = (e: React.FormEvent) => {
@@ -56,7 +59,8 @@ export default function App() {
     { name: "Home", id: "Home" },
     { name: "Cakes", id: "Cakes" },
     { name: "Catering", id: "Catering" },
-    { name: "Live Counters", id: "Live Counters" },
+    { name: "Custom Party Packages", id: "Live Counters" },
+    { name: "Lux Gifting", id: "Gifting" },
     { name: "Price Guide", id: "Menu" },
     { name: "About Us", id: "About" }
   ];
@@ -104,12 +108,6 @@ export default function App() {
 
             {/* Right Controls */}
             <div className="hidden lg:flex items-center space-x-6">
-              <button 
-                onClick={() => alert("Our client portal is under construction! Please submit inquiries directly through our public quoting tools.")}
-                className="font-sans text-xs uppercase tracking-widest font-semibold text-gray-700 hover:text-[#00346f] transition-all cursor-pointer"
-              >
-                LOGIN
-              </button>
               <button
                 onClick={() => handleOpenWizard()}
                 className="bg-[#00346f] hover:bg-[#00346f]/95 text-white px-5 py-2.5 rounded text-xs uppercase tracking-widest font-semibold transition-all duration-200 shadow-sm cursor-pointer"
@@ -162,15 +160,6 @@ export default function App() {
               <div className="pt-4 pb-2 border-t border-gray-150 flex flex-col gap-2 px-3">
                 <button
                   onClick={() => {
-                    alert("Our client portal is under construction!");
-                    setMobileMenuOpen(false);
-                  }}
-                  className="w-full text-center py-2.5 text-xs font-semibold tracking-widest uppercase text-gray-500 border border-gray-200 rounded hover:bg-gray-50 font-sans cursor-pointer"
-                >
-                  LOGIN
-                </button>
-                <button
-                  onClick={() => {
                     handleOpenWizard();
                     setMobileMenuOpen(false);
                   }}
@@ -189,14 +178,14 @@ export default function App() {
         {activeTab === "Home" && (
           <Home 
             onOpenWizard={handleOpenWizard} 
-            onOpenBaker={() => setIsBakerOpen(true)}
+            onOpenBaker={handleOpenBaker}
             onNavigate={setActiveTab}
           />
         )}
         {activeTab === "Cakes" && (
           <CakesPage 
             onOpenWizard={handleOpenWizard} 
-            onOpenBaker={() => setIsBakerOpen(true)}
+            onOpenBaker={handleOpenBaker}
             onOpenPriceList={() => setShowPriceList(true)}
           />
         )}
@@ -206,6 +195,9 @@ export default function App() {
         {activeTab === "Live Counters" && (
           <LiveCountersPage onOpenWizard={handleOpenWizard} />
         )}
+        {activeTab === "Gifting" && (
+          <GiftingPage onOpenWizard={handleOpenWizard} />
+        )}
         {activeTab === "Menu" && (
           <MenuPage />
         )}
@@ -214,18 +206,29 @@ export default function App() {
         )}
       </main>
 
-      {/* Floating consult CTA button representing luxury interaction */}
+      {/* Floating WhatsApp CTA button */}
       <div className="fixed bottom-6 right-6 z-40">
-        <button
-          onClick={() => setIsBakerOpen(true)}
-          className="bg-[#775a19] hover:bg-[#5d4201] text-white p-4 rounded-full shadow-2xl transition-all duration-300 flex items-center gap-2 group hover:scale-105 select-none cursor-pointer"
-          title="Talk with Baker"
+        <a
+          href="https://wa.me/19455274566"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="bg-[#25D366] hover:bg-[#20ba59] text-white p-4 rounded-full shadow-2xl transition-all duration-300 flex items-center gap-2 group hover:scale-105 select-none cursor-pointer"
+          title="Chat on WhatsApp"
         >
-          <MessageSquare className="h-5 w-5" />
-          <span className="font-sans text-xs font-bold tracking-widest uppercase max-w-0 overflow-hidden group-hover:max-w-[120px] transition-all duration-500 whitespace-nowrap">
-            Ask Baker AI
+          <svg 
+            xmlns="http://www.w3.org/2000/svg" 
+            width="20" 
+            height="20" 
+            viewBox="0 0 24 24" 
+            fill="currentColor" 
+            className="h-5 w-5"
+          >
+            <path d="M12.012 2c-5.506 0-9.989 4.478-9.99 9.984a9.96 9.96 0 0 0 1.333 4.993L2 22l5.233-1.371a9.948 9.948 0 0 0 4.775 1.22c5.507 0 9.99-4.477 9.99-9.985 0-2.67-1.037-5.18-2.92-7.062C17.18 3.033 14.671 2 12.012 2zm5.72 13.918c-.313.88-1.56 1.6-2.285 1.707-.63.093-1.45.166-4.152-.96-3.45-1.442-5.63-4.994-5.802-5.222-.173-.228-1.4-1.859-1.4-3.547 0-1.688.88-2.52 1.194-2.864.314-.343.687-.43.915-.43h.656c.228 0 .514-.085.8.6.314.757 1.057 2.602 1.143 2.788.086.186.143.403.029.63-.115.228-.172.37-.343.571-.172.2-.358.4-.515.571-.172.172-.343.358-.143.7.2.343.886 1.458 1.886 2.36 1.286 1.157 2.372 1.514 2.715 1.685.343.172.543.143.743-.085.2-.229.857-.999 1.086-1.343.228-.343.457-.285.77-.172.314.115 2 .943 2.343 1.115.343.172.571.257.657.4.086.143.086.829-.228 1.709z"/>
+          </svg>
+          <span className="font-sans text-xs font-bold tracking-widest uppercase max-w-0 overflow-hidden group-hover:max-w-[130px] transition-all duration-500 whitespace-nowrap">
+            Chat with Chef
           </span>
-        </button>
+        </a>
       </div>
 
       {/* FOOTER */}
@@ -316,8 +319,13 @@ export default function App() {
 
         </div>
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 border-t border-gray-200/50 mt-10 pt-6 text-center text-[11px] text-gray-400 font-sans">
-          © 2026 Bluebonnet Whisk. All rights reserved. Modern Heritage Patisserie.
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 border-t border-gray-200/50 mt-10 pt-6 text-center text-[11px] text-gray-400 font-sans space-y-2">
+          <p className="italic max-w-3xl mx-auto leading-relaxed">
+            “Prepared in a home kitchen that is not inspected by the Texas Department of State Health Services or local health departments. This product is made in a cottage food operation that is not subject to Texas food establishment regulations.”
+          </p>
+          <p className="pt-2 border-t border-gray-200/30">
+            © 2026 Bluebonnet Whisk. All rights reserved. Modern Heritage Patisserie.
+          </p>
         </div>
       </footer>
 
@@ -331,11 +339,7 @@ export default function App() {
         preselectedCategory={wizardCategory} 
       />
 
-      {/* Head Baker consult modal */}
-      <BakerModal 
-        isOpen={isBakerOpen} 
-        onClose={() => setIsBakerOpen(false)} 
-      />
+
 
       {/* Price list guidelines modal */}
       {showPriceList && (

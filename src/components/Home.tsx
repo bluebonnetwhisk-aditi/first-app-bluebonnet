@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { motion, useScroll, useTransform, useMotionValueEvent } from "motion/react";
-import { ArrowRight, Sparkles, ChevronDown } from "lucide-react";
+import { ArrowRight, Sparkles, ChevronDown, ChefHat, Clock, Truck } from "lucide-react";
 
 interface HomeProps {
   onOpenWizard: (flavor?: string, category?: string) => void;
@@ -81,41 +81,7 @@ export default function Home({ onOpenWizard, onOpenBaker, onNavigate }: HomeProp
 
   const rec = getCalculatedRecommendation(calculatorGuests);
 
-  // Signature Pastries list
-  const signaturePastries = [
-    {
-      name: "Rasmalai Royale Cake",
-      desc: "Cardamom sponge layered with fresh pistachios, almonds, and saffron-infused milk cream.",
-      tag: "Best Seller",
-      image: "/src/assets/images/hero_cakes_desserts_1781194959946.jpg",
-      category: "Classic Flavors",
-      flavor: "Rasmalai Royalty"
-    },
-    {
-      name: "Gulab Jamun Indulgence Cake",
-      desc: "Rose syrup soaked layers loaded with traditional milk solids and sweet kheer reduction toppings.",
-      tag: "Signature",
-      image: "/src/assets/images/cake_jars_detail_2_1781195040371.jpg",
-      category: "Indian Fusion",
-      flavor: "Gulab Jamun Indulgence"
-    },
-    {
-      name: "Mango Mastani Dessert Jars",
-      desc: "Whipped mascarpone layered with pure Alphonso mango pulp and premium cardamom crumb.",
-      tag: "Seasonal",
-      image: "/src/assets/images/cake_jars_mini_loaves_1781195014914.jpg",
-      category: "Indian Fusion",
-      flavor: "Mango Mastani"
-    },
-    {
-      name: "Cardamom Funfetti Cookies",
-      desc: "Thick, soft-baked artisan cookies combining organic cardamom with festive color splashes.",
-      tag: "Artisan Baked",
-      image: "/src/assets/images/cake_jars_detail_1_1781195027694.jpg",
-      category: "Classic Flavors",
-      flavor: "Butterscotch Drizzle"
-    }
-  ];
+
 
   const pricingTiers = [
     {
@@ -220,23 +186,30 @@ export default function Home({ onOpenWizard, onOpenBaker, onNavigate }: HomeProp
             style={{ opacity: heroTextOpacity, y: heroTextY }}
             className="relative z-10 max-w-4xl mx-auto px-4 text-center space-y-6"
           >
-            <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full glass-panel text-[10px] tracking-widest font-extrabold text-brand-gold-tint uppercase">
-              <Sparkles className="h-3 w-3 animate-pulse" /> Indian Fusion Artistry
-            </span>
             <h1 className="font-serif text-4xl md:text-6xl font-black tracking-tight leading-tight text-brand-cream drop-shadow-md">
               Bringing People Together <br />
               Through <span className="italic text-brand-gold-tint">Authentic Flavors</span> &amp; <span className="italic text-brand-gold-tint">Sweets</span>
             </h1>
             <p className="text-gray-300 text-xs sm:text-sm md:text-base max-w-xl mx-auto leading-relaxed">
-              Experience North Texas&apos;s premier Indian patisserie and live street food catering. Crafted by hand using organic cardamom, real saffron milk, and premium baking ingredients.
+              Made for celebrations that matter. Custom cakes, indulgent desserts, and catering inspired by Indian flavors crafted fresh for your special moments.
             </p>
             <div className="flex flex-wrap justify-center gap-3 pt-4">
               <button 
-                onClick={() => onOpenWizard()}
+                onClick={() => {
+                  window.location.href = "mailto:bluebonnetwhisk@gmail.com?subject=Custom%20Celebration%20Inquiry";
+                }}
                 className="px-8 py-4 bg-[#775a19] hover:bg-[#5d4201] text-white text-xs font-bold tracking-widest uppercase rounded shadow-lg transition-all cursor-pointer flex items-center gap-2"
               >
                 REQUEST A CUSTOM QUOTE <ArrowRight className="h-3.5 w-3.5" />
               </button>
+              <a 
+                href="https://wa.me/9455274566"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-8 py-4 border border-brand-gold-tint hover:bg-brand-gold-tint/10 text-brand-cream text-xs font-bold tracking-widest uppercase rounded transition-all cursor-pointer inline-flex items-center gap-2"
+              >
+                CHAT WITH THE CHEF
+              </a>
               <button 
                 onClick={() => onNavigate("Menu")}
                 className="px-8 py-4 glass-panel hover:bg-white/10 text-white text-xs font-bold tracking-widest uppercase rounded transition-all cursor-pointer"
@@ -263,21 +236,18 @@ export default function Home({ onOpenWizard, onOpenBaker, onNavigate }: HomeProp
 
             {[
               {
-                stage: "STAGE 01",
-                title: "Gourmet Fusion Cakes",
-                desc: "Every wedding and milestone celebration centers on a gorgeous, custom-designed cake. Indulge in Saffron-soaked Rasmalai milk sponges or sweet Gulab Jamun layers layered with whipped cream.",
+                title: "Custom Cakes & Desserts",
+                desc: "Made-to-order cakes for birthdays, anniversaries, and milestones. Theme cakes, kids birthdays, and desserts including trending cake jars and mini cake loaves.",
                 tab: "Cakes"
               },
               {
-                stage: "STAGE 02",
-                title: "Gourmet Catering Trays",
-                desc: "Serve your guests our signature Paneer Tikka Crostinis, claypot Matar Paneers, or warm Dal Makhani trays. Neatly packaged and portion-optimized for your guest size.",
+                title: "Catering",
+                desc: "Whether it's a birthday, corporate event, or family gathering, we've got the menu covered.",
                 tab: "Catering"
               },
               {
-                stage: "STAGE 03",
-                title: "Live Street Food Counters",
-                desc: "Add theatrical energy with Pani Puri griddle stations, chaat verrines, and wok noodles prepared live by our chefs in custom brass-styled traditional counters.",
+                title: "Custom Party Packages",
+                desc: "Bring Your Celebration to Life with Our Custom Party Packages",
                 tab: "Live Counters"
               }
             ].map((item, idx) => {
@@ -300,10 +270,6 @@ export default function Home({ onOpenWizard, onOpenBaker, onNavigate }: HomeProp
                       }
                     }}
                   >
-                    <div className="flex justify-between items-center mb-1.5">
-                      <span className="font-mono text-[10px] text-brand-gold-tint font-bold">{item.stage}</span>
-                      {isActive && <span className="text-brand-gold-tint text-[10px] font-semibold font-sans tracking-widest uppercase">★ Active</span>}
-                    </div>
                     <h3 className="font-serif text-base font-bold text-brand-cream">{item.title}</h3>
                     <p className="text-gray-300 text-xs leading-relaxed mt-2">{item.desc}</p>
                     {isActive && (
@@ -314,7 +280,7 @@ export default function Home({ onOpenWizard, onOpenBaker, onNavigate }: HomeProp
                         }} 
                         className="text-brand-gold-tint text-[10px] font-bold uppercase tracking-widest flex items-center gap-1 hover:gap-2 transition-all mt-3"
                       >
-                        EXPLORE {item.tab} <ArrowRight className="h-3 w-3" />
+                        EXPLORE {item.tab === "Live Counters" ? "PARTY PACKAGES" : item.tab.toUpperCase()} <ArrowRight className="h-3 w-3" />
                       </button>
                     )}
                   </div>
@@ -327,8 +293,8 @@ export default function Home({ onOpenWizard, onOpenBaker, onNavigate }: HomeProp
           <div className="lg:col-span-7 lg:sticky lg:top-28 h-[550px] relative rounded-lg overflow-hidden border border-white/10 shadow-2xl bg-black">
             {[
               "/src/assets/images/custom_celebration_cakes_1781194977914.jpg",
-              "/src/assets/images/WhatsApp Image 2026-02-13 at 12.00.03 AM.jpeg",
-              "/src/assets/images/BlueBonnet Whisk Booth BackdropCustom Cakes and Bakes BannerFusion Desserts & Custom Creations BackdropHomemade Goodness, Baked with Love Display.jpg"
+              "/src/assets/images/catering_buffet.png",
+              "/src/assets/images/custom_party_packages.png"
             ].map((src, idx) => (
               <motion.div
                 key={idx}
@@ -345,7 +311,7 @@ export default function Home({ onOpenWizard, onOpenBaker, onNavigate }: HomeProp
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex items-end p-5">
                   <span className="font-serif text-xs font-semibold text-brand-cream">
-                    {idx === 0 ? "Designer Cake Detail" : idx === 1 ? "Appetizer Chaat Detail" : "Live Counter Stall Detail"}
+                    {idx === 0 ? "Designer Cake Detail" : idx === 1 ? "Catering Buffet Detail" : "Custom Party Setup Detail"}
                   </span>
                 </div>
               </motion.div>
@@ -439,54 +405,60 @@ export default function Home({ onOpenWizard, onOpenBaker, onNavigate }: HomeProp
         </div>
       </section>
 
-      {/* ── SIGNATURE PASTRY SHOWCASE ── */}
+      {/* ── UNIQUE SELLING PROPOSITIONS (USPs) ── */}
       <section className="py-24 border-t border-white/5 bg-[#050a1a]">
-        <div className="max-w-7xl mx-auto px-4 space-y-12">
+        <div className="max-w-7xl mx-auto px-4 space-y-16">
           
           <div className="text-center max-w-xl mx-auto space-y-2">
-            <span className="text-[10px] font-bold text-brand-gold-tint tracking-widest uppercase">MASTERPIECES</span>
-            <h2 className="font-serif text-3xl font-bold text-brand-cream">Signature Pastry Showcase</h2>
-            <p className="text-xs text-gray-400 font-sans">Exquisite fusion creations handcrafted daily. Click to preselect and quote instantly.</p>
+            <span className="text-[10px] font-bold text-brand-gold-tint tracking-widest uppercase font-mono">OUR COMMITMENT</span>
+            <h2 className="font-serif text-3xl md:text-4xl font-bold text-brand-cream">Why Choose Bluebonnet Whisk</h2>
+            <p className="text-xs text-gray-400 font-sans">Crafting unforgettable experiences with a dedication to perfection.</p>
             <div className="h-0.5 w-12 bg-brand-gold-tint mx-auto mt-2" />
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {signaturePastries.map((pastry, idx) => (
-              <div 
-                key={idx}
-                className="glass-panel-dark rounded-lg overflow-hidden border border-white/5 flex flex-col justify-between group hover:border-brand-gold-tint/40 transition-all hover:-translate-y-0.5 duration-300 shadow-lg"
-              >
-                <div className="relative h-44 overflow-hidden bg-gray-900">
-                  <img 
-                    src={pastry.image} 
-                    alt={pastry.name} 
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-103"
-                    referrerPolicy="no-referrer"
-                  />
-                  <span className="absolute top-2 left-2 bg-[#775a19] text-white text-[8px] font-bold tracking-widest uppercase px-2 py-0.5 rounded-sm">
-                    {pastry.tag}
-                  </span>
-                </div>
-
-                <div className="p-5 flex-1 flex flex-col justify-between space-y-4">
-                  <div className="space-y-1.5">
-                    <h3 className="font-serif text-base font-bold text-brand-cream group-hover:text-brand-gold-tint transition-colors leading-snug">
-                      {pastry.name}
-                    </h3>
-                    <p className="text-gray-300 text-xs leading-relaxed font-sans font-light">
-                      {pastry.desc}
-                    </p>
+            {[
+              {
+                title: "Fully Custom Celebration Menus",
+                desc: "Every detail tailored to your unique preferences, theme, and dietary needs for an unforgettable culinary experience.",
+                icon: "ChefHat"
+              },
+              {
+                title: "Freshly Baked to Order",
+                desc: "No pre-made layers or frozen shortcuts. Every cake and pastry is crafted fresh specifically for your special day.",
+                icon: "Clock"
+              },
+              {
+                title: "High-Quality Ingredients",
+                desc: "Made with premium baking ingredients, organic spices, real saffron milk, and pure cardamom for genuine luxury taste.",
+                icon: "Sparkles"
+              },
+              {
+                title: "On-Time Event Delivery",
+                desc: "Reliable, temperature-controlled transport across DFW, ensuring your custom creations arrive in pristine condition.",
+                icon: "Truck"
+              }
+            ].map((usp, idx) => {
+              return (
+                <div 
+                  key={idx}
+                  className="glass-panel-dark rounded-lg p-6 border border-white/5 flex flex-col items-center text-center space-y-4 hover:border-brand-gold-tint/40 transition-all hover:-translate-y-1 duration-300 shadow-lg"
+                >
+                  <div className="h-12 w-12 rounded-full bg-brand-gold-tint/10 flex items-center justify-center text-brand-gold-tint mb-2">
+                    {usp.icon === "ChefHat" && <ChefHat className="h-6 w-6" />}
+                    {usp.icon === "Clock" && <Clock className="h-6 w-6" />}
+                    {usp.icon === "Sparkles" && <Sparkles className="h-6 w-6" />}
+                    {usp.icon === "Truck" && <Truck className="h-6 w-6" />}
                   </div>
-
-                  <button
-                    onClick={() => onOpenWizard(pastry.flavor, pastry.category)}
-                    className="w-full border border-secondary-brand/60 hover:bg-secondary-brand/10 text-brand-gold-tint py-2 text-[10px] font-bold tracking-wider uppercase rounded-sm transition-all cursor-pointer font-sans"
-                  >
-                    Inquire Flavor
-                  </button>
+                  <h3 className="font-serif text-base font-bold text-brand-cream leading-snug">
+                    {usp.title}
+                  </h3>
+                  <p className="text-gray-300 text-xs leading-relaxed font-sans font-light">
+                    {usp.desc}
+                  </p>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
         </div>
