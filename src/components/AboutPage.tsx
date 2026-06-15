@@ -45,7 +45,7 @@ export default function AboutPage() {
           {/* Watercolor Moms Illustration on the right */}
           <div className="lg:col-span-5 h-[300px] md:h-[450px] rounded-lg overflow-hidden shadow-md">
             <img 
-              src="/src/assets/images/Gemini_Generated_Image_y8j5kpy8j5kpy8j5.png" 
+              src="src/assets/images/Gemini_Generated_Image_y8j5kpy8j5kpy8j5.png" 
               alt="Moms cooking sketch illustration" 
               className="w-full h-full object-cover"
               referrerPolicy="no-referrer"
@@ -72,7 +72,7 @@ export default function AboutPage() {
             <div className="border border-gray-150 rounded-lg p-6 flex flex-col md:flex-row gap-4 items-center bg-[#fcfbf9] shadow-xs">
               <div className="w-full md:w-1/3 h-28 rounded overflow-hidden shrink-0">
                 <img 
-                  src="/src/assets/images/cake_jars_detail_2_1781195040371.jpg" 
+                  src="src/assets/images/cake_jars_detail_2_1781195040371.jpg" 
                   alt="Home-style baking details" 
                   className="w-full h-full object-cover"
                   referrerPolicy="no-referrer"
@@ -116,7 +116,7 @@ export default function AboutPage() {
               </div>
               <div className="w-full md:w-1/3 h-28 rounded overflow-hidden shrink-0">
                 <img 
-                  src="/src/assets/images/BlueBonnet Catering.jpeg" 
+                  src="src/assets/images/BlueBonnet Catering.jpeg" 
                   alt="Hygienic kitchen workspace" 
                   className="w-full h-full object-cover"
                   referrerPolicy="no-referrer"
@@ -135,7 +135,7 @@ export default function AboutPage() {
           {/* Picture on the left */}
           <div className="lg:col-span-6 h-[250px] md:h-[400px] rounded-lg overflow-hidden shadow-sm">
             <img 
-              src="/src/assets/images/custom_celebration_cakes_1781194977914.jpg" 
+              src="src/assets/images/custom_celebration_cakes_1781194977914.jpg" 
               alt="Custom cakes display setup" 
               className="w-full h-full object-cover"
               referrerPolicy="no-referrer"

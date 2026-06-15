@@ -15,7 +15,7 @@ export default function CakesPage({ onOpenWizard, onOpenBaker, onOpenPriceList }
         {/* Background with soft luxury overlay */}
         <div className="absolute inset-0 z-0">
           <img 
-            src="/src/assets/images/hero_cakes_desserts_1781194959946.jpg" 
+            src="src/assets/images/hero_cakes_desserts_1781194959946.jpg" 
             alt="Premium Baked goods table" 
             className="w-full h-full object-cover scale-105 filter brightness-85"
             referrerPolicy="no-referrer"
@@ -64,7 +64,7 @@ export default function CakesPage({ onOpenWizard, onOpenBaker, onOpenPriceList }
           <div className="md:col-span-2 border border-gray-150 rounded-md bg-white overflow-hidden shadow-xs relative flex flex-col justify-between group">
             <div className="relative h-[250px] md:h-[400px] overflow-hidden">
               <img 
-                src="/src/assets/images/custom_celebration_cakes_1781194977914.jpg" 
+                src="src/assets/images/custom_celebration_cakes_1781194977914.jpg" 
                 alt="Custom Celebration Cakes" 
                 className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-102"
                 referrerPolicy="no-referrer"
@@ -99,7 +99,7 @@ export default function CakesPage({ onOpenWizard, onOpenBaker, onOpenPriceList }
             <div>
               <div className="relative h-[130px] overflow-hidden">
                 <img 
-                  src="/src/assets/images/indian_fusion_cakes_1781194990456.jpg" 
+                  src="src/assets/images/indian_fusion_cakes_1781194990456.jpg" 
                   alt="Indian Fusion Cakes" 
                   className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-102"
                   referrerPolicy="no-referrer"
@@ -216,7 +216,7 @@ export default function CakesPage({ onOpenWizard, onOpenBaker, onOpenPriceList }
           <div className="border border-gray-150 rounded-md bg-white overflow-hidden shadow-xs flex flex-col justify-between group">
             <div className="relative h-[200px] overflow-hidden">
               <img 
-                src="/src/assets/images/cupcakes_cake_pops_1781195003119.jpg" 
+                src="src/assets/images/cupcakes_cake_pops_1781195003119.jpg" 
                 alt="Cupcakes and Cake Pops" 
                 className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-102"
                 referrerPolicy="no-referrer"
@@ -250,7 +250,7 @@ export default function CakesPage({ onOpenWizard, onOpenBaker, onOpenPriceList }
             <div className="px-6 py-2 grid grid-cols-2 gap-3">
               <div className="relative h-20 rounded overflow-hidden">
                 <img 
-                  src="/src/assets/images/cake_jars_detail_1_1781195027694.jpg" 
+                  src="src/assets/images/cake_jars_detail_1_1781195027694.jpg" 
                   alt="Chocolate Jar Detail" 
                   className="w-full h-full object-cover scale-105"
                   referrerPolicy="no-referrer"
@@ -258,7 +258,7 @@ export default function CakesPage({ onOpenWizard, onOpenBaker, onOpenPriceList }
               </div>
               <div className="relative h-20 rounded overflow-hidden">
                 <img 
-                  src="/src/assets/images/cake_jars_detail_2_1781195040371.jpg" 
+                  src="src/assets/images/cake_jars_detail_2_1781195040371.jpg" 
                   alt="Strawberry Jar Detail" 
                   className="w-full h-full object-cover scale-105"
                   referrerPolicy="no-referrer"

@@ -66,7 +66,7 @@ export default function LiveCountersPage({ onOpenWizard }: LiveCountersPageProps
         {/* Dark Glassmorphic Gradients */}
         <div className="absolute inset-0 z-0 opacity-40">
           <img 
-            src="/src/assets/images/BlueBonnet India.jpg" 
+            src="src/assets/images/BlueBonnet India.jpg" 
             alt="Custom Party setup background" 
             className="w-full h-full object-cover filter brightness-50 contrast-105"
             referrerPolicy="no-referrer"

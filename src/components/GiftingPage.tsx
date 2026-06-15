@@ -9,19 +9,19 @@ export default function GiftingPage({ onOpenWizard }: GiftingPageProps) {
     {
       title: "Ganpati Pooja Gifts",
       desc: "Traditional festive hampers inspired by devotion and celebration. Includes modak-inspired sweets, dry fruits, festive savories, and pooja-themed essentials — beautifully packaged for gifting.",
-      image: "/src/assets/images/ganpati_pooja_gift.png",
+      image: "src/assets/images/ganpati_pooja_gift.png",
       tag: "Traditional"
     },
     {
       title: "Rakhi Gift Boxes",
       desc: "A heartfelt expression of love and tradition. Includes premium rakhi, handcrafted sweets, savoury treats, and a personalized message card designed to make your sibling feel special.",
-      image: "/src/assets/images/rakhi_gift_box.png",
+      image: "src/assets/images/rakhi_gift_box.png",
       tag: "Best Seller"
     },
     {
       title: "Diwali Luxe Hampers",
       desc: "Celebrate the festival of lights with elegant, indulgent gifting. Includes gourmet cookies, Indian sweets & savouries, festive treats, and personalized message cards (e.g., “Best Wishes from [Your Name/Family Name]”).",
-      image: "/src/assets/images/diwali_luxe_hamper.png",
+      image: "src/assets/images/diwali_luxe_hamper.png",
       tag: "Luxe Edition"
     }
   ];
@@ -48,7 +48,7 @@ export default function GiftingPage({ onOpenWizard }: GiftingPageProps) {
       
       {/* ── HERO SECTION ── */}
       <header className="relative py-24 md:py-32 overflow-hidden bg-[#050a1a] text-white">
-        <div className="absolute inset-0 z-0 opacity-35 bg-cover bg-center" style={{ backgroundImage: "url('/src/assets/images/gifting_hero_bg.png')" }} />
+        <div className="absolute inset-0 z-0 opacity-35 bg-cover bg-center" style={{ backgroundImage: "url('src/assets/images/gifting_hero_bg.png')" }} />
         <div className="absolute inset-0 bg-radial-gradient(circle, transparent 20%, #050a1a 90%)" />
         
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-6">

@@ -42,7 +42,7 @@ export const collectionsData: CollectionItem[] = [
     description: "Made-to-order cakes for birthdays, anniversaries, and milestones. Theme Cakes, Kids Birthdays, and Elegant Florals.",
     tags: ["Custom Design", "Theme Decors", "Eggless Options"],
     buttonText: "VIEW GALLERY",
-    image: "/src/assets/images/custom_celebration_cakes_1781194977914.jpg",
+    image: "src/assets/images/custom_celebration_cakes_1781194977914.jpg",
     items: ["Butterscotch Drizzle", "Racing Legend", "Jungle Adventure", "Berry Chantilly"]
   },
   {
@@ -51,7 +51,7 @@ export const collectionsData: CollectionItem[] = [
     description: "Featuring Rasmalai, Gulab Jamun, and Mango Mastani. High-end pastries with opulent traditional spices.",
     tags: ["Saffron Milk", "Cardamom Crumble", "Sweets Topping"],
     buttonText: "VIEW GALLERY",
-    image: "/src/assets/images/indian_fusion_cakes_1781194990456.jpg",
+    image: "src/assets/images/indian_fusion_cakes_1781194990456.jpg",
     items: ["Gulab Jamun Indulgence", "Rasmalai Royalty", "Mango Cake"]
   },
   {
@@ -60,7 +60,7 @@ export const collectionsData: CollectionItem[] = [
     description: "Cake Jars & Mini Cake Loaves. Jar Flavors: Gulab Jamun, Rasmalai, Mango, Makhan Malai, and Pistachio.",
     tags: ["Dessert Jars", "Individual Portion", "Gifting Favourite"],
     buttonText: "VIEW GALLERY",
-    image: "/src/assets/images/cake_jars_mini_loaves_1781195014914.jpg"
+    image: "src/assets/images/cake_jars_mini_loaves_1781195014914.jpg"
   },
   {
     id: "cupcakes-pops",
@@ -68,7 +68,7 @@ export const collectionsData: CollectionItem[] = [
     description: "Bite-sized treats, big smiles! Our custom cupcakes and cake pops are loved by kids and adults alike, making every celebration a little sweeter.",
     tags: ["Bite-Sized", "Party Platters", "Colorful Designs"],
     buttonText: "EXPLORE",
-    image: "/src/assets/images/cupcakes_cake_pops_1781195003119.jpg"
+    image: "src/assets/images/cupcakes_cake_pops_1781195003119.jpg"
   },
   {
     id: "jars-mini-loaves",
@@ -76,7 +76,7 @@ export const collectionsData: CollectionItem[] = [
     description: "Individual elegance. Strawberry, Chocolate Pistachio, Funfetti, Chocolate, Tiramisu, and Seasonal Specials.",
     tags: ["Layered Goodness", "Gift Bundles", "Baking Cups"],
     buttonText: "DETAILS",
-    image: "/src/assets/images/cake_jars_mini_loaves_1781195014914.jpg"
+    image: "src/assets/images/cake_jars_mini_loaves_1781195014914.jpg"
   }
 ];
 
@@ -122,7 +122,7 @@ export const cateringPackages: CateringPackage[] = [
     minGuests: 30,
     pricePerGuest: 18,
     highlights: ["Custom 3-Tier Theme Cake", "Assorted Fusion Dessert Jars", "Artisanal Cake Pops & Tarts", "Premium Setup and Floral Accents", "100% Eggless customization available"],
-    image: "/src/assets/images/hero_cakes_desserts_1781194959946.jpg"
+    image: "src/assets/images/hero_cakes_desserts_1781194959946.jpg"
   },
   {
     id: "gourmet-high-tea",
@@ -132,7 +132,7 @@ export const cateringPackages: CateringPackage[] = [
     minGuests: 15,
     pricePerGuest: 14,
     highlights: ["Saffron Buttercream Macarons", "Miniature Pistachio Tea Cakes", "Fresh Fruit Cream Tartlets", "Luxury Selection of Indian Chai & Herbal Teas"],
-    image: "/src/assets/images/cupcakes_cake_pops_1781195003119.jpg"
+    image: "src/assets/images/cupcakes_cake_pops_1781195003119.jpg"
   },
   {
     id: "sweet-celebration-station",
@@ -142,7 +142,7 @@ export const cateringPackages: CateringPackage[] = [
     minGuests: 50,
     pricePerGuest: 22,
     highlights: ["Live-Plated Rose Milk Cakes", "Pistachio Milk Shots", "Diwali Theme Fondant Toppers", "Full Traditional Decor Setup"],
-    image: "/src/assets/images/indian_fusion_cakes_1781194990456.jpg"
+    image: "src/assets/images/indian_fusion_cakes_1781194990456.jpg"
   }
 ];
 
@@ -153,7 +153,7 @@ export const giftingBoxes: GiftingItem[] = [
     description: "An elegant, gold-embossed heritage chest filled with 4 signature fusion cake jars (Rasmalai, Gulab Jamun, Mango, and Pistachio) and 6 gourmet fusion cookies. Styled with traditional marigold motifs and premium ribbons.",
     price: "45.00",
     tags: ["Best Seller", "Diwali & Eid Specials", "Gift Ready"],
-    image: "/src/assets/images/cake_jars_mini_loaves_1781195014914.jpg"
+    image: "src/assets/images/cake_jars_mini_loaves_1781195014914.jpg"
   },
   {
     id: "fusion-trio",
@@ -161,7 +161,7 @@ export const giftingBoxes: GiftingItem[] = [
     description: "Three handcrafted individual cake jars layered with light, moist cardamom sponge and traditional saffron syrup. Flavors: Rasmalai Royale, Gulab Jamun Indulgence, and Kesar Pista Delight.",
     price: "24.00",
     tags: ["Eggless Available", "Tasting Set", "Travel Friendly"],
-    image: "/src/assets/images/cake_jars_detail_1_1781195027694.jpg"
+    image: "src/assets/images/cake_jars_detail_1_1781195027694.jpg"
   },
   {
     id: "artisanal-cookie-box",
@@ -169,7 +169,7 @@ export const giftingBoxes: GiftingItem[] = [
     description: "Freshly-baked thick gourmet cookies infused with cardamon and rose petals, stuffed with premium white chocolate, roasted pistachios, and rich chocolate ganache. Includes Strawberry, Blueberry, and Double Chocolate Pistachio.",
     price: "20.00",
     tags: ["Limited Edition", "Perfect High Tea"],
-    image: "/src/assets/images/cake_jars_detail_2_1781195040371.jpg"
+    image: "src/assets/images/cake_jars_detail_2_1781195040371.jpg"
   }
 ];
 

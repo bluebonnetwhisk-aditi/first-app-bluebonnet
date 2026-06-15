@@ -17,7 +17,7 @@ export default function CateringPage({ onOpenWizard }: CateringPageProps) {
     <div className="bg-brand-cream-light min-h-screen animate-fade-in font-sans">
       
       {/* Hero Section */}
-      <section className="relative py-20 bg-cover bg-center border-b border-[#ededf4]" style={{ backgroundImage: "url('/src/assets/images/bluebonnet_whisk_backdrop.png')" }}>
+      <section className="relative py-20 bg-cover bg-center border-b border-[#ededf4]" style={{ backgroundImage: "url('src/assets/images/bluebonnet_whisk_backdrop.png')" }}>
         <div className="absolute inset-0 bg-[#00346f]/70 mix-blend-multiply" />
         <div className="relative z-10 max-w-7xl mx-auto px-4 py-12 text-center text-white">
           <h1 className="font-serif text-4xl md:text-5xl font-bold tracking-tight mb-4 text-brand-cream">
@@ -64,7 +64,7 @@ export default function CateringPage({ onOpenWizard }: CateringPageProps) {
             {/* Left large verrine image */}
             <div className="lg:col-span-7 h-[250px] md:h-[400px] rounded overflow-hidden shadow-sm relative group">
               <img 
-                src="/src/assets/images/WhatsApp Image 2026-02-13 at 12.00.03 AM.jpeg" 
+                src="src/assets/images/WhatsApp Image 2026-02-13 at 12.00.03 AM.jpeg" 
                 alt="Deconstructed Samosa Chaat" 
                 className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-102"
                 referrerPolicy="no-referrer"
@@ -115,7 +115,7 @@ export default function CateringPage({ onOpenWizard }: CateringPageProps) {
             {/* Left cookies and milk image */}
             <div className="lg:col-span-6 h-[250px] md:h-[400px] rounded overflow-hidden shadow-sm">
               <img 
-                src="/src/assets/images/cake_jars_detail_2_1781195040371.jpg" 
+                src="src/assets/images/cake_jars_detail_2_1781195040371.jpg" 
                 alt="Artisanal Cookie Flight" 
                 className="w-full h-full object-cover"
                 referrerPolicy="no-referrer"
@@ -246,7 +246,7 @@ export default function CateringPage({ onOpenWizard }: CateringPageProps) {
             <div className="lg:col-span-5 grid grid-cols-2 gap-4 p-8 lg:p-12">
               <div className="aspect-square rounded overflow-hidden shadow-md">
                 <img 
-                  src="/src/assets/images/WhatsApp Image 2023-06-25 at 2.12.52 PM.jpeg" 
+                  src="src/assets/images/WhatsApp Image 2023-06-25 at 2.12.52 PM.jpeg" 
                   alt="Corporate Bento Layout" 
                   className="w-full h-full object-cover"
                   referrerPolicy="no-referrer"
@@ -254,7 +254,7 @@ export default function CateringPage({ onOpenWizard }: CateringPageProps) {
               </div>
               <div className="aspect-square rounded overflow-hidden shadow-md">
                 <img 
-                  src="/src/assets/images/BlueBonnet Catering.jpeg" 
+                  src="src/assets/images/BlueBonnet Catering.jpeg" 
                   alt="Chefs plating gourmet dishes" 
                   className="w-full h-full object-cover"
                   referrerPolicy="no-referrer"

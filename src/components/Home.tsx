@@ -292,9 +292,9 @@ export default function Home({ onOpenWizard, onOpenBaker, onNavigate }: HomeProp
           {/* Right Side: Sticky Images cross-fade */}
           <div className="lg:col-span-7 lg:sticky lg:top-28 h-[550px] relative rounded-lg overflow-hidden border border-white/10 shadow-2xl bg-black">
             {[
-              "/src/assets/images/custom_celebration_cakes_1781194977914.jpg",
-              "/src/assets/images/catering_buffet.png",
-              "/src/assets/images/custom_party_packages.png"
+              "src/assets/images/custom_celebration_cakes_1781194977914.jpg",
+              "src/assets/images/catering_buffet.png",
+              "src/assets/images/custom_party_packages.png"
             ].map((src, idx) => (
               <motion.div
                 key={idx}
