@@ -14,16 +14,12 @@ import MenuPage from "./components/MenuPage";
 import AboutPage from "./components/AboutPage";
 
 // Modals
-import InquiryWizard from "./components/InquiryWizard";
+import TalkToKitchenModal from "./components/TalkToKitchenModal";
 
 
 export default function App() {
   const [activeTab, setActiveTab] = useState("Home");
   const [isWizardOpen, setIsWizardOpen] = useState(false);
-  
-  // Custom wizard preselects
-  const [wizardFlavor, setWizardFlavor] = useState("");
-  const [wizardCategory, setWizardCategory] = useState("");
   
   // Interactive UI states
   const [showPriceList, setShowPriceList] = useState(false);
@@ -31,9 +27,7 @@ export default function App() {
   const [newsletterAlert, setNewsletterAlert] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  const handleOpenWizard = (flavor = "", category = "") => {
-    setWizardFlavor(flavor);
-    setWizardCategory(category);
+  const handleOpenWizard = (..._args: any[]) => {
     setIsWizardOpen(true);
   };
 
@@ -112,7 +106,7 @@ export default function App() {
                 onClick={() => handleOpenWizard()}
                 className="bg-[#00346f] hover:bg-[#00346f]/95 text-white px-5 py-2.5 rounded text-xs uppercase tracking-widest font-semibold transition-all duration-200 shadow-sm cursor-pointer"
               >
-                ORDER NOW
+                REQUEST QUOTE
               </button>
             </div>
 
@@ -121,7 +115,7 @@ export default function App() {
               <button
                 onClick={() => handleOpenWizard()}
                 className="bg-[#00346f] hover:bg-[#00346f]/95 text-white p-2 rounded text-xs font-semibold uppercase aspect-square cursor-pointer"
-                title="Order Now"
+                title="Request Quote"
               >
                 📥
               </button>
@@ -165,7 +159,7 @@ export default function App() {
                   }}
                   className="w-full text-center py-2.5 text-xs font-semibold tracking-widest uppercase bg-[#00346f] text-white rounded hover:bg-[#00346f]/95 font-sans cursor-pointer"
                 >
-                  ORDER NOW
+                  REQUEST QUOTE
                 </button>
               </div>
             </div>
@@ -332,11 +326,9 @@ export default function App() {
       {/* ── MODALS & OVERLAYS ── */}
 
       {/* Complete Inquiry wizard modal */}
-      <InquiryWizard 
+      <TalkToKitchenModal 
         isOpen={isWizardOpen} 
         onClose={() => setIsWizardOpen(false)} 
-        preselectedFlavor={wizardFlavor} 
-        preselectedCategory={wizardCategory} 
       />
 
 

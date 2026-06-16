@@ -40,7 +40,7 @@ export default function CakesPage({ onOpenWizard, onOpenBaker, onOpenPriceList }
               onClick={() => onOpenWizard()}
               className="w-full sm:w-auto bg-[#00346f] hover:bg-[#00346f]/90 text-white font-sans text-xs uppercase tracking-widest font-bold px-8 py-4 rounded shadow-lg transition-all duration-300 cursor-pointer"
             >
-              ORDER INQUIRY
+              REQUEST QUOTE
             </button>
             <p className="flex items-center gap-2.5 text-sm sm:text-base text-brand-gold-tint font-sans font-semibold">
               <span className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500 text-white font-black text-xs">✓</span>
@@ -408,7 +408,7 @@ export default function CakesPage({ onOpenWizard, onOpenBaker, onOpenPriceList }
               onClick={() => onOpenWizard()}
               className="w-full sm:w-auto bg-[#00346f] hover:bg-primary-brand/90 text-white font-sans text-xs uppercase tracking-widest font-bold px-8 py-4 rounded shadow-md transition-all cursor-pointer"
             >
-              START ORDER INQUIRY
+              REQUEST QUOTE
             </button>
             <button
               onClick={onOpenPriceList}
