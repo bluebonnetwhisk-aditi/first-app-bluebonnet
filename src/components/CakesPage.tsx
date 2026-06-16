@@ -109,9 +109,42 @@ export default function CakesPage({ onOpenWizard, onOpenBaker, onOpenPriceList }
               <div className="p-6">
                 <span className="text-[9px] font-bold tracking-widest text-[#775a19] uppercase block mb-1">Limited-Edition Boxes</span>
                 <h3 className="font-serif text-lg font-bold text-primary-brand mb-2">Festival Specials</h3>
-                <p className="text-gray-600 text-xs font-sans leading-relaxed mb-5">
+                <p className="text-gray-600 text-xs font-sans leading-relaxed mb-4">
                   Custom celebration boxes for Diwali, Rakhi, Eid, and Holi. Elegantly themed embellishments, custom greeting tags, and luxury packaging.
                 </p>
+                
+                {/* Festival box thumbnails to fill empty space */}
+                <div className="grid grid-cols-2 gap-3 mt-4 pt-4 border-t border-gray-100/65">
+                  <div className="flex items-center gap-2">
+                    <div className="h-9 w-9 rounded overflow-hidden shrink-0 border border-gray-200">
+                      <img 
+                        src="src/assets/images/ganpati_pooja_gift.png" 
+                        alt="Ganesh Chaturthi Pooja Box" 
+                        className="w-full h-full object-cover"
+                        referrerPolicy="no-referrer"
+                      />
+                    </div>
+                    <div className="leading-tight">
+                      <span className="text-[8px] font-sans font-bold text-gray-400 uppercase block">Ganesh Chaturthi</span>
+                      <span className="text-[10px] font-serif font-bold text-primary-brand">Pooja Box</span>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center gap-2">
+                    <div className="h-9 w-9 rounded overflow-hidden shrink-0 border border-gray-200">
+                      <img 
+                        src="src/assets/images/rakhi_gift_box.png" 
+                        alt="Raksha Bandhan Rakhi Hamper" 
+                        className="w-full h-full object-cover"
+                        referrerPolicy="no-referrer"
+                      />
+                    </div>
+                    <div className="leading-tight">
+                      <span className="text-[8px] font-sans font-bold text-gray-400 uppercase block">Raksha Bandhan</span>
+                      <span className="text-[10px] font-serif font-bold text-primary-brand">Rakhi Hamper</span>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
             <div className="p-6 pt-0 flex justify-between items-end border-t border-gray-100 mt-2">
