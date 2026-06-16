@@ -11,7 +11,7 @@ export default function CakesPage({ onOpenWizard, onOpenBaker, onOpenPriceList }
   return (
     <div className="animate-fade-in bg-brand-cream-light min-h-screen">
       {/* Elegant Hero Section */}
-      <header className="relative py-24 md:py-36 overflow-hidden">
+      <header className="relative py-24 lg:py-36 overflow-hidden">
         {/* Background with soft luxury overlay */}
         <div className="absolute inset-0 z-0">
           <img 
@@ -24,25 +24,25 @@ export default function CakesPage({ onOpenWizard, onOpenBaker, onOpenPriceList }
           <div className="absolute inset-0 bg-gradient-to-t from-[#fbfbfa] via-[#fbfbfa]/10 to-transparent" />
         </div>
 
-        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-white md:text-left">
+        <div className="relative z-10 max-w-7xl mx-auto px-4 lg:px-6 lg:px-8 text-white lg:text-left">
           <span className="font-sans text-xs font-bold tracking-widest text-brand-gold-tint uppercase block mb-3">
             SWEET MOMENTS, BEAUTIFULLY BAKED
           </span>
-          <h1 className="font-serif text-4xl sm:text-6xl font-bold tracking-tight mb-6 max-w-3xl drop-shadow-xs text-brand-cream leading-tight">
+          <h1 className="font-serif text-4xl lg:text-6xl font-bold tracking-tight mb-6 max-w-3xl drop-shadow-xs text-brand-cream leading-tight">
             Cakes & <span className="italic text-brand-gold-tint">Desserts</span>
           </h1>
-          <p className="font-sans text-sm sm:text-base text-gray-100 max-w-xl mb-8 leading-relaxed font-medium drop-shadow-xs">
+          <p className="font-sans text-sm lg:text-base text-gray-100 max-w-xl mb-8 leading-relaxed font-medium drop-shadow-xs">
             From custom celebration cakes to bite-sized treats and Indian-inspired desserts, every creation at Bluebonnet Whisk is handcrafted with quality ingredients, creativity, and love.
           </p>
 
-          <div className="flex flex-col sm:flex-row items-center gap-4">
+          <div className="flex flex-col lg:flex-row items-center gap-4">
             <button
               onClick={() => onOpenWizard()}
-              className="w-full sm:w-auto bg-[#00346f] hover:bg-[#00346f]/90 text-white font-sans text-xs uppercase tracking-widest font-bold px-8 py-4 rounded shadow-lg transition-all duration-300 cursor-pointer"
+              className="w-full lg:w-auto bg-[#00346f] hover:bg-[#00346f]/90 text-white font-sans text-xs uppercase tracking-widest font-bold px-8 py-4 rounded shadow-lg transition-all duration-300 cursor-pointer"
             >
               REQUEST QUOTE
             </button>
-            <p className="flex items-center gap-2.5 text-sm sm:text-base text-brand-gold-tint font-sans font-semibold">
+            <p className="flex items-center gap-2.5 text-sm lg:text-base text-brand-gold-tint font-sans font-semibold">
               <span className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500 text-white font-black text-xs">✓</span>
               Custom flavors & Eggless options available
             </p>
@@ -51,18 +51,18 @@ export default function CakesPage({ onOpenWizard, onOpenBaker, onOpenPriceList }
       </header>
 
       {/* Our Collections Section */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <div className="mb-12 text-center md:text-left">
-          <h2 className="font-serif text-3xl md:text-4xl font-bold text-primary-brand tracking-tight">Our Collections</h2>
-          <div className="h-0.5 w-16 bg-secondary-brand mt-4 mx-auto md:mx-0" />
+      <section className="max-w-7xl mx-auto px-4 lg:px-6 lg:px-8 py-16">
+        <div className="mb-12 text-center lg:text-left">
+          <h2 className="font-serif text-3xl lg:text-4xl font-bold text-primary-brand tracking-tight">Our Collections</h2>
+          <div className="h-0.5 w-16 bg-secondary-brand mt-4 mx-auto lg:mx-0" />
         </div>
 
         {/* Bento-style Collections grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
           {/* Left Large Column spanning 2 rows: Custom Celebration Cakes */}
-          <div className="md:col-span-2 border border-gray-150 rounded-md bg-white overflow-hidden shadow-xs relative flex flex-col justify-between group">
-            <div className="relative h-[250px] md:h-[400px] overflow-hidden">
+          <div className="lg:col-span-2 border border-gray-150 rounded-md bg-white overflow-hidden shadow-xs relative flex flex-col justify-between group">
+            <div className="relative h-[250px] lg:h-[400px] overflow-hidden">
               <img 
                 src="src/assets/images/custom_celebration_cakes_1781194977914.jpg" 
                 alt="Custom Celebration Cakes" 
@@ -73,9 +73,9 @@ export default function CakesPage({ onOpenWizard, onOpenBaker, onOpenPriceList }
                 Featured Collection
               </div>
             </div>
-            <div className="p-6 md:p-8">
+            <div className="p-6 lg:p-8">
               <h3 className="font-serif text-2xl font-bold text-primary-brand mb-2">Custom Celebration Cakes</h3>
-              <p className="text-gray-600 text-xs sm:text-sm font-sans mb-4 leading-normal">
+              <p className="text-gray-600 text-xs lg:text-sm font-sans mb-4 leading-normal">
                 Made-to-order cakes for birthdays, anniversaries, and milestones. Theme Cakes, Kids Birthdays, and Elegant Florals. Hand-decorated by master artists.
               </p>
               <div className="flex flex-wrap gap-2 mb-6">
@@ -277,7 +277,7 @@ export default function CakesPage({ onOpenWizard, onOpenBaker, onOpenPriceList }
           </div>
 
           {/* Bottom Row - Gourmet Cookies and Festival Specials */}
-          <div className="md:col-span-3 grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="lg:col-span-3 grid grid-cols-1 lg:grid-cols-2 gap-6">
             
             {/* Gourmet Cookies Card (Solid Royal Blue) */}
             <div className="border border-primary-brand rounded-md bg-primary-brand text-white p-6 shadow-xs flex flex-col justify-between group min-h-[160px]">
@@ -331,16 +331,16 @@ export default function CakesPage({ onOpenWizard, onOpenBaker, onOpenPriceList }
 
       {/* Choose Your Flavor Section */}
       <section className="bg-gray-50 py-16 border-y border-gray-150">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto px-4 lg:px-6 lg:px-8">
           
           <div className="mb-12 text-center">
-            <h2 className="font-serif text-3xl md:text-4xl font-bold text-primary-brand mb-3">Choose Your Flavor</h2>
-            <p className="text-gray-600 font-sans text-xs md:text-sm max-w-xl mx-auto">
+            <h2 className="font-serif text-3xl lg:text-4xl font-bold text-primary-brand mb-3">Choose Your Flavor</h2>
+            <p className="text-gray-600 font-sans text-xs lg:text-sm max-w-xl mx-auto">
               Crafting layers of taste with precision and the finest global ingredients.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
             {flavorCategories.map((cat) => (
               <div 
                 key={cat.title}
@@ -373,10 +373,10 @@ export default function CakesPage({ onOpenWizard, onOpenBaker, onOpenPriceList }
             ))}
 
             {/* Recommendation Baker Box */}
-            <div className="border border-brand-gold-tint/40 rounded bg-[#ffdea5] p-6 shadow-xs flex flex-col justify-between text-gray-900 md:col-span-1">
+            <div className="border border-brand-gold-tint/40 rounded bg-[#ffdea5] p-6 shadow-xs flex flex-col justify-between text-gray-900 lg:col-span-1">
               <div>
                 <span className="text-xs font-serif italic text-brand-gold-shadow font-semibold block mb-2">Heritage Consult</span>
-                <p className="text-gray-800 text-xs sm:text-sm font-sans leading-relaxed mb-4">
+                <p className="text-gray-800 text-xs lg:text-sm font-sans leading-relaxed mb-4">
                   Not sure which flavor to choose? We&apos;d be happy to help you find the perfect match for your celebration.
                 </p>
               </div>
@@ -396,23 +396,23 @@ export default function CakesPage({ onOpenWizard, onOpenBaker, onOpenPriceList }
       {/* Create Your Masterpiece Final CTA Section */}
       <section className="bg-gradient-to-br from-[#faf7f2] to-[#fbfbfa] py-20 text-center border-b border-gray-150">
         <div className="max-w-4xl mx-auto px-4">
-          <h2 className="font-serif text-3xl sm:text-4xl font-bold text-primary-brand tracking-tight mb-5 leading-tight">
+          <h2 className="font-serif text-3xl lg:text-4xl font-bold text-primary-brand tracking-tight mb-5 leading-tight">
             Create Your <span className="italic text-secondary-brand">Masterpiece</span>
           </h2>
-          <p className="text-gray-600 font-sans text-sm sm:text-base max-w-2xl mx-auto mb-8 leading-relaxed">
+          <p className="text-gray-600 font-sans text-sm lg:text-base max-w-2xl mx-auto mb-8 leading-relaxed">
             Ready to bring your dream cake to life? Let&apos;s discuss your vision and make your next event unforgettable.
           </p>
 
-          <div className="flex flex-col sm:flex-row justify-center items-center gap-4">
+          <div className="flex flex-col lg:flex-row justify-center items-center gap-4">
             <button
               onClick={() => onOpenWizard()}
-              className="w-full sm:w-auto bg-[#00346f] hover:bg-primary-brand/90 text-white font-sans text-xs uppercase tracking-widest font-bold px-8 py-4 rounded shadow-md transition-all cursor-pointer"
+              className="w-full lg:w-auto bg-[#00346f] hover:bg-primary-brand/90 text-white font-sans text-xs uppercase tracking-widest font-bold px-8 py-4 rounded shadow-md transition-all cursor-pointer"
             >
               REQUEST QUOTE
             </button>
             <button
               onClick={onOpenPriceList}
-              className="w-full sm:w-auto border border-gray-400 hover:bg-gray-50 text-gray-700 font-sans text-xs uppercase tracking-widest font-bold px-8 py-4 rounded transition-all cursor-pointer"
+              className="w-full lg:w-auto border border-gray-400 hover:bg-gray-50 text-gray-700 font-sans text-xs uppercase tracking-widest font-bold px-8 py-4 rounded transition-all cursor-pointer"
             >
               DOWNLOAD PRICE LIST
             </button>

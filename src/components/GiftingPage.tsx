@@ -47,28 +47,28 @@ export default function GiftingPage({ onOpenWizard }: GiftingPageProps) {
     <div className="bg-brand-cream-light min-h-screen animate-fade-in font-sans">
       
       {/* ── HERO SECTION ── */}
-      <header className="relative py-24 md:py-32 overflow-hidden bg-[#050a1a] text-white">
+      <header className="relative py-24 lg:py-32 overflow-hidden bg-[#050a1a] text-white">
         <div className="absolute inset-0 z-0 opacity-35 bg-cover bg-center" style={{ backgroundImage: "url('src/assets/images/gifting_hero_bg.png')" }} />
         <div className="absolute inset-0 bg-radial-gradient(circle, transparent 20%, #050a1a 90%)" />
         
-        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-6">
+        <div className="relative z-10 max-w-7xl mx-auto px-4 lg:px-6 lg:px-8 text-center space-y-6">
           <span className="bg-[#ffdea5]/10 text-brand-gold-tint border border-[#ffdea5]/20 px-3 py-1 rounded-full text-[10px] font-sans tracking-widest uppercase font-extrabold">
             THE LUXURY COLLECTION
           </span>
-          <h1 className="font-serif text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight max-w-4xl leading-tight text-brand-cream mx-auto">
+          <h1 className="font-serif text-4xl lg:text-5xl lg:text-6xl font-bold tracking-tight max-w-4xl leading-tight text-brand-cream mx-auto">
             Lux Gifting
           </h1>
-          <p className="font-serif text-lg md:text-xl text-brand-gold-tint italic max-w-2xl mx-auto">
+          <p className="font-serif text-lg lg:text-xl text-brand-gold-tint italic max-w-2xl mx-auto">
             Thoughtfully Curated Hampers for Every Celebration
           </p>
-          <p className="font-sans text-xs sm:text-sm md:text-base text-gray-300 max-w-3xl leading-relaxed mx-auto">
+          <p className="font-sans text-xs lg:text-sm lg:text-base text-gray-300 max-w-3xl leading-relaxed mx-auto">
             Make every occasion unforgettable with beautifully designed gift boxes tailored to your needs. Each hamper is thoughtfully handcrafted with a perfect balance of sweets, savouries, and personalized touches that reflect the joy of your celebration.
           </p>
 
-          <div className="flex flex-col sm:flex-row justify-center items-center gap-4 pt-4">
+          <div className="flex flex-col lg:flex-row justify-center items-center gap-4 pt-4">
             <button
               onClick={() => onOpenWizard("", "Gifting")}
-              className="w-full sm:w-auto bg-[#775a19] hover:bg-[#5d4201] text-white font-sans text-xs font-bold uppercase tracking-widest px-8 py-4 rounded shadow-lg transition-all cursor-pointer"
+              className="w-full lg:w-auto bg-[#775a19] hover:bg-[#5d4201] text-white font-sans text-xs font-bold uppercase tracking-widest px-8 py-4 rounded shadow-lg transition-all cursor-pointer"
             >
               REQUEST A GIFTING QUOTE
             </button>
@@ -76,7 +76,7 @@ export default function GiftingPage({ onOpenWizard }: GiftingPageProps) {
               href="https://wa.me/19455274566"
               target="_blank"
               rel="noopener noreferrer"
-              className="w-full sm:w-auto border border-brand-gold-tint hover:bg-white/10 text-brand-gold-tint font-sans text-xs font-bold uppercase tracking-widest px-8 py-4 rounded transition-all flex items-center justify-center gap-2 cursor-pointer"
+              className="w-full lg:w-auto border border-brand-gold-tint hover:bg-white/10 text-brand-gold-tint font-sans text-xs font-bold uppercase tracking-widest px-8 py-4 rounded transition-all flex items-center justify-center gap-2 cursor-pointer"
             >
               CHAT WITH THE CHEF
             </a>
@@ -85,14 +85,14 @@ export default function GiftingPage({ onOpenWizard }: GiftingPageProps) {
       </header>
 
       {/* ── SIGNATURE COLLECTIONS ── */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+      <section className="max-w-7xl mx-auto px-4 lg:px-6 lg:px-8 py-20">
         <div className="text-center mb-16">
           <span className="text-[10px] font-bold tracking-widest text-[#775a19] uppercase block mb-1">SIGNATURE RANGE</span>
-          <h2 className="font-serif text-3xl md:text-4xl font-bold text-[#00346f] tracking-tight">Our Signature Gifting Collections</h2>
+          <h2 className="font-serif text-3xl lg:text-4xl font-bold text-[#00346f] tracking-tight">Our Signature Gifting Collections</h2>
           <div className="h-0.5 w-16 bg-[#775a19] mt-3 mx-auto" />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {signatureCollections.map((col, idx) => (
             <div 
               key={idx}
@@ -109,10 +109,10 @@ export default function GiftingPage({ onOpenWizard }: GiftingPageProps) {
                   {col.tag}
                 </span>
               </div>
-              <div className="p-6 md:p-8 flex-1 flex flex-col justify-between space-y-4">
+              <div className="p-6 lg:p-8 flex-1 flex flex-col justify-between space-y-4">
                 <div className="space-y-2.5">
                   <h3 className="font-serif text-xl font-bold text-[#00346f]">{col.title}</h3>
-                  <p className="text-gray-600 text-xs sm:text-sm font-sans leading-relaxed">{col.desc}</p>
+                  <p className="text-gray-600 text-xs lg:text-sm font-sans leading-relaxed">{col.desc}</p>
                 </div>
                 <div className="pt-4 border-t border-gray-100">
                   <button 
@@ -130,13 +130,13 @@ export default function GiftingPage({ onOpenWizard }: GiftingPageProps) {
 
       {/* ── CUSTOM OPTIONS & PERSONALIZATION ── */}
       <section className="bg-white border-t border-b border-gray-150 py-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-2 gap-16">
+        <div className="max-w-7xl mx-auto px-4 lg:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-2 gap-16">
           
           {/* Custom Options Column */}
           <div className="space-y-8">
             <div>
               <span className="text-[10px] font-bold tracking-widest text-[#775a19] uppercase block mb-1">VERSATILE CHOICES</span>
-              <h2 className="font-serif text-2xl md:text-3xl font-bold text-[#00346f]">More Custom Gifting Options</h2>
+              <h2 className="font-serif text-2xl lg:text-3xl font-bold text-[#00346f]">More Custom Gifting Options</h2>
               <div className="h-0.5 w-12 bg-[#775a19] mt-2" />
             </div>
 
@@ -158,7 +158,7 @@ export default function GiftingPage({ onOpenWizard }: GiftingPageProps) {
           <div className="space-y-8">
             <div>
               <span className="text-[10px] font-bold tracking-widest text-[#775a19] uppercase block mb-1">PERSONAL TOUCHES</span>
-              <h2 className="font-serif text-2xl md:text-3xl font-bold text-[#00346f]">Personalization Options</h2>
+              <h2 className="font-serif text-2xl lg:text-3xl font-bold text-[#00346f]">Personalization Options</h2>
               <div className="h-0.5 w-12 bg-[#775a19] mt-2" />
             </div>
 
@@ -170,7 +170,7 @@ export default function GiftingPage({ onOpenWizard }: GiftingPageProps) {
                   </div>
                   <div>
                     <h4 className="font-serif text-base font-bold text-primary-brand">{item.label}</h4>
-                    <p className="text-gray-600 text-xs sm:text-sm font-sans mt-0.5 leading-relaxed">{item.desc}</p>
+                    <p className="text-gray-600 text-xs lg:text-sm font-sans mt-0.5 leading-relaxed">{item.desc}</p>
                   </div>
                 </div>
               ))}
@@ -181,21 +181,21 @@ export default function GiftingPage({ onOpenWizard }: GiftingPageProps) {
       </section>
 
       {/* ── CLOSING CALLOUT SECTION ── */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
-        <div className="bg-gradient-to-br from-[#0a1128] to-[#00346f] text-white rounded-lg p-10 md:p-14 text-center shadow-md relative overflow-hidden">
+      <section className="max-w-7xl mx-auto px-4 lg:px-6 lg:px-8 py-20">
+        <div className="bg-gradient-to-br from-[#0a1128] to-[#00346f] text-white rounded-lg p-10 lg:p-14 text-center shadow-md relative overflow-hidden">
           <div className="absolute inset-0 bg-grid-pattern opacity-10" />
           <div className="relative z-10 max-w-3xl mx-auto space-y-6">
-            <h2 className="font-serif text-3xl md:text-4xl font-semibold tracking-tight text-brand-cream">
+            <h2 className="font-serif text-3xl lg:text-4xl font-semibold tracking-tight text-brand-cream">
               You name the occasion — we bring the sweetness. <br />
               <span className="text-brand-gold-tint italic font-bold">We’ve got your celebrations covered.</span>
             </h2>
-            <p className="text-gray-300 text-xs sm:text-sm font-sans leading-relaxed max-w-xl mx-auto">
+            <p className="text-gray-300 text-xs lg:text-sm font-sans leading-relaxed max-w-xl mx-auto">
               Ready to curate a set of custom hampers for your next milestone or festival? Get in touch with us today.
             </p>
-            <div className="flex flex-col sm:flex-row justify-center gap-4 pt-4">
+            <div className="flex flex-col lg:flex-row justify-center gap-4 pt-4">
               <button 
                 onClick={() => onOpenWizard("", "Gifting")}
-                className="w-full sm:w-auto bg-[#775a19] hover:bg-[#5d4201] text-white font-sans text-xs uppercase tracking-widest font-bold px-8 py-4 rounded shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
+                className="w-full lg:w-auto bg-[#775a19] hover:bg-[#5d4201] text-white font-sans text-xs uppercase tracking-widest font-bold px-8 py-4 rounded shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
               >
                 DISCUSS A CUSTOM HAMPER <ArrowRight className="h-4 w-4" />
               </button>
@@ -203,7 +203,7 @@ export default function GiftingPage({ onOpenWizard }: GiftingPageProps) {
                 href="https://wa.me/19455274566"
                 target="_blank" 
                 rel="noreferrer"
-                className="w-full sm:w-auto border border-brand-gold-tint hover:bg-white/10 text-brand-gold-tint font-sans text-xs uppercase tracking-widest font-bold px-8 py-4 rounded flex items-center justify-center gap-2 cursor-pointer"
+                className="w-full lg:w-auto border border-brand-gold-tint hover:bg-white/10 text-brand-gold-tint font-sans text-xs uppercase tracking-widest font-bold px-8 py-4 rounded flex items-center justify-center gap-2 cursor-pointer"
               >
                 <MessageSquare className="h-4 w-4" /> CHAT ON WHATSAPP
               </a>

@@ -252,12 +252,12 @@ export default function MenuPage() {
     <div className="bg-[#f9f9ff] min-h-screen animate-fade-in font-sans">
       
       {/* Hero Header */}
-      <section className="text-center pt-16 pb-12 px-4 md:px-8 bg-gradient-to-b from-[#f3f3f9] to-[#f9f9ff]">
+      <section className="text-center pt-16 pb-12 px-4 lg:px-8 bg-gradient-to-b from-[#f3f3f9] to-[#f9f9ff]">
         <div className="max-w-4xl mx-auto space-y-4">
-          <h1 className="font-serif font-bold text-4xl md:text-5xl text-[#00346f] tracking-tight leading-none">
+          <h1 className="font-serif font-bold text-4xl lg:text-5xl text-[#00346f] tracking-tight leading-none">
             Digital Menu &amp; Price Guide
           </h1>
-          <p className="text-sm md:text-base text-[#434751] max-w-2xl mx-auto leading-relaxed">
+          <p className="text-sm lg:text-base text-[#434751] max-w-2xl mx-auto leading-relaxed">
             Explore our meticulously curated selection of Indian-inspired culinary masterpieces, designed for the modern connoisseur. Click on dishes and prices to estimate sizes and prepare a beautiful printable proposal.
           </p>
           <div className="h-[2px] w-24 bg-[#775a19] mx-auto mt-6"></div>
@@ -265,7 +265,7 @@ export default function MenuPage() {
       </section>
 
       {/* Main Grid Layout */}
-      <main className="max-w-7xl mx-auto px-4 md:px-12 pb-20">
+      <main className="max-w-7xl mx-auto px-4 lg:px-12 pb-20">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
           
           {/* Left Column: Navigation & Planner */}
@@ -317,7 +317,7 @@ export default function MenuPage() {
             
             {/* --- Main Course Section --- */}
             <section id="main-course" className="bg-white rounded-lg border border-[#c3c6d2] shadow-sm overflow-hidden scroll-mt-24">
-              <div className="bg-[#fcf8f0] px-6 py-5 border-b border-[#ededf4] flex flex-col md:flex-row md:items-center justify-between gap-2">
+              <div className="bg-[#fcf8f0] px-6 py-5 border-b border-[#ededf4] flex flex-col lg:flex-row lg:items-center justify-between gap-2">
                 <div>
                   <h2 className="font-serif font-bold text-2xl text-[#00346f]">Main Course</h2>
                   <p className="text-xs text-gray-500 font-sans mt-0.5">Luxurious curries, slow-cooked dal, and royal aromatic rice selection.</p>
@@ -612,8 +612,8 @@ export default function MenuPage() {
                 </span>
               </div>
 
-              <div className="p-6 sm:p-8 space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-4">
+              <div className="p-6 lg:p-8 space-y-4">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-12 gap-y-4">
                   {DRINKS.map((drink) => {
                     const existingSelection = selectedItems.find(item => item.id === drink.id);
                     return (
@@ -680,12 +680,12 @@ export default function MenuPage() {
 
             {/* --- Portion & Service Add-ons Section --- */}
             <section id="portions" className="scroll-mt-24">
-              <div className="bg-[#00346f] text-white rounded-lg p-6 sm:p-10 shadow-lg relative overflow-hidden">
+              <div className="bg-[#00346f] text-white rounded-lg p-6 lg:p-10 shadow-lg relative overflow-hidden">
                 <div className="absolute right-0 bottom-0 opacity-10 transform translate-x-1/4 translate-y-1/4 pointer-events-none">
                   <Utensils size={360} />
                 </div>
 
-                <div className="relative z-10 grid grid-cols-1 md:grid-cols-2 gap-10">
+                <div className="relative z-10 grid grid-cols-1 lg:grid-cols-2 gap-10">
                   
                   {/* Left: Portion Guide */}
                   <div className="space-y-6">
@@ -752,8 +752,8 @@ export default function MenuPage() {
             </section>
 
             {/* --- Dynamic Consultation Summary section --- */}
-            <section id="consultation-summary" className="bg-white rounded-lg border-t-4 border-b border-x border-[#775a19] shadow-md p-6 sm:p-8 space-y-6 transition-all scroll-mt-24">
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <section id="consultation-summary" className="bg-white rounded-lg border-t-4 border-b border-x border-[#775a19] shadow-md p-6 lg:p-8 space-y-6 transition-all scroll-mt-24">
+              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                 <div>
                   <span className="text-xs uppercase font-bold tracking-widest text-[#775a19] flex items-center gap-1.5 font-sans mb-1">
                     <ShoppingBag size={14} /> Design Your Catering Proposal
@@ -782,7 +782,7 @@ export default function MenuPage() {
                 <div className="space-y-4">
                   <div className="divide-y divide-[#ededf4]">
                     {selectedItems.map((item) => (
-                      <div key={`${item.id}-${item.size}`} className="py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                      <div key={`${item.id}-${item.size}`} className="py-3 flex flex-col lg:flex-row lg:items-center justify-between gap-2">
                         <div className="flex-1">
                           <p className="font-sans font-semibold text-gray-800 text-sm flex items-center gap-2">
                             {item.name}
@@ -795,7 +795,7 @@ export default function MenuPage() {
                           <p className="text-xs text-gray-400 font-sans">{item.category}</p>
                         </div>
                         
-                        <div className="flex items-center gap-6 justify-between sm:justify-end">
+                        <div className="flex items-center gap-6 justify-between lg:justify-end">
                           <div className="flex items-center gap-2">
                             <button
                               type="button"
@@ -844,29 +844,29 @@ export default function MenuPage() {
                     </div>
                   )}
 
-                  <div className="pt-4 border-t border-[#ededf4] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div className="pt-4 border-t border-[#ededf4] flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                     <div className="space-y-1 text-left">
                       <p className="text-xs text-gray-500">Proposal Estimated Total:</p>
                       <div className="flex items-baseline gap-2">
-                        <span className="text-2xl md:text-3xl font-serif font-bold text-[#00346f]">
+                        <span className="text-2xl lg:text-3xl font-serif font-bold text-[#00346f]">
                           ${getGrandTotal().toFixed(2)}
                         </span>
                         {appliedAddons.length > 0 && <span className="text-xs text-gray-400 font-sans font-medium">(including services)</span>}
                       </div>
                     </div>
 
-                    <div className="flex gap-2 w-full sm:w-auto">
+                    <div className="flex gap-2 w-full lg:w-auto">
                       <button
                         type="button"
                         onClick={handleDownloadMenuTxt}
-                        className="flex-1 sm:flex-none border border-[#775a19] text-[#775a19] hover:bg-[#775a19]/5 px-4 py-2.5 rounded text-xs uppercase font-bold tracking-wider transition-all inline-flex items-center justify-center gap-1.5 cursor-pointer"
+                        className="flex-1 lg:flex-none border border-[#775a19] text-[#775a19] hover:bg-[#775a19]/5 px-4 py-2.5 rounded text-xs uppercase font-bold tracking-wider transition-all inline-flex items-center justify-center gap-1.5 cursor-pointer"
                       >
                         <FileDown size={14} /> Export Menu (.txt)
                       </button>
                       <button
                         type="button"
                         onClick={() => setIsEnquiryOpen(true)}
-                        className="flex-1 sm:flex-none bg-[#00346f] hover:bg-[#114589] text-white px-6 py-2.5 rounded text-xs uppercase font-extrabold tracking-widest transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer"
+                        className="flex-1 lg:flex-none bg-[#00346f] hover:bg-[#114589] text-white px-6 py-2.5 rounded text-xs uppercase font-extrabold tracking-widest transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer"
                       >
                         Enquire Proposal <ChevronRight size={14} />
                       </button>

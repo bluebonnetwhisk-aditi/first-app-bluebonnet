@@ -23,7 +23,19 @@ export default function TalkToKitchenModal({ isOpen, onClose }: TalkToKitchenMod
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    // Simulate inquiry submission
+
+    const subject = encodeURIComponent(`Catering Inquiry - ${formData.name}`);
+    const body = encodeURIComponent(
+      `New Catering / Custom Menu Inquiry Details:\n\n` +
+      `Name: ${formData.name}\n` +
+      `Event Date: ${formData.eventDate}\n` +
+      `Estimated Guests: ${formData.guests}\n` +
+      `Event Type: ${formData.eventType}\n` +
+      `Special Requirements:\n${formData.message}\n`
+    );
+    const mailtoUrl = `mailto:bluebonnetwhisk@gmail.com?subject=${subject}&body=${body}`;
+    window.location.href = mailtoUrl;
+
     setTimeout(() => {
       setIsSubmitting(false);
       setIsSuccess(true);
@@ -59,12 +71,12 @@ export default function TalkToKitchenModal({ isOpen, onClose }: TalkToKitchenMod
           <X className="h-5 w-5" />
         </button>
 
-        <div className="p-6 md:p-8">
+        <div className="p-6 lg:p-8">
           {!showInquiryForm ? (
             <div className="space-y-6">
               <div className="text-center">
-                <h3 className="font-serif text-2xl md:text-3xl font-bold text-primary-brand">Talk to the Kitchen</h3>
-                <p className="text-xs md:text-sm text-gray-500 font-sans mt-2">Let’s plan your perfect celebration together</p>
+                <h3 className="font-serif text-2xl lg:text-3xl font-bold text-primary-brand">Talk to the Kitchen</h3>
+                <p className="text-xs lg:text-sm text-gray-500 font-sans mt-2">Let’s plan your perfect celebration together</p>
               </div>
 
               <div className="space-y-4 pt-2">

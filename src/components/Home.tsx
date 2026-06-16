@@ -186,11 +186,11 @@ export default function Home({ onOpenWizard, onOpenBaker, onNavigate }: HomeProp
             style={{ opacity: heroTextOpacity, y: heroTextY }}
             className="relative z-10 max-w-4xl mx-auto px-4 text-center space-y-6"
           >
-            <h1 className="font-serif text-4xl md:text-6xl font-black tracking-tight leading-tight text-brand-cream drop-shadow-md">
+            <h1 className="font-serif text-4xl lg:text-6xl font-black tracking-tight leading-tight text-brand-cream drop-shadow-md">
               Bringing People Together <br />
               Through <span className="italic text-brand-gold-tint">Authentic Flavors</span> &amp; <span className="italic text-brand-gold-tint">Sweets</span>
             </h1>
-            <p className="text-gray-300 text-xs sm:text-sm md:text-base max-w-xl mx-auto leading-relaxed">
+            <p className="text-gray-300 text-xs lg:text-sm lg:text-base max-w-xl mx-auto leading-relaxed">
               Made for celebrations that matter. Custom cakes, indulgent desserts, and catering inspired by Indian flavors crafted fresh for your special moments.
             </p>
             <div className="flex flex-wrap justify-center gap-3 pt-4">
@@ -230,7 +230,7 @@ export default function Home({ onOpenWizard, onOpenBaker, onNavigate }: HomeProp
           <div className="lg:col-span-5 space-y-12 py-6">
             <div className="space-y-2 mb-6">
               <span className="text-[10px] font-bold text-brand-gold-tint tracking-widest uppercase">THE LUXURY EXPERIENCE</span>
-              <h2 className="font-serif text-2xl md:text-3xl font-bold text-brand-cream">Visual Walkthrough</h2>
+              <h2 className="font-serif text-2xl lg:text-3xl font-bold text-brand-cream">Visual Walkthrough</h2>
               <div className="h-0.5 w-12 bg-brand-gold-tint mt-2" />
             </div>
 
@@ -332,10 +332,10 @@ export default function Home({ onOpenWizard, onOpenBaker, onNavigate }: HomeProp
             <div className="h-0.5 w-12 bg-brand-gold-tint mx-auto mt-2" />
           </div>
 
-          <div className="glass-panel-dark rounded-lg p-6 md:p-10 border border-white/5 grid grid-cols-1 md:grid-cols-12 gap-8 items-center">
+          <div className="glass-panel-dark rounded-lg p-6 lg:p-10 border border-white/5 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
             
             {/* Left Side: Interactive Slider & Quick Toggles */}
-            <div className="md:col-span-6 space-y-6">
+            <div className="lg:col-span-6 space-y-6">
               <div>
                 <div className="flex justify-between items-baseline mb-2">
                   <label className="text-xs uppercase font-bold text-gray-400 tracking-wider font-sans">Guest Count</label>
@@ -371,7 +371,7 @@ export default function Home({ onOpenWizard, onOpenBaker, onNavigate }: HomeProp
             </div>
 
             {/* Right Side: Instant Recommendation Display */}
-            <div className="md:col-span-6 bg-white/5 rounded-lg border border-white/5 p-6 space-y-4">
+            <div className="lg:col-span-6 bg-white/5 rounded-lg border border-white/5 p-6 space-y-4">
               <div className="text-[10px] font-bold text-brand-gold-tint tracking-widest uppercase font-mono">
                 {rec.serves}
               </div>
@@ -411,12 +411,12 @@ export default function Home({ onOpenWizard, onOpenBaker, onNavigate }: HomeProp
           
           <div className="text-center max-w-xl mx-auto space-y-2">
             <span className="text-[10px] font-bold text-brand-gold-tint tracking-widest uppercase font-mono">OUR COMMITMENT</span>
-            <h2 className="font-serif text-3xl md:text-4xl font-bold text-brand-cream">Why Choose Bluebonnet Whisk</h2>
+            <h2 className="font-serif text-3xl lg:text-4xl font-bold text-brand-cream">Why Choose Bluebonnet Whisk</h2>
             <p className="text-xs text-gray-400 font-sans">Crafting unforgettable experiences with a dedication to perfection.</p>
             <div className="h-0.5 w-12 bg-brand-gold-tint mx-auto mt-2" />
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 lg:grid-cols-4 gap-6">
             {[
               {
                 title: "Fully Custom Celebration Menus",
@@ -470,11 +470,11 @@ export default function Home({ onOpenWizard, onOpenBaker, onNavigate }: HomeProp
           
           <div className="text-center max-w-xl mx-auto">
             <span className="text-[10px] font-bold text-brand-gold-tint tracking-widest uppercase">SIGNATURE RANGE</span>
-            <h2 className="font-serif text-3xl md:text-4xl font-bold text-brand-cream mt-1">Highlights &amp; Attractions</h2>
+            <h2 className="font-serif text-3xl lg:text-4xl font-bold text-brand-cream mt-1">Highlights &amp; Attractions</h2>
             <p className="text-xs text-gray-400 font-sans mt-2">Discover what makes our patrons rave and gets everyone&apos;s attention.</p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             
             {/* Highlight 1: Rasmalai Royalty */}
             <div className="glass-panel-dark rounded-lg p-6 flex flex-col justify-between group hover:border-[#775a19]/55 transition-all">
@@ -537,12 +537,12 @@ export default function Home({ onOpenWizard, onOpenBaker, onNavigate }: HomeProp
           
           <div className="text-center max-w-xl mx-auto space-y-2">
             <span className="text-[10px] font-bold text-brand-gold-tint tracking-widest uppercase">TRANSPARENT VALUE</span>
-            <h2 className="font-serif text-3xl md:text-4xl font-bold text-brand-cream">Catering &amp; Bakery Rates</h2>
+            <h2 className="font-serif text-3xl lg:text-4xl font-bold text-brand-cream">Catering &amp; Bakery Rates</h2>
             <p className="text-xs text-gray-400 font-sans">Compare starting price guidelines to design the perfect event program.</p>
             <div className="h-0.5 w-12 bg-brand-gold-tint mx-auto mt-2" />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-stretch">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-stretch">
             {pricingTiers.map((tier, i) => (
               <div 
                 key={i}
@@ -612,7 +612,7 @@ export default function Home({ onOpenWizard, onOpenBaker, onNavigate }: HomeProp
             <div className="h-0.5 w-12 bg-brand-gold-tint mx-auto mt-2" />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {[
               {
                 quote: "The Rasmalai Royale Cake was the star of our wedding! Incredibly light, not too sweet, and 100% eggless. Our guests were absolutely amazed.",
@@ -634,7 +634,7 @@ export default function Home({ onOpenWizard, onOpenBaker, onNavigate }: HomeProp
                 key={idx} 
                 className="glass-panel-dark rounded-lg p-6 flex flex-col justify-between hover:border-brand-gold-tint/40 transition-all duration-300"
               >
-                <p className="text-gray-300 text-xs sm:text-sm italic leading-relaxed font-sans">
+                <p className="text-gray-300 text-xs lg:text-sm italic leading-relaxed font-sans">
                   &quot;{t.quote}&quot;
                 </p>
                 <div className="mt-6 pt-4 border-t border-white/5 flex items-center justify-between">
@@ -675,7 +675,7 @@ export default function Home({ onOpenWizard, onOpenBaker, onNavigate }: HomeProp
                     onClick={() => setActiveFaq(isOpen ? null : idx)}
                     className="w-full px-6 py-5 flex items-center justify-between text-left focus:outline-none cursor-pointer"
                   >
-                    <span className="font-serif text-sm sm:text-base font-semibold text-brand-cream pr-4">{faq.q}</span>
+                    <span className="font-serif text-sm lg:text-base font-semibold text-brand-cream pr-4">{faq.q}</span>
                     <ChevronDown className={`h-4 w-4 text-brand-gold-tint shrink-0 transition-transform duration-300 ${isOpen ? "transform rotate-180" : ""}`} />
                   </button>
 
@@ -684,7 +684,7 @@ export default function Home({ onOpenWizard, onOpenBaker, onNavigate }: HomeProp
                       isOpen ? "max-h-[300px] border-t border-white/5" : "max-h-0"
                     }`}
                   >
-                    <p className="px-6 py-5 text-gray-300 text-xs sm:text-sm font-sans leading-relaxed">
+                    <p className="px-6 py-5 text-gray-300 text-xs lg:text-sm font-sans leading-relaxed">
                       {faq.a}
                     </p>
                   </div>

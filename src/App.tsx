@@ -70,7 +70,7 @@ export default function App() {
 
       {/* Header / Navbar */}
       <nav className="sticky top-0 z-45 bg-[#fbfbfa]/95 backdrop-blur-md border-b border-gray-150 py-3.5 shadow-xs">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto px-4 lg:px-6 lg:px-8">
           <div className="flex justify-between items-center h-14">
             
             {/* Logo Brand */}
@@ -78,7 +78,7 @@ export default function App() {
               onClick={() => setActiveTab("Home")} 
               className="flex-shrink-0 flex items-center cursor-pointer group"
             >
-              <span className="font-serif text-xl md:text-2xl font-bold text-[#00346f] tracking-tight transition-colors group-hover:text-[#775a19]">
+              <span className="font-serif text-xl lg:text-2xl font-bold text-[#00346f] tracking-tight transition-colors group-hover:text-[#775a19]">
                 Bluebonnet Whisk
               </span>
             </div>
@@ -134,7 +134,7 @@ export default function App() {
         {/* Mobile Menu */}
         {mobileMenuOpen && (
           <div className="lg:hidden bg-[#fbfbfa] border-b border-gray-200 transition-all">
-            <div className="px-2 pt-2 pb-4 space-y-1.5 sm:px-3">
+            <div className="px-2 pt-2 pb-4 space-y-1.5 lg:px-3">
               {navLinks.map((link) => (
                 <button
                   key={link.id}
@@ -227,7 +227,7 @@ export default function App() {
 
       {/* FOOTER */}
       <footer className="bg-gray-100 border-t border-gray-250 py-12 text-[#1a1c20] font-sans mt-auto">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-4 gap-8">
+        <div className="max-w-7xl mx-auto px-4 lg:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-4 gap-8">
           
           {/* Logo and brief summary */}
           <div className="space-y-4">
@@ -313,7 +313,7 @@ export default function App() {
 
         </div>
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 border-t border-gray-200/50 mt-10 pt-6 text-center text-[11px] text-gray-400 font-sans space-y-2">
+        <div className="max-w-7xl mx-auto px-4 lg:px-6 lg:px-8 border-t border-gray-200/50 mt-10 pt-6 text-center text-[11px] text-gray-400 font-sans space-y-2">
           <p className="italic max-w-3xl mx-auto leading-relaxed">
             “Prepared in a home kitchen that is not inspected by the Texas Department of State Health Services or local health departments. This product is made in a cottage food operation that is not subject to Texas food establishment regulations.”
           </p>
@@ -336,7 +336,7 @@ export default function App() {
       {/* Price list guidelines modal */}
       {showPriceList && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-xs animate-fade-in">
-          <div className="relative w-full max-w-lg overflow-hidden rounded-lg bg-white p-6 md:p-8 text-gray-900 shadow-2xl border border-gray-150">
+          <div className="relative w-full max-w-lg overflow-hidden rounded-lg bg-white p-6 lg:p-8 text-gray-900 shadow-2xl border border-gray-150">
             
             <button 
               onClick={() => setShowPriceList(false)}

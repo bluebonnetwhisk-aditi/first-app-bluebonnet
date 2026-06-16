@@ -70,6 +70,33 @@ export default function EnquiryModal({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (validate()) {
+      const subject = encodeURIComponent(`Catering Menu Request - ${formData.name}`);
+      
+      const itemsList = selectedItems
+        .map((item) => `- ${item.name} (${item.size ? `Size: ${item.size}` : 'Qty'}: ${item.quantity}) - $${(item.price * item.quantity).toFixed(2)}`)
+        .join('\n');
+      
+      const addonsList = serviceAddons
+        .map((addon) => `- ${addon.name}: $${addon.price.toFixed(2)}`)
+        .join('\n');
+
+      const body = encodeURIComponent(
+        `Catering Menu Inquiry Details:\n\n` +
+        `Name: ${formData.name}\n` +
+        `Email: ${formData.email}\n` +
+        `Phone: ${formData.phone}\n` +
+        `Event Date: ${formData.date}\n` +
+        `Guests: ${formData.guests}\n` +
+        `Venue: ${formData.venue}\n\n` +
+        `Selected Menu Items:\n${itemsList || 'None'}\n\n` +
+        `Selected Add-ons:\n${addonsList || 'None'}\n\n` +
+        `Estimated Total: $${calculateTotal().toFixed(2)}\n\n` +
+        `Special Requests / Notes:\n${formData.notes}\n`
+      );
+
+      const mailtoUrl = `mailto:bluebonnetwhisk@gmail.com?subject=${subject}&body=${body}`;
+      window.location.href = mailtoUrl;
+
       setIsSubmitted(true);
     }
   };
@@ -90,7 +117,7 @@ export default function EnquiryModal({
         onClick={onClose}
       />
 
-      <div className="flex min-h-screen items-center justify-center p-4 text-center sm:p-6 lg:p-8">
+      <div className="flex min-h-screen items-center justify-center p-4 text-center lg:p-6 lg:p-8">
         <div className="relative w-full max-w-4xl transform overflow-hidden rounded-lg bg-[#f9f9ff] text-left align-middle shadow-2xl transition-all border border-[#abc7ff]/30 animate-fade-in-up">
           
           {/* Close button */}
@@ -106,7 +133,7 @@ export default function EnquiryModal({
             <div className="grid grid-cols-1 lg:grid-cols-12">
               
               {/* Left Column: Form Details */}
-              <div className="lg:col-span-7 p-6 sm:p-8 border-b lg:border-b-0 lg:border-r border-[#ededf4] bg-white">
+              <div className="lg:col-span-7 p-6 lg:p-8 border-b lg:border-b-0 lg:border-r border-[#ededf4] bg-white">
                 <span className="text-xs font-semibold text-[#775a19] tracking-widest uppercase block mb-1 font-sans">
                   Precious Celebrations
                 </span>
@@ -132,7 +159,7 @@ export default function EnquiryModal({
                     {errors.name && <p className="text-red-500 text-[114px] mt-1 text-xs">{errors.name}</p>}
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1 font-sans">
                         Email Address *
@@ -174,7 +201,7 @@ export default function EnquiryModal({
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1 font-sans">
                         Event Date *
@@ -256,7 +283,7 @@ export default function EnquiryModal({
               </div>
 
               {/* Right Column: Mini Proposal Breakdown */}
-              <div className="lg:col-span-5 p-6 sm:p-8 bg-[#f3f3f9] flex flex-col justify-between">
+              <div className="lg:col-span-5 p-6 lg:p-8 bg-[#f3f3f9] flex flex-col justify-between">
                 <div>
                   <h4 className="font-serif font-semibold text-lg text-[#00346f] mb-4 flex items-center gap-2">
                     <FileText size={18} className="text-[#775a19]" /> Proposal Details
