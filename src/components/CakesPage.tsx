@@ -95,7 +95,7 @@ export default function CakesPage({ onOpenWizard, onOpenBaker, onOpenPriceList }
           {/* Right Top Column: Festival Specials */}
           <div className="border border-gray-150 rounded-md bg-white overflow-hidden shadow-xs flex flex-col justify-between group">
             <div>
-              <div className="relative h-[200px] overflow-hidden">
+              <div className="relative h-[200px] lg:h-[280px] overflow-hidden">
                 <img 
                   src="src/assets/images/diwali_luxe_hamper.png" 
                   alt="Festival Specials Gift Boxes" 
@@ -114,9 +114,9 @@ export default function CakesPage({ onOpenWizard, onOpenBaker, onOpenPriceList }
                 </p>
                 
                 {/* Festival box thumbnails to fill empty space */}
-                <div className="grid grid-cols-2 gap-3 mt-4 pt-4 border-t border-gray-100/65">
-                  <div className="flex items-center gap-2">
-                    <div className="h-9 w-9 rounded overflow-hidden shrink-0 border border-gray-200">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6 pt-6 border-t border-gray-150">
+                  <div className="flex items-center gap-3">
+                    <div className="h-14 w-14 rounded-md overflow-hidden shrink-0 border border-gray-200 shadow-2xs">
                       <img 
                         src="src/assets/images/ganpati_pooja_gift.png" 
                         alt="Ganesh Chaturthi Pooja Box" 
@@ -124,14 +124,15 @@ export default function CakesPage({ onOpenWizard, onOpenBaker, onOpenPriceList }
                         referrerPolicy="no-referrer"
                       />
                     </div>
-                    <div className="leading-tight">
-                      <span className="text-[8px] font-sans font-bold text-gray-400 uppercase block">Ganesh Chaturthi</span>
-                      <span className="text-[10px] font-serif font-bold text-primary-brand">Pooja Box</span>
+                    <div className="space-y-0.5">
+                      <span className="text-[8px] font-bold tracking-wider text-secondary-brand uppercase block font-sans">Ganesh Chaturthi</span>
+                      <h4 className="text-[11px] font-serif font-bold text-primary-brand leading-tight">Pooja Box</h4>
+                      <p className="text-gray-500 text-[9px] font-sans leading-none">Mithais & nuts</p>
                     </div>
                   </div>
                   
-                  <div className="flex items-center gap-2">
-                    <div className="h-9 w-9 rounded overflow-hidden shrink-0 border border-gray-200">
+                  <div className="flex items-center gap-3">
+                    <div className="h-14 w-14 rounded-md overflow-hidden shrink-0 border border-gray-200 shadow-2xs">
                       <img 
                         src="src/assets/images/rakhi_gift_box.png" 
                         alt="Raksha Bandhan Rakhi Hamper" 
@@ -139,9 +140,10 @@ export default function CakesPage({ onOpenWizard, onOpenBaker, onOpenPriceList }
                         referrerPolicy="no-referrer"
                       />
                     </div>
-                    <div className="leading-tight">
-                      <span className="text-[8px] font-sans font-bold text-gray-400 uppercase block">Raksha Bandhan</span>
-                      <span className="text-[10px] font-serif font-bold text-primary-brand">Rakhi Hamper</span>
+                    <div className="space-y-0.5">
+                      <span className="text-[8px] font-bold tracking-wider text-[#e0ab51] uppercase block font-sans">Raksha Bandhan</span>
+                      <h4 className="text-[11px] font-serif font-bold text-primary-brand leading-tight">Luxe Hamper</h4>
+                      <p className="text-gray-500 text-[9px] font-sans leading-none">Fusion sweets</p>
                     </div>
                   </div>
                 </div>
