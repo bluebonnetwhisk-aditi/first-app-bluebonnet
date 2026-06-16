@@ -9,6 +9,7 @@ export default function LiveCountersPage({ onOpenWizard }: LiveCountersPageProps
     {
       title: "Kids Birthday Party Package",
       subtitle: "A fun, kid-friendly menu made for little celebrations.",
+      image: "src/assets/images/kids_birthday_package.png",
       icon: Cake,
       items: [
         "2 Appetizers",
@@ -19,8 +20,9 @@ export default function LiveCountersPage({ onOpenWizard }: LiveCountersPageProps
       color: "border-[#775a19]/15"
     },
     {
-      title: "Get-Together / Family Gathering 🍽️",
+      title: "Get-Together / Family Gathering",
       subtitle: "Comforting Indian flavors perfect for sharing.",
+      image: "src/assets/images/family_gathering_package.png",
       icon: Users,
       items: [
         "Appetizers (from our catering menu)",
@@ -31,8 +33,9 @@ export default function LiveCountersPage({ onOpenWizard }: LiveCountersPageProps
       color: "border-[#775a19]/15"
     },
     {
-      title: "Anniversaries & Special Occasions 💛",
+      title: "Anniversaries & Special Occasions",
       subtitle: "Elegant menus for meaningful celebrations.",
+      image: "src/assets/images/anniversary_package.png",
       icon: Heart,
       items: [
         "Appetizers",
@@ -44,8 +47,9 @@ export default function LiveCountersPage({ onOpenWizard }: LiveCountersPageProps
       color: "border-[#775a19]/15"
     },
     {
-      title: "Baby Shower & Special Events 🌸",
+      title: "Baby Shower & Special Events",
       subtitle: "Light, festive, and beautifully balanced menus.",
+      image: "src/assets/images/baby_shower_package.png",
       icon: Gift,
       items: [
         "* Appetizers",
@@ -122,53 +126,67 @@ export default function LiveCountersPage({ onOpenWizard }: LiveCountersPageProps
             return (
               <div 
                 key={idx} 
-                className={`border ${pkg.color} rounded-lg bg-white p-8 lg:p-10 flex flex-col justify-between hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 shadow-xs relative overflow-hidden group`}
+                className={`border ${pkg.color} rounded-lg bg-white flex flex-col justify-between hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 shadow-xs relative overflow-hidden group`}
               >
                 {/* Subtle top brand line */}
                 <div className="absolute top-0 inset-x-0 h-1.5 bg-gradient-to-r from-[#775a19]/40 to-[#ffdea5]" />
                 
-                <div className="space-y-6">
-                  {/* Package Header */}
-                  <div className="flex items-start gap-4">
-                    <div className="h-12 w-12 rounded-full bg-[#775a19]/10 text-[#775a19] flex items-center justify-center shrink-0">
-                      <IconComponent className="h-6 w-6" />
-                    </div>
-                    <div>
-                      <h3 className="font-serif text-xl lg:text-2xl font-bold text-[#00346f] leading-snug">
-                        {pkg.title}
-                      </h3>
-                      <p className="text-gray-500 text-xs lg:text-sm font-sans mt-1">
-                        {pkg.subtitle}
-                      </p>
-                    </div>
+                <div>
+                  {/* Package Cover Image */}
+                  <div className="relative h-48 overflow-hidden">
+                    <img 
+                      src={pkg.image} 
+                      alt={pkg.title} 
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-102"
+                      referrerPolicy="no-referrer"
+                    />
+                    <div className="absolute inset-0 bg-black/10 group-hover:bg-black/0 transition-colors" />
                   </div>
 
-                  <div className="h-[1px] w-full bg-gray-150" />
+                  {/* Content Area */}
+                  <div className="p-6 lg:p-8 space-y-6">
+                    {/* Package Header */}
+                    <div className="flex items-start gap-4">
+                      <div className="h-12 w-12 rounded-full bg-[#775a19]/10 text-[#775a19] flex items-center justify-center shrink-0">
+                        <IconComponent className="h-6 w-6" />
+                      </div>
+                      <div>
+                        <h3 className="font-serif text-xl lg:text-2xl font-bold text-[#00346f] leading-snug">
+                          {pkg.title}
+                        </h3>
+                        <p className="text-gray-500 text-xs lg:text-sm font-sans mt-1">
+                          {pkg.subtitle}
+                        </p>
+                      </div>
+                    </div>
 
-                  {/* Package Items */}
-                  <ul className="space-y-3.5 font-sans text-xs lg:text-sm">
-                    {pkg.items.map((item, itemIdx) => {
-                      const isOptional = item.startsWith("*");
-                      const cleanItem = isOptional ? item.slice(1).trim() : item;
-                      return (
-                        <li key={itemIdx} className="flex items-center gap-3">
-                          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#775a19]/15 text-[#775a19] text-[10px] font-bold">
-                            ✓
-                          </span>
-                          <span className={`${isOptional ? "text-gray-500 italic" : "text-gray-700 font-medium"}`}>
-                            {cleanItem}
-                            {isOptional && <span className="text-[10px] bg-brand-rose text-brand-rose-dark px-1.5 py-0.5 rounded ml-2 uppercase font-bold tracking-wider font-mono">Optional</span>}
-                          </span>
-                        </li>
-                      );
-                    })}
-                  </ul>
+                    <div className="h-[1px] w-full bg-gray-150" />
+
+                    {/* Package Items */}
+                    <ul className="space-y-3.5 font-sans text-xs lg:text-sm">
+                      {pkg.items.map((item, itemIdx) => {
+                        const isOptional = item.startsWith("*");
+                        const cleanItem = isOptional ? item.slice(1).trim() : item;
+                        return (
+                          <li key={itemIdx} className="flex items-center gap-3">
+                            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#775a19]/15 text-[#775a19] text-[10px] font-bold">
+                              ✓
+                            </span>
+                            <span className={`${isOptional ? "text-gray-500 italic" : "text-gray-700 font-medium"}`}>
+                              {cleanItem}
+                              {isOptional && <span className="text-[10px] bg-brand-rose text-brand-rose-dark px-1.5 py-0.5 rounded ml-2 uppercase font-bold tracking-wider font-mono">Optional</span>}
+                            </span>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </div>
                 </div>
 
-                <div className="mt-8 pt-6 border-t border-gray-100">
+                <div className="px-6 pb-6 lg:px-8 lg:pb-8">
                   <button
                     onClick={() => onOpenWizard("", pkg.title)}
-                    className="w-full lg:w-auto bg-[#00346f] hover:bg-[#00346f]/95 text-white font-sans text-xs uppercase tracking-widest font-bold px-6 py-3 rounded shadow-sm transition-all cursor-pointer"
+                    className="w-full bg-[#00346f] hover:bg-[#00346f]/95 text-white font-sans text-xs uppercase tracking-widest font-bold py-3.5 rounded shadow-sm transition-all cursor-pointer"
                   >
                     SELECT THIS PACKAGE
                   </button>
