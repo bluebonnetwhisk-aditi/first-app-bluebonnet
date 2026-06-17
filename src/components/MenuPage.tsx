@@ -268,7 +268,9 @@ export default function MenuPage() {
     title: string,
     subtitle: string,
     items: MenuItem[],
-    categoryName: string
+    categoryName: string,
+    sectionImage?: string,
+    sectionImageCaption?: string
   ) => {
     return (
       <section id={id} className="bg-white rounded-lg border border-[#c3c6d2] shadow-sm overflow-hidden scroll-mt-24">
@@ -354,6 +356,24 @@ export default function MenuPage() {
             </tbody>
           </table>
         </div>
+
+        {sectionImage && (
+          <div className="p-6 bg-gray-50 border-t border-[#ededf4]">
+            <div className="relative aspect-video rounded overflow-hidden shadow-sm border border-[#c3c6d2]">
+              <img 
+                src={sectionImage}
+                alt={sectionImageCaption || title}
+                className="object-cover w-full h-full hover:scale-105 transition-transform duration-500"
+                referrerPolicy="no-referrer"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex items-end p-6">
+                <p className="text-white text-xs tracking-wider uppercase font-semibold font-sans drop-shadow-sm flex items-center gap-2">
+                  <Sparkles size={14} className="text-[#fed488]" /> {sectionImageCaption || title}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
       </section>
     );
   };
@@ -431,7 +451,9 @@ export default function MenuPage() {
               'Chatpati Chaat',
               'The authentic street-style taste inspired by the lanes of Dilli 6.',
               CHATPATI_CHAAT,
-              'Chatpati Chaat'
+              'Chatpati Chaat',
+              'src/assets/images/live_chaat_station.png',
+              'Chatpati Chaat Station & Street Treats'
             )}
 
             {/* 2. APPETIZERS */}
@@ -440,7 +462,9 @@ export default function MenuPage() {
               'Appetizers',
               'Authentic finger food bites — bold, beautiful, and unforgettable.',
               APPETIZERS,
-              'Appetizers'
+              'Appetizers',
+              'src/assets/images/appetizer_platter.png',
+              'Gourmet Indian Appetizers & Finger Foods'
             )}
 
             {/* 3. DAAL & SUBZI */}
@@ -449,7 +473,9 @@ export default function MenuPage() {
               'Daal & Subzi',
               'Comforting lentil dishes and dry-sautéed vegetable favorites.',
               DAAL_SUBZI,
-              'Daal & Subzi'
+              'Daal & Subzi',
+              'src/assets/images/catering_buffet.png',
+              'Home-style Daal and Seasonal Subzi'
             )}
 
             {/* 4. PANEER SPECIALTIES */}
@@ -458,7 +484,9 @@ export default function MenuPage() {
               'Paneer Specialties',
               'Rich, creamy curries and wok-tossed paneer recipes.',
               PANEER_SPECIALTIES,
-              'Paneer Specialties'
+              'Paneer Specialties',
+              'src/assets/images/curry_buffet.png',
+              'Rich and Creamy Paneer Delicacies'
             )}
 
             {/* 5. FRESH BREADS */}
@@ -525,7 +553,9 @@ export default function MenuPage() {
               'Rice Selection',
               'Fragrant steamed long grain Basmati rice and spiced vegetable biryanis.',
               RICE,
-              'Rice'
+              'Rice',
+              'src/assets/images/breads_rice_buffet.png',
+              'Fragrant Basmati Rice & Festive Biryanis'
             )}
 
             {/* 7. SIDES & ACCOMPANIMENTS */}
@@ -534,7 +564,9 @@ export default function MenuPage() {
               'Sides & Accompaniments',
               'Cool whipped raitas, crisp green salads, and pickled onions.',
               SIDES_ACCOMPANIMENTS,
-              'Sides & Accompaniments'
+              'Sides & Accompaniments',
+              'src/assets/images/sides_accompaniments.png',
+              'Crisp Accompaniments, Raitas, and Salads'
             )}
 
             {/* 8. BEVERAGES */}
@@ -626,6 +658,22 @@ export default function MenuPage() {
                   * 1 Gallon serves approximately 12–15 guests. Station setup includes elegant dispenser rentals, cups, ice, and themed menu cards.
                 </p>
               </div>
+
+              <div className="p-6 bg-gray-50 border-t border-[#ededf4]">
+                <div className="relative aspect-video rounded overflow-hidden shadow-sm border border-[#c3c6d2]">
+                  <img 
+                    src="src/assets/images/beverages_refreshments.png"
+                    alt="Refreshing House-made Beverages & Mocktails"
+                    className="object-cover w-full h-full hover:scale-105 transition-transform duration-500"
+                    referrerPolicy="no-referrer"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex items-end p-6">
+                    <p className="text-white text-xs tracking-wider uppercase font-semibold font-sans drop-shadow-sm flex items-center gap-2">
+                      <Sparkles size={14} className="text-[#fed488]" /> Refreshing House-made Beverages &amp; Mocktails
+                    </p>
+                  </div>
+                </div>
+              </div>
             </section>
 
             {/* 9. CAKES & DESSERTS */}
@@ -681,6 +729,22 @@ export default function MenuPage() {
                   </tbody>
                 </table>
               </div>
+
+              <div className="p-6 bg-gray-50 border-t border-[#ededf4]">
+                <div className="relative aspect-video rounded overflow-hidden shadow-sm border border-[#c3c6d2]">
+                  <img 
+                    src="src/assets/images/cakes/hero_cakes_desserts_1781194959946.jpg"
+                    alt="Bespoke Custom Celebration Cakes & Individual Desserts"
+                    className="object-cover w-full h-full hover:scale-105 transition-transform duration-500"
+                    referrerPolicy="no-referrer"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex items-end p-6">
+                    <p className="text-white text-xs tracking-wider uppercase font-semibold font-sans drop-shadow-sm flex items-center gap-2">
+                      <Sparkles size={14} className="text-[#fed488]" /> Bespoke Custom Celebration Cakes &amp; Individual Desserts
+                    </p>
+                  </div>
+                </div>
+              </div>
             </section>
 
             {/* 10. DESSERT TRAYS */}
@@ -689,25 +753,10 @@ export default function MenuPage() {
               'Dessert Trays',
               'Classical celebratory sweets prepared fresh with reduction milk and pure saffron strings.',
               DESSERT_TRAYS,
-              'Dessert Trays'
+              'Dessert Trays',
+              dessertsImage,
+              'Traditional Celebration Sweets & Pastries'
             )}
-
-            {/* Image strip between Desserts & Specials */}
-            <div className="bg-white rounded-lg border border-[#c3c6d2] p-6 shadow-sm overflow-hidden">
-              <div className="relative aspect-video rounded overflow-hidden shadow-sm border border-[#c3c6d2]">
-                <img 
-                  src={dessertsImage}
-                  alt="Glossy Gulab Jamun and delicate saffron Rasmalai set on brass trays"
-                  className="object-cover w-full h-full hover:scale-105 transition-transform duration-500"
-                  referrerPolicy="no-referrer"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex items-end p-6">
-                  <p className="text-white text-xs tracking-wider uppercase font-semibold font-sans drop-shadow-sm flex items-center gap-2">
-                    <Sparkles size={14} className="text-[#fed488]" /> Traditional Celebration Sweets &amp; Pastries
-                  </p>
-                </div>
-              </div>
-            </div>
 
             {/* 11. SPECIALS */}
             <section id="specials" className="bg-white rounded-lg border border-[#c3c6d2] shadow-sm overflow-hidden scroll-mt-24">
@@ -761,6 +810,22 @@ export default function MenuPage() {
                     })}
                   </tbody>
                 </table>
+              </div>
+
+              <div className="p-6 bg-gray-50 border-t border-[#ededf4]">
+                <div className="relative aspect-video rounded overflow-hidden shadow-sm border border-[#c3c6d2]">
+                  <img 
+                    src="src/assets/images/festive_thali_specials.png"
+                    alt="Festive Comfort Meals & Weekend Specials"
+                    className="object-cover w-full h-full hover:scale-105 transition-transform duration-500"
+                    referrerPolicy="no-referrer"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex items-end p-6">
+                    <p className="text-white text-xs tracking-wider uppercase font-semibold font-sans drop-shadow-sm flex items-center gap-2">
+                      <Sparkles size={14} className="text-[#fed488]" /> Festive Comfort Meals &amp; Weekend Specials
+                    </p>
+                  </div>
+                </div>
               </div>
             </section>
 
@@ -832,6 +897,22 @@ export default function MenuPage() {
                   <div className="bg-white p-4 rounded border border-gray-200 shadow-2xs">
                     <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">100+ Guests</p>
                     <p className="text-lg font-serif font-extrabold text-[#00346f] mt-0.5">+$150–$250 range</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-6 bg-gray-50 border-t border-[#ededf4]">
+                <div className="relative aspect-video rounded overflow-hidden shadow-sm border border-[#c3c6d2]">
+                  <img 
+                    src="src/assets/images/live_experiences.png"
+                    alt="Interactive Live Stations & Catering Displays"
+                    className="object-cover w-full h-full hover:scale-105 transition-transform duration-500"
+                    referrerPolicy="no-referrer"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex items-end p-6">
+                    <p className="text-white text-xs tracking-wider uppercase font-semibold font-sans drop-shadow-sm flex items-center gap-2">
+                      <Sparkles size={14} className="text-[#fed488]" /> Interactive Live Stations &amp; Catering Displays
+                    </p>
                   </div>
                 </div>
               </div>
