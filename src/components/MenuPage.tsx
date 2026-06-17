@@ -11,27 +11,35 @@ import {
   ShoppingBag
 } from 'lucide-react';
 import { 
-  MAIN_COURSES, 
-  BREADS, 
-  DESSERTS, 
-  SIDES, 
-  DRINKS, 
+  CHATPATI_CHAAT,
+  APPETIZERS,
+  DAAL_SUBZI,
+  PANEER_SPECIALTIES,
+  FRESH_BREADS,
+  RICE,
+  SIDES_ACCOMPANIMENTS,
+  BEVERAGES,
+  CAKES_DESSERTS,
+  DESSERT_TRAYS,
+  SPECIALS,
+  LIVE_COUNTERS,
   PORTION_GUIDES, 
   SERVICE_ADDONS, 
   BRAND_DETAILS 
 } from '../menuData';
-import type { SelectedItem } from '../types';
+import type { SelectedItem, MenuItem } from '../types';
 import PlannerTool from './PlannerTool';
 import EnquiryModal from './EnquiryModal';
 
 import breadsImage from '../assets/images/indian_breads_basket_1781152845941.png';
 import dessertsImage from '../assets/images/indian_desserts_luxury_1781152864858.png';
 
-const formatSize = (size?: '1/3' | '1/2' | 'Full' | 'Single') => {
+const formatSize = (size?: '1/3' | '1/2' | 'Full' | 'Single' | 'Gallon') => {
   if (!size) return '';
   if (size === '1/3') return 'Third Tray';
   if (size === '1/2') return 'Half Tray';
   if (size === 'Full') return 'Full Tray';
+  if (size === 'Gallon') return 'Gallon';
   return size;
 };
 
@@ -39,21 +47,28 @@ export default function MenuPage() {
   const [selectedItems, setSelectedItems] = useState<SelectedItem[]>([]);
   const [isEnquiryOpen, setIsEnquiryOpen] = useState<boolean>(false);
   const [appliedAddons, setAppliedAddons] = useState<string[]>([]);
-  const [activeSection, setActiveSection] = useState<string>('main-course');
+  const [activeSection, setActiveSection] = useState<string>('chaat');
 
   const sections = [
-    { id: 'main-course', label: 'Main Course' },
-    { id: 'breads', label: 'Breads' },
-    { id: 'desserts', label: 'Desserts' },
-    { id: 'sides', label: 'Sides' },
-    { id: 'drinks', label: 'Drinks' },
-    { id: 'portions', label: 'Portion Guide' }
+    { id: 'chaat', label: 'Chatpati Chaat' },
+    { id: 'appetizers', label: 'Appetizers' },
+    { id: 'daal-subzi', label: 'Daal & Subzi' },
+    { id: 'paneer-specialties', label: 'Paneer Specialties' },
+    { id: 'breads', label: 'Fresh Breads' },
+    { id: 'rice', label: 'Rice' },
+    { id: 'sides', label: 'Sides & Accompaniments' },
+    { id: 'beverages', label: 'Beverages' },
+    { id: 'cakes-desserts', label: 'Cakes & Desserts' },
+    { id: 'dessert-trays', label: 'Dessert Trays' },
+    { id: 'specials', label: 'Specials' },
+    { id: 'live-counters', label: 'Live Counters' },
+    { id: 'portions', label: 'Portion & Service Guide' }
   ];
 
   // Monitor scroll height to highlight Active Section
   useEffect(() => {
     const handleScroll = () => {
-      const scrollPosition = window.scrollY + 200;
+      const scrollPosition = window.scrollY + 220;
       for (const section of sections) {
         const el = document.getElementById(section.id);
         if (el) {
@@ -81,29 +96,29 @@ export default function MenuPage() {
 
   const handleApplyRecommended = (selections: Array<{ name: string; size: 'Third Tray' | 'Half Tray' | 'Full Tray'; qty: number }>) => {
     let placeholderDishName = 'Matar Paneer';
-    let placeholderId = 'mc_matar_paneer';
+    let placeholderId = 'pn_matar_paneer';
     let priceMultiplier = 1;
-    let baseRefCategory: 'Main Course' | 'Desserts' = 'Main Course';
+    let baseRefCategory = 'Paneer Specialties';
 
     const newSelections = [...selectedItems];
 
     selections.forEach(sel => {
       if (sel.name === 'Desserts') {
-        placeholderDishName = 'Rasmalai';
-        placeholderId = 'ds_rasmalai';
-        baseRefCategory = 'Desserts';
-        const found = DESSERTS.find(d => d.id === placeholderId);
-        priceMultiplier = found 
-          ? (sel.size === 'Third Tray' ? found.prices.third : sel.size === 'Half Tray' ? found.prices.half : found.prices.full) 
-          : 30;
-      } else {
-        placeholderDishName = 'Matar Paneer';
-        placeholderId = 'mc_matar_paneer';
-        baseRefCategory = 'Main Course';
-        const found = MAIN_COURSES.find(m => m.id === placeholderId);
+        placeholderDishName = 'Rasmalai (Tray)';
+        placeholderId = 'dt_rasmalai';
+        baseRefCategory = 'Dessert Trays';
+        const found = DESSERT_TRAYS.find(d => d.id === placeholderId);
         priceMultiplier = found 
           ? (sel.size === 'Third Tray' ? found.prices.third! : sel.size === 'Half Tray' ? found.prices.half! : found.prices.full!) 
-          : 65;
+          : 60;
+      } else {
+        placeholderDishName = 'Matar Paneer';
+        placeholderId = 'pn_matar_paneer';
+        baseRefCategory = 'Paneer Specialties';
+        const found = PANEER_SPECIALTIES.find(m => m.id === placeholderId);
+        priceMultiplier = found 
+          ? (sel.size === 'Third Tray' ? found.prices.third! : sel.size === 'Half Tray' ? found.prices.half! : found.prices.full!) 
+          : 55;
       }
 
       const existingIndex = newSelections.findIndex(
@@ -136,9 +151,9 @@ export default function MenuPage() {
   const toggleSelection = (
     id: string, 
     name: string, 
-    category: 'Main Course' | 'Breads' | 'Desserts' | 'Sides' | 'Drinks', 
+    category: string, 
     price: number | undefined, 
-    size?: '1/3' | '1/2' | 'Full' | 'Single'
+    size?: '1/3' | '1/2' | 'Full' | 'Single' | 'Gallon'
   ) => {
     if (price === undefined) return;
 
@@ -248,6 +263,101 @@ export default function MenuPage() {
     document.body.removeChild(link);
   };
 
+  const renderTrayCategoryTable = (
+    id: string,
+    title: string,
+    subtitle: string,
+    items: MenuItem[],
+    categoryName: string
+  ) => {
+    return (
+      <section id={id} className="bg-white rounded-lg border border-[#c3c6d2] shadow-sm overflow-hidden scroll-mt-24">
+        <div className="bg-[#fcf8f0] px-6 py-5 border-b border-[#ededf4] flex flex-col lg:flex-row lg:items-center justify-between gap-2">
+          <div>
+            <h2 className="font-serif font-bold text-2xl text-[#00346f]">{title}</h2>
+            <p className="text-xs text-gray-500 font-sans mt-0.5">{subtitle}</p>
+          </div>
+          <div className="text-[10px] font-semibold text-[#775a19] tracking-wider uppercase bg-[#775a19]/10 px-3 py-1 rounded-full font-sans max-w-fit">
+            Tray Portion Options Available
+          </div>
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="border-b border-[#ededf4] bg-[#f9f9ff]">
+                <th className="py-3 px-6 text-[10px] font-bold text-gray-400 uppercase tracking-widest font-sans w-1/3">Dish Name</th>
+                <th className="py-3 px-6 text-[10px] font-bold text-gray-400 uppercase tracking-widest font-sans w-2/5">Description</th>
+                <th className="py-3 px-6 text-center text-[10px] font-bold text-gray-400 uppercase tracking-widest font-sans w-1/4">1/3 Tray / Half Tray / Full Tray</th>
+              </tr>
+            </thead>
+            <tbody>
+              {items.map((item) => (
+                <tr key={item.id} className="border-b border-[#ededf4]/70 hover:bg-[#f9f9ff]/50 transition-colors">
+                  <td className="py-4 px-6">
+                    <p className="font-serif font-semibold text-[15px] text-[#00346f]">{item.name}</p>
+                    <div className="flex flex-wrap gap-1 mt-1.5">
+                      {item.tag !== 'NONE' && (
+                        <span className={`inline-block text-[9px] font-bold tracking-widest font-sans px-2 py-0.5 rounded-sm ${
+                          item.tag === 'VEGETARIAN' 
+                            ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' 
+                            : 'bg-amber-50 text-amber-800 border border-amber-200'
+                        }`}>
+                          {item.tag}
+                        </span>
+                      )}
+                      {item.allergens && item.allergens.length > 0 && item.allergens.map(allergen => (
+                        <span key={allergen} className="inline-block text-[9px] font-bold tracking-widest font-sans bg-amber-50/70 text-amber-800 border border-amber-100 px-2 py-0.5 rounded-sm">
+                          CONTAINS {allergen.toUpperCase()}
+                        </span>
+                      ))}
+                    </div>
+                  </td>
+                  <td className="py-4 px-6 text-xs text-gray-600 font-sans leading-relaxed">
+                    {item.description}
+                  </td>
+                  <td className="py-4 px-6 text-center">
+                    <div className="flex items-center justify-center gap-1.5">
+                      {item.prices.third !== undefined && (
+                        <button
+                          type="button"
+                          onClick={() => toggleSelection(item.id, `${item.name} (Third Tray)`, categoryName, item.prices.third, '1/3')}
+                          className="px-2.5 py-1.5 bg-white hover:bg-[#00346f] hover:text-white text-[#00346f] border border-[#c3c6d2] rounded text-xs font-semibold cursor-pointer transition-all"
+                        >
+                          ${item.prices.third}
+                        </button>
+                      )}
+                      {item.prices.third !== undefined && item.prices.half !== undefined && <span className="text-[10px] text-gray-300">/</span>}
+                      {item.prices.half !== undefined && (
+                        <button
+                          type="button"
+                          onClick={() => toggleSelection(item.id, `${item.name} (Half Tray)`, categoryName, item.prices.half, '1/2')}
+                          className="px-2.5 py-1.5 bg-white hover:bg-[#00346f] hover:text-white text-[#00346f] border border-[#c3c6d2] rounded text-xs font-semibold cursor-pointer transition-all"
+                        >
+                          ${item.prices.half}
+                        </button>
+                      )}
+                      {item.prices.half !== undefined && item.prices.full !== undefined && <span className="text-[10px] text-gray-300">/</span>}
+                      {item.prices.full !== undefined && (
+                        <button
+                          type="button"
+                          onClick={() => toggleSelection(item.id, `${item.name} (Full Tray)`, categoryName, item.prices.full, 'Full')}
+                          className="px-2.5 py-1.5 bg-[#fed488]/40 hover:bg-[#775a19] hover:text-white text-[#775a19] border border-[#fed488] rounded text-xs font-bold cursor-pointer transition-all"
+                        >
+                          ${item.prices.full}
+                        </button>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
+    );
+  };
+
   return (
     <div className="bg-[#f9f9ff] min-h-screen animate-fade-in font-sans">
       
@@ -257,8 +367,8 @@ export default function MenuPage() {
           <h1 className="font-serif font-bold text-4xl lg:text-5xl text-[#00346f] tracking-tight leading-none">
             Digital Menu &amp; Price Guide
           </h1>
-          <p className="text-sm lg:text-base text-[#434751] max-w-2xl mx-auto leading-relaxed">
-            Explore our meticulously curated selection of Indian-inspired culinary masterpieces, designed for the modern connoisseur. Click on dishes and prices to estimate sizes and prepare a beautiful printable proposal.
+          <p className="text-xs lg:text-base text-[#434751] max-w-2xl mx-auto leading-relaxed">
+            Authentic Indian Catering &amp; Custom Desserts across Dallas, Frisco, Little Elm, Prosper, and McKinney. Click on dishes and prices to estimate sizes and prepare a beautiful proposal quote.
           </p>
           <div className="h-[2px] w-24 bg-[#775a19] mx-auto mt-6"></div>
         </div>
@@ -276,21 +386,21 @@ export default function MenuPage() {
               <h3 className="text-xs uppercase font-bold text-[#434751] tracking-widest mb-4 font-sans border-b border-[#ededf4] pb-2">
                 Quick Navigation
               </h3>
-              <nav className="space-y-1">
+              <nav className="space-y-1 max-h-[380px] overflow-y-auto pr-1">
                 {sections.map((section) => {
                   const isActive = activeSection === section.id;
                   return (
                     <button
                       key={section.id}
                       onClick={() => scrollToSection(section.id)}
-                      className={`w-full flex items-center justify-between py-2.5 px-3 rounded text-[13px] font-sans font-medium text-left transition-all cursor-pointer ${
+                      className={`w-full flex items-center justify-between py-2 px-3 rounded text-[12px] font-sans font-medium text-left transition-all cursor-pointer ${
                         isActive
                           ? 'bg-[#fed488]/30 font-semibold text-[#775a19] border-l-4 border-[#775a19]'
                           : 'text-[#434751] hover:bg-[#f3f3f9] hover:text-[#00346f]'
                       }`}
                     >
                       <span>{section.label}</span>
-                      <ChevronRight size={14} className={isActive ? 'text-[#775a19]' : 'text-gray-300'} />
+                      <ChevronRight size={12} className={isActive ? 'text-[#775a19]' : 'text-gray-300'} />
                     </button>
                   );
                 })}
@@ -306,7 +416,7 @@ export default function MenuPage() {
                 <Sparkles size={12} className="text-[#775a19]" /> Interactive Price Guide
               </p>
               <p className="leading-relaxed">
-                You can build a bespoke menu. Clicking pricing buttons adds corresponding portions to your live estimate. Try selecting Third, Half, or Full portions below.
+                Build a bespoke menu quote. Click pricing buttons to add portions directly to your live estimate summary. Try selecting Third, Half, or Full portions.
               </p>
             </div>
 
@@ -315,91 +425,47 @@ export default function MenuPage() {
           {/* Right Column: Menu Lists */}
           <div className="lg:col-span-9 space-y-12">
             
-            {/* --- Main Course Section --- */}
-            <section id="main-course" className="bg-white rounded-lg border border-[#c3c6d2] shadow-sm overflow-hidden scroll-mt-24">
-              <div className="bg-[#fcf8f0] px-6 py-5 border-b border-[#ededf4] flex flex-col lg:flex-row lg:items-center justify-between gap-2">
-                <div>
-                  <h2 className="font-serif font-bold text-2xl text-[#00346f]">Main Course</h2>
-                  <p className="text-xs text-gray-500 font-sans mt-0.5">Luxurious curries, slow-cooked dal, and royal aromatic rice selection.</p>
-                </div>
-                <div className="text-[10px] font-semibold text-[#775a19] tracking-wider uppercase bg-[#775a19]/10 px-3 py-1 rounded-full font-sans max-w-fit">
-                  Traditional Clay Pot &amp; Saffron Cooked
-                </div>
-              </div>
+            {/* 1. CHATPATI CHAAT */}
+            {renderTrayCategoryTable(
+              'chaat',
+              'Chatpati Chaat',
+              'The authentic street-style taste inspired by the lanes of Dilli 6.',
+              CHATPATI_CHAAT,
+              'Chatpati Chaat'
+            )}
 
-              <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse">
-                  <thead>
-                    <tr className="border-b border-[#ededf4] bg-[#f9f9ff]">
-                      <th className="py-3 px-6 text-[10px] font-bold text-gray-400 uppercase tracking-widest font-sans w-1/3">Dish Name</th>
-                      <th className="py-3 px-6 text-[10px] font-bold text-gray-400 uppercase tracking-widest font-sans w-2/5">Description</th>
-                      <th className="py-3 px-6 text-center text-[10px] font-bold text-gray-400 uppercase tracking-widest font-sans w-1/4">Third / Half / Full Tray</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {MAIN_COURSES.map((item) => (
-                      <tr key={item.id} className="border-b border-[#ededf4]/70 hover:bg-[#f9f9ff]/50 transition-colors">
-                        <td className="py-4 px-6">
-                          <p className="font-serif font-semibold text-[15px] text-[#00346f]">{item.name}</p>
-                          <div className="flex flex-wrap gap-1 mt-1.5">
-                            {item.tag !== 'NONE' && (
-                              <span className={`inline-block text-[9px] font-bold tracking-widest font-sans px-2 py-0.5 rounded-sm ${
-                                item.tag === 'VEGETARIAN' 
-                                  ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' 
-                                  : 'bg-red-50 text-amber-800 border border-amber-200'
-                              }`}>
-                                {item.tag}
-                              </span>
-                            )}
-                            {item.allergens && item.allergens.length > 0 && item.allergens.map(allergen => (
-                              <span key={allergen} className="inline-block text-[9px] font-bold tracking-widest font-sans bg-amber-50/70 text-amber-800 border border-amber-100 px-2 py-0.5 rounded-sm">
-                                CONTAINS {allergen.toUpperCase()}
-                              </span>
-                            ))}
-                          </div>
-                        </td>
-                        <td className="py-4 px-6 text-xs text-gray-600 font-sans leading-relaxed">
-                          {item.description}
-                        </td>
-                        <td className="py-4 px-6 text-center">
-                          <div className="flex items-center justify-center gap-1.5">
-                            <button
-                              type="button"
-                              onClick={() => toggleSelection(item.id, `${item.name} (Third Tray)`, 'Main Course', item.prices.third, '1/3')}
-                              className="px-2 py-1 bg-white hover:bg-[#00346f] hover:text-white text-[#00346f] border border-[#c3c6d2] rounded text-xs font-semibold cursor-pointer transition-all"
-                            >
-                              ${item.prices.third}
-                            </button>
-                            <span className="text-[10px] text-gray-300">/</span>
-                            <button
-                              type="button"
-                              onClick={() => toggleSelection(item.id, `${item.name} (Half Tray)`, 'Main Course', item.prices.half, '1/2')}
-                              className="px-2 py-1 bg-white hover:bg-[#00346f] hover:text-white text-[#00346f] border border-[#c3c6d2] rounded text-xs font-semibold cursor-pointer transition-all"
-                            >
-                              ${item.prices.half}
-                            </button>
-                            <span className="text-[10px] text-gray-300">/</span>
-                            <button
-                              type="button"
-                              onClick={() => toggleSelection(item.id, `${item.name} (Full Tray)`, 'Main Course', item.prices.full, 'Full')}
-                              className="px-2 py-1 bg-[#fed488]/40 hover:bg-[#775a19] hover:text-white text-[#775a19] border border-[#fed488] rounded text-xs font-bold cursor-pointer transition-all"
-                            >
-                              ${item.prices.full}
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </section>
+            {/* 2. APPETIZERS */}
+            {renderTrayCategoryTable(
+              'appetizers',
+              'Appetizers',
+              'Authentic finger food bites — bold, beautiful, and unforgettable.',
+              APPETIZERS,
+              'Appetizers'
+            )}
 
-            {/* --- Breads Section --- */}
+            {/* 3. DAAL & SUBZI */}
+            {renderTrayCategoryTable(
+              'daal-subzi',
+              'Daal & Subzi',
+              'Comforting lentil dishes and dry-sautéed vegetable favorites.',
+              DAAL_SUBZI,
+              'Daal & Subzi'
+            )}
+
+            {/* 4. PANEER SPECIALTIES */}
+            {renderTrayCategoryTable(
+              'paneer-specialties',
+              'Paneer Specialties',
+              'Rich, creamy curries and wok-tossed paneer recipes.',
+              PANEER_SPECIALTIES,
+              'Paneer Specialties'
+            )}
+
+            {/* 5. FRESH BREADS */}
             <section id="breads" className="bg-white rounded-lg border border-[#c3c6d2] shadow-sm overflow-hidden scroll-mt-24">
               <div className="bg-[#fcf8f0] px-6 py-5 border-b border-[#ededf4]">
-                <h2 className="font-serif text-2xl text-[#00346f] font-bold">Breads</h2>
-                <p className="text-xs text-gray-500 font-sans mt-0.5">Golden flatbreads cooked on a pristine griddle or baked to order.</p>
+                <h2 className="font-serif text-2xl text-[#00346f] font-bold">Fresh Breads</h2>
+                <p className="text-xs text-gray-500 font-sans mt-0.5">Golden tandoori flatbreads and griddle rotis cooked to order.</p>
               </div>
 
               <div className="overflow-x-auto">
@@ -412,7 +478,7 @@ export default function MenuPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {BREADS.map((bread) => (
+                    {FRESH_BREADS.map((bread) => (
                       <tr key={bread.id} className="border-b border-[#ededf4]/70 hover:bg-[#f9f9ff]/50 transition-colors">
                         <td className="py-4 px-6">
                           <p className="font-serif font-semibold text-[15px] text-[#00346f]">{bread.name}</p>
@@ -423,11 +489,11 @@ export default function MenuPage() {
                         <td className="py-4 px-6 text-center">
                           <button
                             type="button"
-                            onClick={() => toggleSelection(bread.id, bread.name, 'Breads', bread.price, 'Single')}
+                            onClick={() => toggleSelection(bread.id, bread.name, 'Fresh Breads', bread.prices.single, 'Single')}
                             className="px-3 py-1.5 bg-white hover:bg-[#00346f] hover:text-white text-[#00346f] border border-[#c3c6d2] rounded text-xs font-semibold cursor-pointer transition-all inline-flex items-center gap-1"
                           >
                             <Plus size={10} />
-                            ${bread.price.toFixed(2)}
+                            ${bread.prices.single?.toFixed(2)} each
                           </button>
                         </td>
                       </tr>
@@ -446,63 +512,89 @@ export default function MenuPage() {
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex items-end p-6">
                     <p className="text-white text-xs tracking-wider uppercase font-semibold font-sans drop-shadow-sm flex items-center gap-2">
-                      <Sparkles size={14} className="text-[#fed488]" /> Signature Tandoor and Griddle Flourishes
+                      <Sparkles size={14} className="text-[#fed488]" /> Signature Tandoor and Griddle Flatbreads
                     </p>
                   </div>
                 </div>
               </div>
             </section>
 
-            {/* --- Desserts Section --- */}
-            <section id="desserts" className="bg-white rounded-lg border border-[#c3c6d2] shadow-sm overflow-hidden scroll-mt-24">
-              <div className="bg-[#fcf8f0] px-6 py-5 border-b border-[#ededf4]">
-                <h2 className="font-serif font-bold text-2xl text-[#00346f]">Desserts</h2>
-                <p className="text-xs text-gray-500 font-sans mt-0.5">Saffron-soaked syrups, reduction custards, and celebratory cakes.</p>
+            {/* 6. RICE */}
+            {renderTrayCategoryTable(
+              'rice',
+              'Rice Selection',
+              'Fragrant steamed long grain Basmati rice and spiced vegetable biryanis.',
+              RICE,
+              'Rice'
+            )}
+
+            {/* 7. SIDES & ACCOMPANIMENTS */}
+            {renderTrayCategoryTable(
+              'sides',
+              'Sides & Accompaniments',
+              'Cool whipped raitas, crisp green salads, and pickled onions.',
+              SIDES_ACCOMPANIMENTS,
+              'Sides & Accompaniments'
+            )}
+
+            {/* 8. BEVERAGES */}
+            <section id="beverages" className="bg-white rounded-lg border border-[#c3c6d2] shadow-sm overflow-hidden scroll-mt-24">
+              <div className="bg-[#fcf8f0] px-6 py-5 border-b border-[#ededf4] flex justify-between items-center">
+                <div>
+                  <h2 className="font-serif font-bold text-2xl text-[#00346f]">Beverages</h2>
+                  <p className="text-xs text-gray-500 font-sans mt-0.5">Spiced lemonades, cooling buttermilk, and traditional mango lassis.</p>
+                </div>
+                <span className="text-[10px] uppercase tracking-wider bg-[#00346f]/5 px-2.5 py-1 rounded font-bold font-sans">
+                  Gallons or per-guest options
+                </span>
               </div>
 
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse">
                   <thead>
                     <tr className="border-b border-[#ededf4] bg-[#f9f9ff]">
-                      <th className="py-3 px-6 text-[10px] font-bold text-gray-400 uppercase tracking-widest font-sans w-1/3">Dessert</th>
+                      <th className="py-3 px-6 text-[10px] font-bold text-gray-400 uppercase tracking-widest font-sans w-1/3">Beverage Name</th>
                       <th className="py-3 px-6 text-[10px] font-bold text-gray-400 uppercase tracking-widest font-sans w-2/5">Description</th>
-                      <th className="py-3 px-6 text-center text-[10px] font-bold text-gray-400 uppercase tracking-widest font-sans w-1/4">Third / Half / Full Tray</th>
+                      <th className="py-3 px-6 text-center text-[10px] font-bold text-gray-400 uppercase tracking-widest font-sans w-1/4">Per Guest / Per Gallon</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {DESSERTS.map((item) => (
-                      <tr key={item.id} className="border-b border-[#ededf4]/70 hover:bg-[#f9f9ff]/50 transition-colors">
+                    {BEVERAGES.map((drink) => (
+                      <tr key={drink.id} className="border-b border-[#ededf4]/70 hover:bg-[#f9f9ff]/50 transition-colors">
                         <td className="py-4 px-6">
-                          <p className="font-serif font-semibold text-[15px] text-[#00346f]">{item.name}</p>
+                          <p className="font-serif font-semibold text-[15px] text-[#00346f]">{drink.name}</p>
+                          <div className="flex flex-wrap gap-1 mt-1.5">
+                            {drink.allergens && drink.allergens.length > 0 && drink.allergens.map(allergen => (
+                              <span key={allergen} className="inline-block text-[9px] font-bold tracking-widest font-sans bg-amber-50/70 text-amber-800 border border-amber-100 px-2 py-0.5 rounded-sm">
+                                CONTAINS {allergen.toUpperCase()}
+                              </span>
+                            ))}
+                          </div>
                         </td>
                         <td className="py-4 px-6 text-xs text-gray-600 font-sans leading-relaxed">
-                          {item.description}
+                          {drink.description}
                         </td>
                         <td className="py-4 px-6 text-center">
-                          <div className="flex items-center justify-center gap-1.5">
-                            <button
-                              type="button"
-                              onClick={() => toggleSelection(item.id, `${item.name} (Third Tray)`, 'Desserts', item.prices.third, '1/3')}
-                              className="px-2 py-1 bg-white hover:bg-[#00346f] hover:text-white text-[#00346f] border border-[#c3c6d2] rounded text-xs font-semibold cursor-pointer transition-all"
-                            >
-                              ${item.prices.third}
-                            </button>
-                            <span className="text-gray-300 text-xs">/</span>
-                            <button
-                              type="button"
-                              onClick={() => toggleSelection(item.id, `${item.name} (Half Tray)`, 'Desserts', item.prices.half, '1/2')}
-                              className="px-2 py-1 bg-white hover:bg-[#00346f] hover:text-white text-[#00346f] border border-[#c3c6d2] rounded text-xs font-semibold cursor-pointer transition-all"
-                            >
-                              ${item.prices.half}
-                            </button>
-                            <span className="text-gray-300 text-xs">/</span>
-                            <button
-                              type="button"
-                              onClick={() => toggleSelection(item.id, `${item.name} (Full Tray)`, 'Desserts', item.prices.full, 'Full')}
-                              className="px-2 py-1 bg-[#fed488]/40 hover:bg-[#775a19] hover:text-white text-[#775a19] border border-[#fed488] rounded text-xs font-bold cursor-pointer transition-all"
-                            >
-                              ${item.prices.full}
-                            </button>
+                          <div className="flex flex-col lg:flex-row items-center justify-center gap-1.5">
+                            {drink.prices.single !== undefined && (
+                              <button
+                                type="button"
+                                onClick={() => toggleSelection(drink.id, `${drink.name} (Per Guest)`, 'Beverages', drink.prices.single, 'Single')}
+                                className="w-full lg:w-auto px-2.5 py-1.5 bg-white hover:bg-[#00346f] hover:text-white text-[#00346f] border border-[#c3c6d2] rounded text-xs font-semibold cursor-pointer transition-all"
+                              >
+                                ${drink.prices.single.toFixed(2)}/Guest
+                              </button>
+                            )}
+                            {drink.prices.single !== undefined && drink.prices.gallon !== undefined && <span className="text-[10px] text-gray-300 hidden lg:inline">/</span>}
+                            {drink.prices.gallon !== undefined && (
+                              <button
+                                type="button"
+                                onClick={() => toggleSelection(drink.id, `${drink.name} (Per Gallon)`, 'Beverages', drink.prices.gallon, 'Gallon')}
+                                className="w-full lg:w-auto px-2.5 py-1.5 bg-[#fed488]/40 hover:bg-[#775a19] hover:text-white text-[#775a19] border border-[#fed488] rounded text-xs font-bold cursor-pointer transition-all"
+                              >
+                                ${drink.prices.gallon.toFixed(2)}/Gal
+                              </button>
+                            )}
                           </div>
                         </td>
                       </tr>
@@ -511,28 +603,38 @@ export default function MenuPage() {
                 </table>
               </div>
 
-              <div className="p-6 bg-gray-50 border-t border-[#ededf4]">
-                <div className="relative aspect-video rounded overflow-hidden shadow-sm border border-[#c3c6d2]">
-                  <img 
-                    src={dessertsImage}
-                    alt="Glossy Gulab Jamun and delicate saffron Rasmalai set on bronze tray"
-                    className="object-cover w-full h-full hover:scale-105 transition-transform duration-500"
-                    referrerPolicy="no-referrer"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex items-end p-6">
-                    <p className="text-white text-xs tracking-wider uppercase font-semibold font-sans drop-shadow-sm flex items-center gap-2">
-                      <Sparkles size={14} className="text-[#fed488]" /> Saffron Plated Luxuries
-                    </p>
+              {/* Setup Stations Pricing Info */}
+              <div className="p-6 bg-[#fcf8f0]/40 border-t border-[#ededf4] space-y-3">
+                <p className="text-xs uppercase font-bold tracking-widest text-[#775a19] font-sans">
+                  Beverage Station Setup Options
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="bg-white p-4 rounded border border-[#c3c6d2]/60 shadow-2xs">
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">30–50 Guests</p>
+                    <p className="text-lg font-serif font-extrabold text-[#00346f] mt-0.5">Starting at $125</p>
+                  </div>
+                  <div className="bg-white p-4 rounded border border-[#c3c6d2]/60 shadow-2xs">
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">50–100 Guests</p>
+                    <p className="text-lg font-serif font-extrabold text-[#00346f] mt-0.5">Starting at $225</p>
+                  </div>
+                  <div className="bg-white p-4 rounded border border-[#c3c6d2]/60 shadow-2xs">
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">100+ Guests</p>
+                    <p className="text-lg font-serif font-extrabold text-[#00346f] mt-0.5">Custom Quote</p>
                   </div>
                 </div>
+                <p className="text-[11px] text-gray-500 italic">
+                  * 1 Gallon serves approximately 12–15 guests. Station setup includes elegant dispenser rentals, cups, ice, and themed menu cards.
+                </p>
               </div>
             </section>
 
-            {/* --- Sides & Add-ons Section --- */}
-            <section id="sides" className="bg-white rounded-lg border border-[#c3c6d2] shadow-sm overflow-hidden scroll-mt-24">
-              <div className="bg-[#fcf8f0] px-6 py-5 border-b border-[#ededf4]">
-                <h2 className="font-serif font-bold text-2xl text-[#00346f]">Sides &amp; Add-ons</h2>
-                <p className="text-xs text-gray-500 font-sans mt-0.5">Crispy papads, special chutneys, and fresh organic greens.</p>
+            {/* 9. CAKES & DESSERTS */}
+            <section id="cakes-desserts" className="bg-white rounded-lg border border-[#c3c6d2] shadow-sm overflow-hidden scroll-mt-24">
+              <div className="bg-[#fcf8f0] px-6 py-5 border-b border-[#ededf4] flex justify-between items-center">
+                <div>
+                  <h2 className="font-serif font-bold text-2xl text-[#00346f]">Cakes &amp; Desserts</h2>
+                  <p className="text-xs text-gray-500 font-sans mt-0.5">Milestone custom celebration cakes and individual desserts at special rates.</p>
+                </div>
               </div>
 
               <div className="overflow-x-auto">
@@ -541,144 +643,201 @@ export default function MenuPage() {
                     <tr className="border-b border-[#ededf4] bg-[#f9f9ff]">
                       <th className="py-3 px-6 text-[10px] font-bold text-gray-400 uppercase tracking-widest font-sans w-1/3">Item</th>
                       <th className="py-3 px-6 text-[10px] font-bold text-gray-400 uppercase tracking-widest font-sans w-2/5">Description</th>
-                      <th className="py-3 px-6 text-center text-[10px] font-bold text-gray-400 uppercase tracking-widest font-sans w-1/4">Price</th>
+                      <th className="py-3 px-6 text-center text-[10px] font-bold text-gray-400 uppercase tracking-widest font-sans w-1/4">Pricing Rate</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {SIDES.map((side) => (
-                      <tr key={side.id} className="border-b border-[#ededf4]/70 hover:bg-[#f9f9ff]/50 transition-colors">
-                        <td className="py-4 px-6">
-                          <p className="font-serif font-semibold text-[15px] text-[#00346f]">{side.name}</p>
-                        </td>
-                        <td className="py-4 px-6 text-xs text-gray-600 font-sans">
-                          {side.description}
-                        </td>
-                        <td className="py-4 px-6 text-center">
-                          {side.prices.third ? (
-                            <div className="flex items-center justify-center gap-1.5">
-                              <button
-                                type="button"
-                                onClick={() => toggleSelection(side.id, `${side.name} (Third Tray)`, 'Sides', side.prices.third, '1/3')}
-                                className="px-2 py-0.5 bg-white hover:bg-[#00346f] hover:text-white text-[#00346f] border border-[#c3c6d2] rounded text-xs font-semibold cursor-pointer"
-                              >
-                                ${side.prices.third}
-                              </button>
-                              <span className="text-gray-300">/</span>
-                              <button
-                                type="button"
-                                onClick={() => toggleSelection(side.id, `${side.name} (Half Tray)`, 'Sides', side.prices.half, '1/2')}
-                                className="px-2 py-0.5 bg-white hover:bg-[#00346f] hover:text-white text-[#00346f] border border-[#c3c6d2] rounded text-xs font-semibold cursor-pointer"
-                              >
-                                ${side.prices.half}
-                              </button>
-                              <span className="text-gray-300">/</span>
-                              <button
-                                type="button"
-                                onClick={() => toggleSelection(side.id, `${side.name} (Full Tray)`, 'Sides', side.prices.full, 'Full')}
-                                className="px-2 py-0.5 bg-white hover:bg-[#00346f] hover:text-white text-[#00346f] border border-[#c3c6d2] rounded text-xs font-semibold cursor-pointer"
-                              >
-                                ${side.prices.full}
-                              </button>
-                            </div>
-                          ) : (
+                    {CAKES_DESSERTS.map((item) => {
+                      const priceVal = item.prices.single ?? item.prices.minPrice ?? 0;
+                      const hasRateValue = priceVal > 0;
+                      const buttonLabel = item.prices.customText ?? `$${priceVal.toFixed(2)} ${item.prices.unitText ? `per ${item.prices.unitText}` : ''}`;
+                      return (
+                        <tr key={item.id} className="border-b border-[#ededf4]/70 hover:bg-[#f9f9ff]/50 transition-colors">
+                          <td className="py-4 px-6">
+                            <p className="font-serif font-semibold text-[15px] text-[#00346f]">{item.name}</p>
+                          </td>
+                          <td className="py-4 px-6 text-xs text-gray-600 font-sans">
+                            {item.description}
+                          </td>
+                          <td className="py-4 px-6 text-center">
                             <button
                               type="button"
-                              onClick={() => toggleSelection(side.id, side.name, 'Sides', side.prices.single, 'Single')}
-                              className="px-3 py-1 bg-white hover:bg-[#00346f] hover:text-white text-[#00346f] border border-[#c3c6d2] rounded text-xs font-semibold"
+                              onClick={() => {
+                                if (hasRateValue) {
+                                  toggleSelection(item.id, item.name, 'Cakes & Desserts', priceVal, 'Single');
+                                } else {
+                                  setIsEnquiryOpen(true);
+                                }
+                              }}
+                              className="px-3 py-1.5 bg-white hover:bg-[#00346f] hover:text-white text-[#00346f] border border-[#c3c6d2] rounded text-xs font-semibold cursor-pointer transition-all inline-flex items-center gap-1.5"
                             >
-                              ${side.prices.single?.toFixed(2)} / {side.prices.unitText}
+                              <Plus size={10} />
+                              {buttonLabel}
                             </button>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
-              <div className="bg-[#f9f9ff] px-6 py-3 text-xs text-gray-500 italic font-sans">
-                Note: Available on request.
-              </div>
             </section>
 
-            {/* --- Drinks Section --- */}
-            <section id="drinks" className="bg-white rounded-lg border border-[#c3c6d2] shadow-sm overflow-hidden scroll-mt-24">
+            {/* 10. DESSERT TRAYS */}
+            {renderTrayCategoryTable(
+              'dessert-trays',
+              'Dessert Trays',
+              'Classical celebratory sweets prepared fresh with reduction milk and pure saffron strings.',
+              DESSERT_TRAYS,
+              'Dessert Trays'
+            )}
+
+            {/* Image strip between Desserts & Specials */}
+            <div className="bg-white rounded-lg border border-[#c3c6d2] p-6 shadow-sm overflow-hidden">
+              <div className="relative aspect-video rounded overflow-hidden shadow-sm border border-[#c3c6d2]">
+                <img 
+                  src={dessertsImage}
+                  alt="Glossy Gulab Jamun and delicate saffron Rasmalai set on brass trays"
+                  className="object-cover w-full h-full hover:scale-105 transition-transform duration-500"
+                  referrerPolicy="no-referrer"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex items-end p-6">
+                  <p className="text-white text-xs tracking-wider uppercase font-semibold font-sans drop-shadow-sm flex items-center gap-2">
+                    <Sparkles size={14} className="text-[#fed488]" /> Traditional Celebration Sweets &amp; Pastries
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* 11. SPECIALS */}
+            <section id="specials" className="bg-white rounded-lg border border-[#c3c6d2] shadow-sm overflow-hidden scroll-mt-24">
               <div className="bg-[#fcf8f0] px-6 py-5 border-b border-[#ededf4] flex justify-between items-center">
                 <div>
-                  <h2 className="font-serif font-bold text-2xl text-[#00346f]">Artisanal Drinks</h2>
-                  <p className="text-xs text-gray-500 font-sans mt-0.5">Sophisticated spiced yogurts, floral lemonades, and traditional fruit purees.</p>
+                  <h2 className="font-serif font-bold text-2xl text-[#00346f]">Specials</h2>
+                  <p className="text-xs text-gray-500 font-sans mt-0.5">Festive comfort meals, Poojas, and traditional weekend bundles.</p>
                 </div>
-                <span className="text-[10px] uppercase tracking-wider bg-[#00346f]/5 px-2.5 py-1 rounded font-bold font-sans">
-                  Min. 20 servings
-                </span>
               </div>
 
-              <div className="p-6 lg:p-8 space-y-4">
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-12 gap-y-4">
-                  {DRINKS.map((drink) => {
-                    const existingSelection = selectedItems.find(item => item.id === drink.id);
-                    return (
-                      <div 
-                        key={drink.id} 
-                        className="group flex flex-col gap-1 p-2 rounded hover:bg-[#f9f9ff] transition-all"
-                      >
-                        <div className="w-full flex justify-between items-end gap-2">
-                          <div className="flex-1 flex items-baseline min-w-0">
-                            <span className="font-serif font-semibold text-[15px] text-[#00346f] bg-transparent z-10 pr-2 shrink-0">
-                              {drink.name}
-                            </span>
-                            <div className="flex-1 border-b border-dotted border-gray-300 mx-1 mb-[3px]"></div>
-                          </div>
-                          
-                          <div className="flex items-center gap-2 shrink-0 mb-[3px]">
-                            <span className="text-sm font-semibold text-[#00346f] font-sans leading-none">
-                              ${drink.price.toFixed(2)}
-                            </span>
-                            
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="border-b border-[#ededf4] bg-[#f9f9ff]">
+                      <th className="py-3 px-6 text-[10px] font-bold text-gray-400 uppercase tracking-widest font-sans w-1/3">Meal Combo</th>
+                      <th className="py-3 px-6 text-[10px] font-bold text-gray-400 uppercase tracking-widest font-sans w-2/5">Description</th>
+                      <th className="py-3 px-6 text-center text-[10px] font-bold text-gray-400 uppercase tracking-widest font-sans w-1/4">Rate</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {SPECIALS.map((item) => {
+                      const priceVal = item.prices.single ?? 0;
+                      const hasRateValue = priceVal > 0;
+                      const buttonLabel = item.prices.customText ?? `$${priceVal.toFixed(2)} per ${item.prices.unitText || 'person'}`;
+                      return (
+                        <tr key={item.id} className="border-b border-[#ededf4]/70 hover:bg-[#f9f9ff]/50 transition-colors">
+                          <td className="py-4 px-6">
+                            <p className="font-serif font-semibold text-[15px] text-[#00346f]">{item.name}</p>
+                          </td>
+                          <td className="py-4 px-6 text-xs text-gray-600 font-sans">
+                            {item.description}
+                          </td>
+                          <td className="py-4 px-6 text-center">
                             <button
                               type="button"
-                              onClick={() => toggleSelection(drink.id, drink.name, 'Drinks', drink.price, 'Single')}
-                              className="p-1 px-1.5 bg-white hover:bg-[#00346f] text-[#00346f] hover:text-white border border-[#c3c6d2] rounded transition-all cursor-pointer flex items-center justify-center shrink-0 mt-0.5"
-                              title="Add serving to quote"
+                              onClick={() => {
+                                if (hasRateValue) {
+                                  toggleSelection(item.id, item.name, 'Specials', priceVal, 'Single');
+                                } else {
+                                  setIsEnquiryOpen(true);
+                                }
+                              }}
+                              className="px-3 py-1.5 bg-white hover:bg-[#00346f] hover:text-white text-[#00346f] border border-[#c3c6d2] rounded text-xs font-semibold cursor-pointer transition-all inline-flex items-center gap-1.5"
                             >
-                              <Plus size={12} />
+                              <Plus size={10} />
+                              {buttonLabel}
                             </button>
-                          </div>
-                        </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </section>
 
-                        <div className="flex items-center justify-between mt-1 text-xs">
-                          <div className="flex flex-wrap gap-1">
-                            {drink.allergens && drink.allergens.length > 0 ? (
-                              drink.allergens.map(allergen => (
-                                <span key={allergen} className="inline-block text-[9px] font-bold tracking-widest font-sans bg-amber-50/70 text-amber-800 border border-amber-100 px-1.5 py-0.5 rounded-sm">
-                                  CONTAINS {allergen.toUpperCase()}
-                                </span>
-                              ))
-                            ) : (
-                              <span className="inline-block text-[9px] font-bold tracking-widest font-sans bg-gray-50 text-gray-400 border border-gray-150 px-1.5 py-0.5 rounded-sm">
-                                NO ALLERGENS
-                              </span>
-                            )}
-                          </div>
+            {/* 12. LIVE COUNTERS */}
+            <section id="live-counters" className="bg-white rounded-lg border border-[#c3c6d2] shadow-sm overflow-hidden scroll-mt-24">
+              <div className="bg-[#fcf8f0] px-6 py-5 border-b border-[#ededf4] flex justify-between items-center">
+                <div>
+                  <h2 className="font-serif font-bold text-2xl text-[#00346f]">Live Counters</h2>
+                  <p className="text-xs text-gray-500 font-sans mt-0.5">Chef-attended live stations to bring an interactive culinary flourish to your venue.</p>
+                </div>
+              </div>
 
-                          <div className="flex items-center gap-2">
-                            <span className="text-[10px] text-gray-400 font-sans tracking-tight">
-                              per serve
-                            </span>
-                            {existingSelection && existingSelection.quantity > 0 && (
-                              <span className="text-[10px] font-mono font-bold text-[#775a19] bg-[#fed488]/20 border border-[#fed488]/40 px-1.5 py-0.5 rounded">
-                                Added: {existingSelection.quantity}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="border-b border-[#ededf4] bg-[#f9f9ff]">
+                      <th className="py-3 px-6 text-[10px] font-bold text-gray-400 uppercase tracking-widest font-sans w-1/3">Station Type</th>
+                      <th className="py-3 px-6 text-[10px] font-bold text-gray-400 uppercase tracking-widest font-sans w-1/4">Minimum Guests</th>
+                      <th className="py-3 px-6 text-xs text-gray-600 font-sans w-1/4">Description</th>
+                      <th className="py-3 px-6 text-center text-[10px] font-bold text-gray-400 uppercase tracking-widest font-sans w-1/6">Rate</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {LIVE_COUNTERS.map((item) => {
+                      const priceVal = item.prices.single ?? item.prices.minPrice ?? 0;
+                      const buttonLabel = item.prices.customText ?? `$${priceVal.toFixed(2)} per person`;
+                      return (
+                        <tr key={item.id} className="border-b border-[#ededf4]/70 hover:bg-[#f9f9ff]/50 transition-colors">
+                          <td className="py-4 px-6">
+                            <p className="font-serif font-semibold text-[15px] text-[#00346f]">{item.name}</p>
+                          </td>
+                          <td className="py-4 px-6 text-xs font-mono font-bold text-gray-500">
+                            {item.minGuests} Guests
+                          </td>
+                          <td className="py-4 px-6 text-xs text-gray-600 font-sans">
+                            {item.description}
+                          </td>
+                          <td className="py-4 px-6 text-center">
+                            <button
+                              type="button"
+                              onClick={() => toggleSelection(item.id, item.name, 'Live Counters', priceVal, 'Single')}
+                              className="px-3 py-1.5 bg-white hover:bg-[#00346f] hover:text-white text-[#00346f] border border-[#c3c6d2] rounded text-xs font-semibold cursor-pointer transition-all inline-flex items-center gap-1"
+                            >
+                              <Plus size={10} />
+                              {buttonLabel}
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Staffing Charges details */}
+              <div className="p-6 bg-gray-50 border-t border-[#ededf4] space-y-3">
+                <p className="text-xs uppercase font-bold tracking-widest text-[#775a19] font-sans">
+                  Live Station Staffing Charges
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="bg-white p-4 rounded border border-gray-200 shadow-2xs">
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">30–50 Guests</p>
+                    <p className="text-lg font-serif font-extrabold text-green-700 mt-0.5">Staffing Included</p>
+                  </div>
+                  <div className="bg-white p-4 rounded border border-gray-200 shadow-2xs">
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">50–100 Guests</p>
+                    <p className="text-lg font-serif font-extrabold text-[#00346f] mt-0.5">+$75 surcharge</p>
+                  </div>
+                  <div className="bg-white p-4 rounded border border-gray-200 shadow-2xs">
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">100+ Guests</p>
+                    <p className="text-lg font-serif font-extrabold text-[#00346f] mt-0.5">+$150–$250 range</p>
+                  </div>
                 </div>
               </div>
             </section>
 
-            {/* --- Portion & Service Add-ons Section --- */}
+            {/* 13. PORTION & SERVICE ADD-ONS */}
             <section id="portions" className="scroll-mt-24">
               <div className="bg-[#00346f] text-white rounded-lg p-6 lg:p-10 shadow-lg relative overflow-hidden">
                 <div className="absolute right-0 bottom-0 opacity-10 transform translate-x-1/4 translate-y-1/4 pointer-events-none">

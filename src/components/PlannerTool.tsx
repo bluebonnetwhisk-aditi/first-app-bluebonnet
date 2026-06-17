@@ -10,7 +10,7 @@ export default function PlannerTool({ onApplyRecommended }: PlannerToolProps) {
   const [selectedCourse, setSelectedCourse] = useState<string>('Main Course');
 
   // Calculates the best combination of trays to fit the guest count
-  // S: 0-6, L: 10-12, XL: 25-30
+  // S (1/3): 8-12, L (1/2): 15-20, XL (Full): 30-40
   const calculateTrays = (count: number) => {
     if (count <= 0) return { small: 0, large: 0, xl: 0, minServes: 0, maxServes: 0 };
     
@@ -20,21 +20,20 @@ export default function PlannerTool({ onApplyRecommended }: PlannerToolProps) {
     let bestDiff = Infinity;
     let bestCostScore = Infinity; // Prefer fewer trays and larger sizes based on proportional weights
 
-    const maxXlNeeded = Math.ceil(count / 25) + 1;
+    const maxXlNeeded = Math.ceil(count / 30) + 1;
     for (let xl = 0; xl <= maxXlNeeded; xl++) {
-      const remainingAfterXl = Math.max(0, count - xl * 30);
-      const maxLNeeded = Math.ceil(remainingAfterXl / 10) + 1;
+      const remainingAfterXl = Math.max(0, count - xl * 40);
+      const maxLNeeded = Math.ceil(remainingAfterXl / 15) + 1;
       
       for (let l = 0; l <= maxLNeeded; l++) {
-        const remainingAfterL = Math.max(0, remainingAfterXl - l * 12);
-        const maxSNeeded = Math.ceil(remainingAfterL / 6) + 1;
+        const remainingAfterL = Math.max(0, remainingAfterXl - l * 20);
+        const maxSNeeded = Math.ceil(remainingAfterL / 8) + 1;
         for (let s = 0; s <= maxSNeeded; s++) {
-          const maxServes = xl * 30 + l * 12 + s * 6;
+          const maxServes = xl * 40 + l * 20 + s * 12;
           
           if (maxServes >= count) {
             const diff = maxServes - count;
-            // Weighted penalty to favor 1 Large Tray (costScore = 1.5) over 2 Small Trays (costScore = 2.0),
-            // and 1 Extra-Large Tray (costScore = 2.0) over 2 Large Trays (costScore = 3.0).
+            // Weighted penalty to favor 1 Large Tray over 2 Small Trays, etc.
             const costScore = xl * 2.0 + l * 1.5 + s * 1.0;
             
             if (diff < bestDiff || (diff === bestDiff && costScore < bestCostScore)) {
@@ -53,8 +52,8 @@ export default function PlannerTool({ onApplyRecommended }: PlannerToolProps) {
       small: bestS,
       large: bestL,
       xl: bestXl,
-      minServes: bestXl * 25 + bestL * 10 + bestS * 0,
-      maxServes: bestXl * 30 + bestL * 12 + bestS * 6,
+      minServes: bestXl * 30 + bestL * 15 + bestS * 8,
+      maxServes: bestXl * 40 + bestL * 20 + bestS * 12,
     };
   };
 
@@ -82,7 +81,7 @@ export default function PlannerTool({ onApplyRecommended }: PlannerToolProps) {
         </div>
         <div>
           <h4 className="font-serif font-semibold text-lg text-[#00346f]">Portion & Tray Planner</h4>
-          <p className="text-xs text-gray-500 font-sans">Calculate optimal main course & dessert tray portions based on guest size.</p>
+          <p className="text-xs text-gray-500 font-sans">Calculate optimal portions based on guest size.</p>
         </div>
       </div>
 
@@ -146,15 +145,15 @@ export default function PlannerTool({ onApplyRecommended }: PlannerToolProps) {
           
           <div className="space-y-2">
             <div className="flex justify-between items-center text-sm border-b border-[#ededf4] pb-2">
-              <span className="text-gray-600">Full Tray <span className="text-xs text-gray-400">(Serves 25-30)</span></span>
+              <span className="text-gray-600">Full Tray <span className="text-xs text-gray-400">(Serves 30-40)</span></span>
               <span className="font-bold text-[#00346f]">{results.xl} {results.xl === 1 ? 'Tray' : 'Trays'}</span>
             </div>
             <div className="flex justify-between items-center text-sm border-b border-[#ededf4] pb-2">
-              <span className="text-gray-600">Half Tray <span className="text-xs text-gray-400">(Serves 10-12)</span></span>
+              <span className="text-gray-600">Half Tray <span className="text-xs text-gray-400">(Serves 15-20)</span></span>
               <span className="font-bold text-[#00346f]">{results.large} {results.large === 1 ? 'Tray' : 'Trays'}</span>
             </div>
             <div className="flex justify-between items-center text-sm border-b border-[#ededf4] pb-2">
-              <span className="text-gray-600">Third Tray <span className="text-xs text-gray-400">(Serves 0-6)</span></span>
+              <span className="text-gray-600">Third Tray <span className="text-xs text-gray-400">(Serves 8-12)</span></span>
               <span className="font-bold text-[#00346f]">{results.small} {results.small === 1 ? 'Tray' : 'Trays'}</span>
             </div>
           </div>

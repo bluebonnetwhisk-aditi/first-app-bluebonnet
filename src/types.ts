@@ -184,9 +184,14 @@ export interface MenuItem {
     third?: number; // 1/3 Tray
     half?: number;  // 1/2 Tray
     full?: number;  // Full Tray
-    single?: number; // Per Piece or Per Serving
-    unitText?: string; // e.g., "Piece", "serving"
+    single?: number; // Per Piece, Per Serving, or Per Guest
+    gallon?: number; // Per Gallon (for beverages)
+    minPrice?: number; // For ranges like $6-$8
+    maxPrice?: number; // For ranges like $6-$8
+    unitText?: string; // e.g., "each", "dozen", "person", "serving"
+    customText?: string; // e.g. "Starting at $65", "Custom Quote"
   };
+  minGuests?: number; // for Live Counters
   allergens?: string[];
   image?: string;
 }
@@ -255,8 +260,8 @@ export interface ServiceAddon {
 export interface SelectedItem {
   id: string;
   name: string;
-  category: 'Main Course' | 'Breads' | 'Desserts' | 'Sides' | 'Drinks';
-  size?: '1/3' | '1/2' | 'Full' | 'Single';
+  category: string;
+  size?: '1/3' | '1/2' | 'Full' | 'Single' | 'Gallon';
   price: number;
   quantity: number;
 }
