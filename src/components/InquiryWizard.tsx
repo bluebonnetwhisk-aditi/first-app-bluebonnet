@@ -204,7 +204,7 @@ export default function InquiryWizard({ isOpen, onClose, preselectedFlavor, pres
             </div>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className="p-6 md:p-8">
+          <form onSubmit={handleSubmit} className="p-6 lg:p-8">
             <div className="mb-6 flex items-center justify-between">
               <div>
                 <h3 className="font-serif text-2xl font-bold text-primary-brand">Create Your Masterpiece</h3>
@@ -244,7 +244,7 @@ export default function InquiryWizard({ isOpen, onClose, preselectedFlavor, pres
 
                 <div>
                   <label className="block text-xs font-semibold uppercase tracking-wider text-gray-700 mb-1.5">Desired Crowd Size</label>
-                  <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
+                  <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
                     {["10-15 guests", "15-25 guests", "25-50 guests", "50-100 guests"].map((sz) => (
                       <button
                         key={sz}
@@ -264,7 +264,7 @@ export default function InquiryWizard({ isOpen, onClose, preselectedFlavor, pres
 
                 <div>
                   <label className="block text-xs font-semibold uppercase tracking-wider text-gray-700 mb-1.5">Dietary Adjustments</label>
-                  <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
+                  <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
                     {["Regular", "Eggless", "Gluten-Free", "Vegan"].map((dt) => (
                       <button
                         key={dt}
@@ -292,7 +292,7 @@ export default function InquiryWizard({ isOpen, onClose, preselectedFlavor, pres
             {/* STEP 2: FLAVORS & PRICING */}
             {step === 2 && (
               <div className="space-y-4 animate-fade-in">
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
                   <div>
                     <label className="block text-xs font-semibold uppercase tracking-wider text-gray-700 mb-1.5">Collection Category</label>
                     <select 
@@ -381,7 +381,7 @@ export default function InquiryWizard({ isOpen, onClose, preselectedFlavor, pres
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
                   <div>
                     <label className="block text-xs font-semibold uppercase tracking-wider text-gray-700 mb-1.5">Email Address</label>
                     <div className="relative">

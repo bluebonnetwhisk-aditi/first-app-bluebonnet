@@ -114,7 +114,7 @@ export default function CakesPage({ onOpenWizard, onOpenBaker, onOpenPriceList }
                 </p>
                 
                 {/* Festival box thumbnails to fill empty space */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6 pt-6 border-t border-gray-150">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-6 pt-6 border-t border-gray-150">
                   <div className="flex items-center gap-3">
                     <div className="h-14 w-14 rounded-md overflow-hidden shrink-0 border border-gray-200 shadow-2xs">
                       <img 
@@ -412,7 +412,7 @@ export default function CakesPage({ onOpenWizard, onOpenBaker, onOpenPriceList }
                   <Sparkles className="h-4 w-4 text-[#775a19]" />
                   Signature Cakes
                 </h4>
-                <ul className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs text-gray-600 font-sans">
+                <ul className="grid grid-cols-1 lg:grid-cols-2 gap-2 text-xs text-gray-600 font-sans">
                   {["Gulab Jamun Cake", "Rasmalai Cake", "Mango Cake", "Pistachio Cardamom Cake", "Custom Celebration Cakes"].map((item) => (
                     <li key={item} className="flex items-center gap-2">
                       <span className="h-1 w-1 bg-[#775a19] rounded-full"></span>
@@ -428,7 +428,7 @@ export default function CakesPage({ onOpenWizard, onOpenBaker, onOpenPriceList }
                   <Sparkles className="h-4 w-4 text-[#775a19]" />
                   Signature Desserts
                 </h4>
-                <ul className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs text-gray-600 font-sans">
+                <ul className="grid grid-cols-1 lg:grid-cols-2 gap-2 text-xs text-gray-600 font-sans">
                   {["Gulab Jamun Cake Jars", "Rasmalai Cake Jars", "Mango Dessert Cups", "Dessert Shooters", "Mini Loaf Cakes", "Seasonal Fusion Desserts"].map((item) => (
                     <li key={item} className="flex items-center gap-2">
                       <span className="h-1 w-1 bg-[#775a19] rounded-full"></span>
@@ -441,8 +441,8 @@ export default function CakesPage({ onOpenWizard, onOpenBaker, onOpenPriceList }
             </div>
 
             {/* Customization Note Banner */}
-            <div className="border-t border-gray-100 pt-6 flex flex-col md:flex-row items-center justify-between gap-4">
-              <p className="text-gray-700 text-xs font-semibold font-sans italic text-center md:text-left">
+            <div className="border-t border-gray-100 pt-6 flex flex-col lg:flex-row items-center justify-between gap-4">
+              <p className="text-gray-700 text-xs font-semibold font-sans italic text-center lg:text-left">
                 Custom themes, personalized designs, and eggless options available.
               </p>
               <button 
