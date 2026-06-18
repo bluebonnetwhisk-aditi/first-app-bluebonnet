@@ -227,7 +227,6 @@ export default function Home({ onOpenWizard, onOpenBaker, onNavigate }: HomeProp
         <div className="max-w-7xl mx-auto px-4 space-y-16">
           
           <div className="text-center max-w-xl mx-auto space-y-2">
-            <span className="text-[10px] font-bold text-brand-gold-tint tracking-widest uppercase font-mono">OUR COMMITMENT</span>
             <h2 className="font-serif text-3xl lg:text-4xl font-bold text-brand-cream">Our Commitments to You</h2>
             <p className="text-xs text-gray-400 font-sans">Crafting unforgettable experiences with a dedication to perfection.</p>
             <div className="h-0.5 w-12 bg-brand-gold-tint mx-auto mt-2" />
@@ -252,7 +251,7 @@ export default function Home({ onOpenWizard, onOpenBaker, onNavigate }: HomeProp
               },
               {
                 title: "Everyday Convenience",
-                desc: "We commit to making your life easier. Whether you are relying on our weekly and monthly tiffin services for busy weeknights, or trusting us to cater your next big event, we deliver the warmth of a home kitchen directly to you.",
+                desc: "We commit to making your life easier. Whether you are relying on our weekly and monthly tiffin services, or trusting us to cater your next big event, we deliver the warmth of a home kitchen directly to you.",
                 icon: "Clock"
               }
             ].map((commitment, idx) => {
