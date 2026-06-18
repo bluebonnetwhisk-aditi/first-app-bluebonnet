@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { motion, useScroll, useTransform, useMotionValueEvent } from "motion/react";
-import { ArrowRight, Sparkles, ChevronDown, ChefHat, Clock, Truck } from "lucide-react";
+import { ArrowRight, ChevronDown, ChefHat, Clock, Heart, ShieldCheck } from "lucide-react";
 
 interface HomeProps {
   onOpenWizard: (flavor?: string, category?: string) => void;
@@ -222,6 +222,65 @@ export default function Home({ onOpenWizard, onOpenBaker, onNavigate }: HomeProp
 
       </section>
 
+      {/* ── OUR COMMITMENTS SECTION ── */}
+      <section className="py-24 border-t border-white/5 bg-[#050a1a]">
+        <div className="max-w-7xl mx-auto px-4 space-y-16">
+          
+          <div className="text-center max-w-xl mx-auto space-y-2">
+            <span className="text-[10px] font-bold text-brand-gold-tint tracking-widest uppercase font-mono">OUR COMMITMENT</span>
+            <h2 className="font-serif text-3xl lg:text-4xl font-bold text-brand-cream">Our Commitments to You</h2>
+            <p className="text-xs text-gray-400 font-sans">Crafting unforgettable experiences with a dedication to perfection.</p>
+            <div className="h-0.5 w-12 bg-brand-gold-tint mx-auto mt-2" />
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 lg:grid-cols-4 gap-6">
+            {[
+              {
+                title: "The Family Promise",
+                desc: "We commit to authentic, home-cooked quality using premium ingredients. Our golden rule is simple: if it isn't good enough to feed our own children, it will never leave our kitchen.",
+                icon: "Heart"
+              },
+              {
+                title: "Creative & Custom Menus",
+                desc: "We commit to bringing excitement to your dining table. Expect unique, innovative fusion cuisine alongside classic comfort foods, custom cakes, and elegant desserts.",
+                icon: "ChefHat"
+              },
+              {
+                title: "Mindful & Inclusive Preparation",
+                desc: "We commit to respecting your dietary traditions. We proudly specialize in strict No-Onion/No-Garlic savory preparations and 100% premium eggless baking, ensuring everyone can eat safely and joyfully.",
+                icon: "ShieldCheck"
+              },
+              {
+                title: "Everyday Convenience",
+                desc: "We commit to making your life easier. Whether you are relying on our weekly and monthly tiffin services for busy weeknights, or trusting us to cater your next big event, we deliver the warmth of a home kitchen directly to you.",
+                icon: "Clock"
+              }
+            ].map((commitment, idx) => {
+              return (
+                <div 
+                  key={idx}
+                  className="glass-panel-dark rounded-lg p-6 border border-white/5 flex flex-col items-center text-center space-y-4 hover:border-brand-gold-tint/40 transition-all hover:-translate-y-1 duration-300 shadow-lg"
+                >
+                  <div className="h-12 w-12 rounded-full bg-brand-gold-tint/10 flex items-center justify-center text-brand-gold-tint mb-2">
+                    {commitment.icon === "Heart" && <Heart className="h-6 w-6" />}
+                    {commitment.icon === "ChefHat" && <ChefHat className="h-6 w-6" />}
+                    {commitment.icon === "ShieldCheck" && <ShieldCheck className="h-6 w-6" />}
+                    {commitment.icon === "Clock" && <Clock className="h-6 w-6" />}
+                  </div>
+                  <h3 className="font-serif text-base font-bold text-brand-cream leading-snug">
+                    {commitment.title}
+                  </h3>
+                  <p className="text-gray-300 text-xs leading-relaxed font-sans font-light">
+                    {commitment.desc}
+                  </p>
+                </div>
+              );
+            })}
+          </div>
+
+        </div>
+      </section>
+
       {/* ── VISUAL WALKTHROUGH SECTION ── */}
       <section ref={walkthroughRef} className="relative py-24 border-t border-white/5 bg-[#050a1a]">
         <div className="max-w-7xl mx-auto px-4 w-full grid grid-cols-1 lg:grid-cols-12 gap-12 items-start relative">
@@ -405,64 +464,6 @@ export default function Home({ onOpenWizard, onOpenBaker, onNavigate }: HomeProp
         </div>
       </section>
 
-      {/* ── UNIQUE SELLING PROPOSITIONS (USPs) ── */}
-      <section className="py-24 border-t border-white/5 bg-[#050a1a]">
-        <div className="max-w-7xl mx-auto px-4 space-y-16">
-          
-          <div className="text-center max-w-xl mx-auto space-y-2">
-            <span className="text-[10px] font-bold text-brand-gold-tint tracking-widest uppercase font-mono">OUR COMMITMENT</span>
-            <h2 className="font-serif text-3xl lg:text-4xl font-bold text-brand-cream">Why Choose Bluebonnet Whisk</h2>
-            <p className="text-xs text-gray-400 font-sans">Crafting unforgettable experiences with a dedication to perfection.</p>
-            <div className="h-0.5 w-12 bg-brand-gold-tint mx-auto mt-2" />
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 lg:grid-cols-4 gap-6">
-            {[
-              {
-                title: "Fully Custom Celebration Menus",
-                desc: "Every detail tailored to your unique preferences, theme, and dietary needs for an unforgettable culinary experience.",
-                icon: "ChefHat"
-              },
-              {
-                title: "Freshly Baked to Order",
-                desc: "No pre-made layers or frozen shortcuts. Every cake and pastry is crafted fresh specifically for your special day.",
-                icon: "Clock"
-              },
-              {
-                title: "High-Quality Ingredients",
-                desc: "Made with premium baking ingredients, organic spices, real saffron milk, and pure cardamom for genuine luxury taste.",
-                icon: "Sparkles"
-              },
-              {
-                title: "On-Time Event Delivery",
-                desc: "Reliable, temperature-controlled transport across DFW, ensuring your custom creations arrive in pristine condition.",
-                icon: "Truck"
-              }
-            ].map((usp, idx) => {
-              return (
-                <div 
-                  key={idx}
-                  className="glass-panel-dark rounded-lg p-6 border border-white/5 flex flex-col items-center text-center space-y-4 hover:border-brand-gold-tint/40 transition-all hover:-translate-y-1 duration-300 shadow-lg"
-                >
-                  <div className="h-12 w-12 rounded-full bg-brand-gold-tint/10 flex items-center justify-center text-brand-gold-tint mb-2">
-                    {usp.icon === "ChefHat" && <ChefHat className="h-6 w-6" />}
-                    {usp.icon === "Clock" && <Clock className="h-6 w-6" />}
-                    {usp.icon === "Sparkles" && <Sparkles className="h-6 w-6" />}
-                    {usp.icon === "Truck" && <Truck className="h-6 w-6" />}
-                  </div>
-                  <h3 className="font-serif text-base font-bold text-brand-cream leading-snug">
-                    {usp.title}
-                  </h3>
-                  <p className="text-gray-300 text-xs leading-relaxed font-sans font-light">
-                    {usp.desc}
-                  </p>
-                </div>
-              );
-            })}
-          </div>
-
-        </div>
-      </section>
 
       {/* ── HIGHLIGHTS SHOWCASE ── */}
       <section className="py-24 border-t border-white/5 bg-[#0a1128]">
