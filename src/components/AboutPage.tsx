@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { Sparkles, ShieldCheck } from "lucide-react";
+import { submitToGoogleSheets } from "../services/googleSheets";
 
 export default function AboutPage() {
   const [contactForm, setContactForm] = useState({ name: "", email: "", message: "" });
   const [contactSuccess, setContactSuccess] = useState(false);
 
-  const handleContactSubmit = (e: React.FormEvent) => {
+  const handleContactSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (contactForm.name && contactForm.email && contactForm.message) {
       const subject = encodeURIComponent(`Contact Form Message - ${contactForm.name}`);
@@ -14,6 +15,14 @@ export default function AboutPage() {
         `Email: ${contactForm.email}\n` +
         `Message:\n${contactForm.message}`
       );
+
+      // Submit to Google Sheets
+      await submitToGoogleSheets("Contact Messages", {
+        Name: contactForm.name,
+        Email: contactForm.email,
+        Message: contactForm.message
+      });
+
       const mailtoUrl = `mailto:bluebonnetwhisk@gmail.com?subject=${subject}&body=${body}`;
       window.location.href = mailtoUrl;
 

@@ -3,6 +3,7 @@ import {
   Instagram, 
   X
 } from "lucide-react";
+import { submitToGoogleSheets } from "./services/googleSheets";
 
 // Components
 import Home from "./components/Home";
@@ -34,9 +35,14 @@ export default function App() {
     window.open("https://wa.me/19455274566", "_blank");
   };
 
-  const handleNewsletterSubmit = (e: React.FormEvent) => {
+  const handleNewsletterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (newsletterEmail.trim()) {
+      // Submit to Google Sheets
+      await submitToGoogleSheets("Newsletter Signups", {
+        Email: newsletterEmail.trim()
+      });
+
       setNewsletterAlert(true);
       setNewsletterEmail("");
       setTimeout(() => setNewsletterAlert(false), 4000);

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { X, Calendar, User, Mail, Sparkles, CheckCircle2, Printer, Info } from "lucide-react";
 import { flavorCategories } from "../types";
+import { submitToGoogleSheets } from "../services/googleSheets";
 
 interface InquiryWizardProps {
   isOpen: boolean;
@@ -94,14 +95,26 @@ export default function InquiryWizard({ isOpen, onClose, preselectedFlavor, pres
     });
   }, [formData.category, formData.size, formData.dietary]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    // Simulate API registration or inquiry capture
-    setTimeout(() => {
-      setIsSubmitting(false);
-      setIsSuccess(true);
-    }, 1200);
+    
+    await submitToGoogleSheets("Cake Inquiries", {
+      Name: formData.name,
+      Email: formData.email,
+      Phone: formData.phone,
+      Date: formData.date,
+      Occasion: formData.occasion,
+      Category: formData.category,
+      Flavor: formData.flavor,
+      Size: formData.size,
+      Dietary: formData.dietary,
+      "Custom Wishes": formData.customWishes,
+      "Estimated Total": `$${estimate.total}`
+    });
+
+    setIsSubmitting(false);
+    setIsSuccess(true);
   };
 
   if (!isOpen) return null;

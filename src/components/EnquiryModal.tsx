@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Mail, Phone, Calendar, Users, MapPin, X, CheckCircle2, FileText } from 'lucide-react';
 import type { SelectedItem } from '../types';
 import { BRAND_DETAILS } from '../menuData';
+import { submitToGoogleSheets } from '../services/googleSheets';
 
 interface EnquiryModalProps {
   isOpen: boolean;
@@ -67,7 +68,7 @@ export default function EnquiryModal({
     return itemsTotal + addonsTotal;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (validate()) {
       const subject = encodeURIComponent(`Catering Menu Request - ${formData.name}`);
@@ -93,6 +94,20 @@ export default function EnquiryModal({
         `Estimated Total: $${calculateTotal().toFixed(2)}\n\n` +
         `Special Requests / Notes:\n${formData.notes}\n`
       );
+
+      // Submit to Google Sheets
+      await submitToGoogleSheets("Catering Inquiries", {
+        Name: formData.name,
+        Email: formData.email,
+        Phone: formData.phone,
+        Date: formData.date,
+        Guests: formData.guests,
+        Venue: formData.venue,
+        "Selected Items": selectedItems.map((item) => `${item.name} (${item.size ? `Size: ${item.size}` : 'Qty'}: ${item.quantity})`).join(', ') || 'None',
+        "Selected Addons": serviceAddons.map((addon) => addon.name).join(', ') || 'None',
+        "Estimated Total": `$${calculateTotal().toFixed(2)}`,
+        Notes: formData.notes
+      });
 
       const mailtoUrl = `mailto:bluebonnetwhisk@gmail.com?subject=${subject}&body=${body}`;
       window.location.href = mailtoUrl;

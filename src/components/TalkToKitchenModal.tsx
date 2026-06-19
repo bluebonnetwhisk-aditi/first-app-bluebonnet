@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { X, MessageSquare, Mail, Send, Calendar, Users, CheckCircle2 } from "lucide-react";
+import { submitToGoogleSheets } from "../services/googleSheets";
 
 interface TalkToKitchenModalProps {
   isOpen: boolean;
@@ -20,7 +21,7 @@ export default function TalkToKitchenModal({ isOpen, onClose }: TalkToKitchenMod
 
   if (!isOpen) return null;
 
-  const handleFormSubmit = (e: React.FormEvent) => {
+  const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
@@ -33,6 +34,16 @@ export default function TalkToKitchenModal({ isOpen, onClose }: TalkToKitchenMod
       `Event Type: ${formData.eventType}\n` +
       `Special Requirements:\n${formData.message}\n`
     );
+
+    // Submit to Google Sheets
+    await submitToGoogleSheets("Quick Inquiries", {
+      Name: formData.name,
+      "Event Date": formData.eventDate,
+      Guests: formData.guests,
+      "Event Type": formData.eventType,
+      Message: formData.message
+    });
+
     const mailtoUrl = `mailto:bluebonnetwhisk@gmail.com?subject=${subject}&body=${body}`;
     window.location.href = mailtoUrl;
 
