@@ -296,22 +296,28 @@ export default function Home({ onOpenWizard, onOpenBaker, onNavigate }: HomeProp
               {
                 title: "Custom Cakes & Desserts",
                 desc: "Made-to-order cakes for birthdays, anniversaries, and milestones. Theme cakes, kids birthdays, and desserts including trending cake jars and mini cake loaves.",
-                tab: "Cakes"
+                tab: "Cakes",
+                image: "src/assets/images/custom_celebration_cakes_1781194977914.jpg",
+                imageLabel: "Designer Cake Detail"
               },
               {
                 title: "Catering",
                 desc: "Whether it's a birthday, corporate event, or family gathering, we've got the menu covered.",
-                tab: "Catering"
+                tab: "Catering",
+                image: "src/assets/images/catering_buffet.png",
+                imageLabel: "Catering Buffet Detail"
               },
               {
                 title: "Custom Party Packages",
                 desc: "Bring Your Celebration to Life with Our Custom Party Packages",
-                tab: "Live Counters"
+                tab: "Live Counters",
+                image: "src/assets/images/custom_party_packages.png",
+                imageLabel: "Custom Party Setup Detail"
               }
             ].map((item, idx) => {
               const isActive = activeStage === idx;
               return (
-                <div key={idx} style={{ minHeight: "45vh" }} className="flex items-center py-4">
+                <div key={idx} className="flex flex-col justify-center py-4 min-h-fit lg:min-h-[45vh]">
                   <div 
                     className={`w-full p-6 rounded border transition-all duration-500 cursor-pointer ${
                       isActive 
@@ -330,6 +336,22 @@ export default function Home({ onOpenWizard, onOpenBaker, onNavigate }: HomeProp
                   >
                     <h3 className="font-serif text-base font-bold text-brand-cream">{item.title}</h3>
                     <p className="text-gray-300 text-xs leading-relaxed mt-2">{item.desc}</p>
+                    
+                    {/* Inline Image for Mobile & Tablet only */}
+                    <div className="lg:hidden mt-4 rounded-lg overflow-hidden border border-white/10 aspect-video relative">
+                      <img 
+                        src={item.image} 
+                        alt={item.title}
+                        className="w-full h-full object-cover"
+                        referrerPolicy="no-referrer"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-transparent to-transparent flex items-end p-3">
+                        <span className="font-serif text-[10px] font-semibold text-brand-cream">
+                          {item.imageLabel}
+                        </span>
+                      </div>
+                    </div>
+
                     {isActive && (
                       <button 
                         onClick={(e) => {
@@ -347,8 +369,8 @@ export default function Home({ onOpenWizard, onOpenBaker, onNavigate }: HomeProp
             })}
           </div>
 
-          {/* Right Side: Sticky Images cross-fade */}
-          <div className="lg:col-span-7 lg:sticky lg:top-28 h-[550px] relative rounded-lg overflow-hidden border border-white/10 shadow-2xl bg-black">
+          {/* Right Side: Sticky Images cross-fade (Desktop only) */}
+          <div className="hidden lg:block lg:col-span-7 lg:sticky lg:top-28 h-[550px] relative rounded-lg overflow-hidden border border-white/10 shadow-2xl bg-black">
             {[
               "src/assets/images/custom_celebration_cakes_1781194977914.jpg",
               "src/assets/images/catering_buffet.png",

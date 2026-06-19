@@ -25,7 +25,6 @@ export default function App() {
   const [showPriceList, setShowPriceList] = useState(false);
   const [newsletterEmail, setNewsletterEmail] = useState("");
   const [newsletterAlert, setNewsletterAlert] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const handleOpenWizard = (..._args: any[]) => {
     setIsWizardOpen(true);
@@ -110,61 +109,37 @@ export default function App() {
               </button>
             </div>
 
-            {/* Mobile hamburger button */}
+            {/* Mobile Actions: Request Quote */}
             <div className="lg:hidden flex items-center gap-2">
               <button
                 onClick={() => handleOpenWizard()}
-                className="bg-[#00346f] hover:bg-[#00346f]/95 text-white p-2 rounded text-xs font-semibold uppercase aspect-square cursor-pointer"
-                title="Request Quote"
+                className="bg-[#00346f] hover:bg-[#00346f]/95 text-white px-3.5 py-2 rounded text-[10px] font-bold uppercase tracking-wider cursor-pointer font-sans"
               >
-                📥
-              </button>
-              <button
-                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="inline-flex items-center justify-center p-2 rounded text-gray-500 hover:text-gray-900 focus:outline-none cursor-pointer"
-                aria-expanded="false"
-              >
-                {mobileMenuOpen ? "✕" : "☰"}
+                REQUEST QUOTE
               </button>
             </div>
 
           </div>
         </div>
 
-        {/* Mobile Menu */}
-        {mobileMenuOpen && (
-          <div className="lg:hidden bg-[#fbfbfa] border-b border-gray-200 transition-all">
-            <div className="px-2 pt-2 pb-4 space-y-1.5 lg:px-3">
-              {navLinks.map((link) => (
-                <button
-                  key={link.id}
-                  onClick={() => {
-                    setActiveTab(link.id);
-                    setMobileMenuOpen(false);
-                  }}
-                  className={`block w-full text-left px-3 py-2.5 text-sm uppercase tracking-widest font-semibold font-sans rounded-xs cursor-pointer ${
-                    activeTab === link.id
-                      ? "bg-[#00346f]/5 text-[#00346f] border-l-4 border-[#00346f]"
-                      : "text-gray-600 hover:bg-gray-50"
-                  }`}
-                >
-                  {link.name}
-                </button>
-              ))}
-              <div className="pt-4 pb-2 border-t border-gray-150 flex flex-col gap-2 px-3">
-                <button
-                  onClick={() => {
-                    handleOpenWizard();
-                    setMobileMenuOpen(false);
-                  }}
-                  className="w-full text-center py-2.5 text-xs font-semibold tracking-widest uppercase bg-[#00346f] text-white rounded hover:bg-[#00346f]/95 font-sans cursor-pointer"
-                >
-                  REQUEST QUOTE
-                </button>
-              </div>
-            </div>
+        {/* Mobile Toolbar (persistent scrollable bar of navigation tabs) */}
+        <div className="lg:hidden bg-[#fbfbfa] border-t border-gray-150 py-2.5 mt-2 overflow-x-auto scrollbar-none">
+          <div className="flex px-4 space-x-6 whitespace-nowrap min-w-max">
+            {navLinks.map((link) => (
+              <button
+                key={link.id}
+                onClick={() => setActiveTab(link.id)}
+                className={`font-sans text-[11px] uppercase tracking-widest font-semibold pb-1.5 transition-all border-b-2 cursor-pointer ${
+                  activeTab === link.id
+                    ? "text-[#00346f] border-[#00346f] font-bold"
+                    : "text-gray-500 border-transparent"
+                }`}
+              >
+                {link.name}
+              </button>
+            ))}
           </div>
-        )}
+        </div>
       </nav>
 
       {/* RENDER ACTIVE TAB */}
