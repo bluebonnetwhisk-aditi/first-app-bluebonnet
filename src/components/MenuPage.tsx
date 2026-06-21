@@ -29,7 +29,7 @@ import {
 } from '../menuData';
 import type { SelectedItem, MenuItem } from '../types';
 import PlannerTool from './PlannerTool';
-import EnquiryModal from './EnquiryModal';
+import InquiryWizard from './InquiryWizard';
 
 import breadsImage from '../assets/images/indian_breads_basket_1781152845941.png';
 import dessertsImage from '../assets/images/indian_desserts_luxury_1781152864858.png';
@@ -1145,12 +1145,12 @@ export default function MenuPage() {
         </div>
       </section>
 
-      <EnquiryModal 
+      <InquiryWizard 
         isOpen={isEnquiryOpen} 
         onClose={() => setIsEnquiryOpen(false)} 
-        selectedItems={selectedItems}
-        onClearItems={() => setSelectedItems([])}
-        serviceAddons={SERVICE_ADDONS.filter(a => appliedAddons.includes(a.id)).map(a => ({ name: a.name, price: a.basePrice }))}
+        selectedCateringItems={selectedItems}
+        cateringAddons={SERVICE_ADDONS.filter(a => appliedAddons.includes(a.id)).map(a => ({ name: a.name, price: a.basePrice }))}
+        onClearCateringItems={() => setSelectedItems([])}
       />
 
     </div>

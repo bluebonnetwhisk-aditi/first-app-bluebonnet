@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { X, Calendar, User, Mail, Sparkles, CheckCircle2, Printer, Info } from "lucide-react";
+import { X, Calendar, User, Mail, Phone, Sparkles, CheckCircle2, Printer, Info } from "lucide-react";
 import { flavorCategories } from "../types";
+import type { SelectedItem } from "../types";
 import { submitToGoogleSheets } from "../services/googleSheets";
 
 interface InquiryWizardProps {
@@ -8,22 +9,40 @@ interface InquiryWizardProps {
   onClose: () => void;
   preselectedFlavor?: string;
   preselectedCategory?: string;
+  selectedCateringItems?: SelectedItem[];
+  cateringAddons?: Array<{ name: string; price: number }>;
+  onClearCateringItems?: () => void;
 }
 
-export default function InquiryWizard({ isOpen, onClose, preselectedFlavor, preselectedCategory }: InquiryWizardProps) {
+export default function InquiryWizard({ 
+  isOpen, 
+  onClose, 
+  preselectedFlavor, 
+  preselectedCategory,
+  selectedCateringItems,
+  cateringAddons,
+  onClearCateringItems
+}: InquiryWizardProps) {
+  const isCatering = !!selectedCateringItems && selectedCateringItems.length > 0;
+
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     phone: "",
     date: "",
-    occasion: "Birthday",
-    category: preselectedCategory || "Indian Fusion",
-    flavor: preselectedFlavor || "Rasmalai Cake",
+    occasion: isCatering ? "Catering" : "Birthday",
+    category: isCatering ? "Catering Selection" : (preselectedCategory || "Indian Fusion"),
+    flavor: isCatering ? "Catering Menu Items" : (preselectedFlavor || "Rasmalai Cake"),
     size: "15-25 guests",
     dietary: "Eggless",
     customWishes: "",
   });
+
+  const cateringTotal = isCatering
+    ? (selectedCateringItems?.reduce((acc, curr) => acc + curr.price * curr.quantity, 0) || 0) +
+      (cateringAddons?.reduce((acc, curr) => acc + curr.price, 0) || 0)
+    : 0;
 
   const [estimate, setEstimate] = useState({
     base: 75,
@@ -38,13 +57,14 @@ export default function InquiryWizard({ isOpen, onClose, preselectedFlavor, pres
 
   // Sync preselected values
   useEffect(() => {
+    if (isCatering) return;
     if (preselectedCategory) {
       setFormData(prev => ({ ...prev, category: preselectedCategory }));
     }
     if (preselectedFlavor) {
       setFormData(prev => ({ ...prev, flavor: preselectedFlavor }));
     }
-  }, [preselectedFlavor, preselectedCategory]);
+  }, [preselectedFlavor, preselectedCategory, isCatering]);
 
   // Dynamically update available flavors based on preselected category
   const activeCategoryData = flavorCategories.find(c => c.title === formData.category);
@@ -98,23 +118,72 @@ export default function InquiryWizard({ isOpen, onClose, preselectedFlavor, pres
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
+
+    const selectedItemsText = isCatering && selectedCateringItems
+      ? selectedCateringItems.map(item => `- ${item.name} (${item.size ? `Size: ${item.size}` : `Qty: ${item.quantity}`}) - $${(item.price * item.quantity).toFixed(2)}`).join('\n')
+      : "N/A";
+      
+    const selectedAddonsText = isCatering && cateringAddons
+      ? cateringAddons.map(addon => `- ${addon.name} - $${addon.price.toFixed(2)}`).join('\n')
+      : "N/A";
+
+    const totalStr = isCatering ? `$${cateringTotal.toFixed(2)}` : `$${estimate.total}.00`;
+
+    // 1. Submit to Web3Forms to send email to bluebonnetwhisk@gmail.com
+    try {
+      await fetch("https://api.web3forms.com/submit", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
+        body: JSON.stringify({
+          access_key: "7ef4d494-f03c-4a26-9966-8d6077024735",
+          subject: `New Inquiry (${isCatering ? "Catering" : "Cake"}) - ${formData.name}`,
+          from_name: "Bluebonnet Whisk Website",
+          to: "bluebonnetwhisk@gmail.com",
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone,
+          date: formData.date,
+          occasion: formData.occasion,
+          category: isCatering ? "Catering Selection" : formData.category,
+          flavor: isCatering ? "Catering Menu Items" : formData.flavor,
+          size: isCatering ? "N/A" : formData.size,
+          dietary: formData.dietary,
+          customWishes: formData.customWishes,
+          selectedItems: selectedItemsText,
+          selectedAddons: selectedAddonsText,
+          estimatedTotal: totalStr
+        })
+      });
+    } catch (err) {
+      console.error("Web3Forms submission error:", err);
+    }
     
-    await submitToGoogleSheets("Cake Inquiries", {
+    // 2. Submit to Google Sheets (if VITE_GOOGLE_SCRIPT_URL is configured)
+    await submitToGoogleSheets(isCatering ? "Catering Inquiries" : "Cake Inquiries", {
       Name: formData.name,
       Email: formData.email,
       Phone: formData.phone,
       Date: formData.date,
       Occasion: formData.occasion,
-      Category: formData.category,
-      Flavor: formData.flavor,
-      Size: formData.size,
+      Category: isCatering ? "Catering Selection" : formData.category,
+      Flavor: isCatering ? "Catering Menu Items" : formData.flavor,
+      Size: isCatering ? "N/A" : formData.size,
       Dietary: formData.dietary,
       "Custom Wishes": formData.customWishes,
-      "Estimated Total": `$${estimate.total}`
+      "Selected Items": selectedItemsText !== "N/A" ? selectedItemsText : "",
+      "Selected Addons": selectedAddonsText !== "N/A" ? selectedAddonsText : "",
+      "Estimated Total": totalStr
     });
 
     setIsSubmitting(false);
     setIsSuccess(true);
+
+    if (onClearCateringItems) {
+      onClearCateringItems();
+    }
   };
 
   if (!isOpen) return null;
@@ -170,26 +239,48 @@ export default function InquiryWizard({ isOpen, onClose, preselectedFlavor, pres
                 </div>
               </div>
 
-              <div className="space-y-2 pb-3 border-b border-gray-100">
-                <div className="flex justify-between">
-                  <span>{formData.flavor} ({formData.category})</span>
-                  <span>${formData.category === "Indian Fusion" ? "80.00" : "60.00"}</span>
-                </div>
-                <div className="flex justify-between text-xs text-gray-600 pl-2">
-                  <span>• Portion Adjustment ({formData.size})</span>
-                  <span>x{estimate.sizeMultiplier.toFixed(1)}</span>
-                </div>
-                {estimate.dietAddon > 0 && (
-                  <div className="flex justify-between text-xs text-gray-600 pl-2">
-                    <span>• Dietary Modification ({formData.dietary})</span>
-                    <span>+${(estimate.dietAddon * estimate.sizeMultiplier).toFixed(2)}</span>
-                  </div>
+              <div className="space-y-2 pb-3 border-b border-gray-100 text-xs font-sans">
+                {isCatering && selectedCateringItems ? (
+                  <>
+                    <div className="font-semibold text-gray-700 uppercase tracking-wider text-[10px] mb-1">Catering Selections</div>
+                    {selectedCateringItems.map((item, idx) => (
+                      <div key={idx} className="flex justify-between py-0.5">
+                        <span>{item.name} {item.size ? `(${item.size})` : `(Qty: ${item.quantity})`}</span>
+                        <span className="font-semibold">${(item.price * item.quantity).toFixed(2)}</span>
+                      </div>
+                    ))}
+                    {cateringAddons && cateringAddons.map((addon, idx) => (
+                      <div key={idx} className="flex justify-between py-0.5 text-secondary-brand">
+                        <span>{addon.name} (Addon)</span>
+                        <span className="font-semibold">${addon.price.toFixed(2)}</span>
+                      </div>
+                    ))}
+                  </>
+                ) : (
+                  <>
+                    <div className="flex justify-between">
+                      <span>{formData.flavor} ({formData.category})</span>
+                      <span>${formData.category === "Indian Fusion" ? "80.00" : "60.00"}</span>
+                    </div>
+                    <div className="flex justify-between text-xs text-gray-600 pl-2 mt-1">
+                      <span>• Portion Adjustment ({formData.size})</span>
+                      <span>x{estimate.sizeMultiplier.toFixed(1)}</span>
+                    </div>
+                    {estimate.dietAddon > 0 && (
+                      <div className="flex justify-between text-xs text-gray-600 pl-2">
+                        <span>• Dietary Modification ({formData.dietary})</span>
+                        <span>+${(estimate.dietAddon * estimate.sizeMultiplier).toFixed(2)}</span>
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
 
               <div className="flex justify-between pt-3 font-bold text-gray-900 text-base">
                 <span>ESTIMATED TOTAL:</span>
-                <span className="text-secondary-brand">${estimate.total}.00</span>
+                <span className="text-secondary-brand">
+                  {isCatering ? `$${cateringTotal.toFixed(2)}` : `$${estimate.total}.00`}
+                </span>
               </div>
               
               <div className="text-center mt-6 text-[10px] text-gray-400">
@@ -305,41 +396,63 @@ export default function InquiryWizard({ isOpen, onClose, preselectedFlavor, pres
             {/* STEP 2: FLAVORS & PRICING */}
             {step === 2 && (
               <div className="space-y-4 animate-fade-in">
-                <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                {isCatering && selectedCateringItems ? (
                   <div>
-                    <label className="block text-xs font-semibold uppercase tracking-wider text-gray-700 mb-1.5">Collection Category</label>
-                    <select 
-                      value={formData.category}
-                      onChange={(e) => handleCategoryChange(e.target.value)}
-                      className="w-full border border-gray-300 bg-white px-3 py-2 rounded focus:border-primary-brand focus:outline-none"
-                    >
-                      {flavorCategories.map(c => (
-                        <option key={c.title} value={c.title}>{c.title}</option>
+                    <label className="block text-xs font-semibold uppercase tracking-wider text-gray-700 mb-1.5">Selected Catering Items</label>
+                    <div className="border border-gray-200 rounded divide-y divide-gray-150 font-sans bg-white max-h-48 overflow-y-auto text-xs text-gray-700">
+                      {selectedCateringItems.map((item, idx) => (
+                        <div key={idx} className="p-2.5 flex justify-between items-center">
+                          <span>{item.name} {item.size ? `(${item.size})` : `(Qty: ${item.quantity})`}</span>
+                          <span className="font-semibold text-primary-brand">${(item.price * item.quantity).toFixed(2)}</span>
+                        </div>
                       ))}
-                    </select>
+                      {cateringAddons && cateringAddons.map((addon, idx) => (
+                        <div key={idx} className="p-2.5 flex justify-between items-center text-secondary-brand bg-amber-50/10">
+                          <span>{addon.name} (Addon)</span>
+                          <span className="font-semibold">${addon.price.toFixed(2)}</span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
+                ) : (
+                  <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                    <div>
+                      <label className="block text-xs font-semibold uppercase tracking-wider text-gray-700 mb-1.5">Collection Category</label>
+                      <select 
+                        value={formData.category}
+                        onChange={(e) => handleCategoryChange(e.target.value)}
+                        className="w-full border border-gray-300 bg-white px-3 py-2 rounded focus:border-primary-brand focus:outline-none"
+                      >
+                        {flavorCategories.map(c => (
+                          <option key={c.title} value={c.title}>{c.title}</option>
+                        ))}
+                      </select>
+                    </div>
 
-                  <div>
-                    <label className="block text-xs font-semibold uppercase tracking-wider text-gray-700 mb-1.5">Specific Taste Profile</label>
-                    <select 
-                      value={formData.flavor}
-                      onChange={(e) => setFormData({...formData, flavor: e.target.value})}
-                      className="w-full border border-gray-300 bg-white px-3 py-2 rounded focus:border-primary-brand focus:outline-none"
-                    >
-                      {availableFlavors.map(fl => (
-                        <option key={fl} value={fl}>{fl}</option>
-                      ))}
-                    </select>
+                    <div>
+                      <label className="block text-xs font-semibold uppercase tracking-wider text-gray-700 mb-1.5">Specific Taste Profile</label>
+                      <select 
+                        value={formData.flavor}
+                        onChange={(e) => setFormData({...formData, flavor: e.target.value})}
+                        className="w-full border border-gray-300 bg-white px-3 py-2 rounded focus:border-primary-brand focus:outline-none"
+                      >
+                        {availableFlavors.map(fl => (
+                          <option key={fl} value={fl}>{fl}</option>
+                        ))}
+                      </select>
+                    </div>
                   </div>
-                </div>
+                )}
 
                 <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-gray-700 mb-1.5">Design Vision & Notes</label>
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-gray-700 mb-1.5">
+                    {isCatering ? "Event Details & Special Requests" : "Design Vision & Notes"}
+                  </label>
                   <textarea
                     rows={3}
                     value={formData.customWishes}
                     onChange={(e) => setFormData({...formData, customWishes: e.target.value})}
-                    placeholder="Describe your design (florals, toppers, colors) or specific heritage wishes..."
+                    placeholder={isCatering ? "Describe setup preferences, delivery instructions, or custom menus..." : "Describe your design (florals, toppers, colors) or specific heritage wishes..."}
                     className="w-full border border-gray-300 bg-white px-3 py-2 rounded focus:border-primary-brand focus:outline-none text-xs"
                   />
                 </div>
@@ -351,24 +464,39 @@ export default function InquiryWizard({ isOpen, onClose, preselectedFlavor, pres
                     <div className="w-full">
                       <span className="font-semibold text-secondary-brand leading-none">Instant Est. Proposal Summary</span>
                       <div className="mt-2 space-y-1 font-mono text-[11px] text-gray-600">
-                        <div className="flex justify-between">
-                          <span>Standard Base Cake Setup:</span>
-                          <span>${estimate.base}.00</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span>Gourmet Taste Surcharge ({formData.category}):</span>
-                          <span>+${estimate.flavorAddon}.00</span>
-                        </div>
-                        {estimate.dietAddon > 0 && (
-                          <div className="flex justify-between">
-                            <span>Special dietary surcharge ({formData.dietary}):</span>
-                            <span>+${estimate.dietAddon}.00</span>
-                          </div>
+                        {isCatering ? (
+                          <>
+                            <div className="flex justify-between">
+                              <span>Selected Menu Items & Addons:</span>
+                              <span>${cateringTotal.toFixed(2)}</span>
+                            </div>
+                            <div className="flex justify-between text-gray-700 font-semibold border-t border-gray-200/50 pt-1 mt-1 text-xs">
+                              <span>Total Catering Price:</span>
+                              <span className="text-primary-brand">${cateringTotal.toFixed(2)}</span>
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            <div className="flex justify-between">
+                              <span>Standard Base Cake Setup:</span>
+                              <span>${estimate.base}.00</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span>Gourmet Taste Surcharge ({formData.category}):</span>
+                              <span>+${estimate.flavorAddon}.00</span>
+                            </div>
+                            {estimate.dietAddon > 0 && (
+                              <div className="flex justify-between">
+                                <span>Special dietary surcharge ({formData.dietary}):</span>
+                                <span>+${estimate.dietAddon}.00</span>
+                              </div>
+                            )}
+                            <div className="flex justify-between text-gray-700 font-semibold border-t border-gray-200/50 pt-1 mt-1 text-xs">
+                              <span>Combined Est. Price x {estimate.sizeMultiplier.toFixed(1)} guest count:</span>
+                              <span className="text-primary-brand">${estimate.total}.00</span>
+                            </div>
+                          </>
                         )}
-                        <div className="flex justify-between text-gray-700 font-semibold border-t border-gray-200/50 pt-1 mt-1 text-xs">
-                          <span>Combined Est. Price x {estimate.sizeMultiplier.toFixed(1)} guest count:</span>
-                          <span className="text-primary-brand">${estimate.total}.00</span>
-                        </div>
                       </div>
                     </div>
                   </div>
@@ -378,7 +506,7 @@ export default function InquiryWizard({ isOpen, onClose, preselectedFlavor, pres
 
             {/* STEP 3: LOGISTICS & SUBMIT */}
             {step === 3 && (
-              <div className="space-y-4 animate-fade-in">
+              <div className="space-y-4 animate-fade-in font-sans">
                 <div>
                   <label className="block text-xs font-semibold uppercase tracking-wider text-gray-700 mb-1.5">Your Full Name</label>
                   <div className="relative">
@@ -394,7 +522,7 @@ export default function InquiryWizard({ isOpen, onClose, preselectedFlavor, pres
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
                   <div>
                     <label className="block text-xs font-semibold uppercase tracking-wider text-gray-700 mb-1.5">Email Address</label>
                     <div className="relative">
@@ -405,7 +533,22 @@ export default function InquiryWizard({ isOpen, onClose, preselectedFlavor, pres
                         value={formData.email}
                         onChange={(e) => setFormData({...formData, email: e.target.value})}
                         placeholder="email@example.com"
-                        className="w-full border border-gray-300 bg-white pl-10 pr-3 py-2 rounded focus:border-primary-brand focus:outline-none text-sm"
+                        className="w-full border border-gray-300 bg-white pl-10 pr-3 py-2 rounded focus:border-primary-brand focus:outline-none text-xs"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold uppercase tracking-wider text-gray-700 mb-1.5">Phone Number</label>
+                    <div className="relative">
+                      <Phone className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
+                      <input
+                        type="tel"
+                        required
+                        value={formData.phone}
+                        onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                        placeholder="(123) 456-7890"
+                        className="w-full border border-gray-300 bg-white pl-10 pr-3 py-2 rounded focus:border-primary-brand focus:outline-none text-xs"
                       />
                     </div>
                   </div>
@@ -419,13 +562,13 @@ export default function InquiryWizard({ isOpen, onClose, preselectedFlavor, pres
                         required
                         value={formData.date}
                         onChange={(e) => setFormData({...formData, date: e.target.value})}
-                        className="w-full border border-gray-300 bg-white pl-10 pr-3 py-2 rounded focus:border-primary-brand focus:outline-none text-sm"
+                        className="w-full border border-gray-300 bg-white pl-10 pr-3 py-2 rounded focus:border-primary-brand focus:outline-none text-xs"
                       />
                     </div>
                   </div>
                 </div>
 
-                <div className="rounded border border-emerald-100 bg-emerald-50/30 p-3 text-xs text-emerald-800 leading-normal font-sans">
+                <div className="rounded border border-emerald-100 bg-emerald-50/30 p-3 text-xs text-emerald-800 leading-normal font-sans font-medium">
                   <strong>Secure Consultation:</strong> We never charge you at inquiry! Final specs are personalized by our culinary team. Placing this inquiry guarantees your date slot booking.
                 </div>
               </div>

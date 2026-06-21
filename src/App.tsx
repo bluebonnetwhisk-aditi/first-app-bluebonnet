@@ -15,7 +15,7 @@ import MenuPage from "./components/MenuPage";
 import AboutPage from "./components/AboutPage";
 
 // Modals
-import TalkToKitchenModal from "./components/TalkToKitchenModal";
+import InquiryWizard from "./components/InquiryWizard";
 
 
 export default function App() {
@@ -27,7 +27,12 @@ export default function App() {
   const [newsletterEmail, setNewsletterEmail] = useState("");
   const [newsletterAlert, setNewsletterAlert] = useState(false);
 
-  const handleOpenWizard = (..._args: any[]) => {
+  const [selectedFlavor, setSelectedFlavor] = useState<string>("");
+  const [selectedCategory, setSelectedCategory] = useState<string>("");
+
+  const handleOpenWizard = (flavor?: string, category?: string) => {
+    setSelectedFlavor(flavor || "");
+    setSelectedCategory(category || "");
     setIsWizardOpen(true);
   };
 
@@ -307,9 +312,11 @@ export default function App() {
       {/* ── MODALS & OVERLAYS ── */}
 
       {/* Complete Inquiry wizard modal */}
-      <TalkToKitchenModal 
+      <InquiryWizard 
         isOpen={isWizardOpen} 
-        onClose={() => setIsWizardOpen(false)} 
+        onClose={() => setIsWizardOpen(false)}
+        preselectedFlavor={selectedFlavor}
+        preselectedCategory={selectedCategory}
       />
 
 

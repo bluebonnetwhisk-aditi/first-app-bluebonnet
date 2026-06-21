@@ -210,9 +210,7 @@ export default function LiveCountersPage({ onOpenWizard }: LiveCountersPageProps
             </p>
             <div className="flex flex-col lg:flex-row justify-center gap-4 pt-4">
               <button 
-                onClick={() => {
-                  window.location.href = "mailto:bluebonnetwhisk@gmail.com?subject=Custom%20Celebration%20Inquiry";
-                }}
+                onClick={() => onOpenWizard("", "Catering")}
                 className="w-full lg:w-auto bg-[#775a19] hover:bg-[#5d4201] text-white font-sans text-xs uppercase tracking-widest font-bold px-8 py-4 rounded shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
               >
                 REQUEST CUSTOM PROPOSAL <ArrowRight className="h-4 w-4" />
