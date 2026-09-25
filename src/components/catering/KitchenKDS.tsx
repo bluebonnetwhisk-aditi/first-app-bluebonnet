@@ -14,7 +14,8 @@ import {
   X,
   ArrowRight,
   Package,
-  DollarSign
+  DollarSign,
+  KeyRound
 } from 'lucide-react';
 import type { CateringOrder, OrderStatus } from '../../types/catering';
 import { getCentralTimeNow, getUpcomingDates } from '../../utils/centralTime';
@@ -24,16 +25,35 @@ interface KitchenKDSProps {
   onBackToOrder?: () => void;
 }
 
-const DEFAULT_PIN = '1234';
+const MASTER_PIN_STORAGE_KEY = 'bbw_kds_master_pin_v1';
+const DEFAULT_INITIAL_PIN = '031686';
 const PIN_STORAGE_KEY = 'bbw_kds_unlocked_session';
 
 export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
   // Authentication PIN state
+  const [masterPin, setMasterPin] = useState<string>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem(MASTER_PIN_STORAGE_KEY);
+      if (saved) return saved;
+      localStorage.setItem(MASTER_PIN_STORAGE_KEY, DEFAULT_INITIAL_PIN);
+      return DEFAULT_INITIAL_PIN;
+    }
+    return DEFAULT_INITIAL_PIN;
+  });
+
   const [isUnlocked, setIsUnlocked] = useState<boolean>(() => {
     return sessionStorage.getItem(PIN_STORAGE_KEY) === 'true';
   });
   const [pinInput, setPinInput] = useState('');
   const [pinError, setPinError] = useState(false);
+
+  // Change PIN modal state
+  const [showChangePinModal, setShowChangePinModal] = useState(false);
+  const [currentPinInput, setCurrentPinInput] = useState('');
+  const [newPinInput, setNewPinInput] = useState('');
+  const [confirmPinInput, setConfirmPinInput] = useState('');
+  const [pinChangeError, setPinChangeError] = useState('');
+  const [pinChangeSuccess, setPinChangeSuccess] = useState(false);
 
   // Date Filter state: Defaults to today in America/Chicago
   const { dateStr: todayDateStr } = getCentralTimeNow();
@@ -76,7 +96,7 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
   // Handle PIN entry
   const handlePinSubmit = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    if (pinInput.trim() === DEFAULT_PIN) {
+    if (pinInput.trim() === masterPin) {
       setIsUnlocked(true);
       sessionStorage.setItem(PIN_STORAGE_KEY, 'true');
       setPinError(false);
@@ -85,6 +105,43 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
       setPinError(true);
       setPinInput('');
     }
+  };
+
+  // Handle PIN Update
+  const handleChangePin = (e: React.FormEvent) => {
+    e.preventDefault();
+    setPinChangeError('');
+
+    if (currentPinInput.trim() !== masterPin) {
+      setPinChangeError('Current PIN is incorrect.');
+      return;
+    }
+
+    const cleanNew = newPinInput.trim();
+    if (cleanNew.length < 4 || cleanNew.length > 8) {
+      setPinChangeError('New PIN must be between 4 and 8 digits.');
+      return;
+    }
+
+    if (cleanNew !== confirmPinInput.trim()) {
+      setPinChangeError('New PIN and Confirmation do not match.');
+      return;
+    }
+
+    // Persist new PIN
+    setMasterPin(cleanNew);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(MASTER_PIN_STORAGE_KEY, cleanNew);
+    }
+
+    setPinChangeSuccess(true);
+    setCurrentPinInput('');
+    setNewPinInput('');
+    setConfirmPinInput('');
+    setTimeout(() => {
+      setShowChangePinModal(false);
+      setPinChangeSuccess(false);
+    }, 1500);
   };
 
   const handleLock = () => {
@@ -181,22 +238,22 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
             Kitchen KDS Protected
           </h2>
           <p className="text-xs text-gray-500 mt-1 mb-6">
-            Authorized BlueBonnet Whisk kitchen staff only. Please enter your 4-digit PIN.
+            Authorized BlueBonnet Whisk kitchen staff only. Please enter your kitchen access PIN.
           </p>
 
           <form onSubmit={handlePinSubmit} className="space-y-4">
             <div>
               <input
                 type="password"
-                maxLength={4}
+                maxLength={8}
                 autoFocus
-                placeholder="••••"
+                placeholder="••••••"
                 value={pinInput}
                 onChange={(e) => {
                   setPinInput(e.target.value.replace(/\D/g, ''));
                   setPinError(false);
                 }}
-                className={`w-44 text-center text-3xl font-mono tracking-widest py-3 border rounded-xl focus:outline-none focus:ring-2 ${
+                className={`w-52 text-center text-3xl font-mono tracking-widest py-3 border rounded-xl focus:outline-none focus:ring-2 ${
                   pinError 
                     ? 'border-rose-500 focus:ring-rose-200 bg-rose-50' 
                     : 'border-gray-300 focus:ring-[#00346f]/20 focus:border-[#00346f]'
@@ -204,7 +261,7 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
               />
               {pinError && (
                 <p className="text-xs text-rose-600 mt-2 font-semibold">
-                  Invalid PIN. Default PIN: 1234
+                  Incorrect PIN. Please try again.
                 </p>
               )}
             </div>
@@ -219,7 +276,7 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
                     if (val === 'Clear') setPinInput('');
                     else if (val === 'Enter') handlePinSubmit();
                     else if (typeof val === 'number') {
-                      if (pinInput.length < 4) setPinInput(prev => prev + val);
+                      if (pinInput.length < 8) setPinInput(prev => prev + val);
                     }
                   }}
                   className="py-2.5 rounded-lg bg-gray-50 hover:bg-gray-150 border border-gray-200 text-sm font-bold text-gray-800 transition-colors cursor-pointer"
@@ -247,10 +304,6 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
               )}
             </div>
           </form>
-
-          <p className="text-[11px] text-gray-400 mt-6">
-            Default Master Kitchen PIN: <span className="font-mono font-bold text-gray-700">1234</span>
-          </p>
         </div>
       </div>
     );
@@ -290,6 +343,22 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
             >
               <Printer className="w-4 h-4" />
               <span>Kitchen Prep Sheet</span>
+            </button>
+
+            <button
+              onClick={() => {
+                setShowChangePinModal(true);
+                setCurrentPinInput('');
+                setNewPinInput('');
+                setConfirmPinInput('');
+                setPinChangeError('');
+                setPinChangeSuccess(false);
+              }}
+              className="inline-flex items-center gap-1.5 border border-amber-300 hover:bg-amber-50 text-amber-900 px-3 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer"
+              title="Change Kitchen Access PIN"
+            >
+              <KeyRound className="w-3.5 h-3.5 text-amber-700" />
+              <span>Change PIN</span>
             </button>
 
             <button
@@ -769,6 +838,115 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
                 Close Prep Sheet
               </button>
             </div>
+
+          </div>
+        </div>
+      )}
+
+      {/* ── CHANGE MASTER PIN MODAL ── */}
+      {showChangePinModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-xs p-4 animate-fade-in font-sans">
+          <div className="relative w-full max-w-md bg-white rounded-2xl shadow-2xl border border-gray-200 overflow-hidden p-6 sm:p-7">
+            
+            <button
+              onClick={() => setShowChangePinModal(false)}
+              className="absolute top-4 right-4 p-1 rounded-full text-gray-400 hover:text-gray-700"
+              aria-label="Close"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="flex items-center gap-3 text-[#00346f] mb-4">
+              <div className="p-2.5 rounded-xl bg-amber-50 text-amber-700">
+                <KeyRound className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="font-serif font-bold text-lg sm:text-xl">Update Kitchen PIN</h3>
+                <p className="text-xs text-gray-500">Change your master kitchen passcode</p>
+              </div>
+            </div>
+
+            {pinChangeSuccess ? (
+              <div className="py-6 text-center space-y-2">
+                <div className="w-12 h-12 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto">
+                  <CheckCircle2 className="w-8 h-8" />
+                </div>
+                <h4 className="font-bold text-sm text-emerald-900">PIN Updated Successfully!</h4>
+                <p className="text-xs text-emerald-700">New passcode has been stored securely.</p>
+              </div>
+            ) : (
+              <form onSubmit={handleChangePin} className="space-y-4 text-xs">
+                
+                {pinChangeError && (
+                  <div className="p-2.5 bg-rose-50 border border-rose-200 text-rose-800 rounded-xl text-xs flex items-center gap-2">
+                    <AlertTriangle className="w-4 h-4 shrink-0 text-rose-600" />
+                    <span>{pinChangeError}</span>
+                  </div>
+                )}
+
+                <div>
+                  <label className="block text-xs font-semibold text-gray-700 mb-1">
+                    Current PIN
+                  </label>
+                  <input
+                    type="password"
+                    maxLength={8}
+                    required
+                    placeholder="Enter current PIN"
+                    value={currentPinInput}
+                    onChange={(e) => setCurrentPinInput(e.target.value.replace(/\D/g, ''))}
+                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs focus:outline-none focus:bg-white focus:border-[#00346f]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-gray-700 mb-1">
+                    New PIN (4–8 digits)
+                  </label>
+                  <input
+                    type="password"
+                    maxLength={8}
+                    required
+                    placeholder="Enter new PIN"
+                    value={newPinInput}
+                    onChange={(e) => setNewPinInput(e.target.value.replace(/\D/g, ''))}
+                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs focus:outline-none focus:bg-white focus:border-[#00346f]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-gray-700 mb-1">
+                    Confirm New PIN
+                  </label>
+                  <input
+                    type="password"
+                    maxLength={8}
+                    required
+                    placeholder="Re-enter new PIN"
+                    value={confirmPinInput}
+                    onChange={(e) => setConfirmPinInput(e.target.value.replace(/\D/g, ''))}
+                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs focus:outline-none focus:bg-white focus:border-[#00346f]"
+                  />
+                </div>
+
+                <div className="pt-2 flex justify-end gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowChangePinModal(false)}
+                    className="px-4 py-2 border border-gray-300 rounded-xl text-xs font-semibold text-gray-600 hover:bg-gray-50 cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="bg-[#00346f] hover:bg-[#00224d] text-white px-5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-xs cursor-pointer"
+                  >
+                    Update Passcode
+                  </button>
+                </div>
+
+              </form>
+            )}
 
           </div>
         </div>
