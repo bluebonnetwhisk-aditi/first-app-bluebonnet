@@ -129,7 +129,7 @@ export default function Home({ onOpenWizard, onOpenBaker, onNavigate }: HomeProp
         "Tandoor griddle naan breads"
       ],
       cta: "Estimate Tray Portions",
-      category: "Menu",
+      category: "Catering",
       highlighted: false
     }
   ];
@@ -209,10 +209,10 @@ export default function Home({ onOpenWizard, onOpenBaker, onNavigate }: HomeProp
                 CHAT WITH THE CHEF
               </a>
               <button 
-                onClick={() => onNavigate("Menu")}
+                onClick={() => onNavigate("Catering")}
                 className="px-8 py-4 glass-panel hover:bg-white/10 text-white text-xs font-bold tracking-widest uppercase rounded transition-all cursor-pointer"
               >
-                VIEW DIGITAL MENU
+                VIEW CATERING &amp; ESTIMATES
               </button>
             </div>
           </motion.div>
@@ -469,10 +469,10 @@ export default function Home({ onOpenWizard, onOpenBaker, onNavigate }: HomeProp
                     <p className="text-2xl font-serif font-bold text-brand-gold-tint">{rec.price}</p>
                   </div>
                   <button
-                    onClick={() => onNavigate("Menu")}
+                    onClick={() => onNavigate("Catering")}
                     className="bg-[#775a19] hover:bg-[#5d4201] text-white px-4 py-2 rounded text-[10px] uppercase tracking-wider font-bold transition-all"
                   >
-                    Customize Menu
+                    Customize Catering
                   </button>
                 </div>
               </div>
@@ -600,8 +600,8 @@ export default function Home({ onOpenWizard, onOpenBaker, onNavigate }: HomeProp
                 <div className="mt-8 pt-4">
                   <button
                     onClick={() => {
-                      if (tier.category === "Menu") {
-                        onNavigate("Menu");
+                      if (tier.category === "Catering") {
+                        onNavigate("Catering");
                       } else {
                         onOpenWizard("", tier.category);
                       }

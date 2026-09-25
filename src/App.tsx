@@ -13,7 +13,6 @@ import CakesPage from "./components/CakesPage";
 import CateringContainer from "./components/catering/CateringContainer";
 import LiveCountersPage from "./components/LiveCountersPage";
 import GiftingPage from "./components/GiftingPage";
-import MenuPage from "./components/MenuPage";
 import AboutPage from "./components/AboutPage";
 
 // Modals
@@ -24,9 +23,8 @@ export default function App() {
   const [activeTab, setActiveTab] = useState(() => {
     if (typeof window !== "undefined") {
       const path = window.location.pathname.toLowerCase();
-      if (path.startsWith("/catering")) return "Catering";
+      if (path.startsWith("/catering") || path.startsWith("/menu")) return "Catering";
       if (path.startsWith("/cakes")) return "Cakes";
-      if (path.startsWith("/menu")) return "Menu";
       if (path.startsWith("/about")) return "About";
     }
     return "Home";
@@ -85,9 +83,8 @@ export default function App() {
   useEffect(() => {
     const handlePopState = () => {
       const path = window.location.pathname.toLowerCase();
-      if (path.startsWith("/catering")) setActiveTab("Catering");
+      if (path.startsWith("/catering") || path.startsWith("/menu")) setActiveTab("Catering");
       else if (path.startsWith("/cakes")) setActiveTab("Cakes");
-      else if (path.startsWith("/menu")) setActiveTab("Menu");
       else if (path.startsWith("/about")) setActiveTab("About");
       else setActiveTab("Home");
     };
@@ -101,7 +98,6 @@ export default function App() {
     { name: "Catering", id: "Catering" },
     { name: "Custom Party Packages", id: "Live Counters" },
     { name: "Lux Gifting", id: "Gifting" },
-    { name: "Price Guide", id: "Menu" },
     { name: "About Us", id: "About" }
   ];
 
@@ -213,15 +209,6 @@ export default function App() {
         )}
         {activeTab === "Gifting" && (
           <GiftingPage onOpenWizard={handleOpenWizard} />
-        )}
-        {activeTab === "Menu" && (
-          <MenuPage 
-            selectedItems={selectedCateringItems}
-            setSelectedItems={setSelectedCateringItems}
-            appliedAddons={appliedCateringAddons}
-            setAppliedAddons={setAppliedCateringAddons}
-            onOpenWizard={handleOpenWizard}
-          />
         )}
         {activeTab === "About" && (
           <AboutPage />
