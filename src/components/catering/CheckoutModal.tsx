@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { 
   X, 
   Calendar as CalendarIcon, 
@@ -8,17 +8,20 @@ import {
   Send, 
   Truck, 
   Store,
-  MapPin
+  CreditCard,
+  Banknote,
+  QrCode
 } from 'lucide-react';
-import type { CartItem, CateringOrder, OrderType } from '../../types/catering';
+import type { CartItem, CateringOrder, OrderType, PaymentMethod } from '../../types/catering';
 import { 
-  getCentralTimeNow, 
   getRequiredNoticeHours, 
   validateFulfillmentCutoff,
   getUpcomingDates,
   isDateSelectable
 } from '../../utils/centralTime';
 import { fetchCalendarBlackouts, createOrder } from '../../services/supabase';
+import { buildOrderWhatsAppUrl } from '../../utils/whatsapp';
+import AddressValidationInput from './AddressValidationInput';
 
 interface CheckoutModalProps {
   isOpen: boolean;
@@ -45,6 +48,8 @@ export default function CheckoutModal({
   setIsDelivery,
   onOrderSuccess
 }: CheckoutModalProps) {
+  const modalBodyRef = useRef<HTMLDivElement>(null);
+
   // Customer Form state
   const [customerName, setCustomerName] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
@@ -55,6 +60,9 @@ export default function CheckoutModal({
   const [deliveryZip, setDeliveryZip] = useState('');
   const [isSatvikRequested, setIsSatvikRequested] = useState(false);
   const [dietaryNotes, setDietaryNotes] = useState('');
+
+  // Payment Method: 'cash' | 'zelle' | 'credit_card'
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('zelle');
 
   // Date & Time state
   const [blackouts, setBlackouts] = useState<string[]>([]);
@@ -71,15 +79,38 @@ export default function CheckoutModal({
     if (isOpen) {
       fetchCalendarBlackouts().then(dates => {
         setBlackouts(dates);
+
+        // Find earliest valid date & time slot satisfying notice cutoff in Central Time
+        const check = validateFulfillmentCutoff('', '', dates, cart);
+        let safeDate = check.earliestAllowedDate;
+        let safeTimeSlot = '12:30 PM';
+
+        // Check if safeDate is selectable and not blacked out; step forward if needed
+        const d = new Date(safeDate + 'T12:00:00');
+        for (let offset = 0; offset < 30; offset++) {
+          const candidate = new Date(d.getTime() + offset * 24 * 60 * 60 * 1000);
+          const y = candidate.getFullYear();
+          const m = (candidate.getMonth() + 1).toString().padStart(2, '0');
+          const day = candidate.getDate().toString().padStart(2, '0');
+          const dateStr = `${y}-${m}-${day}`;
+          if (isDateSelectable(dateStr, dates, cart).selectable) {
+            safeDate = dateStr;
+            break;
+          }
+        }
+
+        // Find earliest valid time slot for safeDate
+        for (const slot of TIME_SLOTS) {
+          const testCheck = validateFulfillmentCutoff(safeDate, slot, dates, cart);
+          if (testCheck.isValid) {
+            safeTimeSlot = slot;
+            break;
+          }
+        }
+
+        setFulfillmentDate(safeDate);
+        setFulfillmentTime(safeTimeSlot);
       });
-      // Default to earliest safe date
-      const noticeHours = getRequiredNoticeHours(cart);
-      const { nowDate } = getCentralTimeNow();
-      const safeDateObj = new Date(nowDate.getTime() + noticeHours * 60 * 60 * 1000 + 4 * 60 * 60 * 1000);
-      const y = safeDateObj.getFullYear();
-      const m = (safeDateObj.getMonth() + 1).toString().padStart(2, '0');
-      const d = safeDateObj.getDate().toString().padStart(2, '0');
-      setFulfillmentDate(`${y}-${m}-${d}`);
     }
   }, [isOpen, cart]);
 
@@ -94,7 +125,13 @@ export default function CheckoutModal({
   const foodSubtotal = cart.reduce((sum, item) => sum + item.totalPrice, 0);
   const deliveryFee = isDelivery ? 50.00 : 0.00;
   const taxAmount = Math.round((foodSubtotal + deliveryFee) * 0.0825 * 100) / 100;
-  const totalAmount = Math.round((foodSubtotal + deliveryFee + taxAmount) * 100) / 100;
+
+  // Credit Card 3.5% Processing Fee
+  const processingFee = paymentMethod === 'credit_card'
+    ? Math.round((foodSubtotal + deliveryFee + taxAmount) * 0.035 * 100) / 100
+    : 0.00;
+
+  const totalAmount = Math.round((foodSubtotal + deliveryFee + taxAmount + processingFee) * 100) / 100;
 
   // Format phone helper
   const handlePhoneChange = (val: string) => {
@@ -136,14 +173,22 @@ export default function CheckoutModal({
     }
 
     setFormErrors(errors);
-    return Object.keys(errors).length === 0;
+
+    if (Object.keys(errors).length > 0) {
+      setSubmissionError('Please complete all required fields: ' + Object.values(errors).join(' • '));
+      modalBodyRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+      return false;
+    }
+
+    setSubmissionError(null);
+    return true;
   };
 
   const handleSubmit = async (orderType: OrderType) => {
-    setSubmissionError(null);
     if (!validateForm()) return;
 
     setIsSubmitting(true);
+    setSubmissionError(null);
     try {
       const fullDeliveryAddress = isDelivery
         ? `${deliveryStreet.trim()}${deliveryApt.trim() ? `, Apt/Ste ${deliveryApt.trim()}` : ''}, ${deliveryCity.trim()}, TX ${deliveryZip.trim()}`
@@ -163,7 +208,10 @@ export default function CheckoutModal({
         delivery_fee: deliveryFee,
         food_subtotal: foodSubtotal,
         tax_amount: taxAmount,
+        payment_method: paymentMethod,
+        processing_fee: processingFee,
         total_amount: totalAmount,
+        order_description: cart.map(i => `${i.name}${i.notes ? ` [${i.notes}]` : ''} (${i.selectionLabel} × ${i.quantity}) [$${i.totalPrice.toFixed(2)}]`).join('; '),
         fulfillment_date: fulfillmentDate,
         fulfillment_time: fulfillmentTime,
         dietary_notes: fullDietaryNotes || null,
@@ -174,6 +222,13 @@ export default function CheckoutModal({
 
       const result = await createOrder(payload);
       if (result.data) {
+        // Automatically attempt sending notification to Desi Dabba via WhatsApp or SMS
+        try {
+          const waUrl = buildOrderWhatsAppUrl(result.data);
+          window.open(waUrl, '_blank');
+        } catch (e) {
+          console.warn('Auto notification popup prevented by browser', e);
+        }
         onOrderSuccess(result.data, orderType === 'estimate');
         onClose();
       } else {
@@ -210,7 +265,7 @@ export default function CheckoutModal({
         </div>
 
         {/* Modal Scrollable Body */}
-        <div className="p-6 overflow-y-auto space-y-6">
+        <div ref={modalBodyRef} className="p-6 overflow-y-auto space-y-6">
           
           {submissionError && (
             <div className="p-3 bg-rose-50 border border-rose-200 text-rose-800 rounded-xl text-xs flex items-center gap-2">
@@ -437,55 +492,25 @@ export default function CheckoutModal({
               )}
             </div>
 
-            {/* Delivery address (if Delivery selected) */}
+            {/* Interactive USPS Validated Delivery Address */}
             {isDelivery && (
-              <div className="bg-gray-50 p-4 rounded-xl border border-gray-200 space-y-3">
-                <span className="text-xs font-bold text-gray-800 flex items-center gap-1.5">
-                  <MapPin className="w-3.5 h-3.5 text-[#00346f]" />
-                  Delivery Destination
-                </span>
-
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                  <div className="sm:col-span-2">
-                    <input
-                      type="text"
-                      placeholder="Street Address (e.g. 4821 Legacy Dr)"
-                      value={deliveryStreet}
-                      onChange={(e) => setDeliveryStreet(e.target.value)}
-                      className={`w-full px-3 py-2 text-xs bg-white border rounded-xl focus:outline-none ${
-                        formErrors.deliveryStreet ? 'border-rose-500' : 'border-gray-200 focus:border-[#00346f]'
-                      }`}
-                    />
-                  </div>
-                  <div>
-                    <input
-                      type="text"
-                      placeholder="Apt / Suite / Bldg"
-                      value={deliveryApt}
-                      onChange={(e) => setDeliveryApt(e.target.value)}
-                      className="w-full px-3 py-2 text-xs bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-[#00346f]"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-2">
-                  <input
-                    type="text"
-                    placeholder="City (e.g. Frisco)"
-                    value={deliveryCity}
-                    onChange={(e) => setDeliveryCity(e.target.value)}
-                    className="w-full px-3 py-2 text-xs bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-[#00346f]"
-                  />
-                  <input
-                    type="text"
-                    placeholder="ZIP Code (e.g. 75034)"
-                    value={deliveryZip}
-                    onChange={(e) => setDeliveryZip(e.target.value)}
-                    className={`w-full px-3 py-2 text-xs bg-white border rounded-xl focus:outline-none ${
-                      formErrors.deliveryZip ? 'border-rose-500' : 'border-gray-200 focus:border-[#00346f]'
-                    }`}
-                  />
-                </div>
+              <div className="bg-gray-50 p-4 rounded-xl border border-gray-200">
+                <AddressValidationInput
+                  street={deliveryStreet}
+                  setStreet={setDeliveryStreet}
+                  apt={deliveryApt}
+                  setApt={setDeliveryApt}
+                  city={deliveryCity}
+                  setCity={setDeliveryCity}
+                  zip={deliveryZip}
+                  setZip={setDeliveryZip}
+                />
+                {formErrors.deliveryStreet && (
+                  <p className="text-[10px] text-rose-500 mt-1 font-semibold">{formErrors.deliveryStreet}</p>
+                )}
+                {formErrors.deliveryZip && (
+                  <p className="text-[10px] text-rose-500 mt-0.5 font-semibold">{formErrors.deliveryZip}</p>
+                )}
               </div>
             )}
 
@@ -522,7 +547,101 @@ export default function CheckoutModal({
             </div>
           </div>
 
-          {/* ── 4. ORDER SUMMARY & TOTAL BREAKDOWN ── */}
+          {/* ── 4. METHOD OF PAYMENT ── */}
+          <div className="space-y-3 pt-2">
+            <div className="flex items-center justify-between">
+              <h3 className="font-serif font-bold text-sm text-[#00346f]">
+                Method of Payment <span className="text-rose-500">*</span>
+              </h3>
+              <span className="text-[11px] text-gray-500 hidden sm:inline">
+                Select your preferred settlement method
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+              {/* Cash */}
+              <button
+                type="button"
+                onClick={() => setPaymentMethod('cash')}
+                className={`p-3.5 rounded-xl border text-left flex flex-col justify-between transition-all cursor-pointer ${
+                  paymentMethod === 'cash'
+                    ? 'border-[#00346f] bg-blue-50/70 text-[#00346f] ring-2 ring-[#00346f]/20 shadow-xs'
+                    : 'border-gray-200 hover:border-gray-300 bg-white text-gray-700'
+                }`}
+              >
+                <div className="flex items-center justify-between w-full">
+                  <Banknote className="w-5 h-5 text-emerald-600" />
+                  <span className="text-[10px] font-bold uppercase tracking-wider bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full">
+                    0% Fee
+                  </span>
+                </div>
+                <div className="mt-2.5">
+                  <div className="text-xs font-bold text-gray-900">Cash Payment</div>
+                  <div className="text-[11px] text-gray-500 mt-0.5">Pay upon delivery or pickup</div>
+                </div>
+              </button>
+
+              {/* Zelle */}
+              <button
+                type="button"
+                onClick={() => setPaymentMethod('zelle')}
+                className={`p-3.5 rounded-xl border text-left flex flex-col justify-between transition-all cursor-pointer ${
+                  paymentMethod === 'zelle'
+                    ? 'border-[#00346f] bg-blue-50/70 text-[#00346f] ring-2 ring-[#00346f]/20 shadow-xs'
+                    : 'border-gray-200 hover:border-gray-300 bg-white text-gray-700'
+                }`}
+              >
+                <div className="flex items-center justify-between w-full">
+                  <QrCode className="w-5 h-5 text-purple-600" />
+                  <span className="text-[10px] font-bold uppercase tracking-wider bg-purple-100 text-purple-800 px-2 py-0.5 rounded-full">
+                    0% Fee
+                  </span>
+                </div>
+                <div className="mt-2.5">
+                  <div className="text-xs font-bold text-gray-900">Zelle Transfer</div>
+                  <div className="text-[11px] text-gray-500 mt-0.5">Direct bank-to-bank transfer</div>
+                </div>
+              </button>
+
+              {/* Credit Card */}
+              <button
+                type="button"
+                onClick={() => setPaymentMethod('credit_card')}
+                className={`p-3.5 rounded-xl border text-left flex flex-col justify-between transition-all cursor-pointer ${
+                  paymentMethod === 'credit_card'
+                    ? 'border-[#00346f] bg-blue-50/70 text-[#00346f] ring-2 ring-[#00346f]/20 shadow-xs'
+                    : 'border-gray-200 hover:border-gray-300 bg-white text-gray-700'
+                }`}
+              >
+                <div className="flex items-center justify-between w-full">
+                  <CreditCard className="w-5 h-5 text-blue-600" />
+                  <span className="text-[10px] font-bold uppercase tracking-wider bg-amber-100 text-amber-900 border border-amber-200 px-2 py-0.5 rounded-full">
+                    +3.5% Fee
+                  </span>
+                </div>
+                <div className="mt-2.5">
+                  <div className="text-xs font-bold text-gray-900">Credit / Debit Card</div>
+                  <div className="text-[11px] text-gray-500 mt-0.5">Visa, Mastercard, Amex (+3.5%)</div>
+                </div>
+              </button>
+            </div>
+
+            {paymentMethod === 'zelle' && (
+              <div className="p-3 bg-purple-50/70 border border-purple-200 rounded-xl text-xs text-purple-900 flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                <span>Zelle Recipient Phone: <strong>945-527-4566</strong> (Desi Dabba / Bluebonnet Whisk)</span>
+                <span className="text-[11px] font-semibold text-purple-700">Zero additional processing fees</span>
+              </div>
+            )}
+
+            {paymentMethod === 'credit_card' && (
+              <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-900 flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                <span>Credit Card Processing Surcharge (3.5%): <strong>+${processingFee.toFixed(2)}</strong></span>
+                <span className="text-[11px] text-amber-700">Calculated on subtotal, delivery, and tax</span>
+              </div>
+            )}
+          </div>
+
+          {/* ── 5. ORDER SUMMARY & TOTAL BREAKDOWN ── */}
           <div className="bg-gray-50 rounded-2xl p-4 border border-gray-200 space-y-2 text-xs">
             <div className="flex justify-between text-gray-600">
               <span>Food Subtotal ({cart.length} item kinds):</span>
@@ -536,6 +655,12 @@ export default function CheckoutModal({
               <span>Texas Sales Tax (8.25%):</span>
               <span className="font-bold text-gray-900">${taxAmount.toFixed(2)}</span>
             </div>
+            {paymentMethod === 'credit_card' && (
+              <div className="flex justify-between text-amber-800 font-bold">
+                <span>Card Processing Fee (3.5%):</span>
+                <span>+${processingFee.toFixed(2)}</span>
+              </div>
+            )}
             <div className="pt-2 border-t border-gray-200 flex justify-between items-baseline font-bold text-sm sm:text-base text-[#00346f]">
               <span>Grand Total:</span>
               <span className="font-serif text-xl sm:text-2xl">${totalAmount.toFixed(2)}</span>
@@ -545,31 +670,40 @@ export default function CheckoutModal({
         </div>
 
         {/* Footer Actions */}
-        <div className="p-4 sm:p-5 bg-gray-100 border-t border-gray-200 flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0">
-          <div className="text-[11px] text-gray-500 text-center sm:text-left">
-            <span>🔒 Direct Supabase Sync • Automatic Texas 8.25% Tax</span>
-          </div>
+        <div className="p-4 sm:p-5 bg-gray-100 border-t border-gray-200 flex flex-col gap-3 shrink-0">
+          {submissionError && (
+            <div className="p-3 bg-rose-50 border border-rose-200 text-rose-800 rounded-xl text-xs flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
+              <span>{submissionError}</span>
+            </div>
+          )}
 
-          <div className="flex items-center gap-2.5 w-full sm:w-auto">
-            <button
-              type="button"
-              disabled={isSubmitting}
-              onClick={() => handleSubmit('estimate')}
-              className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl border border-[#00346f] text-[#00346f] hover:bg-[#00346f]/10 text-xs font-bold uppercase tracking-wider transition-all cursor-pointer"
-            >
-              <FileText className="w-3.5 h-3.5" />
-              <span>Download / Save Estimate</span>
-            </button>
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div className="text-[11px] text-gray-500 text-center sm:text-left">
+              <span>🔒 Direct Supabase Sync • Automatic Texas 8.25% Tax</span>
+            </div>
 
-            <button
-              type="button"
-              disabled={isSubmitting}
-              onClick={() => handleSubmit('order')}
-              className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-5 py-2.5 rounded-xl bg-[#00346f] hover:bg-[#00224d] text-white text-xs font-bold uppercase tracking-wider transition-all shadow-md cursor-pointer hover:scale-101"
-            >
-              <Send className="w-3.5 h-3.5" />
-              <span>{isSubmitting ? 'Submitting...' : 'Submit Official Order'}</span>
-            </button>
+            <div className="flex items-center gap-2.5 w-full sm:w-auto">
+              <button
+                type="button"
+                disabled={isSubmitting}
+                onClick={() => handleSubmit('estimate')}
+                className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl border border-[#00346f] text-[#00346f] hover:bg-[#00346f]/10 text-xs font-bold uppercase tracking-wider transition-all cursor-pointer"
+              >
+                <FileText className="w-3.5 h-3.5" />
+                <span>Download / Save Estimate</span>
+              </button>
+
+              <button
+                type="button"
+                disabled={isSubmitting}
+                onClick={() => handleSubmit('order')}
+                className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-5 py-2.5 rounded-xl bg-[#00346f] hover:bg-[#00224d] text-white text-xs font-bold uppercase tracking-wider transition-all shadow-md cursor-pointer hover:scale-101"
+              >
+                <Send className="w-3.5 h-3.5" />
+                <span>{isSubmitting ? 'Submitting...' : 'Submit Order'}</span>
+              </button>
+            </div>
           </div>
         </div>
 

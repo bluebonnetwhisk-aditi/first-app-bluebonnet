@@ -4,51 +4,149 @@ import {
   Plus, 
   Minus, 
   Filter, 
-  Sparkles,
-  Utensils,
-  Coffee,
-  Cake,
-  Flame
+  Check, 
+  Sparkles, 
+  Utensils, 
+  Coffee, 
+  Cake as CakeIcon, 
+  Flame, 
+  ChevronDown, 
+  ChevronUp,
+  Trash2,
+  SlidersHorizontal,
+  ChevronsUpDown
 } from 'lucide-react';
 import type { CartItem, Category, MenuItem, TraySize, Allergen } from '../../types/catering';
 import { DESI_DABBA_ITEMS } from '../../data/desiDabbaMenu';
+import CakeConfigurator from './CakeConfigurator';
 
 interface MenuOrderGridProps {
   cart: CartItem[];
   onUpdateCartItem: (
     menuItem: MenuItem,
-    selectionType: TraySize | 'pack_30' | 'gallon' | 'cake_custom',
+    selectionType: TraySize | 'pack_30' | 'pieces' | 'gallon' | 'cake_custom',
     quantity: number,
     selectionLabel: string,
-    unitPrice: number
+    unitPrice: number,
+    customNotes?: string
   ) => void;
+  onRemoveCartItem?: (cartItemId: string) => void;
 }
 
-const CATEGORY_TABS: { key: Category | 'all'; label: string; icon: any }[] = [
-  { key: 'all', label: 'Full Menu', icon: Utensils },
-  { key: 'mains', label: 'Paneer & Mains', icon: Flame },
-  { key: 'sabzi', label: 'Dry Sabzi', icon: Utensils },
-  { key: 'dal', label: 'Dal & Curries', icon: Flame },
-  { key: 'starters', label: 'Starters & Indo-Chinese', icon: Utensils },
-  { key: 'rice', label: 'Rice & Sides', icon: Utensils },
-  { key: 'desserts', label: 'Desserts', icon: Sparkles },
-  { key: 'breads', label: 'Breads (30 pcs)', icon: Utensils },
-  { key: 'beverages', label: 'Beverages (Gallon)', icon: Coffee },
-  { key: 'cakes', label: 'Custom Cakes', icon: Cake },
+interface SectionDef {
+  key: string;
+  category: Category;
+  title: string;
+  subtitle: string;
+  icon: any;
+  customComponent?: 'cakeConfigurator';
+}
+
+const MENU_SECTIONS: SectionDef[] = [
+  {
+    key: 'mains',
+    category: 'mains',
+    title: 'Paneer & Premium Mains',
+    subtitle: 'Royal gravies, cottage cheese specialties & vegetarian curries',
+    icon: Flame
+  },
+  {
+    key: 'dal',
+    category: 'dal',
+    title: 'Dal & Curries',
+    subtitle: 'Slow-simmered lentils, Amritsari chole, rajma & halwai curries',
+    icon: Flame
+  },
+  {
+    key: 'sabzi',
+    category: 'sabzi',
+    title: 'Dry Sabzi',
+    subtitle: 'Homestyle spiced garden vegetables, aloo gobhi & roasted bharwa baingan',
+    icon: Utensils
+  },
+  {
+    key: 'rice',
+    category: 'rice',
+    title: 'Rice',
+    subtitle: 'Aromatic basmati specialties, jeera rice & vegetable pulao',
+    icon: Utensils
+  },
+  {
+    key: 'sides',
+    category: 'sides',
+    title: 'Sides',
+    subtitle: 'Cooling whipped yogurts, boondi raita & fresh garden salads',
+    icon: Utensils
+  },
+  {
+    key: 'starters',
+    category: 'starters',
+    title: 'Starters & Indo-Chinese',
+    subtitle: 'Wok-tossed noodles, manchurian, crispy pakodas & street chaat',
+    icon: Utensils
+  },
+  {
+    key: 'breads',
+    category: 'breads',
+    title: 'Breads (Min. 30 pieces)',
+    subtitle: 'Poori, Methi Poori ($0.90/pc) • Naan, Garlic Naan, Dal Kachori, Bedmi Poori ($1.40/pc)',
+    icon: Utensils
+  },
+  {
+    key: 'desserts',
+    category: 'desserts',
+    title: 'Desserts',
+    subtitle: 'Slow-cooked kheer, dry fruit halwa, shahi tukda & warm gulab jamun',
+    icon: Sparkles
+  },
+  {
+    key: 'beverages',
+    category: 'beverages',
+    title: 'Beverages (Per Gallon)',
+    subtitle: 'Mango lassi, spiced masala chaas & fresh brewed masala chai (~16–20 servings)',
+    icon: Coffee
+  },
+  {
+    key: 'cakes',
+    category: 'cakes',
+    title: 'Cakes & Specialty Bakes Configurator',
+    subtitle: 'Artisan 6″ & 8″ celebration cakes (Eggless, 48 hrs advance notice)',
+    icon: CakeIcon,
+    customComponent: 'cakeConfigurator'
+  }
 ];
 
-export default function MenuOrderGrid({ cart, onUpdateCartItem }: MenuOrderGridProps) {
-  const [selectedCategory, setSelectedCategory] = useState<Category | 'all'>('all');
+export default function MenuOrderGrid({ 
+  cart, 
+  onUpdateCartItem, 
+  onRemoveCartItem 
+}: MenuOrderGridProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [allergenFilter, setAllergenFilter] = useState<Allergen[]>([]);
   const [satvikOnly, setSatvikOnly] = useState(false);
 
-  // Helper to get current quantity of a specific selection in cart
-  const getItemQuantity = (menuItemId: string, selectionType: string): number => {
-    const item = cart.find(
-      c => c.menuItemId === menuItemId && c.selectionType === selectionType
-    );
-    return item ? item.quantity : 0;
+  // Accordion open/collapse state (all open by default)
+  const [openSections, setOpenSections] = useState<Record<string, boolean>>(() => {
+    const initial: Record<string, boolean> = {};
+    MENU_SECTIONS.forEach(s => { initial[s.key] = true; });
+    return initial;
+  });
+
+  // Toggle single section
+  const toggleSection = (key: string) => {
+    setOpenSections(prev => ({
+      ...prev,
+      [key]: !prev[key]
+    }));
+  };
+
+  // Expand all / Collapse all toggle
+  const allOpen = Object.values(openSections).every(Boolean);
+  const toggleAllSections = () => {
+    const nextState = !allOpen;
+    const updated: Record<string, boolean> = {};
+    MENU_SECTIONS.forEach(s => { updated[s.key] = nextState; });
+    setOpenSections(updated);
   };
 
   // Helper to toggle allergen filter
@@ -58,50 +156,119 @@ export default function MenuOrderGrid({ cart, onUpdateCartItem }: MenuOrderGridP
     );
   };
 
-  // Filtered dishes
-  const filteredItems = useMemo(() => {
-    return DESI_DABBA_ITEMS.filter(item => {
-      // Category check
-      if (selectedCategory !== 'all') {
-        if (selectedCategory === 'rice' && (item.category === 'rice' || item.category === 'sides')) {
-          // keep
-        } else if (item.category !== selectedCategory) {
+  // Helper to get current quantity of a specific selection in cart
+  const getItemQuantity = (menuItemId: string, selectionType: string): number => {
+    const item = cart.find(
+      c => c.menuItemId === menuItemId && c.selectionType === selectionType
+    );
+    return item ? item.quantity : 0;
+  };
+
+  // Filter dishes by search and dietary filters
+  const filteredDishesBySection = useMemo(() => {
+    const map: Record<string, MenuItem[]> = {};
+
+    MENU_SECTIONS.forEach(section => {
+      if (section.customComponent === 'cakeConfigurator') {
+        map[section.key] = [];
+        return;
+      }
+
+      const dishes = DESI_DABBA_ITEMS.filter(item => {
+        // Category check
+        if (item.category !== section.category) return false;
+
+        // Search query
+        if (searchQuery.trim()) {
+          const q = searchQuery.toLowerCase();
+          const matchesName = item.name.toLowerCase().includes(q);
+          const matchesDesc = item.description.toLowerCase().includes(q);
+          const matchesTier = item.tier?.toLowerCase().includes(q);
+          if (!matchesName && !matchesDesc && !matchesTier) return false;
+        }
+
+        // Allergen filter (exclude forbidden allergens)
+        if (allergenFilter.length > 0) {
+          const hasForbidden = allergenFilter.some(a => item.allergens.includes(a));
+          if (hasForbidden) return false;
+        }
+
+        // Satvik filter
+        if (satvikOnly && !item.isSatvikAvailable) {
           return false;
         }
-      }
 
-      // Search query
-      if (searchQuery.trim()) {
-        const q = searchQuery.toLowerCase();
-        const matchesName = item.name.toLowerCase().includes(q);
-        const matchesDesc = item.description.toLowerCase().includes(q);
-        const matchesTier = item.tier?.toLowerCase().includes(q);
-        if (!matchesName && !matchesDesc && !matchesTier) return false;
-      }
+        return true;
+      });
 
-      // Allergen filter (exclude items that have the selected allergens if user selected exclusion, or show only safe)
-      // Here: if allergen selected, show items containing that allergen OR exclude?
-      // Convention: User chooses allergens they want to filter or avoid
-      if (allergenFilter.length > 0) {
-        // Exclude items that contain any of the selected allergens (allergy avoidance)
-        const hasForbidden = allergenFilter.some(a => item.allergens.includes(a));
-        if (hasForbidden) return false;
-      }
-
-      // Satvik filter
-      if (satvikOnly && !item.isSatvikAvailable) {
-        return false;
-      }
-
-      return true;
+      map[section.key] = dishes;
     });
-  }, [selectedCategory, searchQuery, allergenFilter, satvikOnly]);
+
+    return map;
+  }, [searchQuery, allergenFilter, satvikOnly]);
+
+  // Handler for cake additions from CakeConfigurator
+  const handleAddCakeFromConfigurator = (cakeData: {
+    menuItemId: string;
+    name: string;
+    size: '6inch' | '8inch';
+    sizeLabel: string;
+    category: string;
+    categoryLabel: string;
+    flavor: string;
+    unitPrice: number;
+    quantity: number;
+    totalPrice: number;
+    inscription: string;
+    designNotes: string;
+    requestCustomTheme: boolean;
+    customThemeDetails?: string;
+  }) => {
+    const cakeMenuItem: MenuItem = {
+      id: cakeData.menuItemId,
+      name: cakeData.name,
+      category: 'cakes',
+      categoryLabel: 'Cakes & Specialty Bakes',
+      description: `${cakeData.flavor} - ${cakeData.sizeLabel}`,
+      allergens: ['G', 'D'],
+      pricingType: 'cake',
+      leadTimeHours: 48,
+      isSatvikAvailable: true
+    };
+
+    const noteSegments = [
+      `Flavor: ${cakeData.flavor}`,
+      cakeData.inscription ? `Inscription: "${cakeData.inscription}"` : null,
+      cakeData.requestCustomTheme 
+        ? `Custom Theme: ${cakeData.customThemeDetails || 'Quote Requested'}` 
+        : null,
+      cakeData.designNotes ? `Notes: ${cakeData.designNotes}` : null
+    ].filter(Boolean);
+
+    onUpdateCartItem(
+      cakeMenuItem,
+      'cake_custom',
+      cakeData.quantity,
+      cakeData.sizeLabel,
+      cakeData.unitPrice,
+      noteSegments.join(' | ')
+    );
+  };
+
+  // Scroll to section helper
+  const scrollToSection = (key: string) => {
+    setOpenSections(prev => ({ ...prev, [key]: true }));
+    const el = document.getElementById(`section-${key}`);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
 
   return (
-    <div id="catering-menu-grid" className="w-full font-sans">
+    <div id="catering-menu-grid" className="w-full font-sans space-y-6">
       
       {/* ── FILTER & SEARCH BAR ── */}
-      <div className="bg-white rounded-2xl border border-gray-200 p-4 mb-6 shadow-xs">
+      <div className="bg-white rounded-2xl border border-gray-200 p-4 shadow-xs">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           
           {/* Search Input */}
@@ -161,338 +328,621 @@ export default function MenuOrderGrid({ cart, onUpdateCartItem }: MenuOrderGridP
 
         </div>
 
-        {/* Category Navigation Pills */}
-        <div className="mt-4 pt-3 border-t border-gray-150 flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
-          {CATEGORY_TABS.map(tab => {
-            const Icon = tab.icon;
-            const isSelected = selectedCategory === tab.key;
-            return (
-              <button
-                key={tab.key}
-                onClick={() => setSelectedCategory(tab.key)}
-                className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer shrink-0 ${
-                  isSelected
-                    ? 'bg-[#00346f] text-white shadow-sm'
-                    : 'bg-gray-50 hover:bg-gray-100 text-gray-700 border border-gray-200'
-                }`}
-              >
-                <Icon className={`w-3.5 h-3.5 ${isSelected ? 'text-[#ffdea5]' : 'text-gray-500'}`} />
-                <span>{tab.label}</span>
-              </button>
-            );
-          })}
+        {/* Category Navigation Pills & Expand/Collapse All Button */}
+        <div className="mt-4 pt-3 border-t border-gray-150 flex flex-wrap items-center justify-between gap-2">
+          
+          {/* Quick jump pills */}
+          <div className="flex flex-wrap items-center gap-1.5 overflow-x-auto py-1">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-gray-500 mr-1 flex items-center gap-1">
+              <SlidersHorizontal className="w-3 h-3" /> Jump:
+            </span>
+            {MENU_SECTIONS.map(s => {
+              const cartItemsForSection = cart.filter(c => s.key === 'cakes' ? c.category === 'cakes' : c.category === s.category);
+              const count = cartItemsForSection.reduce((sum, item) => sum + item.quantity, 0);
+
+              return (
+                <button
+                  key={s.key}
+                  type="button"
+                  onClick={() => scrollToSection(s.key)}
+                  className={`px-2.5 py-1 rounded-lg text-xs font-semibold whitespace-nowrap transition-all border cursor-pointer flex items-center gap-1.5 ${
+                    count > 0
+                      ? 'bg-[#00346f] text-white border-[#00346f] shadow-2xs'
+                      : 'bg-gray-50 hover:bg-gray-100 text-gray-700 border-gray-200'
+                  }`}
+                >
+                  <span>{s.title.split(' ')[0]}</span>
+                  {count > 0 && (
+                    <span className="bg-[#ffdea5] text-[#00346f] text-[10px] font-black px-1.5 py-0.2 rounded-full">
+                      {count}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Toggle All Accordions button */}
+          <button
+            type="button"
+            onClick={toggleAllSections}
+            className="inline-flex items-center gap-1 text-xs font-bold text-[#00346f] hover:text-[#00224d] bg-blue-50/70 hover:bg-blue-100/70 border border-blue-200 px-3 py-1.5 rounded-xl cursor-pointer transition-all ml-auto"
+          >
+            <ChevronsUpDown className="w-3.5 h-3.5" />
+            <span>{allOpen ? 'Collapse All' : 'Expand All Sections'}</span>
+          </button>
+
         </div>
       </div>
 
-      {/* ── DISHES GRID ── */}
-      {filteredItems.length === 0 ? (
-        <div className="bg-white rounded-2xl border border-gray-200 p-12 text-center my-6">
-          <p className="text-gray-500 text-sm font-medium">
-            No dishes match your selected filters. Try clearing your search or allergen filters.
-          </p>
-          <button
-            onClick={() => {
-              setSearchQuery('');
-              setAllergenFilter([]);
-              setSatvikOnly(false);
-              setSelectedCategory('all');
-            }}
-            className="mt-3 text-xs font-bold text-[#00346f] underline cursor-pointer"
-          >
-            Reset all filters
-          </button>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {filteredItems.map(item => {
-            // Check if any quantity of this dish is in cart
-            const totalDishCount = cart
-              .filter(c => c.menuItemId === item.id)
-              .reduce((sum, c) => sum + c.quantity, 0);
+      {/* ── COLLAPSIBLE MENU SECTIONS ACCORDIONS ── */}
+      <div className="space-y-6">
+        {MENU_SECTIONS.map(section => {
+          const isOpen = openSections[section.key] ?? true;
+          const dishes = filteredDishesBySection[section.key] || [];
+          const Icon = section.icon;
 
-            return (
-              <div
-                key={item.id}
-                className={`bg-white rounded-2xl border transition-all p-5 flex flex-col justify-between ${
-                  totalDishCount > 0
-                    ? 'border-[#00346f] shadow-md ring-1 ring-[#00346f]/20 bg-blue-50/10'
-                    : 'border-gray-200 hover:border-[#775a19]/40 shadow-xs'
+          // Cart items for this section
+          const sectionCartItems = cart.filter(c => {
+            if (section.key === 'cakes') return c.category === 'cakes';
+            return c.category === section.category;
+          });
+          const sectionCartCount = sectionCartItems.reduce((s, i) => s + i.quantity, 0);
+          const sectionSubtotal = sectionCartItems.reduce((s, i) => s + i.totalPrice, 0);
+
+          // If search/filter is active and no dishes match in this section (and not cakes), hide section
+          const isFilterActive = searchQuery.trim() || allergenFilter.length > 0 || satvikOnly;
+          if (section.customComponent !== 'cakeConfigurator' && isFilterActive && dishes.length === 0) {
+            return null;
+          }
+
+          return (
+            <div 
+              key={section.key} 
+              id={`section-${section.key}`}
+              className="bg-white rounded-2xl border border-gray-200 shadow-xs overflow-hidden transition-all scroll-mt-28"
+            >
+              
+              {/* Accordion Header */}
+              <button
+                type="button"
+                onClick={() => toggleSection(section.key)}
+                className={`w-full p-4 sm:p-5 flex items-center justify-between text-left transition-colors cursor-pointer ${
+                  isOpen ? 'bg-gray-50/80 border-b border-gray-200' : 'bg-white hover:bg-gray-50'
                 }`}
               >
-                <div>
-                  {/* Top line: Name, Tier badge, Allergen pills */}
-                  <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <h3 className="font-serif font-bold text-base text-gray-900 leading-snug">
-                          {item.name}
-                        </h3>
-                        {item.tier && (
-                          <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${
-                            item.tier === 'Maharaja'
-                              ? 'bg-amber-100 text-amber-900 border border-amber-300'
-                              : item.tier === 'Darbari'
-                              ? 'bg-[#775a19]/10 text-[#775a19] border border-[#775a19]/25'
-                              : item.tier === 'Shahi'
-                              ? 'bg-[#00346f]/10 text-[#00346f] border border-[#00346f]/25'
-                              : 'bg-gray-100 text-gray-800 border border-gray-300'
-                          }`}>
-                            {item.tier}
-                          </span>
-                        )}
-                        {item.category === 'cakes' && (
-                          <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-rose-100 text-rose-800 border border-rose-200">
-                            48h Lead Time
-                          </span>
-                        )}
-                      </div>
-                      <p className="text-xs text-gray-500 mt-1 leading-relaxed">
-                        {item.description}
-                      </p>
-                    </div>
-
-                    {/* Allergens pills */}
-                    <div className="flex items-center gap-1 shrink-0">
-                      {item.allergens.map(a => (
-                        <span
-                          key={a}
-                          className="w-5 h-5 rounded-full bg-gray-100 text-gray-700 border border-gray-300 flex items-center justify-center font-mono font-bold text-[10px]"
-                          title={`Contains ${a}`}
-                        >
-                          {a}
-                        </span>
-                      ))}
-                    </div>
+                <div className="flex items-center gap-3">
+                  <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 border ${
+                    sectionCartCount > 0
+                      ? 'bg-[#00346f] text-[#ffdea5] border-[#00346f]'
+                      : 'bg-blue-50 text-[#00346f] border-blue-100'
+                  }`}>
+                    <Icon className="w-5 h-5" />
                   </div>
-
-                  {/* Dietary tags */}
-                  <div className="flex items-center gap-2 mt-2 text-[10px] font-medium text-gray-500">
-                    {item.isSatvikAvailable && (
-                      <span className="text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded">
-                        ✓ Satvik / Jain Option Available
-                      </span>
-                    )}
-                    {totalDishCount > 0 && (
-                      <span className="text-[#00346f] bg-blue-100 font-bold px-2 py-0.5 rounded">
-                        {totalDishCount} in Cart
-                      </span>
-                    )}
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-serif font-bold text-base sm:text-lg text-[#00346f]">
+                        {section.title}
+                      </h3>
+                      {section.customComponent !== 'cakeConfigurator' && (
+                        <span className="text-[11px] text-gray-500 font-sans">
+                          ({dishes.length} dishes)
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs text-gray-500 hidden sm:block mt-0.5">
+                      {section.subtitle}
+                    </p>
                   </div>
                 </div>
 
-                {/* ── STEPPER CONTROLS ── */}
-                <div className="mt-4 pt-3 border-t border-gray-100">
-                  {item.pricingType === 'tray' && item.trayPricing && (
-                    <div className="grid grid-cols-3 gap-2">
-                      
-                      {/* 1/3 Tray Stepper */}
-                      <div className="bg-gray-50 border border-gray-200 rounded-xl p-2 text-center flex flex-col justify-between">
-                        <div>
-                          <div className="text-[11px] font-bold text-gray-800">1/3 Tray</div>
-                          <div className="text-xs font-bold text-[#00346f]">${item.trayPricing.third}</div>
-                        </div>
-                        <div className="flex items-center justify-center gap-1.5 mt-2">
-                          <button
-                            onClick={() => {
-                              const curr = getItemQuantity(item.id, 'third');
-                              onUpdateCartItem(item, 'third', Math.max(0, curr - 1), '1/3 Tray', item.trayPricing!.third);
-                            }}
-                            className="w-6 h-6 rounded-md bg-white border border-gray-300 hover:bg-gray-100 flex items-center justify-center text-gray-700 cursor-pointer"
-                            aria-label={`Decrease 1/3 Tray of ${item.name}`}
-                          >
-                            <Minus className="w-3 h-3" />
-                          </button>
-                          <span className="w-5 text-center font-bold text-xs">
-                            {getItemQuantity(item.id, 'third')}
-                          </span>
-                          <button
-                            onClick={() => {
-                              const curr = getItemQuantity(item.id, 'third');
-                              onUpdateCartItem(item, 'third', curr + 1, '1/3 Tray', item.trayPricing!.third);
-                            }}
-                            className="w-6 h-6 rounded-md bg-[#00346f] hover:bg-[#00224d] text-white flex items-center justify-center cursor-pointer shadow-xs"
-                            aria-label={`Increase 1/3 Tray of ${item.name}`}
-                          >
-                            <Plus className="w-3 h-3" />
-                          </button>
-                        </div>
-                      </div>
-
-                      {/* Half Tray Stepper */}
-                      <div className="bg-gray-50 border border-gray-200 rounded-xl p-2 text-center flex flex-col justify-between">
-                        <div>
-                          <div className="text-[11px] font-bold text-gray-800">Half Tray</div>
-                          <div className="text-xs font-bold text-[#00346f]">${item.trayPricing.half}</div>
-                        </div>
-                        <div className="flex items-center justify-center gap-1.5 mt-2">
-                          <button
-                            onClick={() => {
-                              const curr = getItemQuantity(item.id, 'half');
-                              onUpdateCartItem(item, 'half', Math.max(0, curr - 1), 'Half Tray', item.trayPricing!.half);
-                            }}
-                            className="w-6 h-6 rounded-md bg-white border border-gray-300 hover:bg-gray-100 flex items-center justify-center text-gray-700 cursor-pointer"
-                            aria-label={`Decrease Half Tray of ${item.name}`}
-                          >
-                            <Minus className="w-3 h-3" />
-                          </button>
-                          <span className="w-5 text-center font-bold text-xs">
-                            {getItemQuantity(item.id, 'half')}
-                          </span>
-                          <button
-                            onClick={() => {
-                              const curr = getItemQuantity(item.id, 'half');
-                              onUpdateCartItem(item, 'half', curr + 1, 'Half Tray', item.trayPricing!.half);
-                            }}
-                            className="w-6 h-6 rounded-md bg-[#00346f] hover:bg-[#00224d] text-white flex items-center justify-center cursor-pointer shadow-xs"
-                            aria-label={`Increase Half Tray of ${item.name}`}
-                          >
-                            <Plus className="w-3 h-3" />
-                          </button>
-                        </div>
-                      </div>
-
-                      {/* Full Tray Stepper */}
-                      <div className="bg-gray-50 border border-gray-200 rounded-xl p-2 text-center flex flex-col justify-between">
-                        <div>
-                          <div className="text-[11px] font-bold text-gray-800">Full Tray</div>
-                          <div className="text-xs font-bold text-[#00346f]">${item.trayPricing.full}</div>
-                        </div>
-                        <div className="flex items-center justify-center gap-1.5 mt-2">
-                          <button
-                            onClick={() => {
-                              const curr = getItemQuantity(item.id, 'full');
-                              onUpdateCartItem(item, 'full', Math.max(0, curr - 1), 'Full Tray', item.trayPricing!.full);
-                            }}
-                            className="w-6 h-6 rounded-md bg-white border border-gray-300 hover:bg-gray-100 flex items-center justify-center text-gray-700 cursor-pointer"
-                            aria-label={`Decrease Full Tray of ${item.name}`}
-                          >
-                            <Minus className="w-3 h-3" />
-                          </button>
-                          <span className="w-5 text-center font-bold text-xs">
-                            {getItemQuantity(item.id, 'full')}
-                          </span>
-                          <button
-                            onClick={() => {
-                              const curr = getItemQuantity(item.id, 'full');
-                              onUpdateCartItem(item, 'full', curr + 1, 'Full Tray', item.trayPricing!.full);
-                            }}
-                            className="w-6 h-6 rounded-md bg-[#00346f] hover:bg-[#00224d] text-white flex items-center justify-center cursor-pointer shadow-xs"
-                            aria-label={`Increase Full Tray of ${item.name}`}
-                          >
-                            <Plus className="w-3 h-3" />
-                          </button>
-                        </div>
-                      </div>
-
-                    </div>
+                <div className="flex items-center gap-2.5">
+                  {/* Active selection badge */}
+                  {sectionCartCount > 0 && (
+                    <span className="bg-[#ffdea5] text-[#00346f] px-2.5 py-1 rounded-full text-xs font-black shadow-2xs flex items-center gap-1">
+                      <Check className="w-3.5 h-3.5" />
+                      <span>{sectionCartCount} Selected (${sectionSubtotal.toFixed(2)})</span>
+                    </span>
                   )}
 
-                  {/* Breads Stepper */}
-                  {item.pricingType === 'bread' && item.pricePer30Pcs && (
-                    <div className="flex items-center justify-between bg-gray-50 p-2.5 rounded-xl border border-gray-200">
-                      <div>
-                        <span className="text-xs font-bold text-gray-800 block">Pack of 30 Pieces</span>
-                        <span className="text-xs font-bold text-[#00346f]">${item.pricePer30Pcs} / 30 pcs</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => {
-                            const curr = getItemQuantity(item.id, 'pack_30');
-                            onUpdateCartItem(item, 'pack_30', Math.max(0, curr - 1), 'Pack of 30 pcs', item.pricePer30Pcs!);
-                          }}
-                          className="w-7 h-7 rounded-md bg-white border border-gray-300 hover:bg-gray-100 flex items-center justify-center text-gray-700 cursor-pointer"
-                        >
-                          <Minus className="w-3.5 h-3.5" />
-                        </button>
-                        <span className="w-6 text-center font-bold text-xs">
-                          {getItemQuantity(item.id, 'pack_30')}
-                        </span>
-                        <button
-                          onClick={() => {
-                            const curr = getItemQuantity(item.id, 'pack_30');
-                            onUpdateCartItem(item, 'pack_30', curr + 1, 'Pack of 30 pcs', item.pricePer30Pcs!);
-                          }}
-                          className="w-7 h-7 rounded-md bg-[#00346f] hover:bg-[#00224d] text-white flex items-center justify-center cursor-pointer shadow-xs"
-                        >
-                          <Plus className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    </div>
-                  )}
+                  <div className="p-1 rounded-lg text-gray-500 hover:text-gray-900 bg-white border border-gray-200">
+                    {isOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                  </div>
+                </div>
+              </button>
 
-                  {/* Beverages Stepper */}
-                  {item.pricingType === 'beverage' && item.pricePerGallon && (
-                    <div className="flex items-center justify-between bg-gray-50 p-2.5 rounded-xl border border-gray-200">
-                      <div>
-                        <span className="text-xs font-bold text-gray-800 block">Gallon Jug (~16-20 Servings)</span>
-                        <span className="text-xs font-bold text-[#00346f]">${item.pricePerGallon} / gallon</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => {
-                            const curr = getItemQuantity(item.id, 'gallon');
-                            onUpdateCartItem(item, 'gallon', Math.max(0, curr - 1), 'Gallon (16-20 serv)', item.pricePerGallon!);
-                          }}
-                          className="w-7 h-7 rounded-md bg-white border border-gray-300 hover:bg-gray-100 flex items-center justify-center text-gray-700 cursor-pointer"
-                        >
-                          <Minus className="w-3.5 h-3.5" />
-                        </button>
-                        <span className="w-6 text-center font-bold text-xs">
-                          {getItemQuantity(item.id, 'gallon')}
-                        </span>
-                        <button
-                          onClick={() => {
-                            const curr = getItemQuantity(item.id, 'gallon');
-                            onUpdateCartItem(item, 'gallon', curr + 1, 'Gallon (16-20 serv)', item.pricePerGallon!);
-                          }}
-                          className="w-7 h-7 rounded-md bg-[#00346f] hover:bg-[#00224d] text-white flex items-center justify-center cursor-pointer shadow-xs"
-                        >
-                          <Plus className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    </div>
-                  )}
+              {/* Accordion Body */}
+              {isOpen && (
+                <div className="p-4 sm:p-6 bg-white animate-fade-in">
+                  
+                  {/* Custom Component: Cake Configurator */}
+                  {section.customComponent === 'cakeConfigurator' ? (
+                    <CakeConfigurator
+                      onAddCake={handleAddCakeFromConfigurator}
+                      cartCakes={cart.filter(i => i.category === 'cakes')}
+                      onRemoveCake={onRemoveCartItem}
+                    />
+                  ) : section.category === 'breads' ? (
+                    
+                    /* ── BREADS GRID (PER-PIECE SELECTION & DYNAMIC CALCULATION) ── */
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {dishes.map(item => {
+                        const unitPrice = item.unitPricePiece || (item.pricePer30Pcs ? item.pricePer30Pcs / 30 : 0.90);
+                        const minPieces = item.minPieces || 30;
 
-                  {/* Celebration Cake Stepper */}
-                  {item.pricingType === 'cake' && (
-                    <div className="flex items-center justify-between bg-rose-50/60 p-2.5 rounded-xl border border-rose-200">
-                      <div>
-                        <span className="text-xs font-bold text-gray-800 block">8&quot; Eggless Celebration Cake</span>
-                        <span className="text-xs font-bold text-[#00346f]">$85.00 (Serves 15-20)</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => {
-                            const curr = getItemQuantity(item.id, 'cake_custom');
-                            onUpdateCartItem(item, 'cake_custom', Math.max(0, curr - 1), '8" Eggless Cake', 85);
-                          }}
-                          className="w-7 h-7 rounded-md bg-white border border-gray-300 hover:bg-gray-100 flex items-center justify-center text-gray-700 cursor-pointer"
-                        >
-                          <Minus className="w-3.5 h-3.5" />
-                        </button>
-                        <span className="w-6 text-center font-bold text-xs">
-                          {getItemQuantity(item.id, 'cake_custom')}
-                        </span>
-                        <button
-                          onClick={() => {
-                            const curr = getItemQuantity(item.id, 'cake_custom');
-                            onUpdateCartItem(item, 'cake_custom', curr + 1, '8" Eggless Cake', 85);
-                          }}
-                          className="w-7 h-7 rounded-md bg-[#00346f] hover:bg-[#00224d] text-white flex items-center justify-center cursor-pointer shadow-xs"
-                        >
-                          <Plus className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
+                        // Find if this bread is in the cart
+                        const cartBread = cart.find(
+                          c => c.menuItemId === item.id && (c.selectionType === 'pieces' || c.selectionType === 'pack_30')
+                        );
+                        const pieceQty = cartBread ? cartBread.quantity : 0;
+                        const hasSelection = pieceQty > 0;
+                        const breadTotal = Math.round(pieceQty * unitPrice * 100) / 100;
+
+                        return (
+                          <div
+                            key={item.id}
+                            className={`rounded-2xl p-4 sm:p-5 border transition-all duration-200 flex flex-col justify-between ${
+                              hasSelection
+                                ? 'border-[#00346f] bg-blue-50/40 shadow-sm ring-1 ring-[#00346f]/20'
+                                : 'border-gray-200 hover:border-gray-300 bg-white'
+                            }`}
+                          >
+                            <div>
+                              {/* Header info */}
+                              <div className="flex items-start justify-between gap-3">
+                                <div>
+                                  <div className="flex items-center gap-2">
+                                    <h4 className="font-serif font-bold text-base text-gray-900">
+                                      {item.name}
+                                    </h4>
+                                    <span className="text-[11px] font-bold text-[#775a19] bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
+                                      ${unitPrice.toFixed(2)} / pc
+                                    </span>
+                                  </div>
+                                  <p className="text-xs text-gray-500 mt-1">
+                                    {item.description}
+                                  </p>
+                                </div>
+
+                                <div className="text-right shrink-0">
+                                  <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500 block">
+                                    Min. {minPieces} pcs
+                                  </span>
+                                  <span className="text-xs font-mono font-bold text-gray-800">
+                                    (${ (minPieces * unitPrice).toFixed(2) } base)
+                                  </span>
+                                </div>
+                              </div>
+
+                              {/* Satvik tag & Selection badge */}
+                              <div className="flex items-center justify-between gap-2 mt-3 pt-2 border-t border-gray-100 text-[10px]">
+                                {item.isSatvikAvailable ? (
+                                  <span className="text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded font-semibold">
+                                    ✓ Satvik Available
+                                  </span>
+                                ) : <span />}
+
+                                {hasSelection && (
+                                  <span className="flex items-center gap-1 bg-[#00346f] text-white font-bold px-2.5 py-0.5 rounded-full shadow-xs">
+                                    <Check className="w-3 h-3 text-[#ffdea5]" />
+                                    <span>{pieceQty} Pieces Selected</span>
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+
+                            {/* Stepper & Piece Input Controls */}
+                            <div className="mt-4 pt-3 border-t border-gray-150">
+                              <div className={`p-3 rounded-xl border transition-all ${
+                                hasSelection
+                                  ? 'bg-[#00346f] text-white border-[#00346f] shadow-sm'
+                                  : 'bg-gray-50 border-gray-200'
+                              }`}>
+                                <div className="flex items-center justify-between gap-2">
+                                  <div>
+                                    <span className={`text-[11px] font-bold block ${hasSelection ? 'text-white' : 'text-gray-800'}`}>
+                                      Quantity in Pieces (Min. {minPieces})
+                                    </span>
+                                    {hasSelection ? (
+                                      <span className="text-xs font-black text-[#ffdea5]">
+                                        {pieceQty} pcs &times; ${unitPrice.toFixed(2)} = ${breadTotal.toFixed(2)}
+                                      </span>
+                                    ) : (
+                                      <span className="text-[11px] text-gray-500">
+                                        Enter any piece count &ge; {minPieces}
+                                      </span>
+                                    )}
+                                  </div>
+
+                                  {/* Interactive Controls */}
+                                  <div className="flex items-center gap-1.5">
+                                    {hasSelection && (
+                                      <button
+                                        type="button"
+                                        onClick={() => onUpdateCartItem(item, 'pieces', 0, '', unitPrice)}
+                                        className="p-1 rounded text-white/70 hover:text-white mr-1 cursor-pointer"
+                                        title="Remove bread selection"
+                                      >
+                                        <Trash2 className="w-3.5 h-3.5" />
+                                      </button>
+                                    )}
+
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        if (pieceQty <= minPieces) {
+                                          onUpdateCartItem(item, 'pieces', 0, '', unitPrice);
+                                        } else {
+                                          const next = pieceQty - 5;
+                                          onUpdateCartItem(item, 'pieces', next, `${next} pieces ($${unitPrice.toFixed(2)}/pc)`, unitPrice);
+                                        }
+                                      }}
+                                      className={`w-7 h-7 rounded-lg flex items-center justify-center transition-colors cursor-pointer ${
+                                        hasSelection 
+                                          ? 'bg-white/20 hover:bg-white/30 text-white' 
+                                          : 'bg-white border border-gray-300 hover:bg-gray-100 text-gray-700'
+                                      }`}
+                                      aria-label={`Decrease pieces of ${item.name}`}
+                                    >
+                                      <Minus className="w-3.5 h-3.5" />
+                                    </button>
+
+                                    {/* Direct Piece Quantity Number Input */}
+                                    <input
+                                      type="number"
+                                      min={minPieces}
+                                      step={5}
+                                      value={pieceQty === 0 ? '' : pieceQty}
+                                      placeholder={minPieces.toString()}
+                                      onChange={(e) => {
+                                        const val = parseInt(e.target.value, 10);
+                                        if (isNaN(val) || val <= 0) {
+                                          onUpdateCartItem(item, 'pieces', 0, '', unitPrice);
+                                        } else {
+                                          onUpdateCartItem(item, 'pieces', val, `${val} pieces ($${unitPrice.toFixed(2)}/pc)`, unitPrice);
+                                        }
+                                      }}
+                                      className={`w-14 text-center font-black text-xs py-1 rounded-lg border focus:outline-none transition-colors ${
+                                        hasSelection
+                                          ? 'bg-white text-[#00346f] border-white shadow-2xs'
+                                          : 'bg-white text-gray-800 border-gray-300'
+                                      }`}
+                                    />
+
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        const next = pieceQty === 0 ? minPieces : pieceQty + 5;
+                                        onUpdateCartItem(item, 'pieces', next, `${next} pieces ($${unitPrice.toFixed(2)}/pc)`, unitPrice);
+                                      }}
+                                      className={`w-7 h-7 rounded-lg flex items-center justify-center transition-colors cursor-pointer ${
+                                        hasSelection 
+                                          ? 'bg-[#ffdea5] hover:bg-white text-[#00346f] font-black' 
+                                          : 'bg-[#00346f] hover:bg-[#00224d] text-white font-bold'
+                                      }`}
+                                      aria-label={`Increase pieces of ${item.name}`}
+                                    >
+                                      <Plus className="w-3.5 h-3.5" />
+                                    </button>
+                                  </div>
+                                </div>
+
+                                {/* Quick Preset Buttons */}
+                                <div className="mt-2 pt-2 border-t border-white/20 flex flex-wrap items-center gap-1.5">
+                                  <span className={`text-[10px] ${hasSelection ? 'text-white/70' : 'text-gray-400'}`}>
+                                    Presets:
+                                  </span>
+                                  {[minPieces, minPieces + 15, minPieces + 30, minPieces + 45, 100].map(qty => (
+                                    <button
+                                      key={qty}
+                                      type="button"
+                                      onClick={() => onUpdateCartItem(item, 'pieces', qty, `${qty} pieces ($${unitPrice.toFixed(2)}/pc)`, unitPrice)}
+                                      className={`px-2 py-0.5 rounded text-[10px] font-bold cursor-pointer transition-colors ${
+                                        pieceQty === qty
+                                          ? 'bg-[#ffdea5] text-[#00346f]'
+                                          : hasSelection
+                                          ? 'bg-white/10 hover:bg-white/20 text-white'
+                                          : 'bg-white hover:bg-gray-100 text-gray-700 border border-gray-200'
+                                      }`}
+                                    >
+                                      {qty} pcs
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+                            </div>
+
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                  ) : (
+                    
+                    /* ── STANDARD TRAYS & DISHES GRID ── */
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {dishes.map(item => {
+                        const thirdQty = getItemQuantity(item.id, 'third');
+                        const halfQty = getItemQuantity(item.id, 'half');
+                        const fullQty = getItemQuantity(item.id, 'full');
+                        const gallonQty = getItemQuantity(item.id, 'gallon');
+                        const totalDishCount = thirdQty + halfQty + fullQty + gallonQty;
+                        const hasSelection = totalDishCount > 0;
+
+                        return (
+                          <div
+                            key={item.id}
+                            className={`rounded-2xl p-4 sm:p-5 border transition-all duration-200 flex flex-col justify-between ${
+                              hasSelection
+                                ? 'border-[#00346f] bg-blue-50/40 shadow-sm ring-1 ring-[#00346f]/20'
+                                : 'border-gray-200 hover:border-gray-300 bg-white'
+                            }`}
+                          >
+                            <div>
+                              {/* Header info */}
+                              <div className="flex items-start justify-between gap-3">
+                                <div>
+                                  <div className="flex items-center gap-2">
+                                    <h4 className="font-serif font-bold text-base text-gray-900">
+                                      {item.name}
+                                    </h4>
+                                    {item.tier && (
+                                      <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${
+                                        item.tier === 'Maharaja' ? 'bg-amber-100 text-amber-900 border border-amber-200' :
+                                        item.tier === 'Darbari' ? 'bg-purple-100 text-purple-900 border border-purple-200' :
+                                        item.tier === 'Shahi' ? 'bg-blue-100 text-blue-900 border border-blue-200' :
+                                        'bg-gray-100 text-gray-800 border border-gray-200'
+                                      }`}>
+                                        {item.tier}
+                                      </span>
+                                    )}
+                                  </div>
+                                  <p className="text-xs text-gray-500 mt-1 leading-relaxed">
+                                    {item.description}
+                                  </p>
+                                </div>
+
+                                {/* Allergens pills */}
+                                <div className="flex items-center gap-1 shrink-0">
+                                  {item.allergens.map(a => (
+                                    <span
+                                      key={a}
+                                      className="w-5 h-5 rounded-full bg-gray-100 text-gray-700 border border-gray-300 flex items-center justify-center font-mono font-bold text-[10px]"
+                                      title={`Contains ${a}`}
+                                    >
+                                      {a}
+                                    </span>
+                                  ))}
+                                </div>
+                              </div>
+
+                              {/* Dietary tags & Selected Confirmation Badge */}
+                              <div className="flex items-center justify-between gap-2 mt-2.5 text-[10px] font-medium">
+                                {item.isSatvikAvailable ? (
+                                  <span className="text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded font-semibold">
+                                    ✓ Satvik Option Available
+                                  </span>
+                                ) : <span />}
+
+                                {hasSelection && (
+                                  <span className="flex items-center gap-1 bg-[#00346f] text-white font-bold px-2.5 py-0.5 rounded-full shadow-xs">
+                                    <Check className="w-3 h-3 text-[#ffdea5]" />
+                                    <span>{totalDishCount} Selected</span>
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+
+                            {/* ── STEPPER CONTROLS ── */}
+                            <div className="mt-4 pt-3 border-t border-gray-100">
+                              {item.pricingType === 'tray' && item.trayPricing && (
+                                <div className="grid grid-cols-3 gap-2">
+                                  
+                                  {/* 1/3 Tray Stepper */}
+                                  <div className={`rounded-xl p-2.5 text-center flex flex-col justify-between transition-all duration-200 ${
+                                    thirdQty > 0
+                                      ? 'bg-[#00346f] text-white border-2 border-[#00346f] shadow-md ring-2 ring-[#ffdea5]/50 scale-[1.02]'
+                                      : 'bg-gray-50 border border-gray-200 hover:border-gray-300'
+                                  }`}>
+                                    <div>
+                                      <div className={`text-[11px] font-bold ${thirdQty > 0 ? 'text-white' : 'text-gray-800'}`}>
+                                        1/3 Tray
+                                      </div>
+                                      <div className={`text-xs font-black ${thirdQty > 0 ? 'text-[#ffdea5]' : 'text-[#00346f]'}`}>
+                                        ${item.trayPricing.third}
+                                      </div>
+                                    </div>
+                                    <div className="flex items-center justify-center gap-1.5 mt-2">
+                                      <button
+                                        onClick={() => onUpdateCartItem(item, 'third', Math.max(0, thirdQty - 1), '1/3 Tray', item.trayPricing!.third)}
+                                        className={`w-6 h-6 rounded-md flex items-center justify-center cursor-pointer transition-colors ${
+                                          thirdQty > 0 
+                                            ? 'bg-white/20 hover:bg-white/30 text-white' 
+                                            : 'bg-white border border-gray-300 hover:bg-gray-100 text-gray-700'
+                                        }`}
+                                        aria-label={`Decrease 1/3 Tray of ${item.name}`}
+                                      >
+                                        <Minus className="w-3 h-3" />
+                                      </button>
+                                      <span className={`w-6 text-center font-black text-xs ${
+                                        thirdQty > 0 
+                                          ? 'bg-white text-[#00346f] rounded px-1 py-0.5 shadow-xs' 
+                                          : 'text-gray-900'
+                                      }`}>
+                                        {thirdQty}
+                                      </span>
+                                      <button
+                                        onClick={() => onUpdateCartItem(item, 'third', thirdQty + 1, '1/3 Tray', item.trayPricing!.third)}
+                                        className={`w-6 h-6 rounded-md flex items-center justify-center cursor-pointer shadow-xs transition-colors ${
+                                          thirdQty > 0 
+                                            ? 'bg-[#ffdea5] hover:bg-white text-[#00346f] font-black' 
+                                            : 'bg-[#00346f] hover:bg-[#00224d] text-white'
+                                        }`}
+                                        aria-label={`Increase 1/3 Tray of ${item.name}`}
+                                      >
+                                        <Plus className="w-3 h-3" />
+                                      </button>
+                                    </div>
+                                  </div>
+
+                                  {/* Half Tray Stepper */}
+                                  <div className={`rounded-xl p-2.5 text-center flex flex-col justify-between transition-all duration-200 ${
+                                    halfQty > 0
+                                      ? 'bg-[#00346f] text-white border-2 border-[#00346f] shadow-md ring-2 ring-[#ffdea5]/50 scale-[1.02]'
+                                      : 'bg-gray-50 border border-gray-200 hover:border-gray-300'
+                                  }`}>
+                                    <div>
+                                      <div className={`text-[11px] font-bold ${halfQty > 0 ? 'text-white' : 'text-gray-800'}`}>
+                                        Half Tray
+                                      </div>
+                                      <div className={`text-xs font-black ${halfQty > 0 ? 'text-[#ffdea5]' : 'text-[#00346f]'}`}>
+                                        ${item.trayPricing.half}
+                                      </div>
+                                    </div>
+                                    <div className="flex items-center justify-center gap-1.5 mt-2">
+                                      <button
+                                        onClick={() => onUpdateCartItem(item, 'half', Math.max(0, halfQty - 1), 'Half Tray', item.trayPricing!.half)}
+                                        className={`w-6 h-6 rounded-md flex items-center justify-center cursor-pointer transition-colors ${
+                                          halfQty > 0 
+                                            ? 'bg-white/20 hover:bg-white/30 text-white' 
+                                            : 'bg-white border border-gray-300 hover:bg-gray-100 text-gray-700'
+                                        }`}
+                                        aria-label={`Decrease Half Tray of ${item.name}`}
+                                      >
+                                        <Minus className="w-3 h-3" />
+                                      </button>
+                                      <span className={`w-6 text-center font-black text-xs ${
+                                        halfQty > 0 
+                                          ? 'bg-white text-[#00346f] rounded px-1 py-0.5 shadow-xs' 
+                                          : 'text-gray-900'
+                                      }`}>
+                                        {halfQty}
+                                      </span>
+                                      <button
+                                        onClick={() => onUpdateCartItem(item, 'half', halfQty + 1, 'Half Tray', item.trayPricing!.half)}
+                                        className={`w-6 h-6 rounded-md flex items-center justify-center cursor-pointer shadow-xs transition-colors ${
+                                          halfQty > 0 
+                                            ? 'bg-[#ffdea5] hover:bg-white text-[#00346f] font-black' 
+                                            : 'bg-[#00346f] hover:bg-[#00224d] text-white'
+                                        }`}
+                                        aria-label={`Increase Half Tray of ${item.name}`}
+                                      >
+                                        <Plus className="w-3 h-3" />
+                                      </button>
+                                    </div>
+                                  </div>
+
+                                  {/* Full Tray Stepper */}
+                                  <div className={`rounded-xl p-2.5 text-center flex flex-col justify-between transition-all duration-200 ${
+                                    fullQty > 0
+                                      ? 'bg-[#00346f] text-white border-2 border-[#00346f] shadow-md ring-2 ring-[#ffdea5]/50 scale-[1.02]'
+                                      : 'bg-gray-50 border border-gray-200 hover:border-gray-300'
+                                  }`}>
+                                    <div>
+                                      <div className={`text-[11px] font-bold ${fullQty > 0 ? 'text-white' : 'text-gray-800'}`}>
+                                        Full Tray
+                                      </div>
+                                      <div className={`text-xs font-black ${fullQty > 0 ? 'text-[#ffdea5]' : 'text-[#00346f]'}`}>
+                                        ${item.trayPricing.full}
+                                      </div>
+                                    </div>
+                                    <div className="flex items-center justify-center gap-1.5 mt-2">
+                                      <button
+                                        onClick={() => onUpdateCartItem(item, 'full', Math.max(0, fullQty - 1), 'Full Tray', item.trayPricing!.full)}
+                                        className={`w-6 h-6 rounded-md flex items-center justify-center cursor-pointer transition-colors ${
+                                          fullQty > 0 
+                                            ? 'bg-white/20 hover:bg-white/30 text-white' 
+                                            : 'bg-white border border-gray-300 hover:bg-gray-100 text-gray-700'
+                                        }`}
+                                        aria-label={`Decrease Full Tray of ${item.name}`}
+                                      >
+                                        <Minus className="w-3 h-3" />
+                                      </button>
+                                      <span className={`w-6 text-center font-black text-xs ${
+                                        fullQty > 0 
+                                          ? 'bg-white text-[#00346f] rounded px-1 py-0.5 shadow-xs' 
+                                          : 'text-gray-900'
+                                      }`}>
+                                        {fullQty}
+                                      </span>
+                                      <button
+                                        onClick={() => onUpdateCartItem(item, 'full', fullQty + 1, 'Full Tray', item.trayPricing!.full)}
+                                        className={`w-6 h-6 rounded-md flex items-center justify-center cursor-pointer shadow-xs transition-colors ${
+                                          fullQty > 0 
+                                            ? 'bg-[#ffdea5] hover:bg-white text-[#00346f] font-black' 
+                                            : 'bg-[#00346f] hover:bg-[#00224d] text-white'
+                                        }`}
+                                        aria-label={`Increase Full Tray of ${item.name}`}
+                                      >
+                                        <Plus className="w-3 h-3" />
+                                      </button>
+                                    </div>
+                                  </div>
+
+                                </div>
+                              )}
+
+                              {/* Beverages Stepper */}
+                              {item.pricingType === 'beverage' && item.pricePerGallon && (
+                                <div className={`flex items-center justify-between p-3 rounded-xl border transition-all duration-200 ${
+                                  gallonQty > 0
+                                    ? 'bg-[#00346f] text-white border-2 border-[#00346f] shadow-md ring-2 ring-[#ffdea5]/50'
+                                    : 'bg-gray-50 border border-gray-200 hover:border-gray-300'
+                                }`}>
+                                  <div>
+                                    <span className={`text-xs font-bold block ${gallonQty > 0 ? 'text-white' : 'text-gray-800'}`}>
+                                      Gallon Jug (~16–20 Servings)
+                                    </span>
+                                    <span className={`text-xs font-black ${gallonQty > 0 ? 'text-[#ffdea5]' : 'text-[#00346f]'}`}>
+                                      ${item.pricePerGallon} / gallon
+                                    </span>
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <button
+                                      onClick={() => onUpdateCartItem(item, 'gallon', Math.max(0, gallonQty - 1), 'Gallon (16–20 serv)', item.pricePerGallon!)}
+                                      className={`w-7 h-7 rounded-md flex items-center justify-center cursor-pointer transition-colors ${
+                                        gallonQty > 0 
+                                          ? 'bg-white/20 hover:bg-white/30 text-white' 
+                                          : 'bg-white border border-gray-300 hover:bg-gray-100 text-gray-700'
+                                      }`}
+                                    >
+                                      <Minus className="w-3.5 h-3.5" />
+                                    </button>
+                                    <span className={`w-7 text-center font-black text-xs ${
+                                      gallonQty > 0 
+                                        ? 'bg-white text-[#00346f] rounded px-1.5 py-0.5 shadow-xs' 
+                                        : 'text-gray-900'
+                                    }`}>
+                                      {gallonQty}
+                                    </span>
+                                    <button
+                                      onClick={() => onUpdateCartItem(item, 'gallon', gallonQty + 1, 'Gallon (16–20 serv)', item.pricePerGallon!)}
+                                      className={`w-7 h-7 rounded-md flex items-center justify-center cursor-pointer shadow-xs transition-colors ${
+                                        gallonQty > 0 
+                                          ? 'bg-[#ffdea5] hover:bg-white text-[#00346f] font-black' 
+                                          : 'bg-[#00346f] hover:bg-[#00224d] text-white'
+                                      }`}
+                                    >
+                                      <Plus className="w-3.5 h-3.5" />
+                                    </button>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+
+                          </div>
+                        );
+                      })}
                     </div>
                   )}
 
                 </div>
+              )}
 
-              </div>
-            );
-          })}
-        </div>
-      )}
+            </div>
+          );
+        })}
+      </div>
 
     </div>
   );

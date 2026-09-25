@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from "react";
-import { X, Calendar, User, Mail, Phone, Sparkles, CheckCircle2, Printer, Info, Plus } from "lucide-react";
+import { X, Calendar, User, Mail, Phone, Sparkles, CheckCircle2, Printer, Info, Plus, MessageCircle } from "lucide-react";
 import { flavorCategories } from "../types";
 import type { SelectedItem } from "../types";
 import { submitToGoogleSheets } from "../services/googleSheets";
+import { buildInquiryWhatsAppUrl } from "../utils/whatsapp";
 import { 
   CHATPATI_CHAAT,
   APPETIZERS,
@@ -377,6 +378,26 @@ export default function InquiryWizard({
       "Estimated Total": totalStr
     });
 
+    // Attempt WhatsApp notification
+    try {
+      const waUrl = buildInquiryWhatsAppUrl({
+        name: formData.name,
+        phone: formData.phone,
+        email: formData.email,
+        date: formData.date,
+        occasion: formData.occasion,
+        category: serviceType,
+        flavor: isCakeService ? formData.flavor : undefined,
+        size: isCakeService ? formData.size : undefined,
+        dietary: formData.dietary,
+        customWishes: formData.customWishes,
+        estimatedTotal: totalStr
+      });
+      window.open(waUrl, '_blank');
+    } catch (e) {
+      console.warn('Auto WhatsApp opening prevented', e);
+    }
+
     setIsSubmitting(false);
     setIsSuccess(true);
 
@@ -491,10 +512,35 @@ export default function InquiryWizard({
               </div>
             </div>
 
-            <div className="mt-8 flex justify-center gap-4">
+            {/* WhatsApp Notification Direct CTA */}
+            <div className="mt-6 max-w-md mx-auto">
+              <a
+                href={buildInquiryWhatsAppUrl({
+                  name: formData.name,
+                  phone: formData.phone,
+                  email: formData.email,
+                  date: formData.date,
+                  occasion: formData.occasion,
+                  category: serviceType,
+                  flavor: isCakeService ? formData.flavor : undefined,
+                  size: isCakeService ? formData.size : undefined,
+                  dietary: formData.dietary,
+                  customWishes: formData.customWishes,
+                  estimatedTotal: `$${grandTotal.toFixed(2)}`
+                })}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full flex items-center justify-center gap-2 bg-[#25D366] hover:bg-[#1ebd5a] text-white py-3 px-4 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-md cursor-pointer"
+              >
+                <MessageCircle className="h-4 w-4 fill-white" />
+                <span>Notify Chef on WhatsApp (945-527-4566)</span>
+              </a>
+            </div>
+
+            <div className="mt-4 flex justify-center gap-4">
               <button 
                 onClick={() => window.print()}
-                className="flex items-center gap-2 border border-secondary-brand px-5 py-2.5 text-xs font-semibold tracking-widest text-secondary-brand uppercase rounded hover:bg-secondary-brand/5 transition-all"
+                className="flex items-center gap-2 border border-secondary-brand px-5 py-2.5 text-xs font-semibold tracking-widest text-secondary-brand uppercase rounded hover:bg-secondary-brand/5 transition-all cursor-pointer"
               >
                 <Printer className="h-4 w-4" /> Print Estimate
               </button>
@@ -504,7 +550,7 @@ export default function InquiryWizard({
                   setStep(1);
                   onClose();
                 }}
-                className="bg-primary-brand px-6 py-2.5 text-xs font-semibold tracking-widest text-white uppercase rounded hover:bg-primary-brand/90 transition-all shadow-md"
+                className="bg-primary-brand px-6 py-2.5 text-xs font-semibold tracking-widest text-white uppercase rounded hover:bg-primary-brand/90 transition-all shadow-md cursor-pointer"
               >
                 Back to Storefront
               </button>

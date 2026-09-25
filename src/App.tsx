@@ -145,7 +145,7 @@ export default function App() {
             {/* Right Controls */}
             <div className="hidden lg:flex items-center space-x-6">
               <button
-                onClick={() => handleOpenWizard()}
+                onClick={() => setActiveTab("Catering")}
                 className="bg-[#00346f] hover:bg-[#00346f]/95 text-white px-5 py-2.5 rounded text-xs uppercase tracking-widest font-semibold transition-all duration-200 shadow-sm cursor-pointer"
               >
                 REQUEST QUOTE
@@ -155,7 +155,7 @@ export default function App() {
             {/* Mobile Actions: Request Quote */}
             <div className="lg:hidden flex items-center gap-2">
               <button
-                onClick={() => handleOpenWizard()}
+                onClick={() => setActiveTab("Catering")}
                 className="bg-[#00346f] hover:bg-[#00346f]/95 text-white px-3.5 py-2 rounded text-[10px] font-bold uppercase tracking-wider cursor-pointer font-sans"
               >
                 REQUEST QUOTE

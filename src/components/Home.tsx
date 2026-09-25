@@ -195,7 +195,7 @@ export default function Home({ onOpenWizard, onOpenBaker, onNavigate }: HomeProp
             </p>
             <div className="flex flex-wrap justify-center gap-3 pt-4">
               <button 
-                onClick={() => onOpenWizard()}
+                onClick={() => onNavigate("Catering")}
                 className="px-8 py-4 bg-[#775a19] hover:bg-[#5d4201] text-white text-xs font-bold tracking-widest uppercase rounded shadow-lg transition-all cursor-pointer flex items-center gap-2"
               >
                 REQUEST A CUSTOM QUOTE <ArrowRight className="h-3.5 w-3.5" />

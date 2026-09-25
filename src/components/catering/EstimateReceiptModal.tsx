@@ -1,5 +1,6 @@
-import { Printer, X, CheckCircle } from 'lucide-react';
+import { Printer, X, CheckCircle, MessageCircle, Phone, CreditCard } from 'lucide-react';
 import type { CateringOrder } from '../../types/catering';
+import { buildOrderWhatsAppUrl, buildOrderSMSUrl, getPaymentMethodLabel } from '../../utils/whatsapp';
 
 interface EstimateReceiptModalProps {
   order: CateringOrder | null;
@@ -93,6 +94,10 @@ export default function EstimateReceiptModal({ order, onClose }: EstimateReceipt
                   Notes: {order.dietary_notes}
                 </div>
               )}
+              <div className="text-gray-700 text-xs mt-1.5 flex items-center gap-1.5">
+                <CreditCard className="w-3.5 h-3.5 text-[#00346f]" />
+                <span>Payment Method: <strong>{getPaymentMethodLabel(order.payment_method)}</strong></span>
+              </div>
             </div>
           </div>
 
@@ -147,6 +152,12 @@ export default function EstimateReceiptModal({ order, onClose }: EstimateReceipt
                 <span>Texas Tax (8.25%):</span>
                 <span className="font-semibold text-gray-900">${order.tax_amount.toFixed(2)}</span>
               </div>
+              {order.processing_fee && order.processing_fee > 0 ? (
+                <div className="flex justify-between text-amber-800">
+                  <span>Card Fee (3.5%):</span>
+                  <span className="font-semibold">+${order.processing_fee.toFixed(2)}</span>
+                </div>
+              ) : null}
               <div className="pt-2 border-t border-gray-200 flex justify-between items-baseline font-bold text-base text-[#00346f]">
                 <span>Total Amount:</span>
                 <span className="font-serif text-xl">${order.total_amount.toFixed(2)}</span>
@@ -166,11 +177,31 @@ export default function EstimateReceiptModal({ order, onClose }: EstimateReceipt
 
         </div>
 
-        {/* Bottom Done Button */}
-        <div className="bg-gray-50 p-4 border-t border-gray-200 flex justify-end gap-3 shrink-0 print:hidden">
+        {/* Bottom Actions Bar */}
+        <div className="bg-gray-50 p-4 border-t border-gray-200 flex flex-wrap items-center justify-between gap-3 shrink-0 print:hidden">
+          <div className="flex flex-wrap items-center gap-2">
+            <a
+              href={buildOrderWhatsAppUrl(order)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 bg-[#25D366] hover:bg-[#1ebd5a] text-white px-3.5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-xs cursor-pointer"
+            >
+              <MessageCircle className="w-3.5 h-3.5 fill-white" />
+              <span>WhatsApp Desi Dabba</span>
+            </a>
+
+            <a
+              href={buildOrderSMSUrl(order)}
+              className="inline-flex items-center gap-1.5 bg-[#00346f] hover:bg-[#00224d] text-white px-3.5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-xs cursor-pointer"
+            >
+              <Phone className="w-3.5 h-3.5" />
+              <span>Send SMS</span>
+            </a>
+          </div>
+
           <button
             onClick={onClose}
-            className="bg-[#00346f] text-white px-6 py-2 rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-[#00224d] transition-all cursor-pointer"
+            className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-6 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer ml-auto"
           >
             Done
           </button>

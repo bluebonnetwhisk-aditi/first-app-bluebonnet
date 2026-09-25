@@ -32,7 +32,9 @@ export interface MenuItem {
   allergens: Allergen[];
   pricingType: 'tray' | 'bread' | 'beverage' | 'cake';
   trayPricing?: TrayPricing;
-  pricePer30Pcs?: number; // for breads
+  pricePer30Pcs?: number; // for breads legacy
+  unitPricePiece?: number; // per piece price for breads ($0.90 or $1.40)
+  minPieces?: number; // minimum piece requirement (e.g. 30)
   pricePerGallon?: number; // for beverages
   customNote?: string;
   leadTimeHours: number; // 24 for catering/beverages, 48 for cakes
@@ -45,7 +47,7 @@ export interface CartItem {
   name: string;
   category: Category;
   categoryLabel: string;
-  selectionType: TraySize | 'pack_30' | 'gallon' | 'cake_custom';
+  selectionType: TraySize | 'pack_30' | 'pieces' | 'gallon' | 'cake_custom';
   selectionLabel: string;
   quantity: number;
   unitPrice: number;
@@ -60,6 +62,8 @@ export type OrderType = 'order' | 'estimate';
 
 export type OrderStatus = 'new' | 'preparing' | 'ready' | 'completed' | 'cancelled';
 
+export type PaymentMethod = 'cash' | 'zelle' | 'credit_card';
+
 export interface CateringOrder {
   id: string;
   customer_name: string;
@@ -70,7 +74,10 @@ export interface CateringOrder {
   delivery_fee: number;
   food_subtotal: number;
   tax_amount: number;
+  payment_method?: PaymentMethod;
+  processing_fee?: number;
   total_amount: number;
+  order_description?: string;
   fulfillment_date: string; // YYYY-MM-DD
   fulfillment_time: string; // e.g. "1:00 PM"
   dietary_notes: string | null;
@@ -80,10 +87,16 @@ export interface CateringOrder {
   created_at?: string;
 }
 
+export type BlackoutRuleType = 'single' | 'recurring_weekday' | 'recurring_month';
+
 export interface CalendarBlackout {
   id: number;
-  closed_date: string; // YYYY-MM-DD
+  closed_date?: string | null; // YYYY-MM-DD
+  day_of_week?: number | null; // 0=Sunday, 1=Monday... 6=Saturday
+  month_of_year?: number | null; // 1=Jan... 12=Dec
+  rule_type?: BlackoutRuleType;
   reason: string | null;
+  created_at?: string;
 }
 
 export interface CutoffCheckResult {

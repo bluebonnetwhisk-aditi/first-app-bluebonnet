@@ -221,52 +221,165 @@ function saveStoredOrders(orders: CateringOrder[]): void {
 
 function getInitialMockBlackouts(): CalendarBlackout[] {
   return [
-    { id: 1, closed_date: '2026-11-26', reason: 'Thanksgiving Holiday Kitchen Close' },
-    { id: 2, closed_date: '2026-12-25', reason: 'Christmas Day Kitchen Maintenance' },
-    { id: 3, closed_date: '2027-01-01', reason: 'New Year Day Reset' }
+    { id: 1, closed_date: '2026-11-26', rule_type: 'single', reason: 'Thanksgiving Holiday Kitchen Close' },
+    { id: 2, closed_date: '2026-12-25', rule_type: 'single', reason: 'Christmas Day Kitchen Maintenance' },
+    { id: 3, closed_date: '2027-01-01', rule_type: 'single', reason: 'New Year Day Reset' }
   ];
 }
 
 /**
- * Fetch calendar blackouts from Supabase or fallback cache.
+ * Fetch all raw calendar blackout rules (single dates, weekday recurring, month recurring)
  */
-export async function fetchCalendarBlackouts(): Promise<string[]> {
+export async function fetchCalendarBlackoutRules(): Promise<CalendarBlackout[]> {
   if (supabase) {
     try {
       const { data, error } = await supabase
         .from('calendar_blackouts')
-        .select('closed_date');
-      
+        .select('*')
+        .order('id', { ascending: false });
+
       if (!error && data) {
-        return data.map((b: { closed_date: string }) => b.closed_date);
+        localStorage.setItem(LOCAL_STORAGE_BLACKOUTS_KEY, JSON.stringify(data));
+        return data as CalendarBlackout[];
       }
     } catch (err) {
-      console.warn('Supabase blackout fetch failed, falling back to local list', err);
+      console.warn('Supabase blackout rules fetch failed, falling back to local list', err);
     }
   }
 
-  // Fallback
   try {
     const raw = localStorage.getItem(LOCAL_STORAGE_BLACKOUTS_KEY);
-    if (raw) {
-      const parsed: CalendarBlackout[] = JSON.parse(raw);
-      return parsed.map(b => b.closed_date);
-    }
+    if (raw) return JSON.parse(raw);
     const initial = getInitialMockBlackouts();
     localStorage.setItem(LOCAL_STORAGE_BLACKOUTS_KEY, JSON.stringify(initial));
-    return initial.map(b => b.closed_date);
+    return initial;
   } catch {
-    return getInitialMockBlackouts().map(b => b.closed_date);
+    return getInitialMockBlackouts();
   }
 }
 
 /**
- * Inserts a new order or estimate into Supabase public.orders
+ * Add a new calendar blackout rule to Supabase (and local storage)
+ */
+export async function addCalendarBlackoutRule(
+  rule: Omit<CalendarBlackout, 'id' | 'created_at'>
+): Promise<CalendarBlackout | null> {
+  const newRule: CalendarBlackout = {
+    ...rule,
+    id: Date.now(),
+    created_at: new Date().toISOString()
+  };
+
+  if (supabase) {
+    try {
+      const { data, error } = await supabase
+        .from('calendar_blackouts')
+        .insert([{
+          closed_date: newRule.closed_date || null,
+          day_of_week: newRule.day_of_week !== undefined ? newRule.day_of_week : null,
+          month_of_year: newRule.month_of_year !== undefined ? newRule.month_of_year : null,
+          rule_type: newRule.rule_type || 'single',
+          reason: newRule.reason || null
+        }])
+        .select()
+        .single();
+
+      if (!error && data) {
+        const current = await fetchCalendarBlackoutRules();
+        localStorage.setItem(LOCAL_STORAGE_BLACKOUTS_KEY, JSON.stringify([data, ...current.filter(r => r.id !== data.id)]));
+        return data as CalendarBlackout;
+      }
+    } catch (err) {
+      console.warn('Supabase add blackout rule failed, saving locally', err);
+    }
+  }
+
+  // Local fallback
+  const current = await fetchCalendarBlackoutRules();
+  const updated = [newRule, ...current];
+  localStorage.setItem(LOCAL_STORAGE_BLACKOUTS_KEY, JSON.stringify(updated));
+  return newRule;
+}
+
+/**
+ * Delete a calendar blackout rule
+ */
+export async function deleteCalendarBlackoutRule(id: number): Promise<boolean> {
+  if (supabase) {
+    try {
+      const { error } = await supabase
+        .from('calendar_blackouts')
+        .delete()
+        .eq('id', id);
+
+      if (!error) {
+        const current = await fetchCalendarBlackoutRules();
+        localStorage.setItem(LOCAL_STORAGE_BLACKOUTS_KEY, JSON.stringify(current.filter(r => r.id !== id)));
+        return true;
+      }
+    } catch (err) {
+      console.warn('Supabase delete blackout rule failed, updating local', err);
+    }
+  }
+
+  // Local fallback
+  const current = await fetchCalendarBlackoutRules();
+  const updated = current.filter(r => r.id !== id);
+  localStorage.setItem(LOCAL_STORAGE_BLACKOUTS_KEY, JSON.stringify(updated));
+  return true;
+}
+
+/**
+ * Resolves all blackout dates (specific dates + recurring weekday + month rules)
+ * for the next 120 days into a set of 'YYYY-MM-DD' strings for the calendar cutoff engine.
+ */
+export async function fetchCalendarBlackouts(): Promise<string[]> {
+  const rules = await fetchCalendarBlackoutRules();
+  const blockedDates = new Set<string>();
+
+  const { nowDate } = getCentralTimeNow();
+
+  // Generate 120 days ahead from today
+  for (let i = 0; i < 120; i++) {
+    const d = new Date(nowDate.getTime() + i * 24 * 60 * 60 * 1000);
+    const y = d.getFullYear();
+    const m = d.getMonth() + 1;
+    const day = d.getDate();
+    const dayOfWeek = d.getDay(); // 0 = Sun, 1 = Mon ...
+    const dateStr = `${y}-${m.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
+
+    for (const rule of rules) {
+      if (rule.rule_type === 'single' && rule.closed_date === dateStr) {
+        blockedDates.add(dateStr);
+      } else if (rule.rule_type === 'recurring_weekday' && rule.day_of_week === dayOfWeek) {
+        blockedDates.add(dateStr);
+      } else if (rule.rule_type === 'recurring_month' && rule.month_of_year === m) {
+        blockedDates.add(dateStr);
+      } else if (!rule.rule_type && rule.closed_date === dateStr) {
+        // legacy compatibility
+        blockedDates.add(dateStr);
+      }
+    }
+  }
+
+  return Array.from(blockedDates);
+}
+
+/**
+ * Inserts a new order or estimate into Supabase public.orders with complete granular details
  */
 export async function createOrder(orderPayload: Omit<CateringOrder, 'id' | 'created_at'>): Promise<{ data: CateringOrder | null; error: Error | null }> {
+  // Build a clean, itemized order description
+  const orderDescription = orderPayload.order_description || orderPayload.items
+    .map(i => `${i.name} (${i.selectionLabel} × ${i.quantity}) [$${i.totalPrice.toFixed(2)}]`)
+    .join('; ');
+
   const newOrder: CateringOrder = {
     ...orderPayload,
     id: typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `ord-${Date.now()}`,
+    payment_method: orderPayload.payment_method || 'zelle',
+    processing_fee: orderPayload.processing_fee || 0.00,
+    order_description: orderDescription,
     created_at: new Date().toISOString()
   };
 
@@ -283,7 +396,10 @@ export async function createOrder(orderPayload: Omit<CateringOrder, 'id' | 'crea
           delivery_fee: newOrder.delivery_fee,
           food_subtotal: newOrder.food_subtotal,
           tax_amount: newOrder.tax_amount,
+          payment_method: newOrder.payment_method,
+          processing_fee: newOrder.processing_fee,
           total_amount: newOrder.total_amount,
+          order_description: newOrder.order_description,
           fulfillment_date: newOrder.fulfillment_date,
           fulfillment_time: newOrder.fulfillment_time,
           dietary_notes: newOrder.dietary_notes,

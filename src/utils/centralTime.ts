@@ -65,12 +65,21 @@ export function isDateSelectable(
   blackouts: string[],
   items: CartItem[]
 ): { selectable: boolean; reason?: string } {
-  // Check blackout first
+  const { nowDate, dateStr: todayDateStr } = getCentralTimeNow();
+
+  // Strictly disallow today and any past dates
+  if (dateStr <= todayDateStr) {
+    return { 
+      selectable: false, 
+      reason: 'Same-day or past date ordering is unavailable. Advance notice required.' 
+    };
+  }
+
+  // Check blackout
   if (blackouts.includes(dateStr)) {
     return { selectable: false, reason: 'Kitchen closed (blackout date)' };
   }
 
-  const { nowDate } = getCentralTimeNow();
   const noticeHours = getRequiredNoticeHours(items);
 
   // Target date parsed at end-of-day (20:00 max delivery time)
@@ -100,11 +109,13 @@ export function validateFulfillmentCutoff(
   blackouts: string[],
   items: CartItem[]
 ): CutoffCheckResult {
-  const { nowDate } = getCentralTimeNow();
+  const { nowDate, dateStr: todayDateStr } = getCentralTimeNow();
   const noticeHours = getRequiredNoticeHours(items);
 
-  // Earliest allowed Date object
-  const earliestAllowed = new Date(nowDate.getTime() + noticeHours * 60 * 60 * 1000);
+  // Earliest allowed Date object: must be at least tomorrow (next calendar day) or nowDate + noticeHours
+  const tomorrowObj = new Date(nowDate.getTime() + 24 * 60 * 60 * 1000);
+  const earliestAllowedTimeMs = Math.max(nowDate.getTime() + noticeHours * 60 * 60 * 1000, tomorrowObj.getTime());
+  const earliestAllowed = new Date(earliestAllowedTimeMs);
   const eYear = earliestAllowed.getFullYear();
   const eMonth = (earliestAllowed.getMonth() + 1).toString().padStart(2, '0');
   const eDay = earliestAllowed.getDate().toString().padStart(2, '0');
@@ -120,8 +131,20 @@ export function validateFulfillmentCutoff(
       earliestAllowedDate,
       earliestAllowedTime,
       requiredNoticeHours: noticeHours,
-      message: `Please select a date (${noticeHours} hrs notice required in US Central Time).`,
+      message: `Please select a fulfillment date (${noticeHours} hrs notice required in US Central Time).`,
       isPassed: false
+    };
+  }
+
+  // Disallow today or earlier dates
+  if (fulfillmentDate <= todayDateStr) {
+    return {
+      isValid: false,
+      earliestAllowedDate,
+      earliestAllowedTime,
+      requiredNoticeHours: noticeHours,
+      message: `Same-day orders are not accepted. Earliest available date is ${earliestAllowedDate}.`,
+      isPassed: true
     };
   }
 
@@ -191,7 +214,8 @@ export function getUpcomingDates(daysCount = 14): { dateStr: string; label: stri
   const { nowDate } = getCentralTimeNow();
   const list = [];
   
-  for (let i = 0; i < daysCount; i++) {
+  // Start from i = 1 (tomorrow), strictly excluding today
+  for (let i = 1; i <= daysCount; i++) {
     const d = new Date(nowDate.getTime() + i * 24 * 60 * 60 * 1000);
     const y = d.getFullYear();
     const m = (d.getMonth() + 1).toString().padStart(2, '0');

@@ -75,14 +75,15 @@ export default function CateringContainer() {
   // Update item in cart handler
   const handleUpdateCartItem = (
     menuItem: MenuItem,
-    selectionType: TraySize | 'pack_30' | 'gallon' | 'cake_custom',
+    selectionType: TraySize | 'pack_30' | 'pieces' | 'gallon' | 'cake_custom',
     quantity: number,
     selectionLabel: string,
-    unitPrice: number
+    unitPrice: number,
+    customNotes?: string
   ) => {
     setCart(prev => {
       const existingIdx = prev.findIndex(
-        item => item.menuItemId === menuItem.id && item.selectionType === selectionType
+        item => item.menuItemId === menuItem.id && item.selectionType === selectionType && (customNotes ? item.notes === customNotes : true)
       );
 
       if (quantity <= 0) {
@@ -93,7 +94,9 @@ export default function CateringContainer() {
       }
 
       const updatedItem: CartItem = {
-        id: `${menuItem.id}-${selectionType}`,
+        id: customNotes 
+          ? `${menuItem.id}-${selectionType}-${Date.now().toString(36)}` 
+          : `${menuItem.id}-${selectionType}`,
         menuItemId: menuItem.id,
         name: menuItem.name,
         category: menuItem.category,
@@ -105,7 +108,8 @@ export default function CateringContainer() {
         totalPrice: Math.round(quantity * unitPrice * 100) / 100,
         tier: menuItem.tier,
         allergens: menuItem.allergens,
-        leadTimeHours: menuItem.leadTimeHours
+        leadTimeHours: menuItem.leadTimeHours,
+        notes: customNotes
       };
 
       if (existingIdx !== -1) {
@@ -116,6 +120,10 @@ export default function CateringContainer() {
         return [...prev, updatedItem];
       }
     });
+  };
+
+  const handleRemoveCartItem = (id: string) => {
+    setCart(prev => prev.filter(item => item.id !== id));
   };
 
   const handleClearCart = () => {
@@ -135,7 +143,7 @@ export default function CateringContainer() {
     <div className="w-full bg-[#fbfbfa] min-h-screen font-sans selection:bg-[#775a19]/20">
       
       {/* ── 1. SUB-NAVIGATION BAR (Order & Estimates vs Kitchen KDS) ── */}
-      <div className="sticky top-14 z-40 bg-white border-b border-gray-200 shadow-2xs">
+      <div className="sticky top-[84px] z-30 bg-white border-b border-gray-200 shadow-2xs">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-12">
             
@@ -196,26 +204,28 @@ export default function CateringContainer() {
             document.getElementById('catering-menu-grid')?.scrollIntoView({ behavior: 'smooth' });
           }} />
 
-          {/* Main 2-Column Layout: Menu Order Grid + Cost Estimator Sidebar */}
+          {/* Main 2-Column Layout: Menu Order Grid + Sticky Cost Estimator Sidebar */}
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
               
               {/* Left Column: Menu Order Grid (8 Cols) */}
               <div className="lg:col-span-8">
                 <MenuOrderGrid
                   cart={cart}
                   onUpdateCartItem={handleUpdateCartItem}
+                  onRemoveCartItem={handleRemoveCartItem}
                 />
               </div>
 
-              {/* Right Column: Sticky Cost Estimator Sidebar (4 Cols) */}
-              <div className="lg:col-span-4">
+              {/* Right Column: Floating Sticky Cost Estimator Sidebar (4 Cols) */}
+              <div className="lg:col-span-4 relative">
                 <CostEstimatorSidebar
                   cart={cart}
                   isDelivery={isDelivery}
                   setIsDelivery={setIsDelivery}
                   onClearCart={handleClearCart}
                   onProceedToCheckout={() => setIsCheckoutOpen(true)}
+                  onRemoveItem={handleRemoveCartItem}
                 />
               </div>
 
@@ -250,10 +260,6 @@ export default function CateringContainer() {
         onViewReceipt={() => {
           setActiveReceiptOrder(activeConfirmationOrder);
           setActiveConfirmationOrder(null);
-        }}
-        onGoToKitchenKDS={() => {
-          setActiveConfirmationOrder(null);
-          switchSubTab('kitchen');
         }}
       />
 

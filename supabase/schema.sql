@@ -21,17 +21,24 @@ CREATE TABLE IF NOT EXISTS public.orders (
     fulfillment_date DATE NOT NULL,
     fulfillment_time TEXT NOT NULL,
     dietary_notes TEXT,
+    payment_method TEXT DEFAULT 'zelle' CHECK (payment_method IN ('cash', 'zelle', 'credit_card')),
+    processing_fee NUMERIC(10,2) DEFAULT 0.00,
+    order_description TEXT,
     order_type TEXT DEFAULT 'order' CHECK (order_type IN ('order', 'estimate')),
     status TEXT DEFAULT 'new' CHECK (status IN ('new', 'preparing', 'ready', 'completed', 'cancelled')),
     items JSONB NOT NULL DEFAULT '[]'::jsonb,
     created_at TIMESTAMPTZ DEFAULT timezone('America/Chicago', now())
 );
 
--- 3. Create Calendar Blackouts Table
+-- 3. Create Calendar Blackouts Table (Specific Dates & Recurring Rules)
 CREATE TABLE IF NOT EXISTS public.calendar_blackouts (
     id SERIAL PRIMARY KEY,
-    closed_date DATE NOT NULL UNIQUE,
-    reason TEXT
+    closed_date DATE,
+    day_of_week INTEGER, -- 0 = Sunday, 1 = Monday, ... 6 = Saturday
+    month_of_year INTEGER, -- 1 = Jan, ... 12 = Dec
+    rule_type TEXT DEFAULT 'single' CHECK (rule_type IN ('single', 'recurring_weekday', 'recurring_month')),
+    reason TEXT,
+    created_at TIMESTAMPTZ DEFAULT timezone('America/Chicago', now())
 );
 
 -- 4. Create Performance Indexes
@@ -64,12 +71,31 @@ CREATE POLICY "Allow update on orders status"
     USING (true)
     WITH CHECK (true);
 
--- Allow public read on calendar_blackouts
+-- Allow public read & management on calendar_blackouts
 CREATE POLICY "Allow public select on calendar_blackouts"
     ON public.calendar_blackouts
     FOR SELECT
     TO anon, authenticated
     USING (true);
+
+CREATE POLICY "Allow public insert on calendar_blackouts"
+    ON public.calendar_blackouts
+    FOR INSERT
+    TO anon, authenticated
+    WITH CHECK (true);
+
+CREATE POLICY "Allow public delete on calendar_blackouts"
+    ON public.calendar_blackouts
+    FOR DELETE
+    TO anon, authenticated
+    USING (true);
+
+CREATE POLICY "Allow public update on calendar_blackouts"
+    ON public.calendar_blackouts
+    FOR UPDATE
+    TO anon, authenticated
+    USING (true)
+    WITH CHECK (true);
 
 -- 6. Enable Realtime Replication for Live Kitchen KDS Cards
 ALTER PUBLICATION supabase_realtime ADD TABLE public.orders;

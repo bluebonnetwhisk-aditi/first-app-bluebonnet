@@ -18,6 +18,7 @@ interface CostEstimatorSidebarProps {
   setIsDelivery: (val: boolean) => void;
   onClearCart: () => void;
   onProceedToCheckout: () => void;
+  onRemoveItem?: (id: string) => void;
 }
 
 export default function CostEstimatorSidebar({
@@ -25,7 +26,8 @@ export default function CostEstimatorSidebar({
   isDelivery,
   setIsDelivery,
   onClearCart,
-  onProceedToCheckout
+  onProceedToCheckout,
+  onRemoveItem
 }: CostEstimatorSidebarProps) {
   const [isMobileExpanded, setIsMobileExpanded] = useState(false);
 
@@ -49,7 +51,7 @@ export default function CostEstimatorSidebar({
   return (
     <>
       {/* ── DESKTOP STICKY SIDEBAR ── */}
-      <div className="hidden lg:block w-full sticky top-20 bg-white rounded-2xl border border-gray-200 shadow-md p-6 font-sans">
+      <div className="hidden lg:block w-full sticky top-[144px] bg-white rounded-2xl border border-gray-200 shadow-md p-6 font-sans max-h-[calc(100vh-160px)] overflow-y-auto">
         
         {/* Header */}
         <div className="flex items-center justify-between pb-4 border-b border-gray-150">
@@ -95,21 +97,40 @@ export default function CostEstimatorSidebar({
           ) : (
             cart.map(item => (
               <div key={item.id} className="py-2.5 flex items-start justify-between gap-2 text-xs">
-                <div>
+                <div className="flex-1 min-w-0 pr-1">
                   <div className="font-semibold text-gray-900 leading-tight">
                     {item.name}
                   </div>
                   <div className="text-gray-500 text-[11px]">
-                    {item.selectionLabel} &times; {item.quantity}
+                    {item.selectionType === 'pieces'
+                      ? `${item.quantity} pieces @ $${item.unitPrice.toFixed(2)}/pc`
+                      : `${item.selectionLabel} × ${item.quantity}`}
                   </div>
+                  {item.notes && (
+                    <div className="text-[10px] text-gray-500 italic mt-0.5 line-clamp-2">
+                      {item.notes}
+                    </div>
+                  )}
                   {item.tier && (
                     <span className="text-[9px] uppercase tracking-wider text-gray-400">
                       {item.tier} Tier
                     </span>
                   )}
                 </div>
-                <div className="font-bold text-gray-900 text-right shrink-0">
-                  ${item.totalPrice.toFixed(2)}
+                <div className="flex items-center gap-1.5 shrink-0 text-right">
+                  <div className="font-bold text-gray-900">
+                    ${item.totalPrice.toFixed(2)}
+                  </div>
+                  {onRemoveItem && (
+                    <button
+                      type="button"
+                      onClick={() => onRemoveItem(item.id)}
+                      className="text-gray-300 hover:text-rose-500 p-0.5 rounded cursor-pointer transition-colors"
+                      title="Remove from cart"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  )}
                 </div>
               </div>
             ))
@@ -235,9 +256,21 @@ export default function CostEstimatorSidebar({
               </button>
             </div>
             {cart.map(item => (
-              <div key={item.id} className="py-1.5 flex justify-between text-xs">
-                <span>{item.name} ({item.selectionLabel} &times; {item.quantity})</span>
-                <span className="font-semibold">${item.totalPrice.toFixed(2)}</span>
+              <div key={item.id} className="py-1.5 flex justify-between items-center text-xs">
+                <div className="min-w-0 flex-1 pr-2">
+                  <span className="truncate block font-medium">
+                    {item.name} ({item.selectionType === 'pieces' ? `${item.quantity} pcs` : `${item.selectionLabel} × ${item.quantity}`})
+                  </span>
+                  {item.notes && <span className="text-[10px] text-gray-400 italic block truncate">{item.notes}</span>}
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <span className="font-semibold">${item.totalPrice.toFixed(2)}</span>
+                  {onRemoveItem && (
+                    <button onClick={() => onRemoveItem(item.id)} className="text-gray-400 hover:text-rose-500">
+                      <Trash2 className="w-3 h-3" />
+                    </button>
+                  )}
+                </div>
               </div>
             ))}
             <div className="pt-2 text-xs text-gray-600 space-y-1">

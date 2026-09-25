@@ -622,7 +622,7 @@ export const DESI_DABBA_ITEMS: MenuItem[] = [
     isSatvikAvailable: true
   },
 
-  // G. BREADS (Standard: $27 / 30 pcs, Speciality: $42 / 30 pcs)
+  // G. BREADS (Standard: $0.90/pc [$27/30pcs], Speciality: $1.40/pc [$42/30pcs], Min. 30 pieces)
   {
     id: 'bread-poori',
     name: 'Poori',
@@ -631,6 +631,8 @@ export const DESI_DABBA_ITEMS: MenuItem[] = [
     description: 'Puffed golden bread, freshly made to order.',
     allergens: ['G'],
     pricingType: 'bread',
+    unitPricePiece: 0.90,
+    minPieces: 30,
     pricePer30Pcs: 27,
     leadTimeHours: 24,
     isSatvikAvailable: true
@@ -643,6 +645,8 @@ export const DESI_DABBA_ITEMS: MenuItem[] = [
     description: 'Puffed golden poori infused with fresh fenugreek leaves.',
     allergens: ['G'],
     pricingType: 'bread',
+    unitPricePiece: 0.90,
+    minPieces: 30,
     pricePer30Pcs: 27,
     leadTimeHours: 24,
     isSatvikAvailable: true
@@ -655,6 +659,8 @@ export const DESI_DABBA_ITEMS: MenuItem[] = [
     description: 'Soft, airy tandoori-style bread baked to perfection.',
     allergens: ['G', 'D'],
     pricingType: 'bread',
+    unitPricePiece: 1.40,
+    minPieces: 30,
     pricePer30Pcs: 42,
     leadTimeHours: 24,
     isSatvikAvailable: true
@@ -667,6 +673,8 @@ export const DESI_DABBA_ITEMS: MenuItem[] = [
     description: 'Soft naan brushed with aromatic roasted garlic and fresh butter.',
     allergens: ['G', 'D'],
     pricingType: 'bread',
+    unitPricePiece: 1.40,
+    minPieces: 30,
     pricePer30Pcs: 42,
     leadTimeHours: 24,
     isSatvikAvailable: false
@@ -679,6 +687,8 @@ export const DESI_DABBA_ITEMS: MenuItem[] = [
     description: 'Crisp, flaky pastry stuffed with seasoned spiced lentils.',
     allergens: ['G'],
     pricingType: 'bread',
+    unitPricePiece: 1.40,
+    minPieces: 30,
     pricePer30Pcs: 42,
     leadTimeHours: 24,
     isSatvikAvailable: true
@@ -691,6 +701,8 @@ export const DESI_DABBA_ITEMS: MenuItem[] = [
     description: 'Crisp, robust puffed poori enriched with coarse spiced urad dal.',
     allergens: ['G'],
     pricingType: 'bread',
+    unitPricePiece: 1.40,
+    minPieces: 30,
     pricePer30Pcs: 42,
     leadTimeHours: 24,
     isSatvikAvailable: true
@@ -731,20 +743,6 @@ export const DESI_DABBA_ITEMS: MenuItem[] = [
     pricingType: 'beverage',
     pricePerGallon: 40,
     leadTimeHours: 24,
-    isSatvikAvailable: true
-  },
-
-  // I. CELEBRATION CAKES (Eggless, 48 hours notice)
-  {
-    id: 'custom-celebration-cake',
-    name: 'Custom Celebration Cake (Eggless)',
-    category: 'cakes',
-    categoryLabel: 'Celebration Bakes (48 hrs notice)',
-    description: 'Custom celebration cakes, cake jars, cupcakes & cake pops — eggless by default. Base 8" cake serves 15–20 guests.',
-    allergens: ['G', 'D'],
-    pricingType: 'cake',
-    pricePerGallon: 85, // base rate
-    leadTimeHours: 48,
     isSatvikAvailable: true
   }
 ];

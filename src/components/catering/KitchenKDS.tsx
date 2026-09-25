@@ -15,11 +15,13 @@ import {
   ArrowRight,
   Package,
   DollarSign,
-  KeyRound
+  KeyRound,
+  Ban
 } from 'lucide-react';
 import type { CateringOrder, OrderStatus } from '../../types/catering';
 import { getCentralTimeNow, getUpcomingDates } from '../../utils/centralTime';
 import { fetchOrders, updateOrderStatus, subscribeToOrders } from '../../services/supabase';
+import KDSBlackoutManager from './KDSBlackoutManager';
 
 interface KitchenKDSProps {
   onBackToOrder?: () => void;
@@ -67,6 +69,9 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
 
   // Kitchen Prep Sheet Modal
   const [showPrepSheet, setShowPrepSheet] = useState(false);
+
+  // Blackout Dates Manager Modal
+  const [showBlackoutModal, setShowBlackoutModal] = useState(false);
 
   // Load orders
   const loadOrders = async () => {
@@ -359,6 +364,15 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
             >
               <KeyRound className="w-3.5 h-3.5 text-amber-700" />
               <span>Change PIN</span>
+            </button>
+
+            <button
+              onClick={() => setShowBlackoutModal(true)}
+              className="inline-flex items-center gap-1.5 border border-rose-300 hover:bg-rose-50 text-rose-900 px-3 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer"
+              title="Manage Kitchen Blackout Dates & Recurring Schedule"
+            >
+              <Ban className="w-3.5 h-3.5 text-rose-700" />
+              <span>Blackout Dates</span>
             </button>
 
             <button
@@ -951,6 +965,15 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
           </div>
         </div>
       )}
+
+      {/* ── BLACKOUT DATES & SCHEDULE MANAGER MODAL ── */}
+      <KDSBlackoutManager
+        isOpen={showBlackoutModal}
+        onClose={() => setShowBlackoutModal(false)}
+        onRulesUpdated={() => {
+          loadOrders();
+        }}
+      />
 
     </div>
   );
