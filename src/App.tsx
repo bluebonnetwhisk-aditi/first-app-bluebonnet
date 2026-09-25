@@ -4,11 +4,13 @@ import {
   X
 } from "lucide-react";
 import { submitToGoogleSheets } from "./services/googleSheets";
+import type { SelectedItem } from "./types";
+import { SERVICE_ADDONS } from "./menuData";
 
 // Components
 import Home from "./components/Home";
 import CakesPage from "./components/CakesPage";
-import CateringPage from "./components/CateringPage";
+import CateringContainer from "./components/catering/CateringContainer";
 import LiveCountersPage from "./components/LiveCountersPage";
 import GiftingPage from "./components/GiftingPage";
 import MenuPage from "./components/MenuPage";
@@ -19,7 +21,16 @@ import InquiryWizard from "./components/InquiryWizard";
 
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState("Home");
+  const [activeTab, setActiveTab] = useState(() => {
+    if (typeof window !== "undefined") {
+      const path = window.location.pathname.toLowerCase();
+      if (path.startsWith("/catering")) return "Catering";
+      if (path.startsWith("/cakes")) return "Cakes";
+      if (path.startsWith("/menu")) return "Menu";
+      if (path.startsWith("/about")) return "About";
+    }
+    return "Home";
+  });
   const [isWizardOpen, setIsWizardOpen] = useState(false);
   
   // Interactive UI states
@@ -29,6 +40,9 @@ export default function App() {
 
   const [selectedFlavor, setSelectedFlavor] = useState<string>("");
   const [selectedCategory, setSelectedCategory] = useState<string>("");
+
+  const [selectedCateringItems, setSelectedCateringItems] = useState<SelectedItem[]>([]);
+  const [appliedCateringAddons, setAppliedCateringAddons] = useState<string[]>([]);
 
   const handleOpenWizard = (flavor?: string, category?: string) => {
     setSelectedFlavor(flavor || "");
@@ -54,10 +68,32 @@ export default function App() {
     }
   };
 
-  // Scroll to top when active tab changes
+  // Scroll to top and sync URL when active tab changes
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
+    if (typeof window !== "undefined") {
+      const currentPath = window.location.pathname.toLowerCase();
+      if (activeTab === "Catering" && !currentPath.startsWith("/catering")) {
+        window.history.pushState(null, "", "/catering/order");
+      } else if (activeTab === "Home" && currentPath !== "/" && currentPath !== "") {
+        window.history.pushState(null, "", "/");
+      }
+    }
   }, [activeTab]);
+
+  // Handle browser back/forward buttons
+  useEffect(() => {
+    const handlePopState = () => {
+      const path = window.location.pathname.toLowerCase();
+      if (path.startsWith("/catering")) setActiveTab("Catering");
+      else if (path.startsWith("/cakes")) setActiveTab("Cakes");
+      else if (path.startsWith("/menu")) setActiveTab("Menu");
+      else if (path.startsWith("/about")) setActiveTab("About");
+      else setActiveTab("Home");
+    };
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, []);
 
   const navLinks = [
     { name: "Home", id: "Home" },
@@ -170,7 +206,7 @@ export default function App() {
           />
         )}
         {activeTab === "Catering" && (
-          <CateringPage onOpenWizard={handleOpenWizard} />
+          <CateringContainer />
         )}
         {activeTab === "Live Counters" && (
           <LiveCountersPage onOpenWizard={handleOpenWizard} />
@@ -179,7 +215,13 @@ export default function App() {
           <GiftingPage onOpenWizard={handleOpenWizard} />
         )}
         {activeTab === "Menu" && (
-          <MenuPage />
+          <MenuPage 
+            selectedItems={selectedCateringItems}
+            setSelectedItems={setSelectedCateringItems}
+            appliedAddons={appliedCateringAddons}
+            setAppliedAddons={setAppliedCateringAddons}
+            onOpenWizard={handleOpenWizard}
+          />
         )}
         {activeTab === "About" && (
           <AboutPage />
@@ -317,6 +359,12 @@ export default function App() {
         onClose={() => setIsWizardOpen(false)}
         preselectedFlavor={selectedFlavor}
         preselectedCategory={selectedCategory}
+        selectedCateringItems={selectedCateringItems}
+        cateringAddons={SERVICE_ADDONS.filter(a => appliedCateringAddons.includes(a.id)).map(a => ({ name: a.name, price: a.basePrice }))}
+        onClearCateringItems={() => {
+          setSelectedCateringItems([]);
+          setAppliedCateringAddons([]);
+        }}
       />
 
 

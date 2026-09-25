@@ -1,0 +1,406 @@
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import type { CateringOrder, CalendarBlackout, OrderStatus } from '../types/catering';
+import { getCentralTimeNow } from '../utils/centralTime';
+
+// Safe Environment variables retrieval (Vite or Next.js compatible)
+const getEnvVar = (key: string): string => {
+  if (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env[key]) {
+    return import.meta.env[key];
+  }
+  if (typeof globalThis !== 'undefined' && (globalThis as any).process?.env?.[key]) {
+    return (globalThis as any).process.env[key];
+  }
+  return '';
+};
+
+const SUPABASE_URL = getEnvVar('VITE_SUPABASE_URL') || getEnvVar('NEXT_PUBLIC_SUPABASE_URL');
+const SUPABASE_ANON_KEY = getEnvVar('VITE_SUPABASE_ANON_KEY') || getEnvVar('NEXT_PUBLIC_SUPABASE_ANON_KEY');
+
+export const isSupabaseConfigured = Boolean(
+  SUPABASE_URL && 
+  SUPABASE_ANON_KEY && 
+  !SUPABASE_URL.includes('your-supabase-url') &&
+  !SUPABASE_ANON_KEY.includes('your-anon-key')
+);
+
+export const supabase: SupabaseClient | null = isSupabaseConfigured
+  ? createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+  : null;
+
+// LocalStorage Keys for Mock / Offline Fallback
+const LOCAL_STORAGE_ORDERS_KEY = 'bbw_catering_orders_cache';
+const LOCAL_STORAGE_BLACKOUTS_KEY = 'bbw_catering_blackouts_cache';
+
+// Initial Mock Seed for Testing & Immediate Demo
+function getInitialMockOrders(): CateringOrder[] {
+  const { dateStr } = getCentralTimeNow();
+  return [
+    {
+      id: 'ord-1001',
+      customer_name: 'Priya Sharma',
+      phone_number: '(972) 555-0142',
+      email: 'priya.sharma@example.com',
+      is_delivery: true,
+      delivery_address: '4821 Legacy Dr, Apt 304, Frisco, TX 75034',
+      delivery_fee: 50.00,
+      food_subtotal: 275.00,
+      tax_amount: 26.81,
+      total_amount: 351.81,
+      fulfillment_date: dateStr,
+      fulfillment_time: '12:30 PM',
+      dietary_notes: 'Satvik / No Onion No Garlic requested for pooja celebration.',
+      order_type: 'order',
+      status: 'preparing',
+      items: [
+        {
+          id: 'item-1',
+          menuItemId: 'shahi-paneer',
+          name: 'Shahi Paneer',
+          category: 'mains',
+          categoryLabel: 'Paneer & Premium Mains',
+          selectionType: 'full',
+          selectionLabel: 'Full Tray ($130)',
+          quantity: 1,
+          unitPrice: 130,
+          totalPrice: 130,
+          tier: 'Maharaja',
+          allergens: ['D', 'N'],
+          leadTimeHours: 24
+        },
+        {
+          id: 'item-2',
+          menuItemId: 'dal-makhani',
+          name: 'Dal Makhani',
+          category: 'dal',
+          categoryLabel: 'Dal & Curries',
+          selectionType: 'half',
+          selectionLabel: 'Half Tray ($60)',
+          quantity: 1,
+          unitPrice: 60,
+          totalPrice: 60,
+          tier: 'Shahi',
+          allergens: ['D'],
+          leadTimeHours: 24
+        },
+        {
+          id: 'item-3',
+          menuItemId: 'bread-poori',
+          name: 'Poori',
+          category: 'breads',
+          categoryLabel: 'Breads (Min. 30 pieces)',
+          selectionType: 'pack_30',
+          selectionLabel: '30 pcs ($27)',
+          quantity: 1,
+          unitPrice: 27,
+          totalPrice: 27,
+          allergens: ['G'],
+          leadTimeHours: 24
+        },
+        {
+          id: 'item-4',
+          menuItemId: 'bread-naan',
+          name: 'Naan',
+          category: 'breads',
+          categoryLabel: 'Breads (Min. 30 pieces)',
+          selectionType: 'pack_30',
+          selectionLabel: '30 pcs ($42)',
+          quantity: 1,
+          unitPrice: 42,
+          totalPrice: 42,
+          allergens: ['G', 'D'],
+          leadTimeHours: 24
+        },
+        {
+          id: 'item-5',
+          menuItemId: 'beverage-mango-lassi',
+          name: 'Mango Lassi',
+          category: 'beverages',
+          categoryLabel: 'Beverages (Per Gallon)',
+          selectionType: 'gallon',
+          selectionLabel: '1 Gallon ($45)',
+          quantity: 1,
+          unitPrice: 45,
+          totalPrice: 45,
+          allergens: ['D'],
+          leadTimeHours: 24
+        }
+      ],
+      created_at: new Date().toISOString()
+    },
+    {
+      id: 'ord-1002',
+      customer_name: 'Rajesh Patel',
+      phone_number: '(469) 555-8921',
+      email: 'rajesh.patel@example.com',
+      is_delivery: false,
+      delivery_address: null,
+      delivery_fee: 0,
+      food_subtotal: 195.00,
+      tax_amount: 16.09,
+      total_amount: 211.09,
+      fulfillment_date: dateStr,
+      fulfillment_time: '5:00 PM',
+      dietary_notes: 'Jain-friendly, please keep mild spice.',
+      order_type: 'order',
+      status: 'new',
+      items: [
+        {
+          id: 'item-201',
+          menuItemId: 'kadhai-paneer',
+          name: 'Kadhai Paneer',
+          category: 'mains',
+          categoryLabel: 'Paneer & Premium Mains',
+          selectionType: 'half',
+          selectionLabel: 'Half Tray ($80)',
+          quantity: 1,
+          unitPrice: 80,
+          totalPrice: 80,
+          tier: 'Maharaja',
+          allergens: ['D'],
+          leadTimeHours: 24
+        },
+        {
+          id: 'item-202',
+          menuItemId: 'samosa-chaat',
+          name: 'Samosa Chaat',
+          category: 'starters',
+          categoryLabel: 'Starters & Indo-Chinese',
+          selectionType: 'half',
+          selectionLabel: 'Half Tray ($70)',
+          quantity: 1,
+          unitPrice: 70,
+          totalPrice: 70,
+          tier: 'Darbari',
+          allergens: ['G', 'D'],
+          leadTimeHours: 24
+        },
+        {
+          id: 'item-203',
+          menuItemId: 'jeera-rice',
+          name: 'Jeera Rice',
+          category: 'rice',
+          categoryLabel: 'Rice & Sides',
+          selectionType: 'half',
+          selectionLabel: 'Half Tray ($50)',
+          quantity: 1,
+          unitPrice: 50,
+          totalPrice: 50,
+          tier: 'Khaas',
+          allergens: ['D'],
+          leadTimeHours: 24
+        }
+      ],
+      created_at: new Date().toISOString()
+    }
+  ];
+}
+
+function getStoredOrders(): CateringOrder[] {
+  try {
+    const raw = localStorage.getItem(LOCAL_STORAGE_ORDERS_KEY);
+    if (!raw) {
+      const initial = getInitialMockOrders();
+      localStorage.setItem(LOCAL_STORAGE_ORDERS_KEY, JSON.stringify(initial));
+      return initial;
+    }
+    return JSON.parse(raw);
+  } catch {
+    return getInitialMockOrders();
+  }
+}
+
+function saveStoredOrders(orders: CateringOrder[]): void {
+  try {
+    localStorage.setItem(LOCAL_STORAGE_ORDERS_KEY, JSON.stringify(orders));
+    // Trigger storage event across components / tabs
+    window.dispatchEvent(new CustomEvent('bbw_orders_updated'));
+  } catch {
+    // ignore
+  }
+}
+
+function getInitialMockBlackouts(): CalendarBlackout[] {
+  return [
+    { id: 1, closed_date: '2026-11-26', reason: 'Thanksgiving Holiday Kitchen Close' },
+    { id: 2, closed_date: '2026-12-25', reason: 'Christmas Day Kitchen Maintenance' },
+    { id: 3, closed_date: '2027-01-01', reason: 'New Year Day Reset' }
+  ];
+}
+
+/**
+ * Fetch calendar blackouts from Supabase or fallback cache.
+ */
+export async function fetchCalendarBlackouts(): Promise<string[]> {
+  if (supabase) {
+    try {
+      const { data, error } = await supabase
+        .from('calendar_blackouts')
+        .select('closed_date');
+      
+      if (!error && data) {
+        return data.map((b: { closed_date: string }) => b.closed_date);
+      }
+    } catch (err) {
+      console.warn('Supabase blackout fetch failed, falling back to local list', err);
+    }
+  }
+
+  // Fallback
+  try {
+    const raw = localStorage.getItem(LOCAL_STORAGE_BLACKOUTS_KEY);
+    if (raw) {
+      const parsed: CalendarBlackout[] = JSON.parse(raw);
+      return parsed.map(b => b.closed_date);
+    }
+    const initial = getInitialMockBlackouts();
+    localStorage.setItem(LOCAL_STORAGE_BLACKOUTS_KEY, JSON.stringify(initial));
+    return initial.map(b => b.closed_date);
+  } catch {
+    return getInitialMockBlackouts().map(b => b.closed_date);
+  }
+}
+
+/**
+ * Inserts a new order or estimate into Supabase public.orders
+ */
+export async function createOrder(orderPayload: Omit<CateringOrder, 'id' | 'created_at'>): Promise<{ data: CateringOrder | null; error: Error | null }> {
+  const newOrder: CateringOrder = {
+    ...orderPayload,
+    id: typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `ord-${Date.now()}`,
+    created_at: new Date().toISOString()
+  };
+
+  if (supabase) {
+    try {
+      const { data, error } = await supabase
+        .from('orders')
+        .insert([{
+          customer_name: newOrder.customer_name,
+          phone_number: newOrder.phone_number,
+          email: newOrder.email,
+          is_delivery: newOrder.is_delivery,
+          delivery_address: newOrder.delivery_address,
+          delivery_fee: newOrder.delivery_fee,
+          food_subtotal: newOrder.food_subtotal,
+          tax_amount: newOrder.tax_amount,
+          total_amount: newOrder.total_amount,
+          fulfillment_date: newOrder.fulfillment_date,
+          fulfillment_time: newOrder.fulfillment_time,
+          dietary_notes: newOrder.dietary_notes,
+          order_type: newOrder.order_type,
+          status: newOrder.status,
+          items: newOrder.items
+        }])
+        .select()
+        .single();
+
+      if (!error && data) {
+        // Also update local cache
+        const current = getStoredOrders();
+        saveStoredOrders([data as CateringOrder, ...current.filter(o => o.id !== data.id)]);
+        return { data: data as CateringOrder, error: null };
+      } else if (error) {
+        console.warn('Supabase insert warning, persisting to local cache', error);
+      }
+    } catch (err) {
+      console.warn('Supabase connection error on order insert, falling back to local cache', err);
+    }
+  }
+
+  // Local fallback
+  const current = getStoredOrders();
+  const updated = [newOrder, ...current];
+  saveStoredOrders(updated);
+  return { data: newOrder, error: null };
+}
+
+/**
+ * Fetch orders for a specific fulfillment date (or all active if date not provided)
+ */
+export async function fetchOrders(fulfillmentDate?: string): Promise<CateringOrder[]> {
+  if (supabase) {
+    try {
+      let query = supabase.from('orders').select('*').order('created_at', { ascending: false });
+      if (fulfillmentDate) {
+        query = query.eq('fulfillment_date', fulfillmentDate);
+      }
+      const { data, error } = await query;
+      if (!error && data) {
+        return data as CateringOrder[];
+      }
+    } catch (err) {
+      console.warn('Supabase fetchOrders failed, using local cache', err);
+    }
+  }
+
+  // Local fallback
+  const all = getStoredOrders();
+  if (fulfillmentDate) {
+    return all.filter(o => o.fulfillment_date === fulfillmentDate);
+  }
+  return all;
+}
+
+/**
+ * Update an order's status (new -> preparing -> ready -> completed / cancelled)
+ */
+export async function updateOrderStatus(orderId: string, status: OrderStatus): Promise<boolean> {
+  let updatedSuccessfully = false;
+
+  if (supabase) {
+    try {
+      const { error } = await supabase
+        .from('orders')
+        .update({ status })
+        .eq('id', orderId);
+      
+      if (!error) updatedSuccessfully = true;
+    } catch (err) {
+      console.warn('Supabase update failed, updating local cache', err);
+    }
+  }
+
+  // Always update local cache
+  const all = getStoredOrders();
+  const index = all.findIndex(o => o.id === orderId);
+  if (index !== -1) {
+    all[index].status = status;
+    saveStoredOrders(all);
+    updatedSuccessfully = true;
+  }
+
+  return updatedSuccessfully;
+}
+
+/**
+ * Subscribe to realtime orders updates.
+ */
+export function subscribeToOrders(onUpdate: () => void): () => void {
+  // Local event listener for mock / offline updates
+  const handleLocalUpdate = () => {
+    onUpdate();
+  };
+  window.addEventListener('bbw_orders_updated', handleLocalUpdate);
+
+  if (supabase) {
+    const channel = supabase
+      .channel('realtime:public:orders')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'orders' },
+        () => {
+          onUpdate();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      window.removeEventListener('bbw_orders_updated', handleLocalUpdate);
+      supabase.removeChannel(channel);
+    };
+  }
+
+  return () => {
+    window.removeEventListener('bbw_orders_updated', handleLocalUpdate);
+  };
+}

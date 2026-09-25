@@ -29,7 +29,6 @@ import {
 } from '../menuData';
 import type { SelectedItem, MenuItem } from '../types';
 import PlannerTool from './PlannerTool';
-import InquiryWizard from './InquiryWizard';
 
 import breadsImage from '../assets/images/indian_breads_basket_1781152845941.png';
 import dessertsImage from '../assets/images/indian_desserts_luxury_1781152864858.png';
@@ -43,11 +42,32 @@ const formatSize = (size?: '1/3' | '1/2' | 'Full' | 'Single' | 'Gallon') => {
   return size;
 };
 
-export default function MenuPage() {
-  const [selectedItems, setSelectedItems] = useState<SelectedItem[]>([]);
-  const [isEnquiryOpen, setIsEnquiryOpen] = useState<boolean>(false);
-  const [appliedAddons, setAppliedAddons] = useState<string[]>([]);
+interface MenuPageProps {
+  selectedItems: SelectedItem[];
+  setSelectedItems: React.Dispatch<React.SetStateAction<SelectedItem[]>>;
+  appliedAddons: string[];
+  setAppliedAddons: React.Dispatch<React.SetStateAction<string[]>>;
+  onOpenWizard: () => void;
+}
+
+export default function MenuPage({
+  selectedItems,
+  setSelectedItems,
+  appliedAddons,
+  setAppliedAddons,
+  onOpenWizard
+}: MenuPageProps) {
+  const [toastMessage, setToastMessage] = useState<string>("");
+  const [showToast, setShowToast] = useState<boolean>(false);
   const [activeSection, setActiveSection] = useState<string>('chaat');
+
+  const showNotification = (itemName: string) => {
+    setToastMessage(`✓ ${itemName} added to quote selections`);
+    setShowToast(true);
+    setTimeout(() => {
+      setShowToast(false);
+    }, 3000);
+  };
 
   const sections = [
     { id: 'chaat', label: 'Chatpati Chaat' },
@@ -178,6 +198,7 @@ export default function MenuPage() {
         }
       ]);
     }
+    showNotification(name);
   };
 
   const updateQuantity = (id: string, size: string | undefined, delta: number) => {
@@ -714,7 +735,7 @@ export default function MenuPage() {
                                 if (hasRateValue) {
                                   toggleSelection(item.id, item.name, 'Cakes & Desserts', priceVal, 'Single');
                                 } else {
-                                  setIsEnquiryOpen(true);
+                                  onOpenWizard();
                                 }
                               }}
                               className="px-3 py-1.5 bg-white hover:bg-[#00346f] hover:text-white text-[#00346f] border border-[#c3c6d2] rounded text-xs font-semibold cursor-pointer transition-all inline-flex items-center gap-1.5"
@@ -796,7 +817,7 @@ export default function MenuPage() {
                                 if (hasRateValue) {
                                   toggleSelection(item.id, item.name, 'Specials', priceVal, 'Single');
                                 } else {
-                                  setIsEnquiryOpen(true);
+                                  onOpenWizard();
                                 }
                               }}
                               className="px-3 py-1.5 bg-white hover:bg-[#00346f] hover:text-white text-[#00346f] border border-[#c3c6d2] rounded text-xs font-semibold cursor-pointer transition-all inline-flex items-center gap-1.5"
@@ -1105,7 +1126,7 @@ export default function MenuPage() {
                       </button>
                       <button
                         type="button"
-                        onClick={() => setIsEnquiryOpen(true)}
+                        onClick={() => onOpenWizard()}
                         className="flex-1 lg:flex-none bg-[#00346f] hover:bg-[#114589] text-white px-6 py-2.5 rounded text-xs uppercase font-extrabold tracking-widest transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer"
                       >
                         Enquire Proposal <ChevronRight size={14} />
@@ -1145,13 +1166,48 @@ export default function MenuPage() {
         </div>
       </section>
 
-      <InquiryWizard 
-        isOpen={isEnquiryOpen} 
-        onClose={() => setIsEnquiryOpen(false)} 
-        selectedCateringItems={selectedItems}
-        cateringAddons={SERVICE_ADDONS.filter(a => appliedAddons.includes(a.id)).map(a => ({ name: a.name, price: a.basePrice }))}
-        onClearCateringItems={() => setSelectedItems([])}
-      />
+      {/* Toast Notification for Added to Cart */}
+      {showToast && (
+        <div className="fixed bottom-24 right-6 z-50 bg-[#00346f] border-l-4 border-[#ffdea5] text-white px-4 py-3 rounded shadow-2xl flex items-center gap-2 animate-fade-in font-sans text-xs font-semibold">
+          <span className="text-[#fed488]">✓</span>
+          <span>{toastMessage}</span>
+        </div>
+      )}
+
+      {/* Floating Quote Selections Card */}
+      {selectedItems.length > 0 && (
+        <div className="fixed bottom-24 right-6 lg:right-8 z-45 bg-[#050a1a]/95 backdrop-blur-md border border-[#ffdea5]/30 text-white rounded-lg p-4 shadow-2xl w-72 transition-all duration-300 animate-slide-in font-sans">
+          <div className="flex justify-between items-center border-b border-white/10 pb-2 mb-2">
+            <span className="font-serif text-sm font-bold text-brand-cream flex items-center gap-1.5">
+              <ShoppingBag className="h-4 w-4 text-[#fed488]" /> Quote Basket
+            </span>
+            <span className="text-[10px] bg-secondary-brand/20 text-[#ffdea5] px-2 py-0.5 rounded font-mono font-bold">
+              {selectedItems.reduce((acc, curr) => acc + curr.quantity, 0)} items
+            </span>
+          </div>
+          
+          <div className="space-y-1 max-h-24 overflow-y-auto mb-3 text-[11px] divide-y divide-white/5 pr-1 scrollbar-none">
+            {selectedItems.map((item, idx) => (
+              <div key={idx} className="flex justify-between py-1 text-gray-300">
+                <span className="truncate max-w-[180px]">{item.name} {item.size ? `(${item.size === '1/3' ? '1/3' : item.size === '1/2' ? '1/2' : item.size})` : ''}</span>
+                <span>Qty: {item.quantity}</span>
+              </div>
+            ))}
+          </div>
+
+          <div className="flex justify-between items-center text-xs font-semibold mb-3 pt-1 border-t border-white/5">
+            <span className="text-gray-400">Estimated Subtotal:</span>
+            <span className="text-[#fed488] font-mono text-sm">${getSubtotal().toFixed(2)}</span>
+          </div>
+
+          <button
+            onClick={() => onOpenWizard()}
+            className="w-full bg-[#00346f] hover:bg-[#114589] text-white py-2 rounded text-xs font-bold uppercase tracking-wider transition-all duration-200 cursor-pointer text-center"
+          >
+            Request Quote Now
+          </button>
+        </div>
+      )}
 
     </div>
   );
