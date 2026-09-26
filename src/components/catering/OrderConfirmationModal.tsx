@@ -66,7 +66,7 @@ export default function OrderConfirmationModal({
             <span>
               {order.is_delivery 
                 ? `Delivery to: ${order.delivery_address}` 
-                : 'Self-Pickup at Bluebonnet Whisk Workshop (Frisco, TX)'}
+                : 'Self-Pickup at Home Kitchen - Deerwood Dr, Little Elm'}
             </span>
           </div>
 

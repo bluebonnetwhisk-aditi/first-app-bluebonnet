@@ -123,8 +123,22 @@ export default function CheckoutModal({
 
   // Cost calculations
   const foodSubtotal = cart.reduce((sum, item) => sum + item.totalPrice, 0);
+  const cakeSubtotal = cart.filter(item => item.category === 'cakes').reduce((sum, item) => sum + item.totalPrice, 0);
+  const nonCakeSubtotal = cart.filter(item => item.category !== 'cakes').reduce((sum, item) => sum + item.totalPrice, 0);
+  const hasTiffin = cart.some(item => item.category === 'tiffin');
+
+  // Enforce pickup if cart has tiffin items
+  useEffect(() => {
+    if (hasTiffin && isDelivery) {
+      setIsDelivery(false);
+    }
+  }, [hasTiffin, isDelivery, setIsDelivery]);
+
   const deliveryFee = isDelivery ? 50.00 : 0.00;
-  const taxAmount = Math.round((foodSubtotal + deliveryFee) * 0.0825 * 100) / 100;
+
+  // Texas Sales Tax: Bakery products (cakes) are 0% exempt. Catering food + delivery are subject to 8.25%
+  const taxableAmount = nonCakeSubtotal + (nonCakeSubtotal > 0 && isDelivery ? deliveryFee : 0);
+  const taxAmount = Math.round(taxableAmount * 0.0825 * 100) / 100;
 
   // Credit Card 3.5% Processing Fee
   const processingFee = paymentMethod === 'credit_card'
@@ -390,40 +404,54 @@ export default function CheckoutModal({
             <label className="block text-xs font-bold uppercase tracking-wider text-gray-700">
               Fulfillment Method
             </label>
-            <div className="grid grid-cols-2 gap-3">
-              <button
-                type="button"
-                onClick={() => setIsDelivery(false)}
-                className={`p-3 rounded-xl border flex items-center gap-3 transition-all cursor-pointer ${
-                  !isDelivery
-                    ? 'border-[#00346f] bg-blue-50/50 text-[#00346f] ring-1 ring-[#00346f]'
-                    : 'border-gray-200 text-gray-600 hover:bg-gray-50'
-                }`}
-              >
-                <Store className="w-5 h-5" />
-                <div className="text-left">
-                  <div className="text-xs font-bold">Self-Pickup</div>
-                  <div className="text-[11px] text-gray-500">Workshop in Frisco, TX ($0.00)</div>
-                </div>
-              </button>
 
-              <button
-                type="button"
-                onClick={() => setIsDelivery(true)}
-                className={`p-3 rounded-xl border flex items-center gap-3 transition-all cursor-pointer ${
-                  isDelivery
-                    ? 'border-[#00346f] bg-blue-50/50 text-[#00346f] ring-1 ring-[#00346f]'
-                    : 'border-gray-200 text-gray-600 hover:bg-gray-50'
-                }`}
-              >
-                <Truck className="w-5 h-5" />
-                <div className="text-left">
-                  <div className="text-xs font-bold">Venue Delivery</div>
-                  <div className="text-[11px] text-[#775a19] font-bold">+$50 Flat Fee</div>
+            {hasTiffin ? (
+              <div className="p-3.5 bg-amber-50/90 rounded-xl border border-amber-200 text-xs space-y-1">
+                <div className="flex items-center gap-2 text-amber-900 font-bold">
+                  <Store className="w-5 h-5 text-amber-700 shrink-0" />
+                  <span>Self-Pickup Only (Home Kitchen - Deerwood Dr, Little Elm) ($0.00)</span>
                 </div>
-              </button>
-            </div>
-            {isDelivery && (
+                <p className="text-[11px] text-amber-800">
+                  Your cart contains homestyle tiffin meals, which are handcrafted fresh for self-pickup only. Delivery is not available for tiffins.
+                </p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={() => setIsDelivery(false)}
+                  className={`p-3 rounded-xl border flex items-center gap-3 transition-all cursor-pointer ${
+                    !isDelivery
+                      ? 'border-[#00346f] bg-blue-50/50 text-[#00346f] ring-1 ring-[#00346f]'
+                      : 'border-gray-200 text-gray-600 hover:bg-gray-50'
+                  }`}
+                >
+                  <Store className="w-5 h-5" />
+                  <div className="text-left">
+                    <div className="text-xs font-bold">Self-Pickup</div>
+                    <div className="text-[11px] text-gray-500">Home Kitchen - Deerwood Dr, Little Elm ($0.00)</div>
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setIsDelivery(true)}
+                  className={`p-3 rounded-xl border flex items-center gap-3 transition-all cursor-pointer ${
+                    isDelivery
+                      ? 'border-[#00346f] bg-blue-50/50 text-[#00346f] ring-1 ring-[#00346f]'
+                      : 'border-gray-200 text-gray-600 hover:bg-gray-50'
+                  }`}
+                >
+                  <Truck className="w-5 h-5" />
+                  <div className="text-left">
+                    <div className="text-xs font-bold">Venue Delivery</div>
+                    <div className="text-[11px] text-[#775a19] font-bold">+$50 Flat Fee</div>
+                  </div>
+                </button>
+              </div>
+            )}
+
+            {!hasTiffin && isDelivery && (
               <p className="text-xs text-amber-800 bg-amber-50 p-2.5 rounded-xl border border-amber-200 leading-snug">
                 📍 <em>Delivery available based on location throughout Frisco, Plano, McKinney, Allen, and greater DFW.</em>
               </p>
@@ -647,12 +675,29 @@ export default function CheckoutModal({
               <span>Food Subtotal ({cart.length} item kinds):</span>
               <span className="font-bold text-gray-900">${foodSubtotal.toFixed(2)}</span>
             </div>
+            {cakeSubtotal > 0 && nonCakeSubtotal > 0 && (
+              <div className="pl-2 space-y-0.5 text-[11px] text-gray-500 border-l-2 border-gray-200">
+                <div className="flex justify-between">
+                  <span>• Catering Food (Taxable)</span>
+                  <span>${nonCakeSubtotal.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between text-emerald-700">
+                  <span>• Cakes (0% Tax-Exempt)</span>
+                  <span>${cakeSubtotal.toFixed(2)}</span>
+                </div>
+              </div>
+            )}
             <div className="flex justify-between text-gray-600">
-              <span>{isDelivery ? 'Delivery Fee (DFW Flat Fee)' : 'Self-Pickup'}</span>
+              <span>{isDelivery ? 'Delivery Fee (DFW Flat Fee)' : 'Self-Pickup (Home Kitchen, Little Elm)'}</span>
               <span className="font-bold text-gray-900">${deliveryFee.toFixed(2)}</span>
             </div>
             <div className="flex justify-between text-gray-600">
-              <span>Texas Sales Tax (8.25%):</span>
+              <div>
+                <span>Texas Sales Tax {nonCakeSubtotal > 0 ? '(8.25%)' : '(0% Exempt)'}:</span>
+                {cakeSubtotal > 0 && (
+                  <span className="text-[10px] text-emerald-700 block">Bakery products: 0% tax</span>
+                )}
+              </div>
               <span className="font-bold text-gray-900">${taxAmount.toFixed(2)}</span>
             </div>
             {paymentMethod === 'credit_card' && (

@@ -200,17 +200,9 @@ export default function Home({ onOpenWizard, onOpenBaker, onNavigate }: HomeProp
               >
                 REQUEST A CUSTOM QUOTE <ArrowRight className="h-3.5 w-3.5" />
               </button>
-              <a 
-                href="https://wa.me/9455274566"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="px-8 py-4 border border-brand-gold-tint hover:bg-brand-gold-tint/10 text-brand-cream text-xs font-bold tracking-widest uppercase rounded transition-all cursor-pointer inline-flex items-center gap-2"
-              >
-                CHAT WITH THE CHEF
-              </a>
               <button 
                 onClick={() => onNavigate("Catering")}
-                className="px-8 py-4 glass-panel hover:bg-white/10 text-white text-xs font-bold tracking-widest uppercase rounded transition-all cursor-pointer"
+                className="px-8 py-4 border border-brand-gold-tint hover:bg-brand-gold-tint/10 text-brand-cream text-xs font-bold tracking-widest uppercase rounded transition-all cursor-pointer"
               >
                 VIEW CATERING &amp; ESTIMATES
               </button>

@@ -215,31 +215,6 @@ export default function App() {
         )}
       </main>
 
-      {/* Floating WhatsApp CTA button */}
-      <div className="fixed bottom-6 right-6 z-40">
-        <a
-          href="https://wa.me/19455274566"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="bg-[#25D366] hover:bg-[#20ba59] text-white p-4 rounded-full shadow-2xl transition-all duration-300 flex items-center gap-2 group hover:scale-105 select-none cursor-pointer"
-          title="Chat on WhatsApp"
-        >
-          <svg 
-            xmlns="http://www.w3.org/2000/svg" 
-            width="20" 
-            height="20" 
-            viewBox="0 0 24 24" 
-            fill="currentColor" 
-            className="h-5 w-5"
-          >
-            <path d="M12.012 2c-5.506 0-9.989 4.478-9.99 9.984a9.96 9.96 0 0 0 1.333 4.993L2 22l5.233-1.371a9.948 9.948 0 0 0 4.775 1.22c5.507 0 9.99-4.477 9.99-9.985 0-2.67-1.037-5.18-2.92-7.062C17.18 3.033 14.671 2 12.012 2zm5.72 13.918c-.313.88-1.56 1.6-2.285 1.707-.63.093-1.45.166-4.152-.96-3.45-1.442-5.63-4.994-5.802-5.222-.173-.228-1.4-1.859-1.4-3.547 0-1.688.88-2.52 1.194-2.864.314-.343.687-.43.915-.43h.656c.228 0 .514-.085.8.6.314.757 1.057 2.602 1.143 2.788.086.186.143.403.029.63-.115.228-.172.37-.343.571-.172.2-.358.4-.515.571-.172.172-.343.358-.143.7.2.343.886 1.458 1.886 2.36 1.286 1.157 2.372 1.514 2.715 1.685.343.172.543.143.743-.085.2-.229.857-.999 1.086-1.343.228-.343.457-.285.77-.172.314.115 2 .943 2.343 1.115.343.172.571.257.657.4.086.143.086.829-.228 1.709z"/>
-          </svg>
-          <span className="font-sans text-xs font-bold tracking-widest uppercase max-w-0 overflow-hidden group-hover:max-w-[130px] transition-all duration-500 whitespace-nowrap">
-            Chat with Chef
-          </span>
-        </a>
-      </div>
-
       {/* FOOTER */}
       <footer className="bg-gray-100 border-t border-gray-250 py-12 text-[#1a1c20] font-sans mt-auto">
         <div className="max-w-7xl mx-auto px-4 lg:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-4 gap-8">

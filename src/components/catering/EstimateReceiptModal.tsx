@@ -87,7 +87,7 @@ export default function EstimateReceiptModal({ order, onClose }: EstimateReceipt
                 {order.fulfillment_date} at {order.fulfillment_time}
               </div>
               <div className="text-gray-600 font-medium">
-                {order.is_delivery ? `Venue Delivery: ${order.delivery_address}` : 'Client Self-Pickup (Frisco, TX)'}
+                {order.is_delivery ? `Venue Delivery: ${order.delivery_address}` : 'Client Self-Pickup (Home Kitchen - Deerwood Dr, Little Elm)'}
               </div>
               {order.dietary_notes && (
                 <div className="text-amber-800 font-semibold mt-1">
@@ -104,13 +104,13 @@ export default function EstimateReceiptModal({ order, onClose }: EstimateReceipt
           {/* Line Items Table */}
           <div>
             <h3 className="font-serif font-bold text-sm text-[#00346f] mb-3">
-              Itemized Catering Tray &amp; Dish Selection
+              Itemized Order &amp; Dish Selection
             </h3>
             
             <div className="border border-gray-200 rounded-xl overflow-hidden divide-y divide-gray-150 text-xs">
               <div className="bg-gray-100 p-3 flex justify-between font-bold text-gray-700 uppercase tracking-wider text-[10px]">
                 <span className="w-1/2">Dish &amp; Description</span>
-                <span className="w-1/4 text-center">Tray / Pack Size</span>
+                <span className="w-1/4 text-center">Size / Selection</span>
                 <span className="w-1/8 text-center">Qty</span>
                 <span className="w-1/8 text-right">Total</span>
               </div>
@@ -168,7 +168,7 @@ export default function EstimateReceiptModal({ order, onClose }: EstimateReceipt
           {/* Notice & Footer */}
           <div className="pt-4 border-t border-gray-200 text-[10px] text-gray-500 space-y-1">
             <p>
-              * 100% Vegetarian Kitchen • All dishes prepared fresh to order in Frisco, Texas.
+              * 100% Vegetarian Kitchen • All dishes prepared fresh to order in Little Elm / Frisco, Texas.
             </p>
             <p>
               For inquiries or modifications, call or WhatsApp 945-527-4566 or email bluebonnetwhisk@gmail.com.

@@ -16,12 +16,16 @@ import {
   Package,
   DollarSign,
   KeyRound,
-  Ban
+  Ban,
+  FileEdit,
+  ImageIcon
 } from 'lucide-react';
 import type { CateringOrder, OrderStatus } from '../../types/catering';
 import { getCentralTimeNow, getUpcomingDates } from '../../utils/centralTime';
 import { fetchOrders, updateOrderStatus, subscribeToOrders } from '../../services/supabase';
 import KDSBlackoutManager from './KDSBlackoutManager';
+import KDSEditOrderModal from './KDSEditOrderModal';
+import KDSTiffinMenuModal from './KDSTiffinMenuModal';
 
 interface KitchenKDSProps {
   onBackToOrder?: () => void;
@@ -72,6 +76,12 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
 
   // Blackout Dates Manager Modal
   const [showBlackoutModal, setShowBlackoutModal] = useState(false);
+
+  // Edit Order Items & Pricing Modal
+  const [editingOrder, setEditingOrder] = useState<CateringOrder | null>(null);
+
+  // Weekly Tiffin Flyer & Specials Modal
+  const [showTiffinModal, setShowTiffinModal] = useState(false);
 
   // Load orders
   const loadOrders = async () => {
@@ -367,6 +377,15 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
             </button>
 
             <button
+              onClick={() => setShowTiffinModal(true)}
+              className="inline-flex items-center gap-1.5 border border-purple-300 hover:bg-purple-50 text-purple-900 px-3 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer"
+              title="Upload / Update Weekly Tiffin Menu Flyer & Saturday Specials"
+            >
+              <ImageIcon className="w-3.5 h-3.5 text-purple-700" />
+              <span>Tiffin Flyer &amp; Specials</span>
+            </button>
+
+            <button
               onClick={() => setShowBlackoutModal(true)}
               className="inline-flex items-center gap-1.5 border border-rose-300 hover:bg-rose-50 text-rose-900 px-3 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer"
               title="Manage Kitchen Blackout Dates & Recurring Schedule"
@@ -609,7 +628,7 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
                       ) : (
                         <div className="flex items-center gap-1 text-gray-700 bg-gray-100 px-2.5 py-1 rounded-lg text-[11px]">
                           <Store className="w-3.5 h-3.5 text-gray-500" />
-                          <span>Self-Pickup at Workshop</span>
+                          <span>Self-Pickup (Home Kitchen - Deerwood Dr, Little Elm)</span>
                         </div>
                       )}
                     </div>
@@ -657,11 +676,26 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
 
                   {/* Pipeline Status Buttons Footer */}
                   <div className="p-3 sm:p-4 bg-gray-50 border-t border-gray-150 rounded-b-2xl flex items-center justify-between gap-2">
-                    <div className="text-xs font-bold text-gray-700">
-                      ${order.total_amount.toFixed(2)}
+                    <div>
+                      <span className="text-xs font-bold text-gray-900 block">${order.total_amount.toFixed(2)}</span>
+                      {Boolean((order.discount_amount && order.discount_amount > 0) || (order.rebate_amount && order.rebate_amount > 0)) && (
+                        <span className="text-[10px] text-purple-700 block font-semibold">
+                          {order.discount_amount ? `-${order.discount_amount.toFixed(2)} Disc` : ''}
+                          {order.rebate_amount ? ` -${order.rebate_amount.toFixed(2)} Reb` : ''}
+                        </span>
+                      )}
                     </div>
 
                     <div className="flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => setEditingOrder(order)}
+                        className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-gray-300 hover:bg-gray-100 text-gray-700 text-xs font-semibold cursor-pointer transition-colors"
+                        title="Edit items, quantities, discounts, and rebates"
+                      >
+                        <FileEdit className="w-3.5 h-3.5 text-[#00346f]" />
+                        <span>Edit</span>
+                      </button>
                       {order.status === 'new' && (
                         <button
                           onClick={() => handleStatusChange(order.id, 'preparing')}
@@ -974,6 +1008,27 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
           loadOrders();
         }}
       />
+
+      {/* ── EDIT ORDER MODAL (ITEMS, QUANTITIES, DISCOUNTS, REBATES) ── */}
+      {editingOrder && (
+        <KDSEditOrderModal
+          order={editingOrder}
+          onClose={() => setEditingOrder(null)}
+          onOrderUpdated={() => {
+            loadOrders();
+          }}
+        />
+      )}
+
+      {/* ── TIFFIN FLYER & SATURDAY SPECIALS MODAL ── */}
+      {showTiffinModal && (
+        <KDSTiffinMenuModal
+          onClose={() => setShowTiffinModal(false)}
+          onSettingsSaved={() => {
+            loadOrders();
+          }}
+        />
+      )}
 
     </div>
   );

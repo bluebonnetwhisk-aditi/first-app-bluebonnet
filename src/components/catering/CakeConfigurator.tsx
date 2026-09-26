@@ -8,7 +8,7 @@ import {
   Info, 
   AlertCircle,
   Trash2,
-  Heart
+  Leaf
 } from 'lucide-react';
 import type { CartItem } from '../../types/catering';
 
@@ -111,6 +111,7 @@ interface CakeConfiguratorProps {
     designNotes: string;
     requestCustomTheme: boolean;
     customThemeDetails?: string;
+    isEggless: boolean;
   }) => void;
   cartCakes?: CartItem[];
   onRemoveCake?: (cartItemId: string) => void;
@@ -128,6 +129,7 @@ export default function CakeConfigurator({
   const [designNotes, setDesignNotes] = useState<string>('');
   const [requestCustomTheme, setRequestCustomTheme] = useState<boolean>(false);
   const [customThemeDetails, setCustomThemeDetails] = useState<string>('');
+  const [isEggless, setIsEggless] = useState<boolean>(false);
   const [quantity, setQuantity] = useState<number>(1);
   const [addedAlert, setAddedAlert] = useState<boolean>(false);
 
@@ -149,11 +151,12 @@ export default function CakeConfigurator({
 
   const handleAddToCart = () => {
     const sizeConfig = CAKE_SIZES.find(s => s.id === selectedSize)!;
-    const cakeId = `cake-${selectedSize}-${selectedCategoryId}-${selectedFlavor.toLowerCase().replace(/[^a-z0-9]/g, '-')}`;
+    const egglessSuffix = isEggless ? '-eggless' : '';
+    const cakeId = `cake-${selectedSize}-${selectedCategoryId}-${selectedFlavor.toLowerCase().replace(/[^a-z0-9]/g, '-')}${egglessSuffix}`;
     
     onAddCake({
       menuItemId: cakeId,
-      name: `${selectedFlavor} Cake (${sizeConfig.name})`,
+      name: `${selectedFlavor} Cake (${sizeConfig.name})${isEggless ? ' [Eggless]' : ''}`,
       size: selectedSize,
       sizeLabel: `${sizeConfig.name} (${sizeConfig.serves})`,
       category: selectedCategoryId,
@@ -165,7 +168,8 @@ export default function CakeConfigurator({
       inscription: inscription.trim(),
       designNotes: designNotes.trim(),
       requestCustomTheme,
-      customThemeDetails: customThemeDetails.trim()
+      customThemeDetails: customThemeDetails.trim(),
+      isEggless
     });
 
     // Reset inputs & show alert
@@ -174,6 +178,7 @@ export default function CakeConfigurator({
     setDesignNotes('');
     setRequestCustomTheme(false);
     setCustomThemeDetails('');
+    setIsEggless(false);
     setQuantity(1);
     setTimeout(() => setAddedAlert(false), 3500);
   };
@@ -198,14 +203,14 @@ export default function CakeConfigurator({
                 </span>
               </div>
               <p className="text-xs text-white/80 mt-0.5">
-                Artisan eggless celebration cakes crafted fresh for your birthdays, anniversaries &amp; milestone gatherings
+                Artisan celebration cakes crafted fresh for your birthdays, anniversaries &amp; milestone gatherings. Available eggless on request.
               </p>
             </div>
           </div>
           
-          <div className="inline-flex items-center gap-1.5 self-start sm:self-auto bg-amber-400/20 text-[#ffdea5] px-3 py-1.5 rounded-full border border-amber-300/30 text-xs font-semibold">
-            <Heart className="w-3.5 h-3.5 fill-[#ffdea5]" />
-            <span>100% Eggless by Default</span>
+          <div className="inline-flex items-center gap-1.5 self-start sm:self-auto bg-emerald-500/20 text-[#ffdea5] px-3 py-1.5 rounded-full border border-emerald-400/30 text-xs font-semibold">
+            <Leaf className="w-3.5 h-3.5 text-emerald-300" />
+            <span>Eggless Option on Request</span>
           </div>
         </div>
       </div>
@@ -384,6 +389,27 @@ export default function CakeConfigurator({
 
         </div>
 
+        {/* Eggless Option on Request Checkbox */}
+        <div className="p-4 rounded-xl bg-emerald-50/80 border border-emerald-200">
+          <label className="flex items-start gap-2.5 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={isEggless}
+              onChange={(e) => setIsEggless(e.target.checked)}
+              className="mt-0.5 rounded border-emerald-300 text-emerald-700 focus:ring-emerald-700 cursor-pointer"
+            />
+            <div className="text-xs text-emerald-950">
+              <span className="font-bold flex items-center gap-1.5">
+                <Leaf className="w-3.5 h-3.5 text-emerald-700" />
+                Bake as 100% Eggless / Pure Vegetarian (Available on Request)
+              </span>
+              <p className="text-[11px] text-emerald-800 mt-0.5 leading-snug">
+                Available upon request at zero extra charge. Our signature egg-free sponge recipes deliver heavenly moisture, cloud-like crumb, and authentic richness.
+              </p>
+            </div>
+          </label>
+        </div>
+
         {/* Custom Theme / Additional Customization Checkbox & Dynamic Input Box */}
         <div className="space-y-3 p-4 rounded-xl bg-purple-50/70 border border-purple-200">
           <label className="flex items-start gap-2.5 cursor-pointer">
@@ -536,7 +562,7 @@ export default function CakeConfigurator({
           <div className="flex items-start gap-2">
             <AlertCircle className="w-4 h-4 text-amber-700 shrink-0 mt-0.5" />
             <p>
-              <strong>Dietary &amp; Ingredients:</strong> Eggless by default. For vegan, gluten-free, or specific dietary modifications, please mention in the notes.
+              <strong>Dietary &amp; Ingredients:</strong> Available as 100% eggless upon request (simply check the eggless box above). For vegan, gluten-free, or specific dietary modifications, please include details in the notes.
             </p>
           </div>
         </div>

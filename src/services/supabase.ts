@@ -1,5 +1,5 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
-import type { CateringOrder, CalendarBlackout, OrderStatus } from '../types/catering';
+import type { CateringOrder, CalendarBlackout, OrderStatus, TiffinMenuSettings } from '../types/catering';
 import { getCentralTimeNow } from '../utils/centralTime';
 
 // Safe Environment variables retrieval (Vite or Next.js compatible)
@@ -520,3 +520,126 @@ export function subscribeToOrders(onUpdate: () => void): () => void {
     window.removeEventListener('bbw_orders_updated', handleLocalUpdate);
   };
 }
+
+/**
+ * Updates full order details (items, subtotal, tax, discounts, rebates, totals)
+ * and synchronizes with Supabase public.orders and local storage.
+ */
+export async function updateOrderDetails(orderId: string, updates: Partial<CateringOrder>): Promise<boolean> {
+  let updatedSuccessfully = false;
+
+  if (supabase) {
+    try {
+      const payloadToUpdate: any = { ...updates };
+      delete payloadToUpdate.id;
+      delete payloadToUpdate.created_at;
+
+      const { error } = await supabase
+        .from('orders')
+        .update(payloadToUpdate)
+        .eq('id', orderId);
+
+      if (!error) {
+        updatedSuccessfully = true;
+      } else {
+        console.warn('Supabase updateOrderDetails error:', error);
+      }
+    } catch (err) {
+      console.warn('Supabase updateOrderDetails connection failed, persisting to local cache', err);
+    }
+  }
+
+  // Always update local cache
+  const all = getStoredOrders();
+  const index = all.findIndex(o => o.id === orderId);
+  if (index !== -1) {
+    all[index] = { ...all[index], ...updates };
+    saveStoredOrders(all);
+    updatedSuccessfully = true;
+  }
+
+  return updatedSuccessfully;
+}
+
+const LOCAL_STORAGE_TIFFIN_KEY = 'bbw_tiffin_menu_settings_v1';
+
+export const DEFAULT_TIFFIN_SETTINGS: TiffinMenuSettings = {
+  flyerImageUrl: '/tiffin-flyer.jpg',
+  weekTitle: 'September 21 - 26',
+  specialDishes: [
+    {
+      id: 'spec-1',
+      title: 'Chef’s Special Pav Bhaji Feast',
+      description: 'Slow-simmered spiced vegetable bhaji with extra butter, 2 toasted ladi pavs, onion salad & masala chili.',
+      price: 13.99,
+      imageUrl: ''
+    }
+  ],
+  saturdaySpecialTitle: 'Chef’s Special Pav Bhaji Feast',
+  saturdaySpecialDescription: 'Slow-simmered spiced vegetable bhaji with extra butter, 2 toasted ladi pavs, onion salad & masala chili.',
+  saturdaySpecialImageUrl: ''
+};
+
+/**
+ * Fetch current Tiffin Weekly flyer and specials settings
+ */
+export async function fetchTiffinMenuSettings(): Promise<TiffinMenuSettings> {
+  if (supabase) {
+    try {
+      const { data, error } = await supabase
+        .from('app_settings')
+        .select('value')
+        .eq('key', 'tiffin_menu_settings')
+        .maybeSingle();
+
+      if (!error && data && data.value) {
+        localStorage.setItem(LOCAL_STORAGE_TIFFIN_KEY, JSON.stringify(data.value));
+        return data.value as TiffinMenuSettings;
+      }
+    } catch (err) {
+      console.warn('Supabase fetchTiffinMenuSettings failed, using local fallback', err);
+    }
+  }
+
+  try {
+    const raw = localStorage.getItem(LOCAL_STORAGE_TIFFIN_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch {}
+
+  return DEFAULT_TIFFIN_SETTINGS;
+}
+
+/**
+ * Save Tiffin Weekly flyer and specials settings to Supabase & local cache
+ */
+export async function saveTiffinMenuSettings(settings: TiffinMenuSettings): Promise<boolean> {
+  const updatedSettings: TiffinMenuSettings = {
+    ...settings,
+    updatedAt: new Date().toISOString()
+  };
+
+  try {
+    localStorage.setItem(LOCAL_STORAGE_TIFFIN_KEY, JSON.stringify(updatedSettings));
+    window.dispatchEvent(new CustomEvent('bbw_tiffin_settings_updated'));
+  } catch {}
+
+  if (supabase) {
+    try {
+      const { error } = await supabase
+        .from('app_settings')
+        .upsert({
+          key: 'tiffin_menu_settings',
+          value: updatedSettings,
+          updated_at: new Date().toISOString()
+        });
+
+      if (!error) return true;
+      console.warn('Supabase saveTiffinMenuSettings warning:', error);
+    } catch (err) {
+      console.warn('Supabase saveTiffinMenuSettings failed', err);
+    }
+  }
+
+  return true;
+}
+

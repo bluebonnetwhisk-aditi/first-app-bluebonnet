@@ -8,7 +8,6 @@ import {
   Sparkles, 
   Utensils, 
   Coffee, 
-  Cake as CakeIcon, 
   Flame, 
   ChevronDown, 
   ChevronUp,
@@ -18,7 +17,6 @@ import {
 } from 'lucide-react';
 import type { CartItem, Category, MenuItem, TraySize, Allergen } from '../../types/catering';
 import { DESI_DABBA_ITEMS } from '../../data/desiDabbaMenu';
-import CakeConfigurator from './CakeConfigurator';
 
 interface MenuOrderGridProps {
   cart: CartItem[];
@@ -39,7 +37,6 @@ interface SectionDef {
   title: string;
   subtitle: string;
   icon: any;
-  customComponent?: 'cakeConfigurator';
 }
 
 const MENU_SECTIONS: SectionDef[] = [
@@ -105,21 +102,12 @@ const MENU_SECTIONS: SectionDef[] = [
     title: 'Beverages (Per Gallon)',
     subtitle: 'Mango lassi, spiced masala chaas & fresh brewed masala chai (~16–20 servings)',
     icon: Coffee
-  },
-  {
-    key: 'cakes',
-    category: 'cakes',
-    title: 'Cakes & Specialty Bakes Configurator',
-    subtitle: 'Artisan 6″ & 8″ celebration cakes (Eggless, 48 hrs advance notice)',
-    icon: CakeIcon,
-    customComponent: 'cakeConfigurator'
   }
 ];
 
 export default function MenuOrderGrid({ 
   cart, 
-  onUpdateCartItem, 
-  onRemoveCartItem 
+  onUpdateCartItem 
 }: MenuOrderGridProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [allergenFilter, setAllergenFilter] = useState<Allergen[]>([]);
@@ -169,11 +157,6 @@ export default function MenuOrderGrid({
     const map: Record<string, MenuItem[]> = {};
 
     MENU_SECTIONS.forEach(section => {
-      if (section.customComponent === 'cakeConfigurator') {
-        map[section.key] = [];
-        return;
-      }
-
       const dishes = DESI_DABBA_ITEMS.filter(item => {
         // Category check
         if (item.category !== section.category) return false;
@@ -206,54 +189,6 @@ export default function MenuOrderGrid({
 
     return map;
   }, [searchQuery, allergenFilter, satvikOnly]);
-
-  // Handler for cake additions from CakeConfigurator
-  const handleAddCakeFromConfigurator = (cakeData: {
-    menuItemId: string;
-    name: string;
-    size: '6inch' | '8inch';
-    sizeLabel: string;
-    category: string;
-    categoryLabel: string;
-    flavor: string;
-    unitPrice: number;
-    quantity: number;
-    totalPrice: number;
-    inscription: string;
-    designNotes: string;
-    requestCustomTheme: boolean;
-    customThemeDetails?: string;
-  }) => {
-    const cakeMenuItem: MenuItem = {
-      id: cakeData.menuItemId,
-      name: cakeData.name,
-      category: 'cakes',
-      categoryLabel: 'Cakes & Specialty Bakes',
-      description: `${cakeData.flavor} - ${cakeData.sizeLabel}`,
-      allergens: ['G', 'D'],
-      pricingType: 'cake',
-      leadTimeHours: 48,
-      isSatvikAvailable: true
-    };
-
-    const noteSegments = [
-      `Flavor: ${cakeData.flavor}`,
-      cakeData.inscription ? `Inscription: "${cakeData.inscription}"` : null,
-      cakeData.requestCustomTheme 
-        ? `Custom Theme: ${cakeData.customThemeDetails || 'Quote Requested'}` 
-        : null,
-      cakeData.designNotes ? `Notes: ${cakeData.designNotes}` : null
-    ].filter(Boolean);
-
-    onUpdateCartItem(
-      cakeMenuItem,
-      'cake_custom',
-      cakeData.quantity,
-      cakeData.sizeLabel,
-      cakeData.unitPrice,
-      noteSegments.join(' | ')
-    );
-  };
 
   // Scroll to section helper
   const scrollToSection = (key: string) => {
@@ -390,9 +325,9 @@ export default function MenuOrderGrid({
           const sectionCartCount = sectionCartItems.reduce((s, i) => s + i.quantity, 0);
           const sectionSubtotal = sectionCartItems.reduce((s, i) => s + i.totalPrice, 0);
 
-          // If search/filter is active and no dishes match in this section (and not cakes), hide section
+          // If search/filter is active and no dishes match in this section, hide section
           const isFilterActive = searchQuery.trim() || allergenFilter.length > 0 || satvikOnly;
-          if (section.customComponent !== 'cakeConfigurator' && isFilterActive && dishes.length === 0) {
+          if (isFilterActive && dishes.length === 0) {
             return null;
           }
 
@@ -424,11 +359,9 @@ export default function MenuOrderGrid({
                       <h3 className="font-serif font-bold text-base sm:text-lg text-[#00346f]">
                         {section.title}
                       </h3>
-                      {section.customComponent !== 'cakeConfigurator' && (
-                        <span className="text-[11px] text-gray-500 font-sans">
-                          ({dishes.length} dishes)
-                        </span>
-                      )}
+                      <span className="text-[11px] text-gray-500 font-sans">
+                        ({dishes.length} dishes)
+                      </span>
                     </div>
                     <p className="text-xs text-gray-500 hidden sm:block mt-0.5">
                       {section.subtitle}
@@ -455,14 +388,7 @@ export default function MenuOrderGrid({
               {isOpen && (
                 <div className="p-4 sm:p-6 bg-white animate-fade-in">
                   
-                  {/* Custom Component: Cake Configurator */}
-                  {section.customComponent === 'cakeConfigurator' ? (
-                    <CakeConfigurator
-                      onAddCake={handleAddCakeFromConfigurator}
-                      cartCakes={cart.filter(i => i.category === 'cakes')}
-                      onRemoveCake={onRemoveCartItem}
-                    />
-                  ) : section.category === 'breads' ? (
+                  {section.category === 'breads' ? (
                     
                     /* ── BREADS GRID (PER-PIECE SELECTION & DYNAMIC CALCULATION) ── */
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

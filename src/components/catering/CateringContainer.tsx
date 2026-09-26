@@ -1,7 +1,16 @@
 import { useState, useEffect } from 'react';
-import { ClipboardList, ChefHat, Lock } from 'lucide-react';
+import { 
+  UtensilsCrossed, 
+  Cake as CakeIcon, 
+  Package, 
+  ChefHat, 
+  Lock 
+} from 'lucide-react';
 import BrandHeader from './BrandHeader';
+import CakeBrandHeader from './CakeBrandHeader';
 import MenuOrderGrid from './MenuOrderGrid';
+import CakeConfigurator from './CakeConfigurator';
+import TiffinOrderView from './TiffinOrderView';
 import CostEstimatorSidebar from './CostEstimatorSidebar';
 import CheckoutModal from './CheckoutModal';
 import EstimateReceiptModal from './EstimateReceiptModal';
@@ -11,12 +20,16 @@ import type { CartItem, CateringOrder, MenuItem, TraySize } from '../../types/ca
 
 const CART_STORAGE_KEY = 'bbw_catering_cart_v1';
 
+type SubTab = 'order' | 'cake' | 'tiffin' | 'kitchen';
+
 export default function CateringContainer() {
-  // Sub-navigation: 'order' (/catering/order or /catering) vs 'kitchen' (/catering/kitchen)
-  const [subTab, setSubTab] = useState<'order' | 'kitchen'>(() => {
+  // Sub-navigation: 'order' (/catering/order), 'cake' (/catering/cake), 'tiffin' (/catering/tiffin), 'kitchen' (/catering/kitchen)
+  const [subTab, setSubTab] = useState<SubTab>(() => {
     if (typeof window !== 'undefined') {
       const path = window.location.pathname.toLowerCase();
       if (path.includes('/kitchen')) return 'kitchen';
+      if (path.includes('/cake')) return 'cake';
+      if (path.includes('/tiffin')) return 'tiffin';
     }
     return 'order';
   });
@@ -48,11 +61,23 @@ export default function CateringContainer() {
     }
   }, [cart]);
 
+  // If cart contains any tiffin item, enforce pickup only (no delivery)
+  const hasTiffinInCart = cart.some(i => i.category === 'tiffin');
+  useEffect(() => {
+    if (hasTiffinInCart && isDelivery) {
+      setIsDelivery(false);
+    }
+  }, [hasTiffinInCart, isDelivery]);
+
   // Sync route changes with browser history
-  const switchSubTab = (tab: 'order' | 'kitchen') => {
+  const switchSubTab = (tab: SubTab) => {
     setSubTab(tab);
     if (typeof window !== 'undefined') {
-      const newPath = tab === 'kitchen' ? '/catering/kitchen' : '/catering/order';
+      let newPath = '/catering/order';
+      if (tab === 'kitchen') newPath = '/catering/kitchen';
+      else if (tab === 'cake') newPath = '/catering/cake';
+      else if (tab === 'tiffin') newPath = '/catering/tiffin';
+
       window.history.pushState(null, '', newPath);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
@@ -64,6 +89,10 @@ export default function CateringContainer() {
       const path = window.location.pathname.toLowerCase();
       if (path.includes('/kitchen')) {
         setSubTab('kitchen');
+      } else if (path.includes('/cake')) {
+        setSubTab('cake');
+      } else if (path.includes('/tiffin')) {
+        setSubTab('tiffin');
       } else {
         setSubTab('order');
       }
@@ -75,7 +104,7 @@ export default function CateringContainer() {
   // Update item in cart handler
   const handleUpdateCartItem = (
     menuItem: MenuItem,
-    selectionType: TraySize | 'pack_30' | 'pieces' | 'gallon' | 'cake_custom',
+    selectionType: TraySize | 'pack_30' | 'pieces' | 'gallon' | 'cake_custom' | 'tiffin_single' | 'tiffin_family' | 'tiffin_weekly' | 'container_16oz',
     quantity: number,
     selectionLabel: string,
     unitPrice: number,
@@ -105,7 +134,7 @@ export default function CateringContainer() {
         selectionLabel,
         quantity,
         unitPrice,
-        totalPrice: Math.round(quantity * unitPrice * 100) / 100,
+        totalPrice: Math.round(unitPrice * quantity * 100) / 100,
         tier: menuItem.tier,
         allergens: menuItem.allergens,
         leadTimeHours: menuItem.leadTimeHours,
@@ -113,13 +142,63 @@ export default function CateringContainer() {
       };
 
       if (existingIdx !== -1) {
-        const next = [...prev];
-        next[existingIdx] = updatedItem;
-        return next;
+        const copy = [...prev];
+        copy[existingIdx] = updatedItem;
+        return copy;
       } else {
         return [...prev, updatedItem];
       }
     });
+  };
+
+  // Add custom cake handler from CakeConfigurator
+  const handleAddCakeFromConfigurator = (cakeData: {
+    menuItemId: string;
+    name: string;
+    size: any;
+    sizeLabel: string;
+    category: string;
+    categoryLabel: string;
+    flavor: string;
+    unitPrice: number;
+    quantity: number;
+    totalPrice: number;
+    inscription: string;
+    designNotes: string;
+    requestCustomTheme: boolean;
+    customThemeDetails?: string;
+    isEggless?: boolean;
+  }) => {
+    const cakeMenuItem: MenuItem = {
+      id: cakeData.menuItemId,
+      name: cakeData.name,
+      category: 'cakes',
+      categoryLabel: 'Cakes & Specialty Bakes',
+      description: `${cakeData.flavor} - ${cakeData.sizeLabel}${cakeData.isEggless ? ' (Eggless)' : ''}`,
+      allergens: ['G', 'D'],
+      pricingType: 'cake',
+      leadTimeHours: 48,
+      isSatvikAvailable: true
+    };
+
+    const noteSegments = [
+      `Flavor: ${cakeData.flavor}`,
+      cakeData.isEggless ? 'Dietary: 100% Eggless (Vegetarian on Request)' : 'Dietary: Standard Recipe',
+      cakeData.inscription ? `Inscription: "${cakeData.inscription}"` : null,
+      cakeData.requestCustomTheme 
+        ? `Custom Theme: ${cakeData.customThemeDetails || 'Quote Requested'}` 
+        : null,
+      cakeData.designNotes ? `Notes: ${cakeData.designNotes}` : null
+    ].filter(Boolean);
+
+    handleUpdateCartItem(
+      cakeMenuItem,
+      'cake_custom',
+      cakeData.quantity,
+      cakeData.sizeLabel,
+      cakeData.unitPrice,
+      noteSegments.join(' | ')
+    );
   };
 
   const handleRemoveCartItem = (id: string) => {
@@ -139,40 +218,87 @@ export default function CateringContainer() {
     }
   };
 
+  // Cart counts by segment
+  const cateringDishCount = cart.filter(i => i.category !== 'cakes' && i.category !== 'tiffin').reduce((s, i) => s + i.quantity, 0);
+  const cakeCount = cart.filter(i => i.category === 'cakes').reduce((s, i) => s + i.quantity, 0);
+  const tiffinCount = cart.filter(i => i.category === 'tiffin').reduce((s, i) => s + i.quantity, 0);
+
   return (
     <div className="w-full bg-[#fbfbfa] min-h-screen font-sans selection:bg-[#775a19]/20">
       
-      {/* ── 1. SUB-NAVIGATION BAR (Order & Estimates vs Kitchen KDS) ── */}
+      {/* ── 1. SUB-NAVIGATION BAR (Catering Order, Cake Order, Tiffin Order, Kitchen KDS) ── */}
       <div className="sticky top-[84px] z-30 bg-white border-b border-gray-200 shadow-2xs">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-12">
+          <div className="flex items-center justify-between h-14">
             
-            <div className="flex items-center gap-2">
-              <span className="font-serif font-bold text-xs uppercase tracking-widest text-[#00346f] hidden sm:inline">
-                CATERING PORTAL:
+            <div className="flex items-center gap-2 overflow-x-auto py-1 scrollbar-none">
+              <span className="font-serif font-bold text-xs uppercase tracking-widest text-[#00346f] hidden sm:inline mr-1">
+                PORTAL:
               </span>
               
-              <div className="flex items-center gap-1 bg-gray-100 p-1 rounded-xl">
+              <div className="flex items-center gap-1.5 bg-gray-100 p-1 rounded-xl">
+                {/* 1. Catering Order */}
                 <button
+                  type="button"
                   onClick={() => switchSubTab('order')}
-                  className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all cursor-pointer ${
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all cursor-pointer whitespace-nowrap ${
                     subTab === 'order'
                       ? 'bg-[#00346f] text-white shadow-xs'
                       : 'text-gray-600 hover:text-gray-900'
                   }`}
                 >
-                  <ClipboardList className="w-3.5 h-3.5" />
-                  <span>Order &amp; Estimates</span>
-                  {cart.length > 0 && (
+                  <UtensilsCrossed className="w-3.5 h-3.5" />
+                  <span>Catering Order</span>
+                  {cateringDishCount > 0 && (
                     <span className="w-4 h-4 rounded-full bg-[#ffdea5] text-[#00346f] text-[10px] flex items-center justify-center font-bold">
-                      {cart.reduce((s, i) => s + i.quantity, 0)}
+                      {cateringDishCount}
                     </span>
                   )}
                 </button>
 
+                {/* 2. Cake Order */}
                 <button
+                  type="button"
+                  onClick={() => switchSubTab('cake')}
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all cursor-pointer whitespace-nowrap ${
+                    subTab === 'cake'
+                      ? 'bg-[#00346f] text-white shadow-xs'
+                      : 'text-gray-600 hover:text-gray-900'
+                  }`}
+                >
+                  <CakeIcon className="w-3.5 h-3.5" />
+                  <span>Cake Order</span>
+                  {cakeCount > 0 && (
+                    <span className="w-4 h-4 rounded-full bg-[#ffdea5] text-[#00346f] text-[10px] flex items-center justify-center font-bold">
+                      {cakeCount}
+                    </span>
+                  )}
+                </button>
+
+                {/* 3. Tiffin Order */}
+                <button
+                  type="button"
+                  onClick={() => switchSubTab('tiffin')}
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all cursor-pointer whitespace-nowrap ${
+                    subTab === 'tiffin'
+                      ? 'bg-[#00346f] text-white shadow-xs'
+                      : 'text-gray-600 hover:text-gray-900'
+                  }`}
+                >
+                  <Package className="w-3.5 h-3.5" />
+                  <span>Tiffin Order</span>
+                  {tiffinCount > 0 && (
+                    <span className="w-4 h-4 rounded-full bg-[#ffdea5] text-[#00346f] text-[10px] flex items-center justify-center font-bold">
+                      {tiffinCount}
+                    </span>
+                  )}
+                </button>
+
+                {/* 4. Kitchen KDS */}
+                <button
+                  type="button"
                   onClick={() => switchSubTab('kitchen')}
-                  className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all cursor-pointer ${
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all cursor-pointer whitespace-nowrap ${
                     subTab === 'kitchen'
                       ? 'bg-[#00346f] text-white shadow-xs'
                       : 'text-gray-600 hover:text-gray-900'
@@ -186,7 +312,7 @@ export default function CateringContainer() {
             </div>
 
             <div className="text-right text-[11px] text-gray-500 hidden md:block">
-              <span>Frisco, TX • Strict 24h/48h Lead Time Engine</span>
+              <span>Little Elm / Frisco, TX • Strict 24h/48h Lead Time Engine</span>
             </div>
 
           </div>
@@ -199,22 +325,57 @@ export default function CateringContainer() {
       ) : (
         <div className="space-y-8 pb-24">
           
-          {/* Brand Header with Differentiator Cards & Allergen Notice */}
-          <BrandHeader onScrollToMenu={() => {
-            document.getElementById('catering-menu-grid')?.scrollIntoView({ behavior: 'smooth' });
-          }} />
+          {/* SubTab-Specific Brand Headers */}
+          {subTab === 'order' && (
+            <BrandHeader onScrollToMenu={() => {
+              const el = document.getElementById('catering-content-area');
+              if (el) el.scrollIntoView({ behavior: 'smooth' });
+            }} />
+          )}
 
-          {/* Main 2-Column Layout: Menu Order Grid + Sticky Cost Estimator Sidebar */}
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          {subTab === 'cake' && (
+            <CakeBrandHeader onScrollToConfigurator={() => {
+              const el = document.getElementById('catering-content-area');
+              if (el) el.scrollIntoView({ behavior: 'smooth' });
+            }} />
+          )}
+
+          {/* Main 2-Column Layout: Sub-Tab Component + Sticky Cost Estimator Sidebar */}
+          <div id="catering-content-area" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
               
-              {/* Left Column: Menu Order Grid (8 Cols) */}
+              {/* Left Column: Active Segment (8 Cols) */}
               <div className="lg:col-span-8">
-                <MenuOrderGrid
-                  cart={cart}
-                  onUpdateCartItem={handleUpdateCartItem}
-                  onRemoveCartItem={handleRemoveCartItem}
-                />
+                
+                {/* SubTab 1: Catering Order */}
+                {subTab === 'order' && (
+                  <MenuOrderGrid
+                    cart={cart}
+                    onUpdateCartItem={handleUpdateCartItem}
+                    onRemoveCartItem={handleRemoveCartItem}
+                  />
+                )}
+
+                {/* SubTab 2: Cake Order */}
+                {subTab === 'cake' && (
+                  <div className="space-y-6">
+                    <CakeConfigurator
+                      onAddCake={handleAddCakeFromConfigurator}
+                      cartCakes={cart.filter(i => i.category === 'cakes')}
+                      onRemoveCake={handleRemoveCartItem}
+                    />
+                  </div>
+                )}
+
+                {/* SubTab 3: Tiffin Order */}
+                {subTab === 'tiffin' && (
+                  <TiffinOrderView
+                    cart={cart}
+                    onUpdateCartItem={handleUpdateCartItem}
+                    onRemoveCartItem={handleRemoveCartItem}
+                  />
+                )}
+
               </div>
 
               {/* Right Column: Floating Sticky Cost Estimator Sidebar (4 Cols) */}
@@ -226,6 +387,7 @@ export default function CateringContainer() {
                   onClearCart={handleClearCart}
                   onProceedToCheckout={() => setIsCheckoutOpen(true)}
                   onRemoveItem={handleRemoveCartItem}
+                  activeSubTab={subTab}
                 />
               </div>
 
