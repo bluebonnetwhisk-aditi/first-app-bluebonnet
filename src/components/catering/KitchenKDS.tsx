@@ -107,9 +107,9 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
   const [pinChangeError, setPinChangeError] = useState('');
   const [pinChangeSuccess, setPinChangeSuccess] = useState(false);
 
-  // Date Filter state: Defaults to today in America/Chicago, or 'all' for All Upcoming
+  // Date Filter state: Defaults to 'all' for All Upcoming schedule view
   const { dateStr: todayDateStr } = getCentralTimeNow();
-  const [selectedDate, setSelectedDate] = useState<string>(todayDateStr);
+  const [selectedDate, setSelectedDate] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
 
   // Orders and loading
@@ -345,10 +345,10 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
     return allOrders.filter(o => o.status !== 'cancelled').length;
   }, [allOrders]);
 
-  // Filtered orders list by status (new, preparing, ready, completed, all)
+  // Filtered orders list by status (new, preparing, ready, completed, all active)
   const activeOrders = useMemo(() => {
     return ordersForSelectedDate.filter(o => {
-      if (statusFilter === 'all') return true;
+      if (statusFilter === 'all') return o.status !== 'cancelled';
       return o.status === statusFilter;
     });
   }, [ordersForSelectedDate, statusFilter]);
@@ -846,7 +846,8 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
                 { key: 'new', label: 'New' },
                 { key: 'preparing', label: 'Preparing' },
                 { key: 'ready', label: 'Ready' },
-                { key: 'completed', label: 'Completed' }
+                { key: 'completed', label: 'Completed' },
+                { key: 'cancelled', label: 'Cancelled' }
               ].map(tab => (
                 <button
                   key={tab.key}
