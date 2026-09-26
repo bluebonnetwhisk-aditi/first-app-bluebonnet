@@ -21,8 +21,7 @@ import {
   ImageIcon,
   Volume2,
   VolumeX,
-  BellRing,
-  Zap
+  BellRing
 } from 'lucide-react';
 import type { CateringOrder, OrderStatus } from '../../types/catering';
 import { getCentralTimeNow, getUpcomingDates } from '../../utils/centralTime';
@@ -138,10 +137,6 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
     return true;
   });
 
-  // Always-On Screen WakeLock (prevents Android / iPhone / Echo Show screens from sleeping)
-  const [wakeLockActive, setWakeLockActive] = useState(false);
-  const wakeLockSentinelRef = useRef<any>(null);
-
   // Native Browser Notification Permission state
   const [notificationPermission, setNotificationPermission] = useState<string>(() => {
     if (typeof window !== 'undefined' && 'Notification' in window) {
@@ -156,53 +151,6 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
   // Known order IDs tracking to detect new arrivals
   const knownOrderIdsRef = useRef<Set<string>>(new Set());
   const isInitialLoadRef = useRef(true);
-
-  // Screen WakeLock request helper
-  const requestWakeLock = async () => {
-    if (typeof navigator !== 'undefined' && 'wakeLock' in navigator) {
-      try {
-        wakeLockSentinelRef.current = await (navigator as any).wakeLock.request('screen');
-        setWakeLockActive(true);
-        wakeLockSentinelRef.current.addEventListener('release', () => {
-          setWakeLockActive(false);
-        });
-      } catch (err) {
-        console.warn('Screen WakeLock error:', err);
-        setWakeLockActive(false);
-      }
-    }
-  };
-
-  const releaseWakeLock = async () => {
-    try {
-      if (wakeLockSentinelRef.current) {
-        await wakeLockSentinelRef.current.release();
-        wakeLockSentinelRef.current = null;
-        setWakeLockActive(false);
-      }
-    } catch (err) {
-      console.warn('Release WakeLock error:', err);
-    }
-  };
-
-  // Screen WakeLock lifecycle: auto-acquire when unlocked, re-acquire when returning to tab
-  useEffect(() => {
-    if (isUnlocked) {
-      requestWakeLock();
-
-      const handleVisibilityChange = () => {
-        if (document.visibilityState === 'visible') {
-          requestWakeLock();
-        }
-      };
-      document.addEventListener('visibilitychange', handleVisibilityChange);
-
-      return () => {
-        document.removeEventListener('visibilitychange', handleVisibilityChange);
-        releaseWakeLock();
-      };
-    }
-  }, [isUnlocked]);
 
   // Handle incoming newly punched order (audio chime + notification + alert banner)
   const handleIncomingNewOrder = (order: CateringOrder) => {
@@ -544,27 +492,6 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
                 </button>
               )}
             </div>
-
-            {/* Always-On Screen Awake Toggle */}
-            <button
-              type="button"
-              onClick={() => {
-                if (wakeLockActive) {
-                  releaseWakeLock();
-                } else {
-                  requestWakeLock();
-                }
-              }}
-              className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold border transition cursor-pointer ${
-                wakeLockActive
-                  ? 'bg-amber-50 border-amber-300 text-amber-900 shadow-2xs'
-                  : 'bg-gray-50 border-gray-200 text-gray-500 hover:text-gray-700'
-              }`}
-              title={wakeLockActive ? "Screen Awake is active (display will not sleep)" : "Click to keep screen awake indefinitely"}
-            >
-              <Zap className={`w-3.5 h-3.5 ${wakeLockActive ? 'text-amber-600 fill-amber-500' : 'text-gray-400'}`} />
-              <span>{wakeLockActive ? 'Screen Awake' : 'Awake: Off'}</span>
-            </button>
 
             {/* Native Push Notifications Enable (if not yet granted) */}
             {notificationPermission !== 'granted' && notificationPermission !== 'unsupported' && (
