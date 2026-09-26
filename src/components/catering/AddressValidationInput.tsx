@@ -297,7 +297,7 @@ export default function AddressValidationInput({
               if (suggestions.length > 0) setShowDropdown(true);
             }}
             placeholder="Search address (e.g. 4821 Legacy Dr, Frisco)..."
-            className="w-full pl-9 pr-9 py-2.5 rounded-xl border border-gray-300 text-xs text-gray-900 bg-white placeholder-gray-400 focus:border-[#00346f] focus:ring-2 focus:ring-[#00346f]/15 shadow-2xs"
+            className="w-full pl-9 pr-11 py-2.5 min-h-[44px] rounded-xl border border-gray-300 text-base sm:text-xs text-gray-900 bg-white placeholder-gray-400 focus:border-[#00346f] focus:ring-2 focus:ring-[#00346f]/15 shadow-2xs"
           />
 
           {searchQuery && (
@@ -308,9 +308,10 @@ export default function AddressValidationInput({
                 setSuggestions([]);
                 setShowDropdown(false);
               }}
-              className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 cursor-pointer"
+              className="absolute inset-y-0 right-0 w-11 h-full flex items-center justify-center text-gray-400 hover:text-gray-600 cursor-pointer"
+              aria-label="Clear address search"
             >
-              <X className="w-3.5 h-3.5" />
+              <X className="w-4 h-4" />
             </button>
           )}
         </div>
@@ -326,11 +327,11 @@ export default function AddressValidationInput({
                 key={idx}
                 type="button"
                 onClick={() => handleSelectSuggestion(sug)}
-                className="w-full text-left px-3.5 py-2.5 hover:bg-blue-50 transition-colors flex items-start gap-2.5 cursor-pointer group"
+                className="w-full text-left px-3.5 py-2.5 min-h-[44px] hover:bg-blue-50 transition-colors flex items-start gap-2.5 cursor-pointer group"
               >
                 <MapPin className="w-4 h-4 text-gray-400 group-hover:text-[#00346f] shrink-0 mt-0.5" />
                 <div className="min-w-0 flex-1">
-                  <div className="text-xs font-bold text-gray-900 group-hover:text-[#00346f]">
+                  <div className="text-xs sm:text-xs font-bold text-gray-900 group-hover:text-[#00346f]">
                     {sug.street}
                   </div>
                   <div className="text-[11px] text-gray-500 truncate">
@@ -362,7 +363,7 @@ export default function AddressValidationInput({
               setSearchQuery(e.target.value);
             }}
             placeholder="Street Address (e.g., 4821 Legacy Dr)"
-            className={`w-full pl-9 pr-3 py-2 rounded-xl border text-xs text-gray-900 bg-white placeholder-gray-400 transition-colors ${
+            className={`w-full pl-9 pr-3 py-2 min-h-[44px] rounded-xl border text-base sm:text-xs text-gray-900 bg-white placeholder-gray-400 transition-colors ${
               uspsVerified 
                 ? 'border-emerald-300 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-200' 
                 : 'border-gray-300 focus:border-[#00346f] focus:ring-1 focus:ring-[#00346f]/20'
@@ -371,10 +372,10 @@ export default function AddressValidationInput({
         </div>
 
         {/* Apt / Unit & City & Zip */}
-        <div className="grid grid-cols-1 sm:grid-cols-12 gap-2">
+        <div className="grid grid-cols-12 gap-2">
           
           {/* Apt / Suite */}
-          <div className="sm:col-span-4 relative">
+          <div className="col-span-12 sm:col-span-4 relative">
             <div className="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-gray-400">
               <Building className="w-3.5 h-3.5" />
             </div>
@@ -384,19 +385,19 @@ export default function AddressValidationInput({
               value={apt}
               onChange={e => setApt(e.target.value)}
               placeholder="Apt / Ste / Unit (opt)"
-              className="w-full pl-8 pr-2.5 py-2 rounded-xl border border-gray-300 text-xs text-gray-900 bg-white placeholder-gray-400 focus:border-[#00346f]"
+              className="w-full pl-8 pr-2.5 py-2 min-h-[44px] rounded-xl border border-gray-300 text-base sm:text-xs text-gray-900 bg-white placeholder-gray-400 focus:border-[#00346f]"
             />
           </div>
 
           {/* City with DFW quick selector */}
-          <div className="sm:col-span-4">
+          <div className="col-span-12 sm:col-span-4">
             <input
               type="text"
               list="dfw-cities-list"
               value={city}
               onChange={e => setCity(e.target.value)}
               placeholder="City (e.g., Frisco)"
-              className="w-full px-3 py-2 rounded-xl border border-gray-300 text-xs text-gray-900 bg-white placeholder-gray-400 focus:border-[#00346f]"
+              className="w-full px-3 py-2 min-h-[44px] rounded-xl border border-gray-300 text-base sm:text-xs text-gray-900 bg-white placeholder-gray-400 focus:border-[#00346f]"
             />
             <datalist id="dfw-cities-list">
               {DFW_PRIMARY_CITIES.map(c => (
@@ -406,21 +407,21 @@ export default function AddressValidationInput({
           </div>
 
           {/* State (Fixed TX) */}
-          <div className="sm:col-span-1">
-            <div className="w-full py-2 rounded-xl border border-gray-200 bg-gray-100 text-xs font-bold text-gray-600 text-center select-none">
+          <div className="col-span-4 sm:col-span-1">
+            <div className="w-full min-h-[44px] py-2 rounded-xl border border-gray-200 bg-gray-100 text-xs font-bold text-gray-600 flex items-center justify-center select-none">
               TX
             </div>
           </div>
 
           {/* ZIP Code */}
-          <div className="sm:col-span-3">
+          <div className="col-span-8 sm:col-span-3">
             <input
               type="text"
               maxLength={5}
               value={zip}
               onChange={e => setZip(e.target.value.replace(/\D/g, ''))}
               placeholder="ZIP (75034)"
-              className={`w-full px-3 py-2 rounded-xl border text-xs text-gray-900 bg-white placeholder-gray-400 ${
+              className={`w-full px-3 py-2 min-h-[44px] rounded-xl border text-base sm:text-xs text-gray-900 bg-white placeholder-gray-400 ${
                 /^\d{5}$/.test(zip.trim()) ? 'border-emerald-300' : 'border-gray-300 focus:border-[#00346f]'
               }`}
             />
@@ -441,7 +442,7 @@ export default function AddressValidationInput({
           <button
             type="button"
             onClick={handleApplyStandardized}
-            className="text-[10px] font-bold uppercase tracking-wider text-emerald-700 bg-emerald-100 hover:bg-emerald-200 px-2 py-1 rounded-md transition-colors cursor-pointer shrink-0"
+            className="min-h-[36px] inline-flex items-center text-[10px] font-bold uppercase tracking-wider text-emerald-700 bg-emerald-100 hover:bg-emerald-200 px-2.5 py-1.5 rounded-lg transition-colors cursor-pointer shrink-0"
           >
             Apply Standard
           </button>

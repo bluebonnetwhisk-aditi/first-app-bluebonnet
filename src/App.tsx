@@ -198,7 +198,7 @@ export default function App() {
             <div className="lg:hidden flex items-center gap-2">
               <button
                 onClick={() => setActiveTab("Catering")}
-                className="bg-[#00346f] hover:bg-[#00346f]/95 text-white px-3.5 py-2 rounded text-[10px] font-bold uppercase tracking-wider cursor-pointer font-sans"
+                className="bg-[#00346f] hover:bg-[#00346f]/95 text-white min-h-[44px] px-4 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider cursor-pointer font-sans inline-flex items-center justify-center transition-all shadow-xs"
               >
                 REQUEST QUOTE
               </button>
@@ -208,16 +208,16 @@ export default function App() {
         </div>
 
         {/* Mobile Toolbar (persistent scrollable bar of navigation tabs) */}
-        <div className="lg:hidden bg-[#fbfbfa] border-t border-gray-150 py-2.5 mt-2 overflow-x-auto scrollbar-none">
-          <div className="flex px-4 space-x-6 whitespace-nowrap min-w-max">
+        <div className="lg:hidden bg-[#fbfbfa] border-t border-gray-150 py-1 mt-1 overflow-x-auto scrollbar-none">
+          <div className="flex px-4 space-x-4 whitespace-nowrap min-w-max">
             {navLinks.map((link) => (
               <button
                 key={link.id}
                 onClick={() => setActiveTab(link.id)}
-                className={`font-sans text-[11px] uppercase tracking-widest font-semibold pb-1.5 transition-all border-b-2 cursor-pointer ${
+                className={`font-sans text-xs uppercase tracking-widest font-semibold min-h-[44px] px-1.5 py-2 flex items-center transition-all border-b-2 cursor-pointer ${
                   activeTab === link.id
                     ? "text-[#00346f] border-[#00346f] font-bold"
-                    : "text-gray-500 border-transparent"
+                    : "text-gray-500 border-transparent hover:text-gray-900"
                 }`}
               >
                 {link.name}
@@ -259,7 +259,7 @@ export default function App() {
 
       {/* FOOTER */}
       <footer className="bg-gray-100 border-t border-gray-250 py-12 text-[#1a1c20] font-sans mt-auto">
-        <div className="max-w-7xl mx-auto px-4 lg:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-4 gap-8">
+        <div className="max-w-7xl mx-auto px-4 lg:px-6 lg:px-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
           
           {/* Logo and brief summary */}
           <div className="space-y-4">
@@ -270,10 +270,10 @@ export default function App() {
               Crafting modern heritage through the lens of luxury patisserie and Indian fusion artistry. Handcrafted daily with 100% natural, premium spices.
             </p>
             <div className="flex gap-4">
-              <a href="https://instagram.com" target="_blank" rel="noreferrer" className="text-gray-400 hover:text-primary-brand transition-colors p-1" aria-label="Instagram">
+              <a href="https://instagram.com" target="_blank" rel="noreferrer" className="text-gray-400 hover:text-primary-brand transition-colors p-2 min-h-[44px] min-w-[44px] flex items-center justify-center" aria-label="Instagram">
                 <Instagram className="h-5 w-5" />
               </a>
-              <a href="https://threads.net" target="_blank" rel="noreferrer" className="text-gray-400 hover:text-primary-brand transition-colors p-1" aria-label="Threads">
+              <a href="https://threads.net" target="_blank" rel="noreferrer" className="text-gray-400 hover:text-primary-brand transition-colors p-2 min-h-[44px] min-w-[44px] flex items-center justify-center" aria-label="Threads">
                 <span className="font-bold font-serif text-lg leading-none">@</span>
               </a>
             </div>
@@ -287,7 +287,7 @@ export default function App() {
                 <li key={link.id}>
                   <button 
                     onClick={() => setActiveTab(link.id)}
-                    className="hover:text-[#00346f] transition-colors block text-left w-full cursor-pointer"
+                    className="hover:text-[#00346f] transition-colors block text-left w-full cursor-pointer py-1"
                   >
                     {link.name}
                   </button>
@@ -301,13 +301,13 @@ export default function App() {
             <h4 className="text-[10px] font-bold tracking-widest uppercase text-gray-400 mb-4 font-sans font-semibold">SUPPORT</h4>
             <ul className="space-y-2.5 text-xs text-gray-600 font-sans font-medium">
               <li>
-                <button onClick={() => setActiveTab("About")} className="hover:text-primary-brand transition-colors block text-left w-full cursor-pointer">Contact Us</button>
+                <button onClick={() => setActiveTab("About")} className="hover:text-primary-brand transition-colors block text-left w-full cursor-pointer py-1">Contact Us</button>
               </li>
               <li>
-                <span className="text-gray-400 block cursor-default">Shipping Info (Local DFW only)</span>
+                <span className="text-gray-400 block cursor-default py-1">Shipping Info (Local DFW only)</span>
               </li>
               <li>
-                <span className="text-gray-400 block cursor-default">Accessibility</span>
+                <span className="text-gray-400 block cursor-default py-1">Accessibility</span>
               </li>
             </ul>
           </div>
@@ -320,22 +320,22 @@ export default function App() {
             </p>
             
             {newsletterAlert ? (
-              <div className="bg-emerald-50 border border-emerald-100 p-2.5 text-emerald-800 text-xs font-semibold rounded font-sans">
+              <div className="bg-emerald-50 border border-emerald-100 p-2.5 text-emerald-800 text-xs font-semibold rounded-xl font-sans">
                 ✓ Joined successfully! Watch out for seasonal catalogs.
               </div>
             ) : (
-              <form onSubmit={handleNewsletterSubmit} className="flex gap-1.5 rounded">
+              <form onSubmit={handleNewsletterSubmit} className="flex flex-col sm:flex-row gap-2 rounded">
                 <input
                   type="email"
                   required
                   value={newsletterEmail}
                   onChange={(e) => setNewsletterEmail(e.target.value)}
                   placeholder="Email Address"
-                  className="flex-1 border border-gray-200 bg-white placeholder-gray-400 text-xs p-2.5 rounded focus:outline-none"
+                  className="flex-1 border border-gray-200 bg-white placeholder-gray-400 text-base sm:text-xs min-h-[44px] px-3 py-2.5 rounded-xl focus:outline-none focus:border-[#00346f]"
                 />
                 <button
                   type="submit"
-                  className="bg-[#00346f] hover:bg-[#00346f]/95 text-white px-4 py-2.5 text-xs font-semibold uppercase tracking-wider rounded transition-all cursor-pointer"
+                  className="bg-[#00346f] hover:bg-[#00346f]/95 text-white min-h-[44px] px-5 py-2.5 text-xs font-semibold uppercase tracking-wider rounded-xl transition-all cursor-pointer shrink-0 inline-flex items-center justify-center"
                 >
                   JOIN
                 </button>
@@ -371,22 +371,20 @@ export default function App() {
         }}
       />
 
-
-
       {/* Price list guidelines modal */}
       {showPriceList && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-xs animate-fade-in">
-          <div className="relative w-full max-w-lg overflow-hidden rounded-lg bg-white p-6 lg:p-8 text-gray-900 shadow-2xl border border-gray-150">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-3 sm:p-4 backdrop-blur-xs animate-fade-in">
+          <div className="relative w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl bg-white p-5 sm:p-6 lg:p-8 text-gray-900 shadow-2xl border border-gray-150">
             
             <button 
               onClick={() => setShowPriceList(false)}
-              className="absolute right-4 top-4 text-gray-400 hover:text-gray-900 font-bold p-1 rounded hover:bg-gray-50"
+              className="absolute right-3 top-3 text-gray-400 hover:text-gray-900 font-bold min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg hover:bg-gray-100 cursor-pointer"
               aria-label="Close"
             >
               <X className="h-5 w-5" />
             </button>
 
-            <div className="text-center mb-6">
+            <div className="text-center mb-6 pt-2">
               <span className="font-serif text-lg font-bold tracking-widest text-[#00346f] block uppercase">Bluebonnet Whisk</span>
               <span className="text-xs text-gray-500 uppercase tracking-widest block mt-0.5 font-sans font-bold">Standard Price Guidelines</span>
             </div>
@@ -396,7 +394,7 @@ export default function App() {
                 Our base pricing is determined by portions, tier designs, and flavor layers. Real-time customized proposal quotations are processed in the enquiry tab.
               </p>
 
-              <div className="border border-gray-200/50 rounded divide-y divide-gray-100 font-sans bg-white shadow-2xs">
+              <div className="border border-gray-200/50 rounded-xl overflow-hidden divide-y divide-gray-100 font-sans bg-white shadow-2xs">
                 <div className="p-2.5 flex justify-between bg-gray-50 font-bold text-gray-700 uppercase tracking-wider text-[10px]">
                   <span>Sizing Tier</span>
                   <span>Regular base rate</span>
@@ -419,7 +417,7 @@ export default function App() {
                 </div>
               </div>
 
-              <div className="border border-gray-150 rounded bg-amber-50/20 p-3 text-[11px] leading-relaxed text-[#775a19] font-medium">
+              <div className="border border-gray-150 rounded-xl bg-amber-50/40 p-3.5 text-[11px] leading-relaxed text-[#775a19] font-medium">
                 <strong>Surcharges:</strong>
                 <ul className="mt-1 space-y-0.5 list-disc pl-3">
                   <li>Indian Fusion Flavors: +$15.00</li>
@@ -429,16 +427,16 @@ export default function App() {
               </div>
             </div>
 
-            <div className="mt-6 flex justify-end gap-3 border-t border-gray-100 pt-4">
+            <div className="mt-6 flex flex-col-reverse sm:flex-row justify-end gap-3 border-t border-gray-100 pt-4">
               <button
                 onClick={() => window.print()}
-                className="flex items-center gap-1.5 border border-[#00346f] px-4 py-2 text-xs font-semibold tracking-wider text-[#00346f] uppercase rounded hover:bg-[#00346f]/5 transition-all cursor-pointer"
+                className="flex items-center justify-center gap-1.5 border border-[#00346f] min-h-[44px] px-4 py-2 text-xs font-semibold tracking-wider text-[#00346f] uppercase rounded-xl hover:bg-[#00346f]/5 transition-all cursor-pointer"
               >
                 Print pricing
               </button>
               <button
                 onClick={() => setShowPriceList(false)}
-                className="bg-[#00346f] hover:bg-[#00346f]/95 text-white px-5 py-2 text-xs font-semibold tracking-wider uppercase rounded transition-all shadow-md cursor-pointer"
+                className="bg-[#00346f] hover:bg-[#00346f]/95 text-white min-h-[44px] px-5 py-2 text-xs font-semibold tracking-wider uppercase rounded-xl transition-all shadow-md cursor-pointer inline-flex items-center justify-center"
               >
                 Close
               </button>

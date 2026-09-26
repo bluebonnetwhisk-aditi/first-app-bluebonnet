@@ -224,12 +224,12 @@ export default function CateringContainer() {
   return (
     <div className="w-full bg-[#fbfbfa] min-h-screen font-sans selection:bg-[#775a19]/20 overflow-x-hidden">
       
-      {/* ── 1. SUB-NAVIGATION BAR (Catering Order, Cake Order, Tiffin Order, Kitchen KDS) ── */}
-      <div className="sticky top-[84px] z-30 bg-white border-b border-gray-200 shadow-2xs">
+      {/* ── 1. SUB-NAVIGATION BAR (Catering Order, Cake Order, Tiffin Order) ── */}
+      <div className="sticky top-[125px] lg:top-[84px] z-30 bg-white border-b border-gray-200 shadow-2xs">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-14">
+          <div className="flex items-center justify-between min-h-[56px] py-1.5">
             
-            <div className="flex items-center gap-2 overflow-x-auto py-1 scrollbar-none">
+            <div className="flex items-center gap-2 overflow-x-auto py-1 scrollbar-none w-full sm:w-auto">
               <span className="font-serif font-bold text-xs uppercase tracking-widest text-[#00346f] hidden sm:inline mr-1">
                 PORTAL:
               </span>
@@ -239,7 +239,7 @@ export default function CateringContainer() {
                 <button
                   type="button"
                   onClick={() => switchSubTab('order')}
-                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all cursor-pointer whitespace-nowrap ${
+                  className={`inline-flex items-center gap-1.5 min-h-[44px] px-3.5 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all cursor-pointer whitespace-nowrap ${
                     subTab === 'order'
                       ? 'bg-[#00346f] text-white shadow-xs'
                       : 'text-gray-600 hover:text-gray-900'
@@ -258,7 +258,7 @@ export default function CateringContainer() {
                 <button
                   type="button"
                   onClick={() => switchSubTab('cake')}
-                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all cursor-pointer whitespace-nowrap ${
+                  className={`inline-flex items-center gap-1.5 min-h-[44px] px-3.5 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all cursor-pointer whitespace-nowrap ${
                     subTab === 'cake'
                       ? 'bg-[#00346f] text-white shadow-xs'
                       : 'text-gray-600 hover:text-gray-900'
@@ -277,7 +277,7 @@ export default function CateringContainer() {
                 <button
                   type="button"
                   onClick={() => switchSubTab('tiffin')}
-                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all cursor-pointer whitespace-nowrap ${
+                  className={`inline-flex items-center gap-1.5 min-h-[44px] px-3.5 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all cursor-pointer whitespace-nowrap ${
                     subTab === 'tiffin'
                       ? 'bg-[#00346f] text-white shadow-xs'
                       : 'text-gray-600 hover:text-gray-900'

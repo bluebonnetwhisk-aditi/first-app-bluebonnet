@@ -421,7 +421,7 @@ export default function PortionEstimator({
                       step={1}
                       value={guests}
                       onChange={(e) => handleHeadcountChange(parseInt(e.target.value))}
-                      className="w-20 px-2.5 py-1.5 bg-[#0b1b40] border-2 border-brand-gold-tint/60 rounded-lg text-center font-serif text-lg font-bold text-brand-cream focus:border-brand-gold-tint focus:outline-none"
+                      className="w-20 min-h-[44px] px-2.5 py-1.5 bg-[#0b1b40] border-2 border-brand-gold-tint/60 rounded-lg text-center font-serif text-base sm:text-lg font-bold text-brand-cream focus:border-brand-gold-tint focus:outline-none"
                     />
                   </div>
                   <span className="text-xs font-bold uppercase text-brand-gold-tint">Guests</span>
@@ -437,7 +437,7 @@ export default function PortionEstimator({
                   step={1}
                   value={guests}
                   onChange={(e) => setGuests(parseInt(e.target.value))}
-                  className="w-full h-2.5 bg-[#0b1226] rounded-lg appearance-none cursor-pointer accent-[#ffdea5]"
+                  className="w-full h-3 bg-[#0b1226] rounded-lg appearance-none cursor-pointer accent-[#ffdea5]"
                   aria-label="Guest Headcount Slider"
                 />
                 <div className="flex justify-between text-[10px] text-gray-400 font-mono">
@@ -457,7 +457,7 @@ export default function PortionEstimator({
                     key={num}
                     type="button"
                     onClick={() => setGuests(num)}
-                    className={`px-2.5 py-1 text-[11px] font-bold rounded-lg transition-all cursor-pointer ${
+                    className={`min-h-[40px] min-w-[44px] px-3 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer inline-flex items-center justify-center ${
                       guests === num 
                         ? 'bg-brand-gold-tint text-[#00346f] shadow-sm'
                         : 'bg-white/10 hover:bg-white/15 text-gray-200 border border-white/10'
@@ -485,7 +485,7 @@ export default function PortionEstimator({
                 <button
                   type="button"
                   onClick={() => setPartyFormat('standard')}
-                  className={`py-2 px-2.5 rounded-lg text-xs font-bold uppercase tracking-wider transition cursor-pointer text-center ${
+                  className={`min-h-[44px] py-2 px-2.5 rounded-lg text-xs font-bold uppercase tracking-wider transition cursor-pointer text-center flex items-center justify-center ${
                     partyFormat === 'standard'
                       ? 'bg-[#00346f] text-white border border-[#ffdea5]/40 shadow-md'
                       : 'bg-black/30 hover:bg-black/50 text-gray-300 border border-white/10'
@@ -497,13 +497,13 @@ export default function PortionEstimator({
                 <button
                   type="button"
                   onClick={() => setPartyFormat('cocktail')}
-                  className={`py-2 px-2.5 rounded-lg text-xs font-bold uppercase tracking-wider transition cursor-pointer text-center ${
+                  className={`min-h-[44px] py-2 px-2.5 rounded-lg text-xs font-bold uppercase tracking-wider transition cursor-pointer text-center flex items-center justify-center ${
                     partyFormat === 'cocktail'
                       ? 'bg-[#775a19] text-white border border-[#ffdea5]/40 shadow-md'
                       : 'bg-black/30 hover:bg-black/50 text-gray-300 border border-white/10'
                   }`}
                 >
-                  <span>Cocktail / Heavy Starters</span>
+                  <span>Cocktail / Starters</span>
                 </button>
               </div>
               <p className="text-[11px] text-gray-300 leading-relaxed font-light">
@@ -578,7 +578,7 @@ export default function PortionEstimator({
                 </span>
               </div>
               <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs">
+                <table className="w-full min-w-[540px] text-left text-xs">
                   <thead className="bg-black/30 text-gray-400 text-[10px] uppercase font-bold tracking-wider border-b border-white/5">
                     <tr>
                       <th className="py-2.5 px-4 sm:px-6">Course &amp; Dish Blueprint</th>
@@ -615,7 +615,7 @@ export default function PortionEstimator({
                 </span>
               </div>
               <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs">
+                <table className="w-full min-w-[540px] text-left text-xs">
                   <thead className="bg-black/30 text-gray-400 text-[10px] uppercase font-bold tracking-wider border-b border-white/5">
                     <tr>
                       <th className="py-2.5 px-4 sm:px-6">Course &amp; Dish Blueprint</th>
@@ -652,7 +652,7 @@ export default function PortionEstimator({
                 </span>
               </div>
               <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs">
+                <table className="w-full min-w-[540px] text-left text-xs">
                   <thead className="bg-black/30 text-gray-400 text-[10px] uppercase font-bold tracking-wider border-b border-white/5">
                     <tr>
                       <th className="py-2.5 px-4 sm:px-6">Course &amp; Dish Blueprint</th>
@@ -689,7 +689,7 @@ export default function PortionEstimator({
                 </span>
               </div>
               <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs">
+                <table className="w-full min-w-[540px] text-left text-xs">
                   <thead className="bg-black/30 text-gray-400 text-[10px] uppercase font-bold tracking-wider border-b border-white/5">
                     <tr>
                       <th className="py-2.5 px-4 sm:px-6">Course &amp; Dish Blueprint</th>
@@ -758,13 +758,13 @@ export default function PortionEstimator({
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center justify-center gap-3">
+          <div className="flex flex-col sm:flex-row flex-wrap items-center justify-center gap-3">
             {/* Direct portal order */}
             {onNavigateToFoodOrder && (
               <button
                 type="button"
                 onClick={onNavigateToFoodOrder}
-                className="inline-flex items-center gap-2 bg-[#ffdea5] hover:bg-[#ffe7be] text-[#00346f] px-6 py-3 rounded-xl font-bold text-xs uppercase tracking-wider transition-all shadow-md cursor-pointer hover:scale-102"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-[#ffdea5] hover:bg-[#ffe7be] text-[#00346f] min-h-[44px] px-6 py-3 rounded-xl font-bold text-xs uppercase tracking-wider transition-all shadow-md cursor-pointer hover:scale-102"
               >
                 <Utensils className="w-4 h-4 text-[#00346f]" />
                 <span>Open Food Order Portal</span>
@@ -775,7 +775,7 @@ export default function PortionEstimator({
             {/* Call */}
             <a
               href="tel:+19455274566"
-              className="inline-flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-5 py-3 rounded-xl font-bold text-xs uppercase tracking-wider transition-all border border-white/20 cursor-pointer"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 text-white min-h-[44px] px-5 py-3 rounded-xl font-bold text-xs uppercase tracking-wider transition-all border border-white/20 cursor-pointer"
             >
               <Phone className="w-4 h-4 text-emerald-400" />
               <span>Call 945-527-4566</span>
@@ -784,7 +784,7 @@ export default function PortionEstimator({
             {/* SMS */}
             <a
               href={`sms:+19455274566?body=Hi%20Bluebonnet%20Whisk!%20I'm%20inquiring%20about%20pure%20vegetarian%20catering%20for%20${guests}%20guests.`}
-              className="inline-flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-5 py-3 rounded-xl font-bold text-xs uppercase tracking-wider transition-all border border-white/20 cursor-pointer"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 text-white min-h-[44px] px-5 py-3 rounded-xl font-bold text-xs uppercase tracking-wider transition-all border border-white/20 cursor-pointer"
             >
               <MessageSquare className="w-4 h-4 text-sky-400" />
               <span>SMS 945-527-4566</span>
@@ -795,7 +795,7 @@ export default function PortionEstimator({
               href={`https://wa.me/19455274566?text=Hi%20Bluebonnet%20Whisk!%20I'm%20inquiring%20about%20pure%20vegetarian%20catering%20for%20${guests}%20guests%20(${partyFormat === 'cocktail' ? 'Cocktail%20Focus' : 'Standard%20Dinner%20Buffet'}).`}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 bg-[#25D366] hover:bg-[#1ebd5a] text-white px-5 py-3 rounded-xl font-bold text-xs uppercase tracking-wider transition-all shadow-md cursor-pointer"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-[#25D366] hover:bg-[#1ebd5a] text-white min-h-[44px] px-5 py-3 rounded-xl font-bold text-xs uppercase tracking-wider transition-all shadow-md cursor-pointer"
             >
               <MessageCircle className="w-4 h-4 fill-white" />
               <span>WhatsApp 945-527-4566</span>
@@ -806,7 +806,7 @@ export default function PortionEstimator({
               <button
                 type="button"
                 onClick={onOpenInquiry}
-                className="inline-flex items-center gap-2 bg-brand-gold-tint/15 hover:bg-brand-gold-tint/25 text-brand-gold-tint px-5 py-3 rounded-xl font-bold text-xs uppercase tracking-wider transition-all border border-brand-gold-tint/30 cursor-pointer"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-brand-gold-tint/15 hover:bg-brand-gold-tint/25 text-brand-gold-tint min-h-[44px] px-5 py-3 rounded-xl font-bold text-xs uppercase tracking-wider transition-all border border-brand-gold-tint/30 cursor-pointer"
               >
                 <Sparkles className="w-4 h-4 text-brand-gold-tint" />
                 <span>Custom Inquiry Wizard</span>

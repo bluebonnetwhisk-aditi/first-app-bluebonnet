@@ -68,7 +68,7 @@ export default function TalkToKitchenModal({ isOpen, onClose }: TalkToKitchenMod
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs animate-fade-in">
-      <div className="relative w-full max-w-lg overflow-hidden rounded-lg bg-[#fbfbfa] text-[#1a1c20] shadow-2xl border border-secondary-brand/20">
+      <div className="relative w-full max-w-lg max-h-[92vh] overflow-y-auto rounded-lg bg-[#fbfbfa] text-[#1a1c20] shadow-2xl border border-secondary-brand/20">
         
         {/* Decorative Gold Header Ribbon */}
         <div className="h-1.5 w-full bg-gradient-to-r from-primary-brand via-secondary-brand to-tertiary-brand" />
@@ -76,7 +76,7 @@ export default function TalkToKitchenModal({ isOpen, onClose }: TalkToKitchenMod
         {/* Absolute Close */}
         <button 
           onClick={handleClose}
-          className="absolute right-4 top-4 text-gray-400 hover:text-gray-900 transition-colors p-1.5 rounded-full hover:bg-gray-100"
+          className="absolute right-3 top-3 text-gray-400 hover:text-gray-900 transition-colors w-11 h-11 flex items-center justify-center rounded-full hover:bg-gray-100 z-10 cursor-pointer"
           aria-label="Close"
         >
           <X className="h-5 w-5" />
@@ -182,21 +182,21 @@ export default function TalkToKitchenModal({ isOpen, onClose }: TalkToKitchenMod
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     placeholder="Enter your name"
-                    className="w-full border border-gray-300 bg-white px-3 py-2 rounded text-xs focus:border-primary-brand focus:outline-none"
+                    className="w-full border border-gray-300 bg-white px-3 py-2 rounded min-h-[44px] text-base sm:text-xs focus:border-primary-brand focus:outline-none"
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
                     <label className="block text-[10px] font-bold uppercase tracking-wider text-gray-600 mb-1">Event Date</label>
                     <div className="relative">
-                      <Calendar className="absolute right-3 top-2 h-3.5 w-3.5 text-gray-400 pointer-events-none" />
+                      <Calendar className="absolute right-3 top-3.5 h-3.5 w-3.5 text-gray-400 pointer-events-none" />
                       <input
                         type="date"
                         required
                         value={formData.eventDate}
                         onChange={(e) => setFormData({ ...formData, eventDate: e.target.value })}
-                        className="w-full border border-gray-300 bg-white px-3 py-2 rounded text-xs focus:border-primary-brand focus:outline-none"
+                        className="w-full border border-gray-300 bg-white px-3 py-2 rounded min-h-[44px] text-base sm:text-xs focus:border-primary-brand focus:outline-none"
                       />
                     </div>
                   </div>
@@ -204,7 +204,7 @@ export default function TalkToKitchenModal({ isOpen, onClose }: TalkToKitchenMod
                   <div>
                     <label className="block text-[10px] font-bold uppercase tracking-wider text-gray-600 mb-1">Guests</label>
                     <div className="relative">
-                      <Users className="absolute right-3 top-2 h-3.5 w-3.5 text-gray-400 pointer-events-none" />
+                      <Users className="absolute right-3 top-3.5 h-3.5 w-3.5 text-gray-400 pointer-events-none" />
                       <input
                         type="number"
                         required
@@ -212,7 +212,7 @@ export default function TalkToKitchenModal({ isOpen, onClose }: TalkToKitchenMod
                         value={formData.guests}
                         onChange={(e) => setFormData({ ...formData, guests: e.target.value })}
                         placeholder="Est. Count"
-                        className="w-full border border-gray-300 bg-white px-3 py-2 rounded text-xs focus:border-primary-brand focus:outline-none"
+                        className="w-full border border-gray-300 bg-white px-3 py-2 rounded min-h-[44px] text-base sm:text-xs focus:border-primary-brand focus:outline-none"
                       />
                     </div>
                   </div>
@@ -223,7 +223,7 @@ export default function TalkToKitchenModal({ isOpen, onClose }: TalkToKitchenMod
                   <select
                     value={formData.eventType}
                     onChange={(e) => setFormData({ ...formData, eventType: e.target.value })}
-                    className="w-full border border-gray-300 bg-white px-3 py-2 rounded text-xs focus:border-primary-brand focus:outline-none"
+                    className="w-full border border-gray-300 bg-white px-3 py-2 rounded min-h-[44px] text-base sm:text-xs focus:border-primary-brand focus:outline-none"
                   >
                     <option>Birthday</option>
                     <option>Anniversary</option>
@@ -243,18 +243,18 @@ export default function TalkToKitchenModal({ isOpen, onClose }: TalkToKitchenMod
                     value={formData.message}
                     onChange={(e) => setFormData({ ...formData, message: e.target.value })}
                     placeholder="Tell us about desired menus, fusion tastes, or special themes..."
-                    className="w-full border border-gray-300 bg-white px-3 py-2 rounded text-xs focus:border-primary-brand focus:outline-none"
+                    className="w-full border border-gray-300 bg-white px-3 py-2 rounded min-h-[60px] text-base sm:text-xs focus:border-primary-brand focus:outline-none"
                   />
                 </div>
 
-                <div className="pt-2 flex justify-between items-center">
-                  <span className="text-[10px] text-gray-400 italic font-sans">
+                <div className="pt-2 flex flex-col sm:flex-row sm:justify-between items-start sm:items-center gap-3">
+                  <span className="text-[10px] text-gray-400 italic font-sans order-2 sm:order-1">
                     “We typically respond within a few hours.”
                   </span>
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="bg-secondary-brand hover:bg-secondary-brand/90 text-white font-sans text-xs font-bold uppercase tracking-widest px-5 py-2.5 rounded shadow-sm transition-all disabled:opacity-50 cursor-pointer"
+                    className="w-full sm:w-auto min-h-[44px] bg-secondary-brand hover:bg-secondary-brand/90 text-white font-sans text-xs font-bold uppercase tracking-widest px-6 py-2.5 rounded shadow-sm transition-all disabled:opacity-50 cursor-pointer order-1 sm:order-2 inline-flex items-center justify-center"
                   >
                     {isSubmitting ? "Sending..." : "Submit Inquiry"}
                   </button>

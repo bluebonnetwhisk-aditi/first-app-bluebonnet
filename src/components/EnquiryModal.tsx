@@ -133,15 +133,16 @@ export default function EnquiryModal({
       />
 
       <div className="flex min-h-screen items-center justify-center p-4 text-center lg:p-6 lg:p-8">
-        <div className="relative w-full max-w-4xl transform overflow-hidden rounded-lg bg-[#f9f9ff] text-left align-middle shadow-2xl transition-all border border-[#abc7ff]/30 animate-fade-in-up">
+        <div className="relative w-full max-w-4xl max-h-[92vh] overflow-y-auto transform rounded-lg bg-[#f9f9ff] text-left align-middle shadow-2xl transition-all border border-[#abc7ff]/30 animate-fade-in-up">
           
           {/* Close button */}
           <button
             type="button"
-            className="absolute top-4 right-4 text-gray-400 hover:text-[#00346f] focus:outline-none transition-colors"
+            className="absolute top-3 right-3 w-11 h-11 flex items-center justify-center text-gray-400 hover:text-[#00346f] focus:outline-none transition-colors z-20 cursor-pointer rounded-full hover:bg-gray-100"
             onClick={onClose}
+            aria-label="Close dialog"
           >
-            <X size={24} />
+            <X size={22} />
           </button>
 
           {!isSubmitted ? (
@@ -167,27 +168,27 @@ export default function EnquiryModal({
                       value={formData.name}
                       onChange={handleInputChange}
                       placeholder="e.g. Aditi Sharma"
-                      className={`w-full px-3 py-2 border rounded-md text-sm font-sans focus:outline-none transition-all ${
+                      className={`w-full px-3 py-2 border rounded-md min-h-[44px] text-base sm:text-sm font-sans focus:outline-none transition-all ${
                         errors.name ? 'border-red-500 focus:border-red-500 bg-red-50/10' : 'border-[#c3c6d2] focus:border-[#00346f]'
                       }`}
                     />
-                    {errors.name && <p className="text-red-500 text-[114px] mt-1 text-xs">{errors.name}</p>}
+                    {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name}</p>}
                   </div>
 
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1 font-sans">
                         Email Address *
                       </label>
                       <div className="relative">
-                        <Mail size={16} className="absolute left-3 top-2.5 text-gray-400" />
+                        <Mail size={16} className="absolute left-3 top-3.5 text-gray-400 pointer-events-none" />
                         <input
                           type="email"
                           name="email"
                           value={formData.email}
                           onChange={handleInputChange}
                           placeholder="aditi@example.com"
-                          className={`w-full pl-9 pr-3 py-2 border rounded-md text-sm font-sans focus:outline-none transition-all ${
+                          className={`w-full pl-9 pr-3 py-2 border rounded-md min-h-[44px] text-base sm:text-sm font-sans focus:outline-none transition-all ${
                             errors.email ? 'border-red-500 focus:border-red-500 bg-red-50/10' : 'border-[#c3c6d2] focus:border-[#00346f]'
                           }`}
                         />
@@ -200,14 +201,14 @@ export default function EnquiryModal({
                         WhatsApp / Phone *
                       </label>
                       <div className="relative">
-                        <Phone size={16} className="absolute left-3 top-2.5 text-gray-400" />
+                        <Phone size={16} className="absolute left-3 top-3.5 text-gray-400 pointer-events-none" />
                         <input
                           type="text"
                           name="phone"
                           value={formData.phone}
                           onChange={handleInputChange}
                           placeholder="+1 (945) 527-4566"
-                          className={`w-full pl-9 pr-3 py-2 border rounded-md text-sm font-sans focus:outline-none transition-all ${
+                          className={`w-full pl-9 pr-3 py-2 border rounded-md min-h-[44px] text-base sm:text-sm font-sans focus:outline-none transition-all ${
                             errors.phone ? 'border-red-500 focus:border-red-500 bg-red-50/10' : 'border-[#c3c6d2] focus:border-[#00346f]'
                           }`}
                         />
@@ -216,19 +217,19 @@ export default function EnquiryModal({
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1 font-sans">
                         Event Date *
                       </label>
                       <div className="relative">
-                        <Calendar size={16} className="absolute left-3 top-2.5 text-gray-400" />
+                        <Calendar size={16} className="absolute left-3 top-3.5 text-gray-400 pointer-events-none" />
                         <input
                           type="date"
                           name="date"
                           value={formData.date}
                           onChange={handleInputChange}
-                          className={`w-full pl-9 pr-3 py-2 border rounded-md text-sm font-sans focus:outline-none transition-all ${
+                          className={`w-full pl-9 pr-3 py-2 border rounded-md min-h-[44px] text-base sm:text-sm font-sans focus:outline-none transition-all ${
                             errors.date ? 'border-red-500 focus:border-red-500 bg-red-50/10' : 'border-[#c3c6d2] focus:border-[#00346f]'
                           }`}
                         />
@@ -241,14 +242,14 @@ export default function EnquiryModal({
                         Guest Count *
                       </label>
                       <div className="relative">
-                        <Users size={16} className="absolute left-3 top-2.5 text-gray-400" />
+                        <Users size={16} className="absolute left-3 top-3.5 text-gray-400 pointer-events-none" />
                         <input
                           type="number"
                           name="guests"
                           value={formData.guests}
                           onChange={handleInputChange}
                           placeholder="e.g. 50"
-                          className={`w-full pl-9 pr-3 py-2 border rounded-md text-sm font-sans focus:outline-none transition-all ${
+                          className={`w-full pl-9 pr-3 py-2 border rounded-md min-h-[44px] text-base sm:text-sm font-sans focus:outline-none transition-all ${
                             errors.guests ? 'border-red-500 focus:border-red-500 bg-red-50/10' : 'border-[#c3c6d2] focus:border-[#00346f]'
                           }`}
                         />
@@ -262,14 +263,14 @@ export default function EnquiryModal({
                       Venue / Area
                     </label>
                     <div className="relative">
-                      <MapPin size={16} className="absolute left-3 top-2.5 text-gray-400" />
+                      <MapPin size={16} className="absolute left-3 top-3.5 text-gray-400 pointer-events-none" />
                       <input
                         type="text"
                         name="venue"
                         value={formData.venue}
                         onChange={handleInputChange}
                         placeholder="e.g. Sunset Grand Hall, Houston, TX"
-                        className="w-full pl-9 pr-3 py-2 border border-[#c3c6d2] rounded-md text-sm font-sans focus:outline-none focus:border-[#00346f]"
+                        className="w-full pl-9 pr-3 py-2 border border-[#c3c6d2] rounded-md min-h-[44px] text-base sm:text-sm font-sans focus:outline-none focus:border-[#00346f]"
                       />
                     </div>
                   </div>
@@ -284,13 +285,13 @@ export default function EnquiryModal({
                       value={formData.notes}
                       onChange={handleInputChange}
                       placeholder="e.g. Vegan requirements, allergy restrictions, styling themes, specific arrival times."
-                      className="w-full px-3 py-2 border border-[#c3c6d2] rounded-md text-sm font-sans focus:outline-none focus:border-[#00346f] resize-none"
+                      className="w-full px-3 py-2 border border-[#c3c6d2] rounded-md min-h-[64px] text-base sm:text-sm font-sans focus:outline-none focus:border-[#00346f] resize-none"
                     />
                   </div>
 
                   <button
                     type="submit"
-                    className="w-full mt-4 py-3 bg-[#00346f] hover:bg-[#114589] text-white rounded-md text-[13px] tracking-widest font-semibold uppercase transition-all duration-300 shadow-md hover:shadow-lg focus:outline-none"
+                    className="w-full mt-4 min-h-[48px] py-3 bg-[#00346f] hover:bg-[#114589] text-white rounded-md text-[13px] tracking-widest font-semibold uppercase transition-all duration-300 shadow-md hover:shadow-lg focus:outline-none inline-flex items-center justify-center cursor-pointer"
                   >
                     Send Menu Request
                   </button>
@@ -376,7 +377,7 @@ export default function EnquiryModal({
               <button
                 type="button"
                 onClick={handleSuccessClose}
-                className="px-8 py-3 bg-[#00346f] hover:bg-[#114589] text-white rounded font-semibold text-xs uppercase tracking-widest transition-all shadow"
+                className="px-8 py-3 min-h-[44px] bg-[#00346f] hover:bg-[#114589] text-white rounded font-semibold text-xs uppercase tracking-widest transition-all shadow inline-flex items-center justify-center cursor-pointer"
               >
                 Return To Price Guide
               </button>

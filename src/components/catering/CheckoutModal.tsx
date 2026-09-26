@@ -306,7 +306,7 @@ export default function CheckoutModal({
             <button
               type="button"
               onClick={() => setStep('schedule')}
-              className={`flex items-center gap-2 py-1 px-2 rounded-lg text-left transition-all cursor-pointer ${
+              className={`min-h-[44px] min-w-[44px] flex items-center justify-center sm:justify-start gap-2 py-1.5 px-2.5 rounded-xl text-left transition-all cursor-pointer ${
                 step === 'schedule'
                   ? 'bg-white/20 text-[#ffdea5] font-bold'
                   : 'text-white/60 hover:text-white'
@@ -326,7 +326,7 @@ export default function CheckoutModal({
               onClick={() => {
                 if (cutoffValidation.isValid) setStep('details');
               }}
-              className={`flex items-center gap-2 py-1 px-2 rounded-lg text-left transition-all ${
+              className={`min-h-[44px] min-w-[44px] flex items-center justify-center sm:justify-start gap-2 py-1.5 px-2.5 rounded-xl text-left transition-all ${
                 step === 'details'
                   ? 'bg-white/20 text-[#ffdea5] font-bold'
                   : cutoffValidation.isValid
@@ -350,7 +350,7 @@ export default function CheckoutModal({
                   setStep('payment');
                 }
               }}
-              className={`flex items-center gap-2 py-1 px-2 rounded-lg text-left transition-all ${
+              className={`min-h-[44px] min-w-[44px] flex items-center justify-center sm:justify-start gap-2 py-1.5 px-2.5 rounded-xl text-left transition-all ${
                 step === 'payment'
                   ? 'bg-white/20 text-[#ffdea5] font-bold'
                   : customerName.trim()
@@ -506,7 +506,7 @@ export default function CheckoutModal({
                           type="button"
                           disabled={!check.selectable}
                           onClick={() => handleSelectDate(opt.dateStr)}
-                          className={`flex flex-col items-center justify-center min-w-[70px] py-2 px-2 rounded-xl border text-center transition-all cursor-pointer shrink-0 ${
+                          className={`flex flex-col items-center justify-center min-w-[72px] min-h-[54px] py-2 px-2.5 rounded-xl border text-center transition-all cursor-pointer shrink-0 ${
                             !check.selectable
                               ? 'bg-gray-100 border-gray-200 text-gray-300 cursor-not-allowed opacity-60'
                               : isSelected
@@ -539,7 +539,7 @@ export default function CheckoutModal({
                       value={fulfillmentDate}
                       min={cutoffValidation.earliestAllowedDate}
                       onChange={(e) => handleSelectDate(e.target.value)}
-                      className="w-full bg-white border border-gray-300 rounded-xl px-3 py-2 text-xs text-gray-800 focus:outline-none focus:border-[#00346f]"
+                      className="w-full bg-white border border-gray-300 rounded-xl px-3 py-2.5 min-h-[44px] text-base sm:text-xs text-gray-800 focus:outline-none focus:border-[#00346f]"
                     />
                   </div>
 
@@ -550,7 +550,7 @@ export default function CheckoutModal({
                     <select
                       value={fulfillmentTime}
                       onChange={(e) => setFulfillmentTime(e.target.value)}
-                      className="w-full bg-white border border-gray-300 rounded-xl px-3 py-2 text-xs text-gray-800 focus:outline-none focus:border-[#00346f]"
+                      className="w-full bg-white border border-gray-300 rounded-xl px-3 py-2.5 min-h-[44px] text-base sm:text-xs text-gray-800 focus:outline-none focus:border-[#00346f]"
                     >
                       {TIME_SLOTS.map(slot => {
                         const isSlotValid = isTimeSlotValidForDate(fulfillmentDate, slot, cart);
@@ -605,7 +605,7 @@ export default function CheckoutModal({
                       placeholder="e.g. Aditi Singhal"
                       value={customerName}
                       onChange={(e) => setCustomerName(e.target.value)}
-                      className={`w-full px-3 py-2 text-xs bg-gray-50 border rounded-xl focus:outline-none focus:bg-white transition-all ${
+                      className={`w-full px-3 py-2.5 min-h-[44px] text-base sm:text-xs bg-gray-50 border rounded-xl focus:outline-none focus:bg-white transition-all ${
                         formErrors.customerName ? 'border-rose-500' : 'border-gray-200 focus:border-[#00346f]'
                       }`}
                     />
@@ -623,7 +623,7 @@ export default function CheckoutModal({
                       placeholder="(945) 527-4566"
                       value={phoneNumber}
                       onChange={(e) => handlePhoneChange(e.target.value)}
-                      className={`w-full px-3 py-2 text-xs bg-gray-50 border rounded-xl focus:outline-none focus:bg-white transition-all ${
+                      className={`w-full px-3 py-2.5 min-h-[44px] text-base sm:text-xs bg-gray-50 border rounded-xl focus:outline-none focus:bg-white transition-all ${
                         formErrors.phoneNumber ? 'border-rose-500' : 'border-gray-200 focus:border-[#00346f]'
                       }`}
                     />
@@ -642,7 +642,7 @@ export default function CheckoutModal({
                     placeholder="name@example.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className={`w-full px-3 py-2 text-xs bg-gray-50 border rounded-xl focus:outline-none focus:bg-white transition-all ${
+                    className={`w-full px-3 py-2.5 min-h-[44px] text-base sm:text-xs bg-gray-50 border rounded-xl focus:outline-none focus:bg-white transition-all ${
                       formErrors.email ? 'border-rose-500' : 'border-gray-200 focus:border-[#00346f]'
                     }`}
                   />
@@ -718,7 +718,7 @@ export default function CheckoutModal({
                   placeholder="Mention gate codes, spice preferences, or any specific allergen precautions..."
                   value={dietaryNotes}
                   onChange={(e) => setDietaryNotes(e.target.value)}
-                  className="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:bg-white focus:border-[#00346f]"
+                  className="w-full px-3 py-2.5 min-h-[56px] text-base sm:text-xs bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:bg-white focus:border-[#00346f]"
                 />
               </div>
 
@@ -896,11 +896,11 @@ export default function CheckoutModal({
           
           {/* Step 1 Actions */}
           {step === 'schedule' && (
-            <div className="flex items-center justify-between gap-3">
+            <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-2.5 sm:gap-3">
               <button
                 type="button"
                 onClick={onClose}
-                className="px-4 py-2.5 rounded-xl border border-gray-300 text-gray-600 hover:bg-gray-200 text-xs font-semibold cursor-pointer"
+                className="min-h-[44px] px-5 py-2.5 rounded-xl border border-gray-300 text-gray-700 hover:bg-gray-200 text-xs font-semibold cursor-pointer inline-flex items-center justify-center"
               >
                 Cancel
               </button>
@@ -908,7 +908,7 @@ export default function CheckoutModal({
               <button
                 type="button"
                 onClick={handleProceedToDetails}
-                className="inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-[#00346f] hover:bg-[#00224d] text-white text-xs font-bold uppercase tracking-wider transition-all shadow-md cursor-pointer hover:scale-101"
+                className="min-h-[44px] inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-[#00346f] hover:bg-[#00224d] text-white text-xs font-bold uppercase tracking-wider transition-all shadow-md cursor-pointer hover:scale-101"
               >
                 <span>Continue to Customer Details</span>
                 <ArrowRight className="w-4 h-4" />
@@ -918,11 +918,11 @@ export default function CheckoutModal({
 
           {/* Step 2 Actions */}
           {step === 'details' && (
-            <div className="flex items-center justify-between gap-3">
+            <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-2.5 sm:gap-3">
               <button
                 type="button"
                 onClick={() => setStep('schedule')}
-                className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl border border-gray-300 text-gray-700 hover:bg-gray-200 text-xs font-semibold cursor-pointer"
+                className="min-h-[44px] inline-flex items-center justify-center gap-1.5 px-5 py-2.5 rounded-xl border border-gray-300 text-gray-700 hover:bg-gray-200 text-xs font-semibold cursor-pointer"
               >
                 <ArrowLeft className="w-4 h-4" />
                 <span>Back to Schedule</span>
@@ -931,7 +931,7 @@ export default function CheckoutModal({
               <button
                 type="button"
                 onClick={handleProceedToPayment}
-                className="inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-[#00346f] hover:bg-[#00224d] text-white text-xs font-bold uppercase tracking-wider transition-all shadow-md cursor-pointer hover:scale-101"
+                className="min-h-[44px] inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-[#00346f] hover:bg-[#00224d] text-white text-xs font-bold uppercase tracking-wider transition-all shadow-md cursor-pointer hover:scale-101"
               >
                 <span>Continue to Payment &amp; Review</span>
                 <ArrowRight className="w-4 h-4" />
@@ -941,22 +941,22 @@ export default function CheckoutModal({
 
           {/* Step 3 Actions */}
           {step === 'payment' && (
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 sm:gap-3">
               <button
                 type="button"
                 onClick={() => setStep('details')}
-                className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl border border-gray-300 text-gray-700 hover:bg-gray-200 text-xs font-semibold cursor-pointer w-full sm:w-auto justify-center"
+                className="min-h-[44px] inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl border border-gray-300 text-gray-700 hover:bg-gray-200 text-xs font-semibold cursor-pointer w-full sm:w-auto"
               >
                 <ArrowLeft className="w-4 h-4" />
                 <span>Back to Details</span>
               </button>
 
-              <div className="flex items-center gap-2 w-full sm:w-auto">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
                 <button
                   type="button"
                   disabled={isSubmitting}
                   onClick={() => handleSubmit('estimate')}
-                  className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl border border-[#00346f] text-[#00346f] hover:bg-[#00346f]/10 text-xs font-bold uppercase tracking-wider transition-all cursor-pointer"
+                  className="min-h-[44px] flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl border border-[#00346f] text-[#00346f] hover:bg-[#00346f]/10 text-xs font-bold uppercase tracking-wider transition-all cursor-pointer"
                 >
                   <FileText className="w-3.5 h-3.5" />
                   <span>Save Estimate</span>
@@ -966,7 +966,7 @@ export default function CheckoutModal({
                   type="button"
                   disabled={isSubmitting}
                   onClick={() => handleSubmit('order')}
-                  className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-5 py-2.5 rounded-xl bg-[#00346f] hover:bg-[#00224d] text-white text-xs font-bold uppercase tracking-wider transition-all shadow-md cursor-pointer hover:scale-101"
+                  className="min-h-[44px] flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-5 py-2.5 rounded-xl bg-[#00346f] hover:bg-[#00224d] text-white text-xs font-bold uppercase tracking-wider transition-all shadow-md cursor-pointer hover:scale-101"
                 >
                   <Send className="w-3.5 h-3.5" />
                   <span>{isSubmitting ? 'Submitting...' : 'Submit Order'}</span>

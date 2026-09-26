@@ -38,16 +38,16 @@ export default function CateringPage({ onOpenWizard }: CateringPageProps) {
             Perfect for birthdays, weddings, baby showers, corporate events & festivals.
           </p>
 
-          <div className="flex flex-col lg:flex-row justify-center items-center gap-4 pt-6">
+          <div className="flex flex-col sm:flex-row justify-center items-center gap-4 pt-6">
             <button
               onClick={onOpenWizard}
-              className="w-full lg:w-auto bg-secondary-brand hover:bg-[#5d4201] text-white font-sans text-xs uppercase tracking-widest font-bold px-8 py-4 rounded shadow-xl transition-all cursor-pointer hover:scale-101 duration-300"
+              className="w-full sm:w-auto min-h-[44px] bg-secondary-brand hover:bg-[#5d4201] text-white font-sans text-xs uppercase tracking-widest font-bold px-8 py-3.5 rounded shadow-xl transition-all cursor-pointer hover:scale-101 duration-300 inline-flex items-center justify-center"
             >
               Plan Your Event
             </button>
             <button
               onClick={() => scrollToSection("menu-nav")}
-              className="w-full lg:w-auto border border-brand-gold-tint hover:bg-white/10 text-brand-gold-tint font-sans text-xs uppercase tracking-widest font-bold px-8 py-4 rounded transition-all cursor-pointer"
+              className="w-full sm:w-auto min-h-[44px] border border-brand-gold-tint hover:bg-white/10 text-brand-gold-tint font-sans text-xs uppercase tracking-widest font-bold px-8 py-3.5 rounded transition-all cursor-pointer inline-flex items-center justify-center"
             >
               View Menu
             </button>
@@ -80,8 +80,8 @@ export default function CateringPage({ onOpenWizard }: CateringPageProps) {
       </section>
 
       {/* Categories Sub-nav */}
-      <div className="bg-white border-b border-gray-150 py-4 sticky top-16 z-30 shadow-xs">
-        <div className="max-w-7xl mx-auto px-4 flex flex-wrap justify-center gap-2 lg:gap-4">
+      <div className="bg-white border-b border-gray-150 py-3 sticky top-16 z-30 shadow-xs">
+        <div className="max-w-7xl mx-auto px-4 flex flex-wrap justify-center gap-2 lg:gap-3">
           {[
             { label: "CHAAT", id: "chaat" },
             { label: "APPETIZERS", id: "appetizers" },
@@ -96,7 +96,7 @@ export default function CateringPage({ onOpenWizard }: CateringPageProps) {
             <button
               key={btn.id}
               onClick={() => scrollToSection(btn.id)}
-              className="border border-[#775a19]/40 hover:bg-[#775a19]/5 px-3 py-1.5 text-[9px] lg:text-[10px] font-bold tracking-widest text-[#775a19] uppercase rounded-sm transition-all cursor-pointer font-sans"
+              className="min-h-[36px] border border-[#775a19]/40 hover:bg-[#775a19]/5 px-3 py-1.5 text-[9px] lg:text-[10px] font-bold tracking-widest text-[#775a19] uppercase rounded-sm transition-all cursor-pointer font-sans inline-flex items-center justify-center"
             >
               {btn.label}
             </button>
@@ -540,10 +540,10 @@ export default function CateringPage({ onOpenWizard }: CateringPageProps) {
               Browse our recipes, pick your favorites, and get in touch with our kitchen team. We take care of all sizing, custom flavors, eggless preparations, and elegant table presentation sets.
             </p>
 
-            <div className="flex flex-col lg:flex-row justify-center gap-4 pt-4">
+            <div className="flex flex-col sm:flex-row flex-wrap justify-center gap-4 pt-4">
               <button 
                 onClick={onOpenWizard}
-                className="w-full lg:w-auto bg-secondary-brand hover:bg-[#5d4201] text-white font-sans text-xs uppercase tracking-widest font-bold px-8 py-4 rounded shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
+                className="w-full sm:w-auto min-h-[44px] bg-secondary-brand hover:bg-[#5d4201] text-white font-sans text-xs uppercase tracking-widest font-bold px-8 py-3 rounded shadow-md transition-all inline-flex items-center justify-center gap-2 cursor-pointer"
               >
                 Request Custom Menu
               </button>
@@ -551,15 +551,15 @@ export default function CateringPage({ onOpenWizard }: CateringPageProps) {
                 href="https://wa.me/19455274566"
                 target="_blank" 
                 rel="noreferrer"
-                className="w-full lg:w-auto border border-brand-gold-tint hover:bg-white/10 text-brand-gold-tint font-sans text-xs uppercase tracking-widest font-bold px-8 py-4 rounded flex items-center justify-center gap-2 cursor-pointer"
+                className="w-full sm:w-auto min-h-[44px] border border-brand-gold-tint hover:bg-white/10 text-brand-gold-tint font-sans text-xs uppercase tracking-widest font-bold px-6 py-3 rounded inline-flex items-center justify-center gap-2 cursor-pointer"
               >
-                <MessageSquare className="h-4 w-4" /> Talk to Kitchen (WhatsApp)
+                <MessageSquare className="h-4 w-4 shrink-0" /> Talk to Kitchen (WhatsApp)
               </a>
               <a 
                 href="mailto:bluebonnetwhisk@gmail.com"
-                className="w-full lg:w-auto border border-gray-400 hover:bg-white/10 text-gray-200 font-sans text-xs uppercase tracking-widest font-bold px-8 py-4 rounded flex items-center justify-center gap-2 cursor-pointer"
+                className="w-full sm:w-auto min-h-[44px] border border-gray-400 hover:bg-white/10 text-gray-200 font-sans text-xs uppercase tracking-widest font-bold px-6 py-3 rounded inline-flex items-center justify-center gap-2 cursor-pointer"
               >
-                <Mail className="h-4 w-4" /> Email Us
+                <Mail className="h-4 w-4 shrink-0" /> Email Us
               </a>
             </div>
 

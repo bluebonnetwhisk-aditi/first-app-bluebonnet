@@ -107,7 +107,7 @@ export default function PlannerTool({ onApplyRecommended }: PlannerToolProps) {
                 max="300"
                 value={guests}
                 onChange={(e) => setGuests(Math.max(1, parseInt(e.target.value) || 0))}
-                className="w-16 px-2 py-1 text-center font-bold text-[#00346f] border border-[#c3c6d2] rounded-md focus:outline-none focus:border-[#00346f]"
+                className="w-16 px-2 py-1.5 text-center font-bold text-[#00346f] border border-[#c3c6d2] rounded-md focus:outline-none focus:border-[#00346f] min-h-[44px] text-base sm:text-sm"
               />
               <span className="text-sm font-medium text-gray-600">guests</span>
             </div>
@@ -125,7 +125,7 @@ export default function PlannerTool({ onApplyRecommended }: PlannerToolProps) {
                 key={course}
                 type="button"
                 onClick={() => setSelectedCourse(course)}
-                className={`py-2 px-3 text-xs font-medium rounded-md border transition-all ${
+                className={`min-h-[40px] py-2 px-3 text-xs font-medium rounded-md border transition-all cursor-pointer flex items-center justify-center ${
                   selectedCourse === course
                     ? 'border-[#00346f] bg-[#00346f]/5 text-[#00346f] font-semibold'
                     : 'border-[#c3c6d2] text-gray-600 hover:border-gray-400'
@@ -171,7 +171,7 @@ export default function PlannerTool({ onApplyRecommended }: PlannerToolProps) {
           type="button"
           onClick={handleApply}
           disabled={results.small === 0 && results.large === 0 && results.xl === 0}
-          className="w-full py-2.5 px-4 bg-[#775a19] hover:bg-[#5d4201] text-white rounded-md text-xs uppercase font-semibold tracking-wider transition-all shadow-sm flex items-center justify-center gap-2"
+          className="w-full min-h-[44px] py-2.5 px-4 bg-[#775a19] hover:bg-[#5d4201] text-white rounded-md text-xs uppercase font-semibold tracking-wider transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
         >
           <Check size={14} />
           Pre-populate My Catering Inquiry

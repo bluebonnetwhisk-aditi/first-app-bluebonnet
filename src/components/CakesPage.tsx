@@ -35,10 +35,10 @@ export default function CakesPage({ onOpenWizard, onOpenBaker, onOpenPriceList }
             From custom celebration cakes to bite-sized treats and Indian-inspired desserts, every creation at Bluebonnet Whisk is handcrafted with quality ingredients, creativity, and love.
           </p>
 
-          <div className="flex flex-col lg:flex-row items-center gap-4">
+          <div className="flex flex-col sm:flex-row items-center gap-4">
             <button
               onClick={() => onOpenWizard()}
-              className="w-full lg:w-auto bg-[#00346f] hover:bg-[#00346f]/90 text-white font-sans text-xs uppercase tracking-widest font-bold px-8 py-4 rounded shadow-lg transition-all duration-300 cursor-pointer"
+              className="w-full sm:w-auto min-h-[44px] inline-flex items-center justify-center bg-[#00346f] hover:bg-[#00224d] text-white font-sans text-xs uppercase tracking-widest font-bold px-8 py-3.5 rounded-xl shadow-lg transition-all duration-300 cursor-pointer"
             >
               REQUEST QUOTE
             </button>
@@ -471,10 +471,10 @@ export default function CakesPage({ onOpenWizard, onOpenBaker, onOpenPriceList }
           </div>
 
           {/* Cookie gallery-carousel layout */}
-          <div className="flex overflow-x-auto lg:grid lg:grid-cols-5 gap-6 snap-x snap-mandatory scrollbar-none pb-6">
+          <div className="flex overflow-x-auto sm:grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 sm:gap-6 snap-x snap-mandatory scrollbar-none pb-6">
             
             {/* Cookie 1: Chocolate Chip */}
-            <div className="min-w-[260px] lg:min-w-0 bg-[#fcfbf9] border border-gray-150 rounded-lg overflow-hidden shadow-xs hover:shadow-lg transition-all duration-300 flex flex-col justify-between group snap-center hover:-translate-y-0.5">
+            <div className="min-w-[240px] sm:min-w-0 bg-[#fcfbf9] border border-gray-150 rounded-xl overflow-hidden shadow-xs hover:shadow-lg transition-all duration-300 flex flex-col justify-between group snap-center hover:-translate-y-0.5">
               <div className="relative h-48 overflow-hidden">
                 <img 
                   src="src/assets/images/chocolate_chip_cookies.png" 
@@ -492,7 +492,7 @@ export default function CakesPage({ onOpenWizard, onOpenBaker, onOpenPriceList }
             </div>
 
             {/* Cookie 2: Double Chocolate */}
-            <div className="min-w-[260px] lg:min-w-0 bg-[#fcfbf9] border border-gray-150 rounded-lg overflow-hidden shadow-xs hover:shadow-lg transition-all duration-300 flex flex-col justify-between group snap-center hover:-translate-y-0.5">
+            <div className="min-w-[240px] sm:min-w-0 bg-[#fcfbf9] border border-gray-150 rounded-xl overflow-hidden shadow-xs hover:shadow-lg transition-all duration-300 flex flex-col justify-between group snap-center hover:-translate-y-0.5">
               <div className="relative h-48 overflow-hidden">
                 <img 
                   src="src/assets/images/double_chocolate_cookies.png" 
@@ -510,7 +510,7 @@ export default function CakesPage({ onOpenWizard, onOpenBaker, onOpenPriceList }
             </div>
 
             {/* Cookie 3: Biscoff Cookies */}
-            <div className="min-w-[260px] lg:min-w-0 bg-[#fcfbf9] border border-gray-150 rounded-lg overflow-hidden shadow-xs hover:shadow-lg transition-all duration-300 flex flex-col justify-between group snap-center hover:-translate-y-0.5">
+            <div className="min-w-[240px] sm:min-w-0 bg-[#fcfbf9] border border-gray-150 rounded-xl overflow-hidden shadow-xs hover:shadow-lg transition-all duration-300 flex flex-col justify-between group snap-center hover:-translate-y-0.5">
               <div className="relative h-48 overflow-hidden">
                 <img 
                   src="src/assets/images/biscoff_cookies.png" 
@@ -528,7 +528,7 @@ export default function CakesPage({ onOpenWizard, onOpenBaker, onOpenPriceList }
             </div>
 
             {/* Cookie 4: Stuffed Cookies */}
-            <div className="min-w-[260px] lg:min-w-0 bg-[#fcfbf9] border border-gray-150 rounded-lg overflow-hidden shadow-xs hover:shadow-lg transition-all duration-300 flex flex-col justify-between group snap-center hover:-translate-y-0.5">
+            <div className="min-w-[240px] sm:min-w-0 bg-[#fcfbf9] border border-gray-150 rounded-xl overflow-hidden shadow-xs hover:shadow-lg transition-all duration-300 flex flex-col justify-between group snap-center hover:-translate-y-0.5">
               <div className="relative h-48 overflow-hidden">
                 <img 
                   src="src/assets/images/stuffed_cookies.png" 
@@ -546,7 +546,7 @@ export default function CakesPage({ onOpenWizard, onOpenBaker, onOpenPriceList }
             </div>
 
             {/* Cookie 5: Gourmet Cookies Assortment */}
-            <div className="min-w-[260px] lg:min-w-0 bg-[#fcfbf9] border border-gray-150 rounded-lg overflow-hidden shadow-xs hover:shadow-lg transition-all duration-300 flex flex-col justify-between group snap-center hover:-translate-y-0.5">
+            <div className="min-w-[240px] sm:min-w-0 bg-[#fcfbf9] border border-gray-150 rounded-xl overflow-hidden shadow-xs hover:shadow-lg transition-all duration-300 flex flex-col justify-between group snap-center hover:-translate-y-0.5">
               <div className="relative h-48 overflow-hidden">
                 <img 
                   src="src/assets/images/gourmet_cookies.png" 
@@ -566,13 +566,13 @@ export default function CakesPage({ onOpenWizard, onOpenBaker, onOpenPriceList }
           </div>
 
           {/* Cookie CTA & Description */}
-          <div className="mt-8 flex flex-col lg:flex-row justify-between items-center bg-[#faf7f2]/55 border border-gray-150 rounded p-6 gap-6">
+          <div className="mt-8 flex flex-col lg:flex-row justify-between items-center bg-[#faf7f2]/55 border border-gray-150 rounded-2xl p-6 gap-6">
             <p className="text-gray-700 text-xs lg:text-sm font-sans leading-relaxed text-center lg:text-left max-w-2xl font-medium">
               ★ Our premium thick-style cookies are hand-rolled daily in our Frisco kitchen, using slow-churned butter and organic flour. Perfect for family sweet cravings or custom event cookie boxes.
             </p>
             <button
               onClick={() => onOpenWizard("", "Classic Flavors")}
-              className="bg-[#00346f] hover:bg-[#00346f]/90 text-white font-sans text-xs uppercase tracking-widest font-bold px-8 py-3.5 rounded transition-all cursor-pointer whitespace-nowrap shadow-sm"
+              className="w-full sm:w-auto min-h-[44px] inline-flex items-center justify-center bg-[#00346f] hover:bg-[#00224d] text-white font-sans text-xs uppercase tracking-widest font-bold px-8 py-3.5 rounded-xl transition-all cursor-pointer whitespace-nowrap shadow-sm"
             >
               ORDER COOKIES
             </button>

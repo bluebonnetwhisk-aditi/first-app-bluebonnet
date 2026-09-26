@@ -306,7 +306,7 @@ export default function MenuPage({
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
+          <table className="w-full min-w-[540px] text-left border-collapse">
             <thead>
               <tr className="border-b border-[#ededf4] bg-[#f9f9ff]">
                 <th className="py-3 px-6 text-[10px] font-bold text-gray-400 uppercase tracking-widest font-sans w-1/3">Dish Name</th>
@@ -518,7 +518,7 @@ export default function MenuPage({
               </div>
 
               <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse">
+                <table className="w-full min-w-[500px] text-left border-collapse">
                   <thead>
                     <tr className="border-b border-[#ededf4] bg-[#f9f9ff]">
                       <th className="py-3 px-6 text-[10px] font-bold text-gray-400 uppercase tracking-widest font-sans w-1/3">Bread Type</th>
@@ -603,7 +603,7 @@ export default function MenuPage({
               </div>
 
               <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse">
+                <table className="w-full min-w-[500px] text-left border-collapse">
                   <thead>
                     <tr className="border-b border-[#ededf4] bg-[#f9f9ff]">
                       <th className="py-3 px-6 text-[10px] font-bold text-gray-400 uppercase tracking-widest font-sans w-1/3">Beverage Name</th>
@@ -707,7 +707,7 @@ export default function MenuPage({
               </div>
 
               <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse">
+                <table className="w-full min-w-[500px] text-left border-collapse">
                   <thead>
                     <tr className="border-b border-[#ededf4] bg-[#f9f9ff]">
                       <th className="py-3 px-6 text-[10px] font-bold text-gray-400 uppercase tracking-widest font-sans w-1/3">Item</th>
@@ -789,7 +789,7 @@ export default function MenuPage({
               </div>
 
               <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse">
+                <table className="w-full min-w-[500px] text-left border-collapse">
                   <thead>
                     <tr className="border-b border-[#ededf4] bg-[#f9f9ff]">
                       <th className="py-3 px-6 text-[10px] font-bold text-gray-400 uppercase tracking-widest font-sans w-1/3">Meal Combo</th>
@@ -860,7 +860,7 @@ export default function MenuPage({
               </div>
 
               <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse">
+                <table className="w-full min-w-[540px] text-left border-collapse">
                   <thead>
                     <tr className="border-b border-[#ededf4] bg-[#f9f9ff]">
                       <th className="py-3 px-6 text-[10px] font-bold text-gray-400 uppercase tracking-widest font-sans w-1/3">Station Type</th>
@@ -1148,18 +1148,18 @@ export default function MenuPage({
         <p className="text-xs text-gray-500 font-sans max-w-md mx-auto italic">
           Note: All prices are subject to seasonal changes and availability. Taxes not included. Portions can be refined to meet customized dietary parameters.
         </p>
-        <div className="flex gap-3 justify-center">
+        <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <button
             type="button"
             onClick={handleDownloadMenuTxt}
-            className="px-6 py-3 border border-[#775a19] hover:bg-[#775a19]/10 text-[#775a19] rounded font-mono text-xs uppercase tracking-widest font-semibold cursor-pointer transition-all duration-300"
+            className="w-full sm:w-auto min-h-[44px] px-6 py-3 border border-[#775a19] hover:bg-[#775a19]/10 text-[#775a19] rounded font-mono text-xs uppercase tracking-widest font-semibold cursor-pointer transition-all duration-300 inline-flex items-center justify-center"
           >
             Download Full TXT Menu
           </button>
           <button
             type="button"
             onClick={() => window.print()}
-            className="px-6 py-3 bg-[#f3f3f9] hover:bg-[#ededf4] text-[#00346f] rounded font-mono text-xs uppercase tracking-widest font-semibold cursor-pointer transition-all duration-300"
+            className="w-full sm:w-auto min-h-[44px] px-6 py-3 bg-[#f3f3f9] hover:bg-[#ededf4] text-[#00346f] rounded font-mono text-xs uppercase tracking-widest font-semibold cursor-pointer transition-all duration-300 inline-flex items-center justify-center"
           >
             Print Guide
           </button>
@@ -1168,15 +1168,15 @@ export default function MenuPage({
 
       {/* Toast Notification for Added to Cart */}
       {showToast && (
-        <div className="fixed bottom-24 right-6 z-50 bg-[#00346f] border-l-4 border-[#ffdea5] text-white px-4 py-3 rounded shadow-2xl flex items-center gap-2 animate-fade-in font-sans text-xs font-semibold">
+        <div className="fixed bottom-24 right-4 sm:right-6 z-50 bg-[#00346f] border-l-4 border-[#ffdea5] text-white px-4 py-3 rounded shadow-2xl flex items-center gap-2 animate-fade-in font-sans text-xs font-semibold max-w-[calc(100vw-2rem)]">
           <span className="text-[#fed488]">✓</span>
-          <span>{toastMessage}</span>
+          <span className="truncate">{toastMessage}</span>
         </div>
       )}
 
       {/* Floating Quote Selections Card */}
       {selectedItems.length > 0 && (
-        <div className="fixed bottom-24 right-6 lg:right-8 z-45 bg-[#050a1a]/95 backdrop-blur-md border border-[#ffdea5]/30 text-white rounded-lg p-4 shadow-2xl w-72 transition-all duration-300 animate-slide-in font-sans">
+        <div className="fixed bottom-24 right-4 sm:right-6 lg:right-8 z-45 bg-[#050a1a]/95 backdrop-blur-md border border-[#ffdea5]/30 text-white rounded-lg p-4 shadow-2xl max-w-[calc(100vw-2rem)] w-72 transition-all duration-300 animate-slide-in font-sans">
           <div className="flex justify-between items-center border-b border-white/10 pb-2 mb-2">
             <span className="font-serif text-sm font-bold text-brand-cream flex items-center gap-1.5">
               <ShoppingBag className="h-4 w-4 text-[#fed488]" /> Quote Basket
@@ -1202,7 +1202,7 @@ export default function MenuPage({
 
           <button
             onClick={() => onOpenWizard()}
-            className="w-full bg-[#00346f] hover:bg-[#114589] text-white py-2 rounded text-xs font-bold uppercase tracking-wider transition-all duration-200 cursor-pointer text-center"
+            className="w-full min-h-[44px] bg-[#00346f] hover:bg-[#114589] text-white py-2.5 px-4 rounded text-xs font-bold uppercase tracking-wider transition-all duration-200 cursor-pointer inline-flex items-center justify-center text-center"
           >
             Request Quote Now
           </button>

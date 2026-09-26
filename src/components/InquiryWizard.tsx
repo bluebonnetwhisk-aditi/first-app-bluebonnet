@@ -409,8 +409,8 @@ export default function InquiryWizard({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs animate-fade-in">
-      <div className="relative w-full max-w-2xl overflow-hidden rounded-lg bg-[#fbfbfa] text-[#1a1c20] shadow-2xl border border-secondary-brand/20">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-3 sm:p-4 backdrop-blur-xs animate-fade-in">
+      <div className="relative w-full max-w-2xl max-h-[92vh] overflow-y-auto rounded-2xl bg-[#fbfbfa] text-[#1a1c20] shadow-2xl border border-secondary-brand/20">
         
         {/* Decorative Gold Header Ribbon */}
         <div className="h-1.5 w-full bg-gradient-to-r from-primary-brand via-secondary-brand to-tertiary-brand" />
@@ -418,7 +418,7 @@ export default function InquiryWizard({
         {/* Absolute Close */}
         <button 
           onClick={onClose}
-          className="absolute right-4 top-4 text-gray-400 hover:text-gray-900 transition-colors p-1 rounded-full hover:bg-gray-100"
+          className="absolute right-3 top-3 z-20 text-gray-400 hover:text-gray-900 transition-colors w-10 h-10 rounded-xl hover:bg-gray-100 flex items-center justify-center cursor-pointer"
           aria-label="Close"
         >
           <X className="h-5 w-5" />
@@ -565,10 +565,10 @@ export default function InquiryWizard({
               </p>
             </div>
 
-            <div className="mt-4 flex justify-center gap-4">
+            <div className="mt-4 flex flex-wrap justify-center gap-3">
               <button 
                 onClick={() => window.print()}
-                className="flex items-center gap-2 border border-secondary-brand px-5 py-2.5 text-xs font-semibold tracking-widest text-secondary-brand uppercase rounded hover:bg-secondary-brand/5 transition-all cursor-pointer"
+                className="flex items-center justify-center gap-2 border border-secondary-brand px-5 py-2.5 min-h-[44px] text-xs font-semibold tracking-widest text-secondary-brand uppercase rounded-xl hover:bg-secondary-brand/5 transition-all cursor-pointer"
               >
                 <Printer className="h-4 w-4" /> Print Estimate
               </button>
@@ -578,17 +578,17 @@ export default function InquiryWizard({
                   setStep(1);
                   onClose();
                 }}
-                className="bg-primary-brand px-6 py-2.5 text-xs font-semibold tracking-widest text-white uppercase rounded hover:bg-primary-brand/90 transition-all shadow-md cursor-pointer"
+                className="bg-primary-brand px-6 py-2.5 min-h-[44px] text-xs font-semibold tracking-widest text-white uppercase rounded-xl hover:bg-primary-brand/90 transition-all shadow-md cursor-pointer"
               >
                 Back to Storefront
               </button>
             </div>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className="p-6 lg:p-8">
+          <form onSubmit={handleSubmit} className="p-5 sm:p-6 lg:p-8">
             <div className="mb-6 flex items-center justify-between">
               <div>
-                <h3 className="font-serif text-2xl font-bold text-primary-brand">Create Your Masterpiece</h3>
+                <h3 className="font-serif text-xl sm:text-2xl font-bold text-primary-brand">Create Your Masterpiece</h3>
                 <p className="text-xs text-gray-500 font-sans mt-0.5">Design inquiry and custom quotation engine</p>
               </div>
               <div className="flex items-center gap-1.5 font-mono text-xs text-secondary-brand bg-secondary-brand/10 px-2.5 py-1 rounded">
@@ -608,7 +608,7 @@ export default function InquiryWizard({
               <div className="space-y-4 animate-fade-in">
                 <div>
                   <label className="block text-xs font-semibold uppercase tracking-wider text-gray-700 mb-1.5 font-bold">What are we planning?</label>
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     {[
                       { id: "Custom Cakes", label: "🎂 Custom Cakes" },
                       { id: "Catering Platters", label: "🍽️ Catering Platters" },
@@ -619,7 +619,7 @@ export default function InquiryWizard({
                         key={svc.id}
                         type="button"
                         onClick={() => setServiceType(svc.id)}
-                        className={`border py-3 px-2 rounded text-center text-xs transition-all font-sans font-semibold flex items-center justify-center gap-1.5 cursor-pointer ${
+                        className={`border py-3 px-3 min-h-[44px] rounded-xl text-center text-xs transition-all font-sans font-semibold flex items-center justify-center gap-1.5 cursor-pointer ${
                           serviceType === svc.id 
                             ? "border-[#00346f] bg-[#00346f] text-white shadow-sm" 
                             : "border-gray-300 hover:border-gray-400 bg-white text-gray-700"
@@ -637,7 +637,7 @@ export default function InquiryWizard({
                     <select 
                       value={formData.occasion}
                       onChange={(e) => setFormData({...formData, occasion: e.target.value})}
-                      className="w-full border border-gray-300 bg-white px-3 py-2 rounded focus:border-primary-brand focus:outline-none text-xs"
+                      className="w-full min-h-[44px] border border-gray-300 bg-white px-3 py-2.5 rounded-xl focus:border-primary-brand focus:outline-none text-base sm:text-xs"
                     >
                       <option>Birthday</option>
                       <option>Anniversary</option>
@@ -654,7 +654,7 @@ export default function InquiryWizard({
                     <select
                       value={formData.size}
                       onChange={(e) => setFormData({...formData, size: e.target.value})}
-                      className="w-full border border-gray-300 bg-white px-3 py-2 rounded focus:border-primary-brand focus:outline-none text-xs"
+                      className="w-full min-h-[44px] border border-gray-300 bg-white px-3 py-2.5 rounded-xl focus:border-primary-brand focus:outline-none text-base sm:text-xs"
                     >
                       <option>10-15 guests</option>
                       <option>15-25 guests</option>
@@ -673,7 +673,7 @@ export default function InquiryWizard({
                         key={dt}
                         type="button"
                         onClick={() => setFormData({...formData, dietary: dt})}
-                        className={`border py-2.5 px-1 rounded text-center text-xs transition-all font-sans cursor-pointer ${
+                        className={`border py-2.5 px-2 min-h-[44px] rounded-xl text-center text-xs transition-all font-sans cursor-pointer flex items-center justify-center ${
                           formData.dietary === dt 
                             ? "border-secondary-brand bg-[#ffdea5] text-[#775a19] font-bold" 
                             : "border-gray-200 hover:border-gray-300 bg-white text-gray-600"
@@ -706,7 +706,7 @@ export default function InquiryWizard({
                         <select 
                           value={formData.category}
                           onChange={(e) => handleCategoryChange(e.target.value)}
-                          className="w-full border border-gray-300 bg-white px-3 py-2 rounded focus:border-[#00346f] focus:outline-none text-xs"
+                          className="w-full min-h-[44px] border border-gray-300 bg-white px-3 py-2.5 rounded-xl focus:border-[#00346f] focus:outline-none text-base sm:text-xs"
                         >
                           {flavorCategories.map(c => (
                             <option key={c.title} value={c.title}>{c.title}</option>
@@ -719,7 +719,7 @@ export default function InquiryWizard({
                         <select 
                           value={formData.flavor}
                           onChange={(e) => setFormData({...formData, flavor: e.target.value})}
-                          className="w-full border border-gray-300 bg-white px-3 py-2 rounded focus:border-[#00346f] focus:outline-none text-xs"
+                          className="w-full min-h-[44px] border border-gray-300 bg-white px-3 py-2.5 rounded-xl focus:border-[#00346f] focus:outline-none text-base sm:text-xs"
                         >
                           {availableFlavors.map(fl => (
                             <option key={fl} value={fl}>{fl}</option>
@@ -739,18 +739,18 @@ export default function InquiryWizard({
                     <button
                       type="button"
                       onClick={handleAddCustomRow}
-                      className="text-[11px] text-[#775a19] font-bold uppercase tracking-wider flex items-center gap-1 hover:underline cursor-pointer"
+                      className="min-h-[36px] text-xs text-[#775a19] font-bold uppercase tracking-wider inline-flex items-center gap-1 hover:underline cursor-pointer"
                     >
-                      <Plus className="h-3.5 w-3.5" /> Add Custom Item
+                      <Plus className="h-4 w-4" /> Add Custom Item
                     </button>
                   </div>
 
                   {wizardItems.length === 0 ? (
-                    <div className="text-center py-8 border-2 border-dashed border-gray-250 rounded bg-white text-xs text-gray-500 font-sans leading-relaxed">
+                    <div className="text-center py-8 border-2 border-dashed border-gray-250 rounded-xl bg-white text-xs text-gray-500 font-sans leading-relaxed">
                       No custom menu items added. {isCakeService ? "Your quote estimate will include the custom cake specified above." : "Click '+ Add Custom Item' to search the menu and add custom rows."}
                     </div>
                   ) : (
-                    <div className="w-full overflow-x-auto border border-gray-200 rounded bg-white max-h-56 overflow-y-auto">
+                    <div className="w-full overflow-x-auto border border-gray-200 rounded-xl bg-white max-h-56 overflow-y-auto">
                       <table className="w-full text-left border-collapse min-w-[550px] text-xs">
                         <thead>
                           <tr className="bg-gray-50 border-b border-gray-200 text-[10px] font-bold text-gray-400 uppercase tracking-widest font-sans">
@@ -771,14 +771,14 @@ export default function InquiryWizard({
                                   value={item.name}
                                   onChange={(e) => handleRowNameChange(idx, e.target.value)}
                                   placeholder="Start typing item name (e.g. Samosa)..."
-                                  className="w-full border border-gray-300 px-2 py-1 rounded text-xs focus:border-[#00346f] focus:outline-none"
+                                  className="w-full min-h-[38px] border border-gray-300 px-2 py-1 rounded-lg text-base sm:text-xs focus:border-[#00346f] focus:outline-none"
                                 />
                               </td>
                               <td className="p-2">
                                 <select
                                   value={item.size || '1/2'}
                                   onChange={(e) => handleRowSizeChange(idx, e.target.value as any)}
-                                  className="w-full border border-gray-300 px-1 py-1 rounded text-xs focus:border-[#00346f] focus:outline-none bg-white"
+                                  className="w-full min-h-[38px] border border-gray-300 px-1 py-1 rounded-lg text-base sm:text-xs focus:border-[#00346f] focus:outline-none bg-white"
                                 >
                                   <option value="1/3">Third Tray</option>
                                   <option value="1/2">Half Tray</option>
@@ -793,7 +793,7 @@ export default function InquiryWizard({
                                   min="1"
                                   value={item.quantity}
                                   onChange={(e) => handleRowQuantityChange(idx, parseInt(e.target.value) || 1)}
-                                  className="w-full border border-gray-300 px-1 py-1 rounded text-xs text-center focus:border-[#00346f] focus:outline-none"
+                                  className="w-full min-h-[38px] border border-gray-300 px-1 py-1 rounded-lg text-base sm:text-xs text-center focus:border-[#00346f] focus:outline-none"
                                 />
                               </td>
                               <td className="p-2 text-right pr-4">
@@ -805,7 +805,7 @@ export default function InquiryWizard({
                                     step="0.01"
                                     value={item.price}
                                     onChange={(e) => handleRowPriceChange(idx, parseFloat(e.target.value) || 0)}
-                                    className="w-16 border border-gray-300 px-1.5 py-1 rounded text-xs text-right focus:border-[#00346f] focus:outline-none"
+                                    className="w-16 min-h-[38px] border border-gray-300 px-1.5 py-1 rounded-lg text-base sm:text-xs text-right focus:border-[#00346f] focus:outline-none"
                                   />
                                 </div>
                               </td>
@@ -813,7 +813,7 @@ export default function InquiryWizard({
                                 <button
                                   type="button"
                                   onClick={() => handleDeleteRow(idx)}
-                                  className="text-gray-400 hover:text-red-500 text-lg font-bold p-1 cursor-pointer transition-colors"
+                                  className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:text-red-500 text-lg font-bold p-1 cursor-pointer transition-colors"
                                   aria-label="Remove item"
                                 >
                                   &times;
@@ -949,12 +949,12 @@ export default function InquiryWizard({
                     value={formData.customWishes}
                     onChange={(e) => setFormData({...formData, customWishes: e.target.value})}
                     placeholder="Describe custom setups, dietary notes, delivery timing, or intricate design themes..."
-                    className="w-full border border-gray-300 bg-white px-3 py-2 rounded focus:border-primary-brand focus:outline-none text-xs"
+                    className="w-full min-h-[64px] border border-gray-300 bg-white px-3 py-2.5 rounded-xl focus:border-primary-brand focus:outline-none text-base sm:text-xs"
                   />
                 </div>
 
                 {/* 6. Real-time elegant Quote Box widget inside form */}
-                <div className="rounded border border-secondary-brand/20 bg-amber-50/20 p-4">
+                <div className="rounded-xl border border-secondary-brand/20 bg-amber-50/20 p-4">
                   <div className="flex items-start gap-2 text-xs">
                     <Info className="h-4 w-4 text-secondary-brand shrink-0 mt-0.5" />
                     <div className="w-full">
@@ -1013,14 +1013,14 @@ export default function InquiryWizard({
                 <div>
                   <label className="block text-xs font-semibold uppercase tracking-wider text-gray-700 mb-1.5 font-bold">Your Full Name</label>
                   <div className="relative">
-                    <User className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
+                    <User className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
                     <input
                       type="text"
                       required
                       value={formData.name}
                       onChange={(e) => setFormData({...formData, name: e.target.value})}
                       placeholder="Enter your name"
-                      className="w-full border border-gray-300 bg-white pl-10 pr-3 py-2 rounded focus:border-[#00346f] focus:outline-none text-sm"
+                      className="w-full min-h-[44px] border border-gray-300 bg-white pl-10 pr-3 py-2.5 rounded-xl focus:border-[#00346f] focus:outline-none text-base sm:text-sm"
                     />
                   </div>
                 </div>
@@ -1029,14 +1029,14 @@ export default function InquiryWizard({
                   <div>
                     <label className="block text-xs font-semibold uppercase tracking-wider text-gray-700 mb-1.5 font-bold">Email Address</label>
                     <div className="relative">
-                      <Mail className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
+                      <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
                       <input
                         type="email"
                         required
                         value={formData.email}
                         onChange={(e) => setFormData({...formData, email: e.target.value})}
                         placeholder="email@example.com"
-                        className="w-full border border-gray-300 bg-white pl-10 pr-3 py-2 rounded focus:border-[#00346f] focus:outline-none text-xs"
+                        className="w-full min-h-[44px] border border-gray-300 bg-white pl-10 pr-3 py-2.5 rounded-xl focus:border-[#00346f] focus:outline-none text-base sm:text-xs"
                       />
                     </div>
                   </div>
@@ -1044,14 +1044,14 @@ export default function InquiryWizard({
                   <div>
                     <label className="block text-xs font-semibold uppercase tracking-wider text-gray-700 mb-1.5 font-bold">Phone Number</label>
                     <div className="relative">
-                      <Phone className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
+                      <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
                       <input
                         type="tel"
                         required
                         value={formData.phone}
                         onChange={(e) => setFormData({...formData, phone: e.target.value})}
                         placeholder="(123) 456-7890"
-                        className="w-full border border-gray-300 bg-white pl-10 pr-3 py-2 rounded focus:border-[#00346f] focus:outline-none text-xs"
+                        className="w-full min-h-[44px] border border-gray-300 bg-white pl-10 pr-3 py-2.5 rounded-xl focus:border-[#00346f] focus:outline-none text-base sm:text-xs"
                       />
                     </div>
                   </div>
@@ -1059,31 +1059,31 @@ export default function InquiryWizard({
                   <div>
                     <label className="block text-xs font-semibold uppercase tracking-wider text-gray-700 mb-1.5 font-bold">Celebration Date</label>
                     <div className="relative">
-                      <Calendar className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
+                      <Calendar className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
                       <input
                         type="date"
                         required
                         value={formData.date}
                         onChange={(e) => setFormData({...formData, date: e.target.value})}
-                        className="w-full border border-gray-300 bg-white pl-10 pr-3 py-2 rounded focus:border-[#00346f] focus:outline-none text-xs"
+                        className="w-full min-h-[44px] border border-gray-300 bg-white pl-10 pr-3 py-2.5 rounded-xl focus:border-[#00346f] focus:outline-none text-base sm:text-xs"
                       />
                     </div>
                   </div>
                 </div>
 
-                <div className="rounded border border-emerald-100 bg-emerald-50/30 p-3 text-xs text-emerald-800 leading-normal font-sans font-medium">
+                <div className="rounded-xl border border-emerald-100 bg-emerald-50/30 p-3.5 text-xs text-emerald-800 leading-normal font-sans font-medium">
                   <strong>Secure Consultation:</strong> We never charge you at inquiry! Final specs are personalized by our culinary team. Placing this inquiry guarantees your date slot booking.
                 </div>
               </div>
             )}
 
             {/* BUTTON CONTROLS */}
-            <div className="mt-8 flex justify-end gap-3 border-t border-gray-100 pt-5">
+            <div className="mt-8 flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-3 border-t border-gray-100 pt-5">
               {step > 1 && (
                 <button
                   type="button"
                   onClick={() => setStep(step - 1)}
-                  className="border border-gray-300 px-5 py-2.5 text-xs font-semibold tracking-widest text-gray-700 uppercase rounded hover:bg-gray-50 transition-all cursor-pointer"
+                  className="min-h-[44px] inline-flex items-center justify-center border border-gray-300 px-5 py-2.5 text-xs font-semibold tracking-widest text-gray-700 uppercase rounded-xl hover:bg-gray-50 transition-all cursor-pointer"
                 >
                   Back
                 </button>
@@ -1092,7 +1092,7 @@ export default function InquiryWizard({
                 <button
                   type="button"
                   onClick={() => setStep(step + 1)}
-                  className="bg-[#00346f] hover:bg-[#00346f]/95 text-white px-6 py-2.5 text-xs font-semibold tracking-widest uppercase rounded transition-all shadow-md ml-auto cursor-pointer"
+                  className="min-h-[44px] inline-flex items-center justify-center bg-[#00346f] hover:bg-[#00346f]/95 text-white px-6 py-2.5 text-xs font-semibold tracking-widest uppercase rounded-xl transition-all shadow-md sm:ml-auto cursor-pointer"
                 >
                   Continue
                 </button>
@@ -1100,7 +1100,7 @@ export default function InquiryWizard({
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="bg-[#775a19] hover:bg-[#5d4201] text-white px-8 py-2.5 text-xs font-semibold tracking-widest uppercase rounded transition-all shadow-md ml-auto disabled:opacity-50 cursor-pointer"
+                  className="min-h-[44px] inline-flex items-center justify-center bg-[#775a19] hover:bg-[#5d4201] text-white px-8 py-2.5 text-xs font-semibold tracking-widest uppercase rounded-xl transition-all shadow-md sm:ml-auto disabled:opacity-50 cursor-pointer"
                 >
                   {isSubmitting ? "Submitting Inquiry..." : "Submit inquiry"}
                 </button>

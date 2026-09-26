@@ -67,7 +67,7 @@ export default function CostEstimatorSidebar({
 
   if (cart.length === 0) {
     return (
-      <div className="fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur-md border-t border-gray-200 shadow-lg py-2.5 px-3 sm:px-6 font-sans">
+      <div className="fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur-md border-t border-gray-200 shadow-lg pt-2.5 pb-[max(0.625rem,env(safe-area-inset-bottom,0px))] px-3 sm:px-6 font-sans">
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-3 text-xs text-gray-500">
           <div className="flex items-center gap-2 min-w-0">
             <ShoppingBag className="w-4 h-4 text-gray-400 shrink-0" />
@@ -95,7 +95,7 @@ export default function CostEstimatorSidebar({
             <button
               type="button"
               onClick={handleEmptyCheckoutClick}
-              className="px-3.5 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-600 text-xs font-bold uppercase tracking-wider transition-all cursor-pointer border border-gray-200"
+              className="min-h-[44px] px-3.5 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-600 text-xs font-bold uppercase tracking-wider transition-all cursor-pointer border border-gray-200 inline-flex items-center justify-center"
             >
               Checkout (0)
             </button>
@@ -218,13 +218,13 @@ export default function CostEstimatorSidebar({
       {/* ── Main Sticky Bottom Bar ── */}
       
       {/* 1. Mobile Screen Layout (< md) */}
-      <div className="md:hidden px-3.5 py-2.5 space-y-2 bg-white">
+      <div className="md:hidden px-3.5 pt-2.5 pb-[max(0.75rem,env(safe-area-inset-bottom,0px))] space-y-2 bg-white">
         <div className="flex items-center justify-between gap-2">
           {/* Left: Cart toggle */}
           <button
             type="button"
             onClick={() => setIsExpanded(!isExpanded)}
-            className="flex items-center gap-2 text-left cursor-pointer"
+            className="flex items-center gap-2 text-left cursor-pointer min-h-[44px] py-1"
           >
             <div className="w-8 h-8 rounded-lg bg-[#00346f] text-[#ffdea5] flex items-center justify-center font-bold text-xs shrink-0 shadow-xs">
               {totalItemCount}
@@ -255,7 +255,7 @@ export default function CostEstimatorSidebar({
         <button
           type="button"
           onClick={onProceedToCheckout}
-          className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-[#00346f] active:bg-[#00224d] text-white text-xs font-bold uppercase tracking-wider shadow-md cursor-pointer transition-transform active:scale-[0.99]"
+          className="w-full flex items-center justify-center gap-2 min-h-[48px] py-3 px-4 rounded-xl bg-[#00346f] active:bg-[#00224d] text-white text-xs font-bold uppercase tracking-wider shadow-md cursor-pointer transition-transform active:scale-[0.99]"
         >
           <span>Proceed to Checkout</span>
           <span className="font-serif font-bold text-sm text-[#ffdea5]">(${totalAmount.toFixed(2)})</span>

@@ -340,13 +340,13 @@ export default function CakeConfigurator({
                   key={flavor}
                   type="button"
                   onClick={() => setSelectedFlavor(flavor)}
-                  className={`p-2.5 rounded-xl border text-center text-xs font-semibold transition-all cursor-pointer ${
+                  className={`min-h-[44px] p-2.5 rounded-xl border text-center text-xs font-semibold transition-all cursor-pointer flex items-center justify-center ${
                     isFlavorSelected
                       ? 'border-[#00346f] bg-[#00346f] text-white shadow-xs ring-1 ring-[#00346f]'
                       : 'border-gray-200 hover:border-gray-300 bg-white text-gray-700 hover:bg-gray-100'
                   }`}
                 >
-                  <div className="truncate">{flavor}</div>
+                  <span className="truncate">{flavor}</span>
                 </button>
               );
             })}
@@ -372,7 +372,7 @@ export default function CakeConfigurator({
               placeholder="e.g. Happy 10th Birthday Aarav!"
               value={inscription}
               onChange={(e) => setInscription(e.target.value)}
-              className="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:bg-white focus:border-[#00346f]"
+              className="w-full px-3 py-2.5 min-h-[44px] text-base sm:text-xs bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:bg-white focus:border-[#00346f] text-gray-900"
             />
           </div>
 
@@ -386,7 +386,7 @@ export default function CakeConfigurator({
               placeholder="Color theme, piping style, sprinkles, candle age number..."
               value={designNotes}
               onChange={(e) => setDesignNotes(e.target.value)}
-              className="w-full px-3 py-2 text-xs bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:bg-white focus:border-[#00346f]"
+              className="w-full px-3 py-2.5 min-h-[54px] text-base sm:text-xs bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:bg-white focus:border-[#00346f] text-gray-900"
             />
           </div>
 
@@ -444,7 +444,7 @@ export default function CakeConfigurator({
                 placeholder="Please describe your theme in detail (e.g. 2-tier Peppa Pig theme in pastel pink & gold, fondant clouds, custom edible topper with name, and star sprinkles...)"
                 value={customThemeDetails}
                 onChange={(e) => setCustomThemeDetails(e.target.value)}
-                className="w-full px-3.5 py-2.5 text-xs bg-white border border-purple-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 placeholder-purple-400 text-gray-800 shadow-2xs"
+                className="w-full px-3.5 py-2.5 text-base sm:text-xs bg-white border border-purple-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 placeholder-purple-400 text-gray-800 shadow-2xs"
               />
               <p className="text-[10px] text-purple-700">
                 Our head cake designer will review your theme specifications and confirm any additional decoration charges prior to fulfillment.
@@ -470,16 +470,16 @@ export default function CakeConfigurator({
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap sm:flex-nowrap items-center justify-center sm:justify-end gap-2.5 w-full sm:w-auto">
             {/* Quantity Stepper */}
             <div className="flex items-center bg-white border border-gray-300 rounded-xl p-1 shadow-2xs">
               <button
                 type="button"
                 onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-600 hover:bg-gray-100 cursor-pointer"
+                className="w-9 h-9 rounded-lg flex items-center justify-center text-gray-600 hover:bg-gray-100 cursor-pointer"
                 aria-label="Decrease quantity"
               >
-                <Minus className="w-3.5 h-3.5" />
+                <Minus className="w-4 h-4" />
               </button>
               <span className="w-8 text-center font-bold text-xs text-gray-900">
                 {quantity}
@@ -487,10 +487,10 @@ export default function CakeConfigurator({
               <button
                 type="button"
                 onClick={() => setQuantity(quantity + 1)}
-                className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-600 hover:bg-gray-100 cursor-pointer"
+                className="w-9 h-9 rounded-lg flex items-center justify-center text-gray-600 hover:bg-gray-100 cursor-pointer"
                 aria-label="Increase quantity"
               >
-                <Plus className="w-3.5 h-3.5" />
+                <Plus className="w-4 h-4" />
               </button>
             </div>
 
@@ -498,7 +498,7 @@ export default function CakeConfigurator({
             <button
               type="button"
               onClick={handleAddToCart}
-              className="bg-[#00346f] hover:bg-[#00224d] text-white px-4 sm:px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-sm cursor-pointer flex items-center gap-1.5"
+              className="min-h-[44px] bg-[#00346f] hover:bg-[#00224d] text-white px-4 sm:px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-sm cursor-pointer inline-flex items-center justify-center gap-1.5 flex-1 sm:flex-none"
             >
               <Sparkles className="w-4 h-4 text-[#ffdea5]" />
               <span>Add Cake</span>
@@ -514,10 +514,10 @@ export default function CakeConfigurator({
                     onProceedToCheckout();
                   }, 120);
                 }}
-                className="bg-emerald-700 hover:bg-emerald-800 text-white px-4 sm:px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-sm cursor-pointer flex items-center gap-1.5"
+                className="min-h-[44px] bg-emerald-700 hover:bg-emerald-800 text-white px-4 sm:px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-sm cursor-pointer inline-flex items-center justify-center gap-1.5 flex-1 sm:flex-none"
               >
                 <span>Add &amp; Checkout</span>
-                <ArrowRight className="w-3.5 h-3.5" />
+                <ArrowRight className="w-4 h-4" />
               </button>
             )}
           </div>
@@ -535,10 +535,10 @@ export default function CakeConfigurator({
               <button
                 type="button"
                 onClick={onProceedToCheckout}
-                className="inline-flex items-center justify-center gap-1.5 px-3.5 py-1.5 bg-[#00346f] text-white rounded-lg font-bold text-xs hover:bg-[#00224d] transition-colors cursor-pointer shrink-0 shadow-xs"
+                className="inline-flex items-center justify-center gap-1.5 px-4 py-2 min-h-[44px] bg-[#00346f] text-white rounded-xl font-bold text-xs hover:bg-[#00224d] transition-colors cursor-pointer shrink-0 shadow-xs"
               >
                 <span>Proceed to Checkout Now</span>
-                <ArrowRight className="w-3.5 h-3.5" />
+                <ArrowRight className="w-4 h-4" />
               </button>
             )}
           </div>
@@ -576,10 +576,11 @@ export default function CakeConfigurator({
                       <button
                         type="button"
                         onClick={() => onRemoveCake(cake.id)}
-                        className="p-1 rounded-lg text-rose-500 hover:text-rose-700 hover:bg-rose-50 cursor-pointer"
+                        className="w-9 h-9 min-w-[36px] min-h-[36px] rounded-lg text-rose-500 hover:text-rose-700 hover:bg-rose-50 flex items-center justify-center cursor-pointer"
                         title="Remove cake"
+                        aria-label={`Remove ${cake.name}`}
                       >
-                        <Trash2 className="w-3.5 h-3.5" />
+                        <Trash2 className="w-4 h-4" />
                       </button>
                     )}
                   </div>
@@ -592,7 +593,7 @@ export default function CakeConfigurator({
               <button
                 type="button"
                 onClick={onProceedToCheckout}
-                className="w-full py-3 px-4 rounded-xl bg-[#00346f] hover:bg-[#00224d] text-white text-xs sm:text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-2 shadow-sm cursor-pointer transition-all hover:scale-[1.01]"
+                className="w-full min-h-[48px] py-3 px-4 rounded-xl bg-[#00346f] hover:bg-[#00224d] text-white text-xs sm:text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-2 shadow-sm cursor-pointer transition-all hover:scale-[1.01]"
               >
                 <span>Proceed to Checkout with {cartCakes.length} Cake{cartCakes.length !== 1 ? 's' : ''} (${cartCakes.reduce((s, c) => s + c.totalPrice, 0).toFixed(2)})</span>
                 <ArrowRight className="w-4 h-4" />

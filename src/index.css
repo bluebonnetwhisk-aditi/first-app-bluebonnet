@@ -20,12 +20,47 @@
   --color-brand-pistachio-dark: #2e7d32;
 }
 
+html {
+  box-sizing: border-box;
+  -webkit-text-size-adjust: 100%;
+}
+
+*, *:before, *:after {
+  box-sizing: inherit;
+}
+
+html, body {
+  max-width: 100%;
+  overflow-x: clip;
+}
+
 body {
   font-family: var(--font-sans);
   background-color: var(--color-brand-cream-light);
   color: #1a1c20;
-  overflow-x: clip;
+  -webkit-tap-highlight-color: transparent;
 }
+
+/* Fluid Media Resets */
+img, video, canvas, svg, iframe {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Universal iOS Safari 16px Mobile Focus Zoom Prevention */
+@media screen and (max-width: 767px) {
+  input:not([type="checkbox"]):not([type="radio"]),
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}
+
+/* Safe-area Inset Utilities */
+.pb-safe {
+  padding-bottom: max(0.75rem, env(safe-area-inset-bottom, 0px));
+}
+
 
 /* Glassmorphism Styles */
 .glass-panel {

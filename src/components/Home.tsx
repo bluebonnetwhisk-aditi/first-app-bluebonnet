@@ -116,18 +116,18 @@ export default function Home({ onOpenWizard, onOpenBaker: _onOpenBaker, onNaviga
             <p className="text-gray-300 text-xs lg:text-sm lg:text-base max-w-xl mx-auto leading-relaxed">
               Made for celebrations that matter. Custom cakes, indulgent desserts, and catering inspired by Indian flavors crafted fresh for your special moments.
             </p>
-            <div className="flex flex-wrap justify-center gap-3 pt-4">
+            <div className="flex flex-col sm:flex-row flex-wrap justify-center gap-3 pt-4 max-w-md sm:max-w-none mx-auto">
               <button 
                 onClick={() => onNavigate("Catering")}
-                className="px-8 py-4 bg-[#775a19] hover:bg-[#5d4201] text-white text-xs font-bold tracking-widest uppercase rounded shadow-lg transition-all cursor-pointer flex items-center gap-2"
+                className="w-full sm:w-auto px-7 py-3.5 sm:px-8 sm:py-4 bg-[#775a19] hover:bg-[#5d4201] text-white text-xs font-bold tracking-widest uppercase rounded shadow-lg transition-all cursor-pointer inline-flex items-center justify-center gap-2 min-h-[44px]"
               >
-                REQUEST A CUSTOM QUOTE <ArrowRight className="h-3.5 w-3.5" />
+                <span>REQUEST A CUSTOM QUOTE</span> <ArrowRight className="h-3.5 w-3.5 shrink-0" />
               </button>
               <button 
                 onClick={() => onNavigate("Catering")}
-                className="px-8 py-4 border border-brand-gold-tint hover:bg-brand-gold-tint/10 text-brand-cream text-xs font-bold tracking-widest uppercase rounded transition-all cursor-pointer"
+                className="w-full sm:w-auto px-7 py-3.5 sm:px-8 sm:py-4 border border-brand-gold-tint hover:bg-brand-gold-tint/10 text-brand-cream text-xs font-bold tracking-widest uppercase rounded transition-all cursor-pointer inline-flex items-center justify-center min-h-[44px]"
               >
-                VIEW CATERING &amp; ESTIMATES
+                <span>VIEW CATERING &amp; ESTIMATES</span>
               </button>
             </div>
           </motion.div>
@@ -145,7 +145,7 @@ export default function Home({ onOpenWizard, onOpenBaker: _onOpenBaker, onNaviga
             <div className="h-0.5 w-12 bg-brand-gold-tint mx-auto mt-2" />
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {[
               {
                 title: "The Family Promise",
@@ -331,7 +331,7 @@ export default function Home({ onOpenWizard, onOpenBaker: _onOpenBaker, onNaviga
             <p className="text-xs text-gray-400 font-sans mt-2">Discover what makes our patrons rave and gets everyone&apos;s attention.</p>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             
             {/* Highlight 1: Rasmalai Royalty */}
             <div className="glass-panel-dark rounded-lg p-6 flex flex-col justify-between group hover:border-[#775a19]/55 transition-all">
@@ -344,8 +344,11 @@ export default function Home({ onOpenWizard, onOpenBaker: _onOpenBaker, onNaviga
               </div>
               <div className="mt-6 pt-4 border-t border-white/5 flex justify-between items-center text-xs text-brand-gold-tint font-bold font-sans">
                 <span>100% EGGLESS</span>
-                <button onClick={() => onOpenWizard("Rasmalai Royale", "Indian Fusion")} className="flex items-center gap-1 hover:gap-2 transition-all">
-                  INQUIRE NOW <ArrowRight className="h-3 w-3" />
+                <button 
+                  onClick={() => onOpenWizard("Rasmalai Royale", "Indian Fusion")} 
+                  className="min-h-[44px] inline-flex items-center gap-1 hover:gap-2 transition-all cursor-pointer"
+                >
+                  <span>INQUIRE NOW</span> <ArrowRight className="h-3 w-3" />
                 </button>
               </div>
             </div>
@@ -361,8 +364,11 @@ export default function Home({ onOpenWizard, onOpenBaker: _onOpenBaker, onNaviga
               </div>
               <div className="mt-6 pt-4 border-t border-white/5 flex justify-between items-center text-xs text-brand-gold-tint font-bold font-sans">
                 <span>LIVE COUNTER SETUP</span>
-                <button onClick={() => onOpenWizard("", "Live Counters")} className="flex items-center gap-1 hover:gap-2 transition-all">
-                  INQUIRE NOW <ArrowRight className="h-3 w-3" />
+                <button 
+                  onClick={() => onOpenWizard("", "Live Counters")} 
+                  className="min-h-[44px] inline-flex items-center gap-1 hover:gap-2 transition-all cursor-pointer"
+                >
+                  <span>INQUIRE NOW</span> <ArrowRight className="h-3 w-3" />
                 </button>
               </div>
             </div>
@@ -378,8 +384,11 @@ export default function Home({ onOpenWizard, onOpenBaker: _onOpenBaker, onNaviga
               </div>
               <div className="mt-6 pt-4 border-t border-white/5 flex justify-between items-center text-xs text-brand-gold-tint font-bold font-sans">
                 <span>SHIPPING AVAILABLE</span>
-                <button onClick={() => onOpenWizard()} className="flex items-center gap-1 hover:gap-2 transition-all">
-                  INQUIRE NOW <ArrowRight className="h-3 w-3" />
+                <button 
+                  onClick={() => onOpenWizard()} 
+                  className="min-h-[44px] inline-flex items-center gap-1 hover:gap-2 transition-all cursor-pointer"
+                >
+                  <span>INQUIRE NOW</span> <ArrowRight className="h-3 w-3" />
                 </button>
               </div>
             </div>
@@ -401,7 +410,7 @@ export default function Home({ onOpenWizard, onOpenBaker: _onOpenBaker, onNaviga
             <div className="h-0.5 w-12 bg-brand-gold-tint mx-auto mt-2" />
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[
               {
                 quote: "The Rasmalai Royale Cake was the star of our wedding! Incredibly light, not too sweet, and 100% eggless. Our guests were absolutely amazed.",
@@ -462,18 +471,18 @@ export default function Home({ onOpenWizard, onOpenBaker: _onOpenBaker, onNaviga
                 >
                   <button
                     onClick={() => setActiveFaq(isOpen ? null : idx)}
-                    className="w-full px-6 py-5 flex items-center justify-between text-left focus:outline-none cursor-pointer"
+                    className="w-full px-5 sm:px-6 py-4 sm:py-5 flex items-center justify-between text-left focus:outline-none cursor-pointer min-h-[48px]"
                   >
-                    <span className="font-serif text-sm lg:text-base font-semibold text-brand-cream pr-4">{faq.q}</span>
+                    <span className="font-serif text-sm lg:text-base font-semibold text-brand-cream pr-4 leading-snug">{faq.q}</span>
                     <ChevronDown className={`h-4 w-4 text-brand-gold-tint shrink-0 transition-transform duration-300 ${isOpen ? "transform rotate-180" : ""}`} />
                   </button>
 
                   <div 
                     className={`transition-all duration-300 ease-in-out overflow-hidden ${
-                      isOpen ? "max-h-[300px] border-t border-white/5" : "max-h-0"
+                      isOpen ? "max-h-[800px] border-t border-white/5" : "max-h-0"
                     }`}
                   >
-                    <p className="px-6 py-5 text-gray-300 text-xs lg:text-sm font-sans leading-relaxed">
+                    <p className="px-5 sm:px-6 py-4 sm:py-5 text-gray-300 text-xs lg:text-sm font-sans leading-relaxed">
                       {faq.a}
                     </p>
                   </div>
@@ -484,17 +493,17 @@ export default function Home({ onOpenWizard, onOpenBaker: _onOpenBaker, onNaviga
 
           <div className="text-center pt-6 space-y-4">
             <p className="text-xs text-gray-400 font-sans">Still have queries or customized requirements? Reach out directly to chef Aditi:</p>
-            <div className="flex flex-wrap items-center justify-center gap-3">
+            <div className="flex flex-col sm:flex-row flex-wrap items-center justify-center gap-3">
               <a
                 href="tel:+19455274566"
-                className="inline-flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-5 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider transition-all border border-white/20 cursor-pointer"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 text-white min-h-[44px] px-5 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider transition-all border border-white/20 cursor-pointer"
               >
                 <Phone className="w-4 h-4 text-emerald-400" />
                 <span>Call 945-527-4566</span>
               </a>
               <a
                 href="sms:+19455274566?body=Hi%20Bluebonnet%20Whisk!%20I'm%20inquiring%20about%20an%20event."
-                className="inline-flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-5 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider transition-all border border-white/20 cursor-pointer"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 text-white min-h-[44px] px-5 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider transition-all border border-white/20 cursor-pointer"
               >
                 <MessageSquare className="w-4 h-4 text-sky-400" />
                 <span>SMS 945-527-4566</span>
@@ -503,7 +512,7 @@ export default function Home({ onOpenWizard, onOpenBaker: _onOpenBaker, onNaviga
                 href="https://wa.me/19455274566?text=Hi%20Bluebonnet%20Whisk!%20I'd%20like%20to%20inquire%20about%20an%20order."
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 bg-[#25D366] hover:bg-[#1ebd5a] text-white px-5 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider transition-all shadow-md cursor-pointer"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-[#25D366] hover:bg-[#1ebd5a] text-white min-h-[44px] px-5 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider transition-all shadow-md cursor-pointer"
               >
                 <MessageCircle className="w-4 h-4 fill-white" />
                 <span>WhatsApp 945-527-4566</span>

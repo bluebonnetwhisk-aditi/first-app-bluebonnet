@@ -236,13 +236,13 @@ export default function MenuOrderGrid({
           
           {/* Search Input */}
           <div className="relative flex-1">
-            <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+            <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
             <input
               type="text"
               placeholder="Search dishes (e.g. Shahi Paneer, Dal Makhani, Poori, Lassi)..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs sm:text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:border-[#00346f] focus:bg-white transition-all"
+              className="w-full pl-10 pr-4 py-2.5 min-h-[44px] bg-gray-50 border border-gray-200 rounded-xl text-base sm:text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:border-[#00346f] focus:bg-white transition-all shadow-2xs"
             />
           </div>
 
@@ -265,7 +265,7 @@ export default function MenuOrderGrid({
                 <button
                   key={a}
                   onClick={() => toggleAllergen(a)}
-                  className={`px-2.5 py-1 rounded-md text-[11px] font-bold tracking-wider transition-all cursor-pointer border ${
+                  className={`min-h-[36px] inline-flex items-center justify-center px-3 py-1.5 rounded-lg text-xs font-bold tracking-wider transition-all cursor-pointer border ${
                     active
                       ? 'bg-rose-500 text-white border-rose-500 shadow-xs'
                       : 'bg-gray-100 hover:bg-gray-200 text-gray-700 border-gray-200'
@@ -279,7 +279,7 @@ export default function MenuOrderGrid({
 
             <button
               onClick={() => setSatvikOnly(!satvikOnly)}
-              className={`px-3 py-1 rounded-md text-[11px] font-bold tracking-wider transition-all cursor-pointer border ${
+              className={`min-h-[36px] inline-flex items-center justify-center px-3.5 py-1.5 rounded-lg text-xs font-bold tracking-wider transition-all cursor-pointer border ${
                 satvikOnly
                   ? 'bg-amber-600 text-white border-amber-600 shadow-xs'
                   : 'bg-amber-50 hover:bg-amber-100 text-amber-900 border-amber-200'
@@ -308,7 +308,7 @@ export default function MenuOrderGrid({
                   key={s.key}
                   type="button"
                   onClick={() => scrollToSection(s.key)}
-                  className={`px-2.5 py-1 rounded-lg text-xs font-semibold whitespace-nowrap transition-all border cursor-pointer flex items-center gap-1.5 ${
+                  className={`min-h-[36px] px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all border cursor-pointer flex items-center gap-1.5 ${
                     count > 0
                       ? 'bg-[#00346f] text-white border-[#00346f] shadow-2xs'
                       : 'bg-gray-50 hover:bg-gray-100 text-gray-700 border-gray-200'
@@ -329,7 +329,7 @@ export default function MenuOrderGrid({
           <button
             type="button"
             onClick={toggleAllSections}
-            className="inline-flex items-center gap-1 text-xs font-bold text-[#00346f] hover:text-[#00224d] bg-blue-50/70 hover:bg-blue-100/70 border border-blue-200 px-3 py-1.5 rounded-xl cursor-pointer transition-all ml-auto"
+            className="inline-flex items-center gap-1 text-xs font-bold text-[#00346f] hover:text-[#00224d] bg-blue-50/70 hover:bg-blue-100/70 border border-blue-200 px-3.5 py-2 min-h-[36px] rounded-xl cursor-pointer transition-all ml-auto"
           >
             <ChevronsUpDown className="w-3.5 h-3.5" />
             <span>{allOpen ? 'Collapse All' : 'Expand All Sections'}</span>
@@ -514,10 +514,11 @@ export default function MenuOrderGrid({
                                       <button
                                         type="button"
                                         onClick={() => onUpdateCartItem(item, 'pieces', 0, '', unitPrice)}
-                                        className="p-1 rounded text-white/70 hover:text-white mr-1 cursor-pointer"
+                                        className="w-8 h-8 rounded-lg flex items-center justify-center text-white/70 hover:text-white mr-0.5 cursor-pointer"
                                         title="Remove bread selection"
+                                        aria-label={`Remove ${item.name} selection`}
                                       >
-                                        <Trash2 className="w-3.5 h-3.5" />
+                                        <Trash2 className="w-4 h-4" />
                                       </button>
                                     )}
 
@@ -531,14 +532,14 @@ export default function MenuOrderGrid({
                                           onUpdateCartItem(item, 'pieces', next, `${next} pieces ($${unitPrice.toFixed(2)}/pc)`, unitPrice);
                                         }
                                       }}
-                                      className={`w-7 h-7 rounded-lg flex items-center justify-center transition-colors cursor-pointer ${
+                                      className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors cursor-pointer shrink-0 ${
                                         hasSelection 
                                           ? 'bg-white/20 hover:bg-white/30 text-white' 
                                           : 'bg-white border border-gray-300 hover:bg-gray-100 text-gray-700'
                                       }`}
                                       aria-label={`Decrease pieces of ${item.name}`}
                                     >
-                                      <Minus className="w-3.5 h-3.5" />
+                                      <Minus className="w-4 h-4" />
                                     </button>
 
                                     {/* Direct Piece Quantity Number Input */}
@@ -556,7 +557,7 @@ export default function MenuOrderGrid({
                                           onUpdateCartItem(item, 'pieces', val, `${val} pieces ($${unitPrice.toFixed(2)}/pc)`, unitPrice);
                                         }
                                       }}
-                                      className={`w-14 text-center font-black text-xs py-1 rounded-lg border focus:outline-none transition-colors ${
+                                      className={`w-16 min-h-[38px] text-center font-black text-base sm:text-xs py-1 rounded-lg border focus:outline-none transition-colors ${
                                         hasSelection
                                           ? 'bg-white text-[#00346f] border-white shadow-2xs'
                                           : 'bg-white text-gray-800 border-gray-300'
@@ -569,20 +570,20 @@ export default function MenuOrderGrid({
                                         const next = pieceQty === 0 ? minPieces : pieceQty + 5;
                                         onUpdateCartItem(item, 'pieces', next, `${next} pieces ($${unitPrice.toFixed(2)}/pc)`, unitPrice);
                                       }}
-                                      className={`w-7 h-7 rounded-lg flex items-center justify-center transition-colors cursor-pointer ${
+                                      className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors cursor-pointer shrink-0 ${
                                         hasSelection 
                                           ? 'bg-[#ffdea5] hover:bg-white text-[#00346f] font-black' 
                                           : 'bg-[#00346f] hover:bg-[#00224d] text-white font-bold'
                                       }`}
                                       aria-label={`Increase pieces of ${item.name}`}
                                     >
-                                      <Plus className="w-3.5 h-3.5" />
+                                      <Plus className="w-4 h-4" />
                                     </button>
                                   </div>
                                 </div>
 
                                 {/* Quick Preset Buttons */}
-                                <div className="mt-2 pt-2 border-t border-white/20 flex flex-wrap items-center gap-1.5">
+                                <div className="mt-2.5 pt-2 border-t border-white/20 flex flex-wrap items-center gap-1.5">
                                   <span className={`text-[10px] ${hasSelection ? 'text-white/70' : 'text-gray-400'}`}>
                                     Presets:
                                   </span>
@@ -591,7 +592,7 @@ export default function MenuOrderGrid({
                                       key={qty}
                                       type="button"
                                       onClick={() => onUpdateCartItem(item, 'pieces', qty, `${qty} pieces ($${unitPrice.toFixed(2)}/pc)`, unitPrice)}
-                                      className={`px-2 py-0.5 rounded text-[10px] font-bold cursor-pointer transition-colors ${
+                                      className={`min-h-[30px] px-2.5 py-1 rounded-md text-[11px] font-bold cursor-pointer transition-colors inline-flex items-center ${
                                         pieceQty === qty
                                           ? 'bg-[#ffdea5] text-[#00346f]'
                                           : hasSelection
@@ -690,10 +691,10 @@ export default function MenuOrderGrid({
                             {/* ── STEPPER CONTROLS ── */}
                             <div className="mt-4 pt-3 border-t border-gray-100">
                               {item.pricingType === 'tray' && item.trayPricing && (
-                                <div className="grid grid-cols-3 gap-2">
+                                <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
                                   
                                   {/* 1/3 Tray Stepper */}
-                                  <div className={`rounded-xl p-2.5 text-center flex flex-col justify-between transition-all duration-200 ${
+                                  <div className={`rounded-xl p-2 sm:p-2.5 text-center flex flex-col justify-between transition-all duration-200 ${
                                     thirdQty > 0
                                       ? 'bg-[#00346f] text-white border-2 border-[#00346f] shadow-md ring-2 ring-[#ffdea5]/50 scale-[1.02]'
                                       : 'bg-gray-50 border border-gray-200 hover:border-gray-300'
@@ -706,19 +707,20 @@ export default function MenuOrderGrid({
                                         ${item.trayPricing.third}
                                       </div>
                                     </div>
-                                    <div className="flex items-center justify-center gap-1.5 mt-2">
+                                    <div className="flex items-center justify-center gap-1 sm:gap-1.5 mt-2">
                                       <button
+                                        type="button"
                                         onClick={() => onUpdateCartItem(item, 'third', Math.max(0, thirdQty - 1), '1/3 Tray', item.trayPricing!.third)}
-                                        className={`w-6 h-6 rounded-md flex items-center justify-center cursor-pointer transition-colors ${
+                                        className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center cursor-pointer transition-colors shrink-0 ${
                                           thirdQty > 0 
                                             ? 'bg-white/20 hover:bg-white/30 text-white' 
                                             : 'bg-white border border-gray-300 hover:bg-gray-100 text-gray-700'
                                         }`}
                                         aria-label={`Decrease 1/3 Tray of ${item.name}`}
                                       >
-                                        <Minus className="w-3 h-3" />
+                                        <Minus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                                       </button>
-                                      <span className={`w-6 text-center font-black text-xs ${
+                                      <span className={`w-6 sm:w-7 text-center font-black text-xs ${
                                         thirdQty > 0 
                                           ? 'bg-white text-[#00346f] rounded px-1 py-0.5 shadow-xs' 
                                           : 'text-gray-900'
@@ -726,21 +728,22 @@ export default function MenuOrderGrid({
                                         {thirdQty}
                                       </span>
                                       <button
+                                        type="button"
                                         onClick={() => onUpdateCartItem(item, 'third', thirdQty + 1, '1/3 Tray', item.trayPricing!.third)}
-                                        className={`w-6 h-6 rounded-md flex items-center justify-center cursor-pointer shadow-xs transition-colors ${
+                                        className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center cursor-pointer shadow-xs transition-colors shrink-0 ${
                                           thirdQty > 0 
                                             ? 'bg-[#ffdea5] hover:bg-white text-[#00346f] font-black' 
                                             : 'bg-[#00346f] hover:bg-[#00224d] text-white'
                                         }`}
                                         aria-label={`Increase 1/3 Tray of ${item.name}`}
                                       >
-                                        <Plus className="w-3 h-3" />
+                                        <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                                       </button>
                                     </div>
                                   </div>
 
                                   {/* Half Tray Stepper */}
-                                  <div className={`rounded-xl p-2.5 text-center flex flex-col justify-between transition-all duration-200 ${
+                                  <div className={`rounded-xl p-2 sm:p-2.5 text-center flex flex-col justify-between transition-all duration-200 ${
                                     halfQty > 0
                                       ? 'bg-[#00346f] text-white border-2 border-[#00346f] shadow-md ring-2 ring-[#ffdea5]/50 scale-[1.02]'
                                       : 'bg-gray-50 border border-gray-200 hover:border-gray-300'
@@ -753,19 +756,20 @@ export default function MenuOrderGrid({
                                         ${item.trayPricing.half}
                                       </div>
                                     </div>
-                                    <div className="flex items-center justify-center gap-1.5 mt-2">
+                                    <div className="flex items-center justify-center gap-1 sm:gap-1.5 mt-2">
                                       <button
+                                        type="button"
                                         onClick={() => onUpdateCartItem(item, 'half', Math.max(0, halfQty - 1), 'Half Tray', item.trayPricing!.half)}
-                                        className={`w-6 h-6 rounded-md flex items-center justify-center cursor-pointer transition-colors ${
+                                        className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center cursor-pointer transition-colors shrink-0 ${
                                           halfQty > 0 
                                             ? 'bg-white/20 hover:bg-white/30 text-white' 
                                             : 'bg-white border border-gray-300 hover:bg-gray-100 text-gray-700'
                                         }`}
                                         aria-label={`Decrease Half Tray of ${item.name}`}
                                       >
-                                        <Minus className="w-3 h-3" />
+                                        <Minus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                                       </button>
-                                      <span className={`w-6 text-center font-black text-xs ${
+                                      <span className={`w-6 sm:w-7 text-center font-black text-xs ${
                                         halfQty > 0 
                                           ? 'bg-white text-[#00346f] rounded px-1 py-0.5 shadow-xs' 
                                           : 'text-gray-900'
@@ -773,21 +777,22 @@ export default function MenuOrderGrid({
                                         {halfQty}
                                       </span>
                                       <button
+                                        type="button"
                                         onClick={() => onUpdateCartItem(item, 'half', halfQty + 1, 'Half Tray', item.trayPricing!.half)}
-                                        className={`w-6 h-6 rounded-md flex items-center justify-center cursor-pointer shadow-xs transition-colors ${
+                                        className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center cursor-pointer shadow-xs transition-colors shrink-0 ${
                                           halfQty > 0 
                                             ? 'bg-[#ffdea5] hover:bg-white text-[#00346f] font-black' 
                                             : 'bg-[#00346f] hover:bg-[#00224d] text-white'
                                         }`}
                                         aria-label={`Increase Half Tray of ${item.name}`}
                                       >
-                                        <Plus className="w-3 h-3" />
+                                        <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                                       </button>
                                     </div>
                                   </div>
 
                                   {/* Full Tray Stepper */}
-                                  <div className={`rounded-xl p-2.5 text-center flex flex-col justify-between transition-all duration-200 ${
+                                  <div className={`rounded-xl p-2 sm:p-2.5 text-center flex flex-col justify-between transition-all duration-200 ${
                                     fullQty > 0
                                       ? 'bg-[#00346f] text-white border-2 border-[#00346f] shadow-md ring-2 ring-[#ffdea5]/50 scale-[1.02]'
                                       : 'bg-gray-50 border border-gray-200 hover:border-gray-300'
@@ -800,19 +805,20 @@ export default function MenuOrderGrid({
                                         ${item.trayPricing.full}
                                       </div>
                                     </div>
-                                    <div className="flex items-center justify-center gap-1.5 mt-2">
+                                    <div className="flex items-center justify-center gap-1 sm:gap-1.5 mt-2">
                                       <button
+                                        type="button"
                                         onClick={() => onUpdateCartItem(item, 'full', Math.max(0, fullQty - 1), 'Full Tray', item.trayPricing!.full)}
-                                        className={`w-6 h-6 rounded-md flex items-center justify-center cursor-pointer transition-colors ${
+                                        className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center cursor-pointer transition-colors shrink-0 ${
                                           fullQty > 0 
                                             ? 'bg-white/20 hover:bg-white/30 text-white' 
                                             : 'bg-white border border-gray-300 hover:bg-gray-100 text-gray-700'
                                         }`}
                                         aria-label={`Decrease Full Tray of ${item.name}`}
                                       >
-                                        <Minus className="w-3 h-3" />
+                                        <Minus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                                       </button>
-                                      <span className={`w-6 text-center font-black text-xs ${
+                                      <span className={`w-6 sm:w-7 text-center font-black text-xs ${
                                         fullQty > 0 
                                           ? 'bg-white text-[#00346f] rounded px-1 py-0.5 shadow-xs' 
                                           : 'text-gray-900'
@@ -820,15 +826,16 @@ export default function MenuOrderGrid({
                                         {fullQty}
                                       </span>
                                       <button
+                                        type="button"
                                         onClick={() => onUpdateCartItem(item, 'full', fullQty + 1, 'Full Tray', item.trayPricing!.full)}
-                                        className={`w-6 h-6 rounded-md flex items-center justify-center cursor-pointer shadow-xs transition-colors ${
+                                        className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center cursor-pointer shadow-xs transition-colors shrink-0 ${
                                           fullQty > 0 
                                             ? 'bg-[#ffdea5] hover:bg-white text-[#00346f] font-black' 
                                             : 'bg-[#00346f] hover:bg-[#00224d] text-white'
                                         }`}
                                         aria-label={`Increase Full Tray of ${item.name}`}
                                       >
-                                        <Plus className="w-3 h-3" />
+                                        <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                                       </button>
                                     </div>
                                   </div>
@@ -853,16 +860,18 @@ export default function MenuOrderGrid({
                                   </div>
                                   <div className="flex items-center gap-2">
                                     <button
+                                      type="button"
                                       onClick={() => onUpdateCartItem(item, 'gallon', Math.max(0, gallonQty - 1), 'Gallon (16–20 serv)', item.pricePerGallon!)}
-                                      className={`w-7 h-7 rounded-md flex items-center justify-center cursor-pointer transition-colors ${
+                                      className={`w-8 h-8 rounded-lg flex items-center justify-center cursor-pointer transition-colors shrink-0 ${
                                         gallonQty > 0 
                                           ? 'bg-white/20 hover:bg-white/30 text-white' 
                                           : 'bg-white border border-gray-300 hover:bg-gray-100 text-gray-700'
                                       }`}
+                                      aria-label={`Decrease Gallon of ${item.name}`}
                                     >
-                                      <Minus className="w-3.5 h-3.5" />
+                                      <Minus className="w-4 h-4" />
                                     </button>
-                                    <span className={`w-7 text-center font-black text-xs ${
+                                    <span className={`w-8 text-center font-black text-xs ${
                                       gallonQty > 0 
                                         ? 'bg-white text-[#00346f] rounded px-1.5 py-0.5 shadow-xs' 
                                         : 'text-gray-900'
@@ -870,14 +879,16 @@ export default function MenuOrderGrid({
                                       {gallonQty}
                                     </span>
                                     <button
+                                      type="button"
                                       onClick={() => onUpdateCartItem(item, 'gallon', gallonQty + 1, 'Gallon (16–20 serv)', item.pricePerGallon!)}
-                                      className={`w-7 h-7 rounded-md flex items-center justify-center cursor-pointer shadow-xs transition-colors ${
+                                      className={`w-8 h-8 rounded-lg flex items-center justify-center cursor-pointer shadow-xs transition-colors shrink-0 ${
                                         gallonQty > 0 
                                           ? 'bg-[#ffdea5] hover:bg-white text-[#00346f] font-black' 
                                           : 'bg-[#00346f] hover:bg-[#00224d] text-white'
                                       }`}
+                                      aria-label={`Increase Gallon of ${item.name}`}
                                     >
-                                      <Plus className="w-3.5 h-3.5" />
+                                      <Plus className="w-4 h-4" />
                                     </button>
                                   </div>
                                 </div>

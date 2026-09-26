@@ -536,31 +536,31 @@ export default function TiffinOrderView({
               <span className="text-[11px] text-gray-500 block">Just ~$11.00 / day</span>
             </div>
 
-            <div className="flex items-center gap-3 w-full">
+            <div className="flex flex-wrap sm:flex-nowrap items-center gap-3 w-full sm:w-auto">
               <div className="flex items-center bg-gray-100 rounded-xl p-1 border border-gray-200">
                 <button
                   type="button"
                   onClick={() => setWeeklyQty(Math.max(1, weeklyQty - 1))}
-                  className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-white text-gray-700 cursor-pointer"
+                  className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-white text-gray-700 cursor-pointer"
                   aria-label="Decrease quantity"
                 >
-                  <Minus className="w-3.5 h-3.5" />
+                  <Minus className="w-4 h-4" />
                 </button>
-                <span className="w-7 text-center font-bold text-xs">{weeklyQty}</span>
+                <span className="w-8 text-center font-bold text-xs">{weeklyQty}</span>
                 <button
                   type="button"
                   onClick={() => setWeeklyQty(weeklyQty + 1)}
-                  className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-white text-gray-700 cursor-pointer"
+                  className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-white text-gray-700 cursor-pointer"
                   aria-label="Increase quantity"
                 >
-                  <Plus className="w-3.5 h-3.5" />
+                  <Plus className="w-4 h-4" />
                 </button>
               </div>
 
               <button
                 type="button"
                 onClick={handleAddWeeklyDabba}
-                className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 bg-[#00346f] hover:bg-[#00224d] text-white px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-sm cursor-pointer"
+                className="flex-1 sm:flex-initial min-h-[44px] inline-flex items-center justify-center gap-2 bg-[#00346f] hover:bg-[#00224d] text-white px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-sm cursor-pointer"
               >
                 <ShoppingBag className="w-4 h-4 text-[#ffdea5]" />
                 <span>Add Weekly Plan ({activeWeeklyPlan?.shortRange})</span>
@@ -781,19 +781,19 @@ export default function TiffinOrderView({
                                 <button
                                   type="button"
                                   onClick={() => updateSpecialQty(dish.id, -1)}
-                                  className="w-6 h-6 rounded flex items-center justify-center hover:bg-white text-gray-700 cursor-pointer"
+                                  className="w-8 h-8 rounded-md flex items-center justify-center hover:bg-white text-gray-700 cursor-pointer"
                                   aria-label="Decrease quantity"
                                 >
-                                  <Minus className="w-3 h-3" />
+                                  <Minus className="w-4 h-4" />
                                 </button>
-                                <span className="w-6 text-center font-bold text-xs">{dishQty}</span>
+                                <span className="w-7 text-center font-bold text-xs">{dishQty}</span>
                                 <button
                                   type="button"
                                   onClick={() => updateSpecialQty(dish.id, 1)}
-                                  className="w-6 h-6 rounded flex items-center justify-center hover:bg-white text-gray-700 cursor-pointer"
+                                  className="w-8 h-8 rounded-md flex items-center justify-center hover:bg-white text-gray-700 cursor-pointer"
                                   aria-label="Increase quantity"
                                 >
-                                  <Plus className="w-3 h-3" />
+                                  <Plus className="w-4 h-4" />
                                 </button>
                               </div>
                             </div>
@@ -801,9 +801,9 @@ export default function TiffinOrderView({
                             <button
                               type="button"
                               onClick={() => handleAddSpecialDish(dish, activeDay)}
-                              className="w-full inline-flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-purple-700 hover:bg-purple-800 text-white font-bold text-xs uppercase tracking-wider transition-colors shadow-2xs cursor-pointer"
+                              className="w-full min-h-[44px] inline-flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl bg-purple-700 hover:bg-purple-800 text-white font-bold text-xs uppercase tracking-wider transition-colors shadow-2xs cursor-pointer"
                             >
-                              <Plus className="w-3.5 h-3.5 text-[#ffdea5]" />
+                              <Plus className="w-4 h-4 text-[#ffdea5]" />
                               <span>Add Special • ${(dishPrice * dishQty).toFixed(2)}</span>
                             </button>
                           </div>
@@ -881,7 +881,7 @@ export default function TiffinOrderView({
                       <button
                         type="button"
                         onClick={() => handleAddDailyDabba('single', activeDay)}
-                        className="w-full inline-flex items-center justify-center gap-2 bg-[#00346f] hover:bg-[#00224d] text-white py-2.5 px-4 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-xs cursor-pointer"
+                        className="w-full min-h-[44px] inline-flex items-center justify-center gap-2 bg-[#00346f] hover:bg-[#00224d] text-white py-2.5 px-4 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-xs cursor-pointer"
                       >
                         <Plus className="w-4 h-4 text-[#ffdea5]" />
                         <span>Add Single Dabba ($11.99)</span>
@@ -904,7 +904,7 @@ export default function TiffinOrderView({
                       <button
                         type="button"
                         onClick={() => handleAddDailyDabba('family', activeDay)}
-                        className="w-full inline-flex items-center justify-center gap-2 bg-[#775a19] hover:bg-[#5e4612] text-white py-2.5 px-4 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-xs cursor-pointer"
+                        className="w-full min-h-[44px] inline-flex items-center justify-center gap-2 bg-[#775a19] hover:bg-[#5e4612] text-white py-2.5 px-4 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-xs cursor-pointer"
                       >
                         <Plus className="w-4 h-4 text-[#ffdea5]" />
                         <span>Add Family Dabba ($34.99)</span>
@@ -960,9 +960,9 @@ export default function TiffinOrderView({
               <button
                 type="button"
                 onClick={() => handleAddContainer(c)}
-                className="w-full inline-flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl border border-[#00346f] text-[#00346f] hover:bg-[#00346f] hover:text-white transition-colors text-xs font-bold uppercase tracking-wider cursor-pointer"
+                className="w-full min-h-[44px] inline-flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl border border-[#00346f] text-[#00346f] hover:bg-[#00346f] hover:text-white transition-colors text-xs font-bold uppercase tracking-wider cursor-pointer"
               >
-                <Plus className="w-3.5 h-3.5" />
+                <Plus className="w-4 h-4" />
                 <span>Add 16 oz Tub</span>
               </button>
             </div>
@@ -1000,10 +1000,11 @@ export default function TiffinOrderView({
                     <button
                       type="button"
                       onClick={() => onRemoveCartItem(item.id)}
-                      className="p-1 rounded-lg text-rose-500 hover:text-rose-700 hover:bg-rose-50 cursor-pointer"
+                      className="w-8 h-8 min-w-[32px] min-h-[32px] rounded-lg text-rose-500 hover:text-rose-700 hover:bg-rose-50 flex items-center justify-center cursor-pointer"
                       title="Remove from cart"
+                      aria-label={`Remove ${item.name}`}
                     >
-                      <X className="w-3.5 h-3.5" />
+                      <X className="w-4 h-4" />
                     </button>
                   )}
                 </div>
@@ -1016,7 +1017,7 @@ export default function TiffinOrderView({
             <button
               type="button"
               onClick={onProceedToCheckout}
-              className="w-full mt-3 py-3 px-4 rounded-xl bg-[#00346f] hover:bg-[#00224d] text-white text-xs sm:text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-2 shadow-sm cursor-pointer transition-all hover:scale-[1.01]"
+              className="w-full min-h-[48px] mt-3 py-3 px-4 rounded-xl bg-[#00346f] hover:bg-[#00224d] text-white text-xs sm:text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-2 shadow-sm cursor-pointer transition-all hover:scale-[1.01]"
             >
               <span>Proceed to Checkout with {tiffinCartItems.length} Tiffin Meal{tiffinCartItems.length !== 1 ? 's' : ''} (${tiffinCartItems.reduce((s, i) => s + i.totalPrice, 0).toFixed(2)})</span>
               <ArrowRight className="w-4 h-4" />
@@ -1077,7 +1078,7 @@ export default function TiffinOrderView({
               <button 
                 type="button"
                 onClick={() => setIsLightboxOpen(false)}
-                className="p-1 rounded-full text-white/80 hover:text-white hover:bg-white/20 transition cursor-pointer"
+                className="w-10 h-10 rounded-xl text-white/80 hover:text-white hover:bg-white/20 transition flex items-center justify-center cursor-pointer"
                 title="Close flyer"
                 aria-label="Close flyer"
               >
