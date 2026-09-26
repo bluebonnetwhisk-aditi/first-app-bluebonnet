@@ -12,7 +12,8 @@ import {
   Phone,
   MessageSquare,
   MessageCircle,
-  CheckCircle2
+  CheckCircle2,
+  Leaf
 } from 'lucide-react';
 
 interface PortionEstimatorProps {
@@ -27,8 +28,7 @@ export default function PortionEstimator({
   // Headcount controls (10 to 100 guests, default 20)
   const [guests, setGuests] = useState<number>(20);
   
-  // Menu configuration toggles
-  const [menuType, setMenuType] = useState<'veg' | 'mixed'>('veg');
+  // Party Format toggle: Standard Buffet vs Cocktail / Heavy Starter
   const [partyFormat, setPartyFormat] = useState<'standard' | 'cocktail'>('standard');
 
   // Clamp and synchronize headcount input
@@ -74,9 +74,8 @@ export default function PortionEstimator({
 
   // Starter items computation
   const isCocktail = partyFormat === 'cocktail';
-  const isMixed = menuType === 'mixed';
 
-  // Modular items generator
+  // Modular items generator (Strictly 100% Pure Vegetarian)
   const getStarterAllocations = () => {
     if (tierNumber === 1) {
       return [
@@ -87,8 +86,8 @@ export default function PortionEstimator({
           servingsGuide: isCocktail ? "~40–45 pieces (4 bites/guest)" : "~20–25 pieces (2–3 bites/guest)"
         },
         {
-          name: isMixed ? "Tandoori / Meat: Chicken 65 or Sheekh Kebab" : "Tandoori Skewer: Paneer Tikka / Hariyali Paneer",
-          category: isMixed ? "Non-Veg Specialty" : "Tandoori Vegetarian",
+          name: "Tandoori Skewer: Flame-Grilled Paneer Tikka / Hariyali Paneer",
+          category: "Tandoori Vegetarian",
           allocation: isCocktail ? "1/2 Tray (Half Pan)" : "1/3 Tray (Third Pan)",
           servingsGuide: isCocktail ? "~35–40 bites (4 bites/guest)" : "~20–25 bites (2–3 bites/guest)"
         }
@@ -97,8 +96,8 @@ export default function PortionEstimator({
       const primaryPan = guests > 24 || isCocktail ? "1/2 Tray (Half Pan)" : "1/3 Tray (Third Pan)";
       return [
         {
-          name: "Hot Appetizer: Cocktail Samosas / Manchurian",
-          category: "Vegetarian Warm",
+          name: "Hot Appetizer: Cocktail Samosas / Veg Spring Rolls",
+          category: "Vegetarian Crispy",
           allocation: primaryPan,
           servingsGuide: "~60–80 pieces"
         },
@@ -108,17 +107,17 @@ export default function PortionEstimator({
           allocation: isCocktail ? "1/2 Tray (Half Pan)" : "1/3 Tray (Third Pan)",
           servingsGuide: "~35–50 pieces"
         },
-        ...(isMixed ? [{
-          name: "Non-Veg Starter: Chicken 65 / Malai Tikka",
-          category: "Poultry Special",
-          allocation: primaryPan,
-          servingsGuide: "~60–75 pieces"
-        }] : [])
+        {
+          name: "Indo-Chinese: Crispy Gobi Manchurian",
+          category: "Wok Vegetarian",
+          allocation: isCocktail ? "1/2 Tray (Half Pan)" : "1/3 Tray (Third Pan)",
+          servingsGuide: "~40–55 pieces"
+        }
       ];
     } else if (tierNumber === 3) {
       return [
         {
-          name: "Street Chaat / Crispy: Samosa Chaat or Cocktail Samosas",
+          name: "Street Chaat: Samosa Chaat or Cocktail Samosas",
           category: "Chaat & Crispy",
           allocation: "1/2 Tray (Half Pan)",
           servingsGuide: "~80–100 pieces"
@@ -131,16 +130,16 @@ export default function PortionEstimator({
         },
         {
           name: "Indo-Chinese: Gobi Manchurian / Chilli Paneer",
-          category: "Wok Special",
+          category: "Wok Vegetarian",
           allocation: "1/2 Tray (Half Pan)",
           servingsGuide: "~70–85 pieces"
         },
-        ...(isMixed ? [{
-          name: "Non-Veg Anchor: Chicken 65 / Lamb Sheekh Kebabs",
-          category: "Non-Veg Tandoori",
+        {
+          name: "Crispy Bites: Hara Bhara Kebab / Corn Cheese Tikki",
+          category: "Vegetarian Finger Food",
           allocation: isCocktail ? "Full Tray (Full Pan)" : "1/2 Tray (Half Pan)",
           servingsGuide: isCocktail ? "~160–180 pieces" : "~80–100 pieces"
-        }] : [])
+        }
       ];
     } else {
       // Tier 4 (76-100 guests)
@@ -163,12 +162,12 @@ export default function PortionEstimator({
           allocation: "1/2 Tray (Half Pan)",
           servingsGuide: "~80–100 pieces"
         },
-        ...(isMixed ? [{
-          name: "Non-Veg Showcase: Chicken 65 / Tandoori Chicken Tikka",
-          category: "Non-Veg Anchor",
+        {
+          name: "Gourmet Bites: Hara Bhara Kebab / Dahi Kebab",
+          category: "Vegetarian Specialty",
           allocation: "Full Tray (Full Pan)",
           servingsGuide: "~160–190 pieces"
-        }] : [])
+        }
       ];
     }
   };
@@ -193,13 +192,7 @@ export default function PortionEstimator({
           category: "Lentils",
           allocation: "1/3 Tray (Third Pan)",
           servingsGuide: "10–12 bowl ladles"
-        },
-        ...(isMixed ? [{
-          name: "Non-Veg Curry: Chicken Tikka Masala / Lamb Curry",
-          category: "Meat Gravy Main",
-          allocation: "1/3 Tray (Third Pan)",
-          servingsGuide: "10–12 protein servings"
-        }] : [])
+        }
       ];
     } else if (tierNumber === 2) {
       return [
@@ -220,13 +213,7 @@ export default function PortionEstimator({
           category: "Comfort Lentils",
           allocation: "1/2 Tray (Half Pan)",
           servingsGuide: "25–30 servings"
-        },
-        ...(isMixed ? [{
-          name: "Non-Veg Main: Chicken Tikka Masala / Mughlai Chicken",
-          category: "Meat Gravy Main",
-          allocation: "1/2 Tray (Half Pan)",
-          servingsGuide: "25–30 entree servings"
-        }] : [])
+        }
       ];
     } else if (tierNumber === 3) {
       const isUpperTier3 = guests >= 55;
@@ -249,12 +236,12 @@ export default function PortionEstimator({
           allocation: "1/2 Tray (Half Pan)",
           servingsGuide: "28–35 servings"
         },
-        ...(isMixed ? [{
-          name: "Non-Veg Anchor: Butter Chicken / Lamb Rogan Josh",
-          category: "Meat Main",
-          allocation: isUpperTier3 ? "Full Tray (Full Pan)" : "1/2 Tray (Half Pan)",
-          servingsGuide: isUpperTier3 ? "50–60 entree servings" : "25–30 entree servings"
-        }] : [])
+        {
+          name: "Specialty Vegetarian Main: Malai Kofta / Methi Matar Malai",
+          category: "Rich Kofta Gravy",
+          allocation: "1/2 Tray (Half Pan)",
+          servingsGuide: "25–30 servings"
+        }
       ];
     } else {
       // Tier 4 (76-100 guests)
@@ -277,12 +264,12 @@ export default function PortionEstimator({
           allocation: "Full Tray (or 2x Half Trays)",
           servingsGuide: "55–65 soup/curry servings"
         },
-        ...(isMixed ? [{
-          name: "Non-Veg Anchor: Chicken Tikka Masala / Goat Curry",
-          category: "Meat Showcase",
+        {
+          name: "Rich Gravy Main: Malai Kofta Curry / Paneer Tikka Masala",
+          category: "Kofta & Gravy Main",
           allocation: "Full Tray (Full Pan)",
           servingsGuide: "55–65 entree servings"
-        }] : [])
+        }
       ];
     }
   };
@@ -306,7 +293,7 @@ export default function PortionEstimator({
     } else if (tierNumber === 2) {
       return [
         {
-          name: "Signature Rice: Hyderabadi Dum Biryani (Veg or Chicken)",
+          name: "Signature Rice: Hyderabadi Veg Dum Biryani",
           category: "Basmati Carb",
           allocation: "1/2 Tray (Half Pan)",
           servingsGuide: "25–30 entree servings"
@@ -321,7 +308,7 @@ export default function PortionEstimator({
     } else if (tierNumber === 3) {
       return [
         {
-          name: "Celebration Biryani: Fragrant Layered Dum Biryani",
+          name: "Celebration Biryani: Fragrant Layered Veg Dum Biryani",
           category: "Specialty Rice",
           allocation: "Full Tray (Full Pan)",
           servingsGuide: "50–60 servings"
@@ -343,7 +330,7 @@ export default function PortionEstimator({
       // Tier 4 (76-100 guests)
       return [
         {
-          name: "Signature Dum Biryani: Hyderabadi Layered Biryani",
+          name: "Signature Dum Biryani: Hyderabadi Layered Veg Biryani",
           category: "Grand Rice",
           allocation: "Full Tray + 1/2 Tray (or 2x Full Trays)",
           servingsGuide: "80–90 servings"
@@ -396,13 +383,13 @@ export default function PortionEstimator({
         <div className="text-center max-w-2xl mx-auto space-y-2">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-brand-gold-tint/15 border border-brand-gold-tint/30 text-brand-gold-tint text-[11px] font-bold uppercase tracking-widest">
             <Utensils className="w-3.5 h-3.5" />
-            <span>Catering Science &amp; Food Volume Guide</span>
+            <span>Pure Vegetarian Catering Science &amp; Food Volume Guide</span>
           </div>
           <h2 className="font-serif text-3xl sm:text-4xl font-bold text-brand-cream">
             Portion Estimator
           </h2>
           <p className="text-xs sm:text-sm text-gray-300 font-light leading-relaxed">
-            Eliminate guesswork when planning Indian catering. Calculate exact steam table pans, tray sizes, appetizer bites, breads, and desserts for any guest size.
+            Eliminate guesswork when planning 100% vegetarian Indian catering. Calculate exact steam table pans, tray sizes, appetizer bites, breads, and desserts for any guest size.
           </p>
           <div className="h-0.5 w-16 bg-brand-gold-tint mx-auto mt-2" />
         </div>
@@ -482,47 +469,29 @@ export default function PortionEstimator({
               </div>
             </div>
 
-            {/* Component B: Menu Configuration Toggles (5 Cols) */}
+            {/* Component B: Vegetarian Kitchen & Party Format Controls (5 Cols) */}
             <div className="lg:col-span-5 bg-white/5 rounded-xl p-4 sm:p-5 border border-white/10 space-y-4">
               
-              {/* Menu Type Toggle */}
-              <div>
-                <span className="text-[10px] uppercase font-bold tracking-wider text-gray-400 block mb-1.5">
-                  1. Menu Dietary Profile
-                </span>
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setMenuType('veg')}
-                    className={`py-2 px-3 rounded-lg text-xs font-bold uppercase tracking-wider transition cursor-pointer flex items-center justify-center gap-1.5 ${
-                      menuType === 'veg'
-                        ? 'bg-emerald-600 text-white shadow-md'
-                        : 'bg-black/30 hover:bg-black/50 text-gray-300 border border-white/10'
-                    }`}
-                  >
-                    <CheckCircle2 className="w-3.5 h-3.5" />
-                    <span>Vegetarian Only</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setMenuType('mixed')}
-                    className={`py-2 px-3 rounded-lg text-xs font-bold uppercase tracking-wider transition cursor-pointer flex items-center justify-center gap-1.5 ${
-                      menuType === 'mixed'
-                        ? 'bg-amber-600 text-white shadow-md'
-                        : 'bg-black/30 hover:bg-black/50 text-gray-300 border border-white/10'
-                    }`}
-                  >
-                    <Flame className="w-3.5 h-3.5" />
-                    <span>Mixed (Veg + Meat)</span>
-                  </button>
+              {/* 100% Vegetarian Standard Badge */}
+              <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-400/30 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2.5 text-emerald-300">
+                  <div className="w-8 h-8 rounded-full bg-emerald-500/20 border border-emerald-400/40 flex items-center justify-center shrink-0">
+                    <Leaf className="w-4 h-4 text-emerald-300" />
+                  </div>
+                  <div>
+                    <span className="font-serif font-bold text-xs text-white block">100% Pure Vegetarian Kitchen</span>
+                    <span className="text-[10px] text-emerald-300/90 leading-tight block">Zero meat, zero poultry, zero eggs handled</span>
+                  </div>
                 </div>
+                <span className="bg-emerald-500/20 text-emerald-200 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded border border-emerald-400/30 shrink-0">
+                  Standard
+                </span>
               </div>
 
               {/* Party Format Toggle */}
               <div>
                 <span className="text-[10px] uppercase font-bold tracking-wider text-gray-400 block mb-1.5">
-                  2. Party Format
+                  Party Service Format
                 </span>
                 <div className="grid grid-cols-2 gap-2">
                   <button
@@ -570,8 +539,9 @@ export default function PortionEstimator({
                 <span className="text-xs text-brand-gold-tint font-bold">
                   • Headcount: {guests} Attendees
                 </span>
-                <span className="text-xs text-gray-300">
-                  • Profile: {menuType === 'veg' ? '100% Vegetarian' : 'Mixed (Veg & Non-Veg)'}
+                <span className="text-xs text-emerald-300 font-semibold flex items-center gap-1">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                  100% Pure Vegetarian Menu
                 </span>
               </div>
               <p className="text-xs text-gray-300 font-light">
@@ -599,7 +569,7 @@ export default function PortionEstimator({
           <div className="flex items-center justify-between">
             <h3 className="font-serif text-xl sm:text-2xl font-bold text-brand-cream flex items-center gap-2">
               <Layers className="w-5 h-5 text-brand-gold-tint" />
-              <span>Recommended Pan &amp; Tray Allocations</span>
+              <span>Recommended Pan &amp; Tray Allocations (100% Pure Vegetarian)</span>
             </h3>
             <span className="text-xs text-gray-400 italic hidden sm:inline">
               Steam Table Standards: 1/3 Tray (Small) • Half Tray (Medium) • Full Tray (Large)
@@ -614,7 +584,7 @@ export default function PortionEstimator({
                 <div className="flex items-center gap-2">
                   <Sparkles className="w-4 h-4 text-brand-gold-tint" />
                   <span className="font-serif font-bold text-sm sm:text-base text-brand-cream uppercase tracking-wide">
-                    1. Starters &amp; Appetizers ({starterItems.length} Selections)
+                    1. Vegetarian Starters &amp; Appetizers ({starterItems.length} Selections)
                   </span>
                 </div>
                 <span className="text-[11px] text-brand-gold-tint font-bold">
@@ -651,7 +621,7 @@ export default function PortionEstimator({
                 <div className="flex items-center gap-2">
                   <Flame className="w-4 h-4 text-amber-400" />
                   <span className="font-serif font-bold text-sm sm:text-base text-brand-cream uppercase tracking-wide">
-                    2. Main Course Curries &amp; Daal ({curryItems.length} Dishes)
+                    2. Vegetarian Main Course Curries &amp; Daal ({curryItems.length} Dishes)
                   </span>
                 </div>
                 <span className="text-[11px] text-amber-300 font-bold">
@@ -809,7 +779,7 @@ export default function PortionEstimator({
               READY TO ORDER OR HAVE QUESTIONS?
             </span>
             <h3 className="font-serif text-2xl sm:text-3xl font-bold text-white">
-              Turn Your Estimate into a Feast
+              Turn Your Estimate into a Pure Vegetarian Feast
             </h3>
             <p className="text-xs sm:text-sm text-gray-200 font-light">
               Select these exact trays on our Food Order Portal or reach out directly to head chef Aditi via Call, SMS, or WhatsApp.
@@ -841,7 +811,7 @@ export default function PortionEstimator({
 
             {/* SMS */}
             <a
-              href={`sms:+19455274566?body=Hi%20Bluebonnet%20Whisk!%20I'm%20inquiring%20about%20catering%20for%20${guests}%20guests.`}
+              href={`sms:+19455274566?body=Hi%20Bluebonnet%20Whisk!%20I'm%20inquiring%20about%20pure%20vegetarian%20catering%20for%20${guests}%20guests.`}
               className="inline-flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-5 py-3 rounded-xl font-bold text-xs uppercase tracking-wider transition-all border border-white/20 cursor-pointer"
             >
               <MessageSquare className="w-4 h-4 text-sky-400" />
@@ -850,7 +820,7 @@ export default function PortionEstimator({
 
             {/* WhatsApp */}
             <a
-              href={`https://wa.me/19455274566?text=Hi%20Bluebonnet%20Whisk!%20I'm%20inquiring%20about%20catering%20for%20${guests}%20guests%20(${menuType === 'veg' ? 'Vegetarian' : 'Mixed'},%20${partyFormat === 'cocktail' ? 'Cocktail%20Focus' : 'Standard%20Dinner'}).`}
+              href={`https://wa.me/19455274566?text=Hi%20Bluebonnet%20Whisk!%20I'm%20inquiring%20about%20pure%20vegetarian%20catering%20for%20${guests}%20guests%20(${partyFormat === 'cocktail' ? 'Cocktail%20Focus' : 'Standard%20Dinner%20Buffet'}).`}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 bg-[#25D366] hover:bg-[#1ebd5a] text-white px-5 py-3 rounded-xl font-bold text-xs uppercase tracking-wider transition-all shadow-md cursor-pointer"
