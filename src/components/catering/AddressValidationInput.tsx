@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { MapPin, CheckCircle2, AlertCircle, Sparkles, Building, Navigation } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { MapPin, CheckCircle2, AlertCircle, Sparkles, Building, Navigation, Search, Loader2, X } from 'lucide-react';
 
 interface AddressValidationInputProps {
   street: string;
@@ -46,6 +46,14 @@ const DFW_PRIMARY_CITIES = [
   'Lewisville', 'Dallas', 'Addison', 'Coppell'
 ];
 
+interface AddressSuggestion {
+  displayName: string;
+  street: string;
+  city: string;
+  state: string;
+  zip: string;
+}
+
 export default function AddressValidationInput({
   street,
   setStreet,
@@ -57,10 +65,93 @@ export default function AddressValidationInput({
   setZip,
   onAddressValidated
 }: AddressValidationInputProps) {
+  const [searchQuery, setSearchQuery] = useState('');
+  const [suggestions, setSuggestions] = useState<AddressSuggestion[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const aptInputRef = useRef<HTMLInputElement>(null);
+
   const [isValidating, setIsValidating] = useState(false);
   const [uspsVerified, setUspsVerified] = useState(false);
   const [standardizedSuggestion, setStandardizedSuggestion] = useState<string | null>(null);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handleOutsideClick = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setShowDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleOutsideClick);
+    return () => document.removeEventListener('mousedown', handleOutsideClick);
+  }, []);
+
+  // Fetch interactive address suggestions via OpenStreetMap Nominatim with DFW boundary focus
+  useEffect(() => {
+    const trimmed = searchQuery.trim();
+    if (trimmed.length < 3) {
+      setSuggestions([]);
+      setShowDropdown(false);
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      setIsSearching(true);
+      try {
+        const queryWithState = `${trimmed}, Texas, United States`;
+        const res = await fetch(
+          `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&countrycodes=us&limit=5&q=${encodeURIComponent(queryWithState)}`
+        );
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data)) {
+            const parsed: AddressSuggestion[] = data.map((item: any) => {
+              const addr = item.address || {};
+              const houseNumber = addr.house_number || '';
+              const road = addr.road || addr.pedestrian || addr.cycleway || '';
+              const streetStr = houseNumber ? `${houseNumber} ${road}` : road || item.display_name.split(',')[0];
+              const cityStr = addr.city || addr.town || addr.village || addr.suburb || addr.municipality || 'Frisco';
+              const zipStr = addr.postcode || '';
+
+              return {
+                displayName: item.display_name,
+                street: streetStr,
+                city: cityStr,
+                state: 'TX',
+                zip: zipStr
+              };
+            }).filter(s => s.street.length > 0);
+
+            setSuggestions(parsed);
+            setShowDropdown(parsed.length > 0);
+          }
+        }
+      } catch (err) {
+        console.warn('Address suggestion lookup failed:', err);
+      } finally {
+        setIsSearching(false);
+      }
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  // Handle selecting an interactive address suggestion
+  const handleSelectSuggestion = (sug: AddressSuggestion) => {
+    setStreet(sug.street);
+    setCity(sug.city);
+    if (sug.zip) setZip(sug.zip);
+    setSearchQuery(sug.street);
+    setShowDropdown(false);
+    setSuggestions([]);
+
+    // Focus Apt input if customer needs to specify unit
+    setTimeout(() => {
+      aptInputRef.current?.focus();
+    }, 100);
+  };
 
   // Real-time USPS Address validation and standardization logic
   useEffect(() => {
@@ -83,7 +174,7 @@ export default function AddressValidationInput({
       // 1. Street format validation
       const hasHouseNumber = /^\d+/.test(trimmedStreet);
       if (!hasHouseNumber) {
-        errors.push('Street address must begin with a house or building number');
+        errors.push('Street address should begin with a house or building number');
       }
 
       // 2. ZIP code validation (5-digit US ZIP)
@@ -161,12 +252,12 @@ export default function AddressValidationInput({
       <div className="flex items-center justify-between">
         <label className="block text-xs font-bold text-gray-800 flex items-center gap-1.5">
           <Navigation className="w-3.5 h-3.5 text-[#00346f]" />
-          <span>Interactive Delivery Address &amp; USPS Validation</span>
+          <span>Interactive Delivery Address Search</span>
         </label>
         
         {isValidating ? (
           <span className="text-[10px] text-gray-400 animate-pulse font-medium">
-            Validating with USPS standards...
+            Validating address...
           </span>
         ) : uspsVerified ? (
           <span className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-full text-[10px] font-bold">
@@ -181,79 +272,161 @@ export default function AddressValidationInput({
         ) : null}
       </div>
 
-      {/* Street Address */}
-      <div className="relative">
-        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
-          <MapPin className="w-4 h-4" />
+      {/* ── Interactive Suggestion Search Box ── */}
+      <div ref={dropdownRef} className="relative">
+        <div className="relative">
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+            {isSearching ? (
+              <Loader2 className="w-4 h-4 animate-spin text-[#00346f]" />
+            ) : (
+              <Search className="w-4 h-4 text-[#00346f]" />
+            )}
+          </div>
+          
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => {
+              setSearchQuery(e.target.value);
+              // Also sync with street if typing directly
+              if (!street || searchQuery === street) {
+                setStreet(e.target.value);
+              }
+            }}
+            onFocus={() => {
+              if (suggestions.length > 0) setShowDropdown(true);
+            }}
+            placeholder="Search address (e.g. 4821 Legacy Dr, Frisco)..."
+            className="w-full pl-9 pr-9 py-2.5 rounded-xl border border-gray-300 text-xs text-gray-900 bg-white placeholder-gray-400 focus:border-[#00346f] focus:ring-2 focus:ring-[#00346f]/15 shadow-2xs"
+          />
+
+          {searchQuery && (
+            <button
+              type="button"
+              onClick={() => {
+                setSearchQuery('');
+                setSuggestions([]);
+                setShowDropdown(false);
+              }}
+              className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 cursor-pointer"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          )}
         </div>
-        <input
-          type="text"
-          value={street}
-          onChange={e => setStreet(e.target.value)}
-          placeholder="Street address (e.g., 4821 Legacy Dr)"
-          className={`w-full pl-9 pr-3 py-2.5 rounded-xl border text-xs text-gray-900 bg-white placeholder-gray-400 transition-colors ${
-            uspsVerified 
-              ? 'border-emerald-300 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-200' 
-              : 'border-gray-300 focus:border-[#00346f] focus:ring-1 focus:ring-[#00346f]/20'
-          }`}
-        />
+
+        {/* Suggestion Dropdown */}
+        {showDropdown && suggestions.length > 0 && (
+          <div className="absolute left-0 right-0 top-full mt-1 bg-white border border-gray-200 rounded-xl shadow-xl z-50 overflow-hidden divide-y divide-gray-100 max-h-56 overflow-y-auto">
+            <div className="px-3 py-1.5 bg-gray-50 text-[10px] uppercase font-bold tracking-wider text-gray-500">
+              Matching Delivery Addresses (Click to Select)
+            </div>
+            {suggestions.map((sug, idx) => (
+              <button
+                key={idx}
+                type="button"
+                onClick={() => handleSelectSuggestion(sug)}
+                className="w-full text-left px-3.5 py-2.5 hover:bg-blue-50 transition-colors flex items-start gap-2.5 cursor-pointer group"
+              >
+                <MapPin className="w-4 h-4 text-gray-400 group-hover:text-[#00346f] shrink-0 mt-0.5" />
+                <div className="min-w-0 flex-1">
+                  <div className="text-xs font-bold text-gray-900 group-hover:text-[#00346f]">
+                    {sug.street}
+                  </div>
+                  <div className="text-[11px] text-gray-500 truncate">
+                    {sug.city}, TX {sug.zip}
+                  </div>
+                </div>
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
-      {/* Apt / Unit & City & Zip */}
-      <div className="grid grid-cols-1 sm:grid-cols-12 gap-2.5">
-        
-        {/* Apt / Suite */}
-        <div className="sm:col-span-3 relative">
-          <div className="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-gray-400">
-            <Building className="w-3.5 h-3.5" />
+      {/* ── Granular Verified Address Fields ── */}
+      <div className="pt-1 space-y-2">
+        <div className="text-[10px] uppercase font-bold tracking-wider text-gray-500">
+          Delivery Address Breakdown
+        </div>
+
+        {/* Street Address Input */}
+        <div className="relative">
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+            <MapPin className="w-4 h-4" />
           </div>
           <input
             type="text"
-            value={apt}
-            onChange={e => setApt(e.target.value)}
-            placeholder="Apt / Ste (opt)"
-            className="w-full pl-8 pr-2.5 py-2.5 rounded-xl border border-gray-300 text-xs text-gray-900 bg-white placeholder-gray-400 focus:border-[#00346f]"
-          />
-        </div>
-
-        {/* City with DFW quick selector */}
-        <div className="sm:col-span-4">
-          <input
-            type="text"
-            list="dfw-cities-list"
-            value={city}
-            onChange={e => setCity(e.target.value)}
-            placeholder="City (e.g., Frisco)"
-            className="w-full px-3 py-2.5 rounded-xl border border-gray-300 text-xs text-gray-900 bg-white placeholder-gray-400 focus:border-[#00346f]"
-          />
-          <datalist id="dfw-cities-list">
-            {DFW_PRIMARY_CITIES.map(c => (
-              <option key={c} value={c} />
-            ))}
-          </datalist>
-        </div>
-
-        {/* State (Fixed TX) */}
-        <div className="sm:col-span-2">
-          <div className="w-full px-3 py-2.5 rounded-xl border border-gray-200 bg-gray-100 text-xs font-bold text-gray-600 text-center select-none">
-            TX
-          </div>
-        </div>
-
-        {/* ZIP Code */}
-        <div className="sm:col-span-3">
-          <input
-            type="text"
-            maxLength={5}
-            value={zip}
-            onChange={e => setZip(e.target.value.replace(/\D/g, ''))}
-            placeholder="ZIP (75034)"
-            className={`w-full px-3 py-2.5 rounded-xl border text-xs text-gray-900 bg-white placeholder-gray-400 ${
-              /^\d{5}$/.test(zip.trim()) ? 'border-emerald-300' : 'border-gray-300 focus:border-[#00346f]'
+            value={street}
+            onChange={e => {
+              setStreet(e.target.value);
+              setSearchQuery(e.target.value);
+            }}
+            placeholder="Street Address (e.g., 4821 Legacy Dr)"
+            className={`w-full pl-9 pr-3 py-2 rounded-xl border text-xs text-gray-900 bg-white placeholder-gray-400 transition-colors ${
+              uspsVerified 
+                ? 'border-emerald-300 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-200' 
+                : 'border-gray-300 focus:border-[#00346f] focus:ring-1 focus:ring-[#00346f]/20'
             }`}
           />
         </div>
 
+        {/* Apt / Unit & City & Zip */}
+        <div className="grid grid-cols-1 sm:grid-cols-12 gap-2">
+          
+          {/* Apt / Suite */}
+          <div className="sm:col-span-4 relative">
+            <div className="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-gray-400">
+              <Building className="w-3.5 h-3.5" />
+            </div>
+            <input
+              ref={aptInputRef}
+              type="text"
+              value={apt}
+              onChange={e => setApt(e.target.value)}
+              placeholder="Apt / Ste / Unit (opt)"
+              className="w-full pl-8 pr-2.5 py-2 rounded-xl border border-gray-300 text-xs text-gray-900 bg-white placeholder-gray-400 focus:border-[#00346f]"
+            />
+          </div>
+
+          {/* City with DFW quick selector */}
+          <div className="sm:col-span-4">
+            <input
+              type="text"
+              list="dfw-cities-list"
+              value={city}
+              onChange={e => setCity(e.target.value)}
+              placeholder="City (e.g., Frisco)"
+              className="w-full px-3 py-2 rounded-xl border border-gray-300 text-xs text-gray-900 bg-white placeholder-gray-400 focus:border-[#00346f]"
+            />
+            <datalist id="dfw-cities-list">
+              {DFW_PRIMARY_CITIES.map(c => (
+                <option key={c} value={c} />
+              ))}
+            </datalist>
+          </div>
+
+          {/* State (Fixed TX) */}
+          <div className="sm:col-span-1">
+            <div className="w-full py-2 rounded-xl border border-gray-200 bg-gray-100 text-xs font-bold text-gray-600 text-center select-none">
+              TX
+            </div>
+          </div>
+
+          {/* ZIP Code */}
+          <div className="sm:col-span-3">
+            <input
+              type="text"
+              maxLength={5}
+              value={zip}
+              onChange={e => setZip(e.target.value.replace(/\D/g, ''))}
+              placeholder="ZIP (75034)"
+              className={`w-full px-3 py-2 rounded-xl border text-xs text-gray-900 bg-white placeholder-gray-400 ${
+                /^\d{5}$/.test(zip.trim()) ? 'border-emerald-300' : 'border-gray-300 focus:border-[#00346f]'
+              }`}
+            />
+          </div>
+
+        </div>
       </div>
 
       {/* USPS Standardized Suggestion Banner */}
@@ -288,7 +461,7 @@ export default function AddressValidationInput({
 
       {/* Local DFW Service Notice */}
       <div className="text-[10px] text-gray-400 pl-1">
-        📍 Bluebonnet Whisk delivers across Frisco, Plano, McKinney, Allen, Prosper, Dallas, and surrounding DFW Metroplex areas ($50 flat delivery).
+        📍 Bluebonnet Whisk delivers across Frisco, Plano, McKinney, Allen, Prosper, Little Elm, Dallas, and surrounding DFW areas ($50 flat delivery).
       </div>
     </div>
   );

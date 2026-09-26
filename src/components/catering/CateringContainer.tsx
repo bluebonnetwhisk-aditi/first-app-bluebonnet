@@ -228,7 +228,7 @@ export default function CateringContainer() {
   const tiffinCount = cart.filter(i => i.category === 'tiffin').reduce((s, i) => s + i.quantity, 0);
 
   return (
-    <div className="w-full bg-[#fbfbfa] min-h-screen font-sans selection:bg-[#775a19]/20">
+    <div className="w-full bg-[#fbfbfa] min-h-screen font-sans selection:bg-[#775a19]/20 overflow-x-hidden">
       
       {/* ── 1. SUB-NAVIGATION BAR (Catering Order, Cake Order, Tiffin Order, Kitchen KDS) ── */}
       <div className="sticky top-[84px] z-30 bg-white border-b border-gray-200 shadow-2xs">
@@ -327,7 +327,7 @@ export default function CateringContainer() {
       {subTab === 'kitchen' ? (
         <KitchenKDS onBackToOrder={() => switchSubTab('order')} />
       ) : (
-        <div className="space-y-8 pb-24">
+        <div className="space-y-8 pb-36 sm:pb-40">
           
           {/* SubTab-Specific Brand Headers */}
           {subTab === 'order' && (
@@ -344,59 +344,52 @@ export default function CateringContainer() {
             }} />
           )}
 
-          {/* Main 2-Column Layout: Sub-Tab Component + Sticky Cost Estimator Sidebar */}
+          {/* Main Full-Width Content Viewport */}
           <div id="catering-content-area" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            <div className="w-full">
               
-              {/* Left Column: Active Segment (8 Cols) */}
-              <div className="lg:col-span-8">
-                
-                {/* SubTab 1: Food Order */}
-                {subTab === 'order' && (
-                  <MenuOrderGrid
-                    cart={cart}
-                    onUpdateCartItem={handleUpdateCartItem}
-                    onRemoveCartItem={handleRemoveCartItem}
-                  />
-                )}
-
-                {/* SubTab 2: Cake Order */}
-                {subTab === 'cake' && (
-                  <div className="space-y-6">
-                    <CakeConfigurator
-                      onAddCake={handleAddCakeFromConfigurator}
-                      cartCakes={cart.filter(i => i.category === 'cakes')}
-                      onRemoveCake={handleRemoveCartItem}
-                    />
-                  </div>
-                )}
-
-                {/* SubTab 3: Tiffin Order */}
-                {subTab === 'tiffin' && (
-                  <TiffinOrderView
-                    cart={cart}
-                    onUpdateCartItem={handleUpdateCartItem}
-                    onRemoveCartItem={handleRemoveCartItem}
-                  />
-                )}
-
-              </div>
-
-              {/* Right Column: Floating Sticky Cost Estimator Sidebar (4 Cols) */}
-              <div className="lg:col-span-4 relative">
-                <CostEstimatorSidebar
+              {/* SubTab 1: Food Order */}
+              {subTab === 'order' && (
+                <MenuOrderGrid
                   cart={cart}
-                  isDelivery={isDelivery}
-                  setIsDelivery={setIsDelivery}
-                  onClearCart={handleClearCart}
-                  onProceedToCheckout={() => setIsCheckoutOpen(true)}
-                  onRemoveItem={handleRemoveCartItem}
-                  activeSubTab={subTab}
+                  onUpdateCartItem={handleUpdateCartItem}
+                  onRemoveCartItem={handleRemoveCartItem}
                 />
-              </div>
+              )}
+
+              {/* SubTab 2: Cake Order */}
+              {subTab === 'cake' && (
+                <div className="space-y-6">
+                  <CakeConfigurator
+                    onAddCake={handleAddCakeFromConfigurator}
+                    cartCakes={cart.filter(i => i.category === 'cakes')}
+                    onRemoveCake={handleRemoveCartItem}
+                  />
+                </div>
+              )}
+
+              {/* SubTab 3: Tiffin Order */}
+              {subTab === 'tiffin' && (
+                <TiffinOrderView
+                  cart={cart}
+                  onUpdateCartItem={handleUpdateCartItem}
+                  onRemoveCartItem={handleRemoveCartItem}
+                />
+              )}
 
             </div>
           </div>
+
+          {/* ── Unified Sticky Bottom Checkout Bar (Aligned at Screen Bottom) ── */}
+          <CostEstimatorSidebar
+            cart={cart}
+            isDelivery={isDelivery}
+            setIsDelivery={setIsDelivery}
+            onClearCart={handleClearCart}
+            onProceedToCheckout={() => setIsCheckoutOpen(true)}
+            onRemoveItem={handleRemoveCartItem}
+            activeSubTab={subTab}
+          />
 
         </div>
       )}
