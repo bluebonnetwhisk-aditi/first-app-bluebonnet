@@ -11,6 +11,7 @@ import { SERVICE_ADDONS } from "./menuData";
 import Home from "./components/Home";
 import CakesPage from "./components/CakesPage";
 import CateringContainer from "./components/catering/CateringContainer";
+import KitchenKDS from "./components/catering/KitchenKDS";
 import LiveCountersPage from "./components/LiveCountersPage";
 import GiftingPage from "./components/GiftingPage";
 import AboutPage from "./components/AboutPage";
@@ -18,8 +19,24 @@ import AboutPage from "./components/AboutPage";
 // Modals
 import InquiryWizard from "./components/InquiryWizard";
 
+const isKitchenPath = (path: string): boolean => {
+  const clean = path.toLowerCase().replace(/\/+$/, "");
+  return clean === "/catering/kitchen" || clean === "/kitchen";
+};
 
 export default function App() {
+  const [isKitchenMode, setIsKitchenMode] = useState<boolean>(() => {
+    if (typeof window !== "undefined") {
+      const path = window.location.pathname.toLowerCase().replace(/\/+$/, "");
+      if (path === "/kitchen") {
+        window.history.replaceState(null, "", "/catering/kitchen");
+        return true;
+      }
+      return isKitchenPath(path);
+    }
+    return false;
+  });
+
   const [activeTab, setActiveTab] = useState(() => {
     if (typeof window !== "undefined") {
       const path = window.location.pathname.toLowerCase();
@@ -71,6 +88,7 @@ export default function App() {
 
   // Scroll to top and sync URL when active tab changes
   useEffect(() => {
+    if (isKitchenMode) return;
     window.scrollTo({ top: 0, behavior: "smooth" });
     if (typeof window !== "undefined") {
       const currentPath = window.location.pathname.toLowerCase();
@@ -80,12 +98,17 @@ export default function App() {
         window.history.pushState(null, "", "/");
       }
     }
-  }, [activeTab]);
+  }, [activeTab, isKitchenMode]);
 
   // Handle browser back/forward buttons
   useEffect(() => {
     const handlePopState = () => {
-      const path = window.location.pathname.toLowerCase();
+      const path = window.location.pathname.toLowerCase().replace(/\/+$/, "");
+      if (isKitchenPath(path)) {
+        setIsKitchenMode(true);
+        return;
+      }
+      setIsKitchenMode(false);
       if (path.startsWith("/catering") || path.startsWith("/menu")) setActiveTab("Catering");
       else if (path.startsWith("/cakes")) setActiveTab("Cakes");
       else if (path.startsWith("/about")) setActiveTab("About");
@@ -94,6 +117,22 @@ export default function App() {
     window.addEventListener("popstate", handlePopState);
     return () => window.removeEventListener("popstate", handlePopState);
   }, []);
+
+  // Direct standalone Kitchen Display System (for phone web apps, PWA & kitchen tablets)
+  if (isKitchenMode) {
+    return (
+      <div className="min-h-screen bg-[#f7f8fa] font-sans antialiased text-gray-900">
+        <KitchenKDS
+          onBackToOrder={() => {
+            setIsKitchenMode(false);
+            setActiveTab("Catering");
+            window.history.pushState(null, "", "/catering/food");
+            window.scrollTo({ top: 0, behavior: "smooth" });
+          }}
+        />
+      </div>
+    );
+  }
 
   const navLinks = [
     { name: "Home", id: "Home" },

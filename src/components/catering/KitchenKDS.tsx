@@ -13,6 +13,7 @@ import {
   AlertTriangle, 
   X,
   ArrowRight,
+  ArrowLeft,
   Package,
   DollarSign,
   KeyRound,
@@ -144,6 +145,17 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
     }
     return 'unsupported';
   });
+
+  // Set dedicated page title for KDS web app
+  useEffect(() => {
+    if (typeof document !== 'undefined') {
+      const prevTitle = document.title;
+      document.title = "Desi Dabba Kitchen KDS | Bluebonnet Whisk";
+      return () => {
+        document.title = prevTitle;
+      };
+    }
+  }, []);
 
   // High-visibility top banner for newly punched orders
   const [newOrderAlert, setNewOrderAlert] = useState<CateringOrder | null>(null);
@@ -485,9 +497,10 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
                 <button
                   type="button"
                   onClick={onBackToOrder}
-                  className="text-xs text-gray-500 hover:text-gray-800 pt-2 underline cursor-pointer"
+                  className="text-xs text-gray-500 hover:text-[#00346f] pt-2 flex items-center justify-center gap-1.5 mx-auto transition-colors cursor-pointer"
                 >
-                  Return to Food Order Form
+                  <ArrowLeft className="w-3.5 h-3.5" />
+                  <span>Exit to Bluebonnet Whisk Website</span>
                 </button>
               )}
             </div>
@@ -631,6 +644,18 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
               <Lock className="w-3.5 h-3.5" />
               <span>Lock</span>
             </button>
+
+            {onBackToOrder && (
+              <button
+                type="button"
+                onClick={onBackToOrder}
+                className="inline-flex items-center gap-1.5 bg-[#00346f] hover:bg-[#00224d] text-white px-3.5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-xs cursor-pointer"
+                title="Return to Bluebonnet Whisk Website"
+              >
+                <ArrowLeft className="w-3.5 h-3.5" />
+                <span>Exit to Website</span>
+              </button>
+            )}
           </div>
         </div>
 

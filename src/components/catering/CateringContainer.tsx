@@ -77,11 +77,17 @@ export default function CateringContainer() {
 
   // Sync route changes with browser history
   const switchSubTab = (tab: SubTab) => {
+    if (tab === 'kitchen') {
+      if (typeof window !== 'undefined') {
+        window.history.pushState(null, '', '/catering/kitchen');
+        window.dispatchEvent(new PopStateEvent('popstate'));
+      }
+      return;
+    }
     setSubTab(tab);
     if (typeof window !== 'undefined') {
       let newPath = '/catering/food';
-      if (tab === 'kitchen') newPath = '/catering/kitchen';
-      else if (tab === 'cake') newPath = '/catering/cake';
+      if (tab === 'cake') newPath = '/catering/cake';
       else if (tab === 'tiffin') newPath = '/catering/tiffin';
 
       window.history.pushState(null, '', newPath);
