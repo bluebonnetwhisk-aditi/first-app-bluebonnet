@@ -469,62 +469,48 @@ export default function PortionEstimator({
               </div>
             </div>
 
-            {/* Component B: Vegetarian Kitchen & Party Format Controls (5 Cols) */}
-            <div className="lg:col-span-5 bg-white/5 rounded-xl p-4 sm:p-5 border border-white/10 space-y-4">
-              
-              {/* 100% Vegetarian Standard Badge */}
-              <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-400/30 flex items-center justify-between gap-3">
-                <div className="flex items-center gap-2.5 text-emerald-300">
-                  <div className="w-8 h-8 rounded-full bg-emerald-500/20 border border-emerald-400/40 flex items-center justify-center shrink-0">
-                    <Leaf className="w-4 h-4 text-emerald-300" />
-                  </div>
-                  <div>
-                    <span className="font-serif font-bold text-xs text-white block">100% Pure Vegetarian Kitchen</span>
-                    <span className="text-[10px] text-emerald-300/90 leading-tight block">Zero meat, zero poultry, zero eggs handled</span>
-                  </div>
-                </div>
-                <span className="bg-emerald-500/20 text-emerald-200 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded border border-emerald-400/30 shrink-0">
-                  Standard
-                </span>
-              </div>
-
-              {/* Party Format Toggle */}
-              <div>
-                <span className="text-[10px] uppercase font-bold tracking-wider text-gray-400 block mb-1.5">
+            {/* Component B: Party Service Format (5 Cols) */}
+            <div className="lg:col-span-5 bg-white/5 rounded-xl p-4 sm:p-5 border border-white/10 space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-xs uppercase font-bold tracking-wider text-gray-300 block">
                   Party Service Format
                 </span>
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setPartyFormat('standard')}
-                    className={`py-2 px-2.5 rounded-lg text-xs font-bold uppercase tracking-wider transition cursor-pointer text-center ${
-                      partyFormat === 'standard'
-                        ? 'bg-[#00346f] text-white border border-[#ffdea5]/40 shadow-md'
-                        : 'bg-black/30 hover:bg-black/50 text-gray-300 border border-white/10'
-                    }`}
-                  >
-                    <span>Dinner Buffet (Std)</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setPartyFormat('cocktail')}
-                    className={`py-2 px-2.5 rounded-lg text-xs font-bold uppercase tracking-wider transition cursor-pointer text-center ${
-                      partyFormat === 'cocktail'
-                        ? 'bg-[#775a19] text-white border border-[#ffdea5]/40 shadow-md'
-                        : 'bg-black/30 hover:bg-black/50 text-gray-300 border border-white/10'
-                    }`}
-                  >
-                    <span>Cocktail / Heavy Starters</span>
-                  </button>
-                </div>
-                <p className="text-[10px] text-gray-400 mt-1.5 italic">
-                  {partyFormat === 'cocktail' 
-                    ? "Starters increased to 5–6 pieces/guest; curries trimmed by ~20%." 
-                    : "Standard balance: 3–4 starter bites, hearty main curries, and rich carbs."}
-                </p>
+                <span className="inline-flex items-center gap-1 text-[11px] text-emerald-300 font-bold bg-emerald-500/20 px-2.5 py-0.5 rounded-full border border-emerald-400/30">
+                  <Leaf className="w-3 h-3 text-emerald-300" />
+                  100% Pure Vegetarian
+                </span>
               </div>
 
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setPartyFormat('standard')}
+                  className={`py-2 px-2.5 rounded-lg text-xs font-bold uppercase tracking-wider transition cursor-pointer text-center ${
+                    partyFormat === 'standard'
+                      ? 'bg-[#00346f] text-white border border-[#ffdea5]/40 shadow-md'
+                      : 'bg-black/30 hover:bg-black/50 text-gray-300 border border-white/10'
+                  }`}
+                >
+                  <span>Dinner Buffet (Std)</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setPartyFormat('cocktail')}
+                  className={`py-2 px-2.5 rounded-lg text-xs font-bold uppercase tracking-wider transition cursor-pointer text-center ${
+                    partyFormat === 'cocktail'
+                      ? 'bg-[#775a19] text-white border border-[#ffdea5]/40 shadow-md'
+                      : 'bg-black/30 hover:bg-black/50 text-gray-300 border border-white/10'
+                  }`}
+                >
+                  <span>Cocktail / Heavy Starters</span>
+                </button>
+              </div>
+              <p className="text-[11px] text-gray-300 leading-relaxed font-light">
+                {partyFormat === 'cocktail' 
+                  ? "Starters increased to 5–6 pieces/guest; curries trimmed by ~20%." 
+                  : "Standard balance: 3–4 starter bites, hearty main curries, and rich carbs."}
+              </p>
             </div>
 
           </div>
