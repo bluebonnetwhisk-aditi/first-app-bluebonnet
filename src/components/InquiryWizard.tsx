@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { X, Calendar, User, Mail, Phone, Sparkles, CheckCircle2, Printer, Info, Plus, MessageCircle } from "lucide-react";
+import { X, Calendar, User, Mail, Phone, Sparkles, CheckCircle2, Printer, Info, Plus, MessageCircle, MessageSquare } from "lucide-react";
 import { flavorCategories } from "../types";
 import type { SelectedItem } from "../types";
 import { submitToGoogleSheets } from "../services/googleSheets";
@@ -512,29 +512,57 @@ export default function InquiryWizard({
               </div>
             </div>
 
-            {/* WhatsApp Notification Direct CTA */}
-            <div className="mt-6 max-w-md mx-auto">
-              <a
-                href={buildInquiryWhatsAppUrl({
-                  name: formData.name,
-                  phone: formData.phone,
-                  email: formData.email,
-                  date: formData.date,
-                  occasion: formData.occasion,
-                  category: serviceType,
-                  flavor: isCakeService ? formData.flavor : undefined,
-                  size: isCakeService ? formData.size : undefined,
-                  dietary: formData.dietary,
-                  customWishes: formData.customWishes,
-                  estimatedTotal: `$${grandTotal.toFixed(2)}`
-                })}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-full flex items-center justify-center gap-2 bg-[#25D366] hover:bg-[#1ebd5a] text-white py-3 px-4 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-md cursor-pointer"
-              >
-                <MessageCircle className="h-4 w-4 fill-white" />
-                <span>Notify Chef on WhatsApp (945-527-4566)</span>
-              </a>
+            {/* Multi-channel Inquiry Options: WhatsApp, SMS, Call */}
+            <div className="mt-6 max-w-md mx-auto space-y-2.5">
+              <span className="text-[10px] uppercase font-bold tracking-widest text-gray-500 block text-center">
+                Instant Direct Communication Options:
+              </span>
+              
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                {/* WhatsApp */}
+                <a
+                  href={buildInquiryWhatsAppUrl({
+                    name: formData.name,
+                    phone: formData.phone,
+                    email: formData.email,
+                    date: formData.date,
+                    occasion: formData.occasion,
+                    category: serviceType,
+                    flavor: isCakeService ? formData.flavor : undefined,
+                    size: isCakeService ? formData.size : undefined,
+                    dietary: formData.dietary,
+                    customWishes: formData.customWishes,
+                    estimatedTotal: `$${grandTotal.toFixed(2)}`
+                  })}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center gap-1.5 bg-[#25D366] hover:bg-[#1ebd5a] text-white py-2.5 px-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-md cursor-pointer"
+                >
+                  <MessageCircle className="h-4 w-4 fill-white shrink-0" />
+                  <span>WhatsApp</span>
+                </a>
+
+                {/* SMS */}
+                <a
+                  href={`sms:+19455274566?body=Hi%20Chef!%20I%20just%20submitted%20an%20inquiry%20for%20${encodeURIComponent(formData.name)}%20(${encodeURIComponent(formData.occasion)}%20on%20${encodeURIComponent(formData.date)}).`}
+                  className="flex items-center justify-center gap-1.5 bg-[#00346f] hover:bg-[#00224d] text-white py-2.5 px-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-md cursor-pointer"
+                >
+                  <MessageSquare className="h-4 w-4 text-sky-300 shrink-0" />
+                  <span>SMS</span>
+                </a>
+
+                {/* Call */}
+                <a
+                  href="tel:+19455274566"
+                  className="flex items-center justify-center gap-1.5 bg-[#775a19] hover:bg-[#5d4201] text-white py-2.5 px-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-md cursor-pointer"
+                >
+                  <Phone className="h-4 w-4 text-emerald-300 shrink-0" />
+                  <span>Call</span>
+                </a>
+              </div>
+              <p className="text-[10px] text-gray-500 text-center font-mono">
+                Direct Kitchen Line: <strong>+1 (945) 527-4566</strong>
+              </p>
             </div>
 
             <div className="mt-4 flex justify-center gap-4">

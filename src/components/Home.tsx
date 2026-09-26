@@ -1,6 +1,17 @@
 import { useState, useRef } from "react";
 import { motion, useScroll, useTransform, useMotionValueEvent } from "motion/react";
-import { ArrowRight, ChevronDown, ChefHat, Clock, Heart, ShieldCheck } from "lucide-react";
+import { 
+  ArrowRight, 
+  ChevronDown, 
+  ChefHat, 
+  Clock, 
+  Heart, 
+  ShieldCheck,
+  Phone,
+  MessageSquare,
+  MessageCircle
+} from "lucide-react";
+import PortionEstimator from "./PortionEstimator";
 
 interface HomeProps {
   onOpenWizard: (flavor?: string, category?: string) => void;
@@ -8,7 +19,7 @@ interface HomeProps {
   onNavigate: (tab: string) => void;
 }
 
-export default function Home({ onOpenWizard, onOpenBaker, onNavigate }: HomeProps) {
+export default function Home({ onOpenWizard, onOpenBaker: _onOpenBaker, onNavigate }: HomeProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const walkthroughRef = useRef<HTMLDivElement>(null);
@@ -16,7 +27,6 @@ export default function Home({ onOpenWizard, onOpenBaker, onNavigate }: HomeProp
 
   const [activeFaq, setActiveFaq] = useState<number | null>(null);
   const [activeStage, setActiveStage] = useState<number>(0);
-  const [calculatorGuests, setCalculatorGuests] = useState<number>(30);
 
   // Framer Motion scroll hooks for Hero zoom & text fade transitions
   const { scrollYProgress } = useScroll({
@@ -46,93 +56,6 @@ export default function Home({ onOpenWizard, onOpenBaker, onNavigate }: HomeProp
     }
   });
 
-
-  const getCalculatedRecommendation = (count: number) => {
-    if (count <= 15) {
-      return {
-        trays: "1 Half Tray of Main Course & 1 Third Tray of Appetizers",
-        price: "$80 - $115",
-        desserts: "1 Third Tray of Rasmalai/Gulab Jamun (12 portions)",
-        serves: `Suitable for intimate gatherings of up to ${count} guests`
-      };
-    } else if (count <= 35) {
-      return {
-        trays: "2 Half Trays of Main Courses & 1 Half Tray of Appetizers",
-        price: "$160 - $220",
-        desserts: "1 Half Tray of Indian Fusion desserts (20 portions)",
-        serves: `Ideal for parties up to ${count} guests`
-      };
-    } else if (count <= 60) {
-      return {
-        trays: "1 Full Tray + 1 Half Tray of Main Courses & 1 Half Tray of Sides",
-        price: "$290 - $380",
-        desserts: "1 Full Tray of desserts (35 portions)",
-        serves: `Perfect for corporate or festive events up to ${count} guests`
-      };
-    } else {
-      return {
-        trays: "2 Full Trays of Main Courses, 1 Full Tray of Appetizers & 1 Full Tray of Sides",
-        price: "$520 - $690",
-        desserts: "2 Full Trays of customized fusion sweets (70 portions)",
-        serves: `Best for wedding celebrations & grand crowds up to ${count} guests`
-      };
-    }
-  };
-
-  const rec = getCalculatedRecommendation(calculatorGuests);
-
-
-
-  const pricingTiers = [
-    {
-      name: "Custom Cakes",
-      price: "$65",
-      period: "starting rate",
-      desc: "Artisanal custom celebration, theme, and wedding cakes.",
-      features: [
-        "6-inch Single starting at $65",
-        "8-inch Signature starting at $85",
-        "Multi-tier designs starting at $180",
-        "Eggless custom recipes included",
-        "Custom design consult with chef"
-      ],
-      cta: "Plan Custom Cake",
-      category: "Cakes",
-      highlighted: true
-    },
-    {
-      name: "Live Chaat & Counters",
-      price: "$7-$14",
-      period: "per guest",
-      desc: "Theatrical live stations showing cooking craftsmanship.",
-      features: [
-        "Pani Puri Live: $7-$9 / head",
-        "Chaat Live (2 types): $8-$10 / head",
-        "Wok Indo-Chinese: $7-$9 / head",
-        "Custom Gold/Brass Stalls",
-        "Staffed live servers & setup"
-      ],
-      cta: "Book Live Counter",
-      category: "Live Counters",
-      highlighted: false
-    },
-    {
-      name: "Catering Trays",
-      price: "$40-$65",
-      period: "per course",
-      desc: "Gourmet main course trays delivered fresh to your door.",
-      features: [
-        "1/3 Tray serves 8-12 guests",
-        "Half Tray serves 15-20 guests",
-        "Full Tray serves 30-40 guests",
-        "Matar Paneer & Claypot Dal",
-        "Tandoor griddle naan breads"
-      ],
-      cta: "Estimate Tray Portions",
-      category: "Catering",
-      highlighted: false
-    }
-  ];
 
   const faqs = [
     {
@@ -392,88 +315,10 @@ export default function Home({ onOpenWizard, onOpenBaker, onNavigate }: HomeProp
       </section>
 
       {/* ── PORTION ESTIMATOR WIDGET ── */}
-      <section className="py-24 bg-[#050a1a]">
-        <div className="max-w-5xl mx-auto px-4 space-y-12">
-          
-          <div className="text-center max-w-xl mx-auto space-y-2">
-            <span className="text-[10px] font-bold text-brand-gold-tint tracking-widest uppercase">SMART UTILITY</span>
-            <h2 className="font-serif text-3xl font-bold text-brand-cream">Portion &amp; Price Quick Estimator</h2>
-            <p className="text-xs text-gray-400 font-sans">Slide or click your guest size to estimate recommended dishes, desserts, and price ranges instantly.</p>
-            <div className="h-0.5 w-12 bg-brand-gold-tint mx-auto mt-2" />
-          </div>
-
-          <div className="glass-panel-dark rounded-lg p-6 lg:p-10 border border-white/5 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-            
-            {/* Left Side: Interactive Slider & Quick Toggles */}
-            <div className="lg:col-span-6 space-y-6">
-              <div>
-                <div className="flex justify-between items-baseline mb-2">
-                  <label className="text-xs uppercase font-bold text-gray-400 tracking-wider font-sans">Guest Count</label>
-                  <span className="text-3xl font-serif font-black text-brand-gold-tint">{calculatorGuests} <span className="text-xs font-sans text-gray-400 font-medium">Guests</span></span>
-                </div>
-                
-                <input
-                  type="range"
-                  min="5"
-                  max="120"
-                  value={calculatorGuests}
-                  onChange={(e) => setCalculatorGuests(parseInt(e.target.value))}
-                  className="w-full h-1.5 bg-[#0b1226] rounded-lg appearance-none cursor-pointer accent-[#775a19]"
-                />
-              </div>
-
-              <div className="flex flex-wrap gap-2 justify-start">
-                {[15, 35, 60, 100].map((num) => (
-                  <button
-                    key={num}
-                    type="button"
-                    onClick={() => setCalculatorGuests(num)}
-                    className={`px-3 py-2 text-[10px] font-bold uppercase rounded-sm tracking-wider transition-all cursor-pointer font-sans ${
-                      calculatorGuests === num
-                        ? "bg-brand-gold-tint text-[#785a1a]"
-                        : "glass-panel hover:bg-white/10 text-white"
-                    }`}
-                  >
-                    {num} Guests
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Right Side: Instant Recommendation Display */}
-            <div className="lg:col-span-6 bg-white/5 rounded-lg border border-white/5 p-6 space-y-4">
-              <div className="text-[10px] font-bold text-brand-gold-tint tracking-widest uppercase font-mono">
-                {rec.serves}
-              </div>
-              
-              <div className="space-y-3 font-sans text-xs">
-                <div>
-                  <span className="text-gray-400 uppercase tracking-wider text-[9px] block mb-0.5">Recommended Mains &amp; Platters</span>
-                  <p className="font-semibold text-brand-cream">{rec.trays}</p>
-                </div>
-                <div>
-                  <span className="text-gray-400 uppercase tracking-wider text-[9px] block mb-0.5">Recommended Sweet Portions</span>
-                  <p className="font-semibold text-brand-cream">{rec.desserts}</p>
-                </div>
-                <div className="pt-2 border-t border-white/5 flex justify-between items-baseline">
-                  <div>
-                    <span className="text-gray-400 uppercase tracking-wider text-[9px] block">Estimated Rate Balance</span>
-                    <p className="text-2xl font-serif font-bold text-brand-gold-tint">{rec.price}</p>
-                  </div>
-                  <button
-                    onClick={() => onNavigate("Catering")}
-                    className="bg-[#775a19] hover:bg-[#5d4201] text-white px-4 py-2 rounded text-[10px] uppercase tracking-wider font-bold transition-all"
-                  >
-                    Customize Catering
-                  </button>
-                </div>
-              </div>
-            </div>
-
-          </div>
-
-        </div>
-      </section>
+      <PortionEstimator 
+        onNavigateToFoodOrder={() => onNavigate("Catering")} 
+        onOpenInquiry={() => onOpenWizard("", "Catering")} 
+      />
 
 
       {/* ── HIGHLIGHTS SHOWCASE ── */}
@@ -543,75 +388,7 @@ export default function Home({ onOpenWizard, onOpenBaker, onNavigate }: HomeProp
         </div>
       </section>
 
-      {/* ── RESPONSIVE PRICING TIER ── */}
-      <section className="py-24 border-t border-white/5 bg-[#050a1a]">
-        <div className="max-w-7xl mx-auto px-4 space-y-16">
-          
-          <div className="text-center max-w-xl mx-auto space-y-2">
-            <span className="text-[10px] font-bold text-brand-gold-tint tracking-widest uppercase">TRANSPARENT VALUE</span>
-            <h2 className="font-serif text-3xl lg:text-4xl font-bold text-brand-cream">Catering &amp; Bakery Rates</h2>
-            <p className="text-xs text-gray-400 font-sans">Compare starting price guidelines to design the perfect event program.</p>
-            <div className="h-0.5 w-12 bg-brand-gold-tint mx-auto mt-2" />
-          </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-stretch">
-            {pricingTiers.map((tier, i) => (
-              <div 
-                key={i}
-                className={`rounded-lg p-8 flex flex-col justify-between border transition-all ${
-                  tier.highlighted 
-                    ? "bg-[#0b1b40]/80 border-brand-gold-tint shadow-2xl relative" 
-                    : "glass-panel-dark border-white/5"
-                }`}
-              >
-                {tier.highlighted && (
-                  <span className="absolute top-0 right-1/2 translate-x-1/2 -translate-y-1/2 bg-brand-gold-tint text-brand-gold-shadow font-sans font-extrabold text-[9px] tracking-widest uppercase px-3 py-1 rounded-full shadow">
-                    Most Popular
-                  </span>
-                )}
-                
-                <div>
-                  <h3 className="font-serif text-xl font-bold text-brand-cream mb-1">{tier.name}</h3>
-                  <p className="text-gray-400 text-xs font-sans min-h-[40px]">{tier.desc}</p>
-                  
-                  <div className="my-6">
-                    <span className="font-serif text-4xl font-black text-brand-cream">{tier.price}</span>
-                    <span className="text-gray-400 text-xs font-sans ml-2 font-medium">/ {tier.period}</span>
-                  </div>
-
-                  <ul className="space-y-3.5 border-t border-white/5 pt-6 font-sans text-xs">
-                    {tier.features.map((feat, idx) => (
-                      <li key={idx} className="flex items-center gap-2.5">
-                        <span className="flex h-4.5 w-4.5 items-center justify-center rounded-full bg-brand-gold-tint/15 text-brand-gold-tint text-[10px]">✓</span>
-                        <span className="text-gray-300 font-medium">{feat}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-
-                <div className="mt-8 pt-4">
-                  <button
-                    onClick={() => {
-                      if (tier.category === "Catering") {
-                        onNavigate("Catering");
-                      } else {
-                        onOpenWizard("", tier.category);
-                      }
-                    }}
-                    className={`w-full py-3.5 rounded text-xs font-bold tracking-widest uppercase shadow transition-all cursor-pointer ${
-                      tier.highlighted
-                        ? "bg-[#775a19] text-white hover:bg-[#5d4201]"
-                        : "glass-panel hover:bg-white/10 text-white"
-                    }`}
-                  >
-                    {tier.cta}
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
 
       {/* ── LUXURY CLIENT TESTIMONIALS ── */}
       <section className="py-24 border-t border-white/5 bg-[#0a1128]">
@@ -706,13 +483,32 @@ export default function Home({ onOpenWizard, onOpenBaker, onNavigate }: HomeProp
           </div>
 
           <div className="text-center pt-6 space-y-4">
-            <p className="text-xs text-gray-400 font-sans">Still have queries or customized requirements?</p>
-            <button 
-              onClick={onOpenBaker}
-              className="bg-brand-gold-tint hover:bg-brand-gold-tint/90 text-[#785a1a] px-6 py-3 text-xs font-bold tracking-widest uppercase rounded shadow transition-all cursor-pointer font-sans"
-            >
-              TALK TO A BAKER
-            </button>
+            <p className="text-xs text-gray-400 font-sans">Still have queries or customized requirements? Reach out directly to chef Aditi:</p>
+            <div className="flex flex-wrap items-center justify-center gap-3">
+              <a
+                href="tel:+19455274566"
+                className="inline-flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-5 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider transition-all border border-white/20 cursor-pointer"
+              >
+                <Phone className="w-4 h-4 text-emerald-400" />
+                <span>Call 945-527-4566</span>
+              </a>
+              <a
+                href="sms:+19455274566?body=Hi%20Bluebonnet%20Whisk!%20I'm%20inquiring%20about%20an%20event."
+                className="inline-flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-5 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider transition-all border border-white/20 cursor-pointer"
+              >
+                <MessageSquare className="w-4 h-4 text-sky-400" />
+                <span>SMS 945-527-4566</span>
+              </a>
+              <a
+                href="https://wa.me/19455274566?text=Hi%20Bluebonnet%20Whisk!%20I'd%20like%20to%20inquire%20about%20an%20order."
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 bg-[#25D366] hover:bg-[#1ebd5a] text-white px-5 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider transition-all shadow-md cursor-pointer"
+              >
+                <MessageCircle className="w-4 h-4 fill-white" />
+                <span>WhatsApp 945-527-4566</span>
+              </a>
+            </div>
           </div>
 
         </div>
