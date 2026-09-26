@@ -57,6 +57,52 @@ export function getRequiredNoticeHours(items: CartItem[]): number {
   return 24;
 }
 
+export const TIME_SLOTS = [
+  '10:00 AM', '10:30 AM', '11:00 AM', '11:30 AM',
+  '12:00 PM', '12:30 PM', '1:00 PM', '1:30 PM',
+  '2:00 PM', '2:30 PM', '3:00 PM', '3:30 PM',
+  '4:00 PM', '4:30 PM', '5:00 PM', '5:30 PM',
+  '6:00 PM', '6:30 PM', '7:00 PM', '7:30 PM', '8:00 PM'
+];
+
+/**
+ * Parses a 12-hour formatted time string into { hours, minutes } in 24-hour time.
+ */
+export function parse12HourTime(timeStr: string): { hours: number; minutes: number } {
+  let hours = 12;
+  let minutes = 0;
+  if (!timeStr) return { hours, minutes };
+  const m = timeStr.match(/(\d+):(\d+)\s*(AM|PM)?/i);
+  if (m) {
+    hours = parseInt(m[1], 10);
+    minutes = parseInt(m[2], 10);
+    const ampm = m[3]?.toUpperCase();
+    if (ampm === 'PM' && hours < 12) hours += 12;
+    if (ampm === 'AM' && hours === 12) hours = 0;
+  }
+  return { hours, minutes };
+}
+
+/**
+ * Checks whether a specific time slot on a given date meets the required lead time.
+ */
+export function isTimeSlotValidForDate(
+  dateStr: string,
+  timeSlot: string,
+  items: CartItem[]
+): boolean {
+  if (!dateStr || !timeSlot) return false;
+  const { nowDate } = getCentralTimeNow();
+  const noticeHours = getRequiredNoticeHours(items);
+
+  const { hours, minutes } = parse12HourTime(timeSlot);
+  const [y, m, d] = dateStr.split('-').map(Number);
+  const targetDate = new Date(y, m - 1, d, hours, minutes, 0);
+
+  const diffHours = (targetDate.getTime() - nowDate.getTime()) / (1000 * 60 * 60);
+  return diffHours >= noticeHours;
+}
+
 /**
  * Determines whether a specific date (YYYY-MM-DD) is allowed given the lead time requirements.
  */
@@ -80,23 +126,66 @@ export function isDateSelectable(
     return { selectable: false, reason: 'Kitchen closed (blackout date)' };
   }
 
+  const [y, m, d] = dateStr.split('-').map(Number);
+  const targetDate = new Date(y, m - 1, d);
+
+  // Tiffin Sunday closure check
+  const hasTiffin = items.some(item => item.category === 'tiffin');
+  if (hasTiffin && targetDate.getDay() === 0) {
+    return { selectable: false, reason: 'Tiffin service is closed on Sundays' };
+  }
+
   const noticeHours = getRequiredNoticeHours(items);
 
-  // Target date parsed at end-of-day (20:00 max delivery time)
-  const [y, m, d] = dateStr.split('-').map(Number);
+  // Target date checked against latest possible slot (8:00 PM = 20:00)
   const latestPossibleSlotOnDate = new Date(y, m - 1, d, 20, 0, 0);
-
-  const diffMs = latestPossibleSlotOnDate.getTime() - nowDate.getTime();
-  const diffHours = diffMs / (1000 * 60 * 60);
+  const diffHours = (latestPossibleSlotOnDate.getTime() - nowDate.getTime()) / (1000 * 60 * 60);
 
   if (diffHours < noticeHours) {
     return { 
       selectable: false, 
-      reason: `Requires ${noticeHours} hrs advance notice in Central Time` 
+      reason: `Requires at least ${noticeHours}h advance notice in Central Time` 
     };
   }
 
   return { selectable: true };
+}
+
+/**
+ * Finds the earliest guaranteed-valid fulfillment date and time slot for the current cart.
+ * Guarantees that opening checkout always starts with a 100% valid fulfillment slot.
+ */
+export function findFirstValidFulfillmentSlot(
+  blackouts: string[],
+  items: CartItem[]
+): { dateStr: string; timeSlot: string } {
+  const { nowDate } = getCentralTimeNow();
+  const noticeHours = getRequiredNoticeHours(items);
+  const hasTiffin = items.some(item => item.category === 'tiffin');
+
+  for (let offset = 1; offset <= 45; offset++) {
+    const candidate = new Date(nowDate.getTime() + offset * 24 * 60 * 60 * 1000);
+    const y = candidate.getFullYear();
+    const m = (candidate.getMonth() + 1).toString().padStart(2, '0');
+    const day = candidate.getDate().toString().padStart(2, '0');
+    const dateStr = `${y}-${m}-${day}`;
+
+    if (blackouts.includes(dateStr)) continue;
+    if (hasTiffin && candidate.getDay() === 0) continue;
+
+    for (const slot of TIME_SLOTS) {
+      if (isTimeSlotValidForDate(dateStr, slot, items)) {
+        return { dateStr, timeSlot: slot };
+      }
+    }
+  }
+
+  // Fallback safe date
+  const fallback = new Date(nowDate.getTime() + (noticeHours + 24) * 60 * 60 * 1000);
+  const fY = fallback.getFullYear();
+  const fM = (fallback.getMonth() + 1).toString().padStart(2, '0');
+  const fD = fallback.getDate().toString().padStart(2, '0');
+  return { dateStr: `${fY}-${fM}-${fD}`, timeSlot: '12:30 PM' };
 }
 
 /**
@@ -112,18 +201,9 @@ export function validateFulfillmentCutoff(
   const { nowDate, dateStr: todayDateStr } = getCentralTimeNow();
   const noticeHours = getRequiredNoticeHours(items);
 
-  // Earliest allowed Date object: must be at least tomorrow (next calendar day) or nowDate + noticeHours
-  const tomorrowObj = new Date(nowDate.getTime() + 24 * 60 * 60 * 1000);
-  const earliestAllowedTimeMs = Math.max(nowDate.getTime() + noticeHours * 60 * 60 * 1000, tomorrowObj.getTime());
-  const earliestAllowed = new Date(earliestAllowedTimeMs);
-  const eYear = earliestAllowed.getFullYear();
-  const eMonth = (earliestAllowed.getMonth() + 1).toString().padStart(2, '0');
-  const eDay = earliestAllowed.getDate().toString().padStart(2, '0');
-  const earliestAllowedDate = `${eYear}-${eMonth}-${eDay}`;
-  
-  const eHours = earliestAllowed.getHours();
-  const eMins = earliestAllowed.getMinutes();
-  const earliestAllowedTime = `${eHours.toString().padStart(2, '0')}:${eMins.toString().padStart(2, '0')}`;
+  const firstValid = findFirstValidFulfillmentSlot(blackouts, items);
+  const earliestAllowedDate = firstValid.dateStr;
+  const earliestAllowedTime = firstValid.timeSlot;
 
   if (!fulfillmentDate) {
     return {
@@ -131,7 +211,7 @@ export function validateFulfillmentCutoff(
       earliestAllowedDate,
       earliestAllowedTime,
       requiredNoticeHours: noticeHours,
-      message: `Please select a fulfillment date (${noticeHours} hrs notice required in US Central Time).`,
+      message: `Please select a fulfillment date (${noticeHours}h notice required in US Central Time).`,
       isPassed: false
     };
   }
@@ -143,7 +223,7 @@ export function validateFulfillmentCutoff(
       earliestAllowedDate,
       earliestAllowedTime,
       requiredNoticeHours: noticeHours,
-      message: `Same-day orders are not accepted. Earliest available date is ${earliestAllowedDate}.`,
+      message: `Same-day orders are not accepted. Earliest available date is ${earliestAllowedDate} (${earliestAllowedTime}).`,
       isPassed: true
     };
   }
@@ -159,24 +239,26 @@ export function validateFulfillmentCutoff(
     };
   }
 
-  // Parse time
-  let hours = 12;
-  let minutes = 0;
-  if (fulfillmentTime) {
-    const timeMatch = fulfillmentTime.match(/(\d+):(\d+)\s*(AM|PM)?/i);
-    if (timeMatch) {
-      hours = parseInt(timeMatch[1], 10);
-      minutes = parseInt(timeMatch[2], 10);
-      const ampm = timeMatch[3]?.toUpperCase();
-      if (ampm === 'PM' && hours < 12) hours += 12;
-      if (ampm === 'AM' && hours === 12) hours = 0;
-    }
+  const [y, m, d] = fulfillmentDate.split('-').map(Number);
+  const targetDate = new Date(y, m - 1, d);
+
+  // Tiffin Sunday closure check
+  const hasTiffin = items.some(item => item.category === 'tiffin');
+  if (hasTiffin && targetDate.getDay() === 0) {
+    return {
+      isValid: false,
+      earliestAllowedDate,
+      earliestAllowedTime,
+      requiredNoticeHours: noticeHours,
+      message: `Desi Dabba Tiffin service is closed on Sundays. Please select a delivery/pickup date between Monday and Saturday.`,
+      isPassed: false
+    };
   }
 
-  const [y, m, d] = fulfillmentDate.split('-').map(Number);
-  const targetDate = new Date(y, m - 1, d, hours, minutes, 0);
-
-  const diffHours = (targetDate.getTime() - nowDate.getTime()) / (1000 * 60 * 60);
+  // Parse time
+  const { hours, minutes } = parse12HourTime(fulfillmentTime);
+  const targetDateTime = new Date(y, m - 1, d, hours, minutes, 0);
+  const diffHours = (targetDateTime.getTime() - nowDate.getTime()) / (1000 * 60 * 60);
 
   if (diffHours < noticeHours) {
     return {
@@ -184,7 +266,7 @@ export function validateFulfillmentCutoff(
       earliestAllowedDate,
       earliestAllowedTime,
       requiredNoticeHours: noticeHours,
-      message: `Orders with ${noticeHours === 48 ? 'Celebration Cakes' : 'Catering Dishes'} require at least ${noticeHours} hours notice in US Central Time. Earliest available: ${earliestAllowedDate} after ${format12Hour(earliestAllowedTime)}.`,
+      message: `Orders with ${noticeHours === 48 ? 'Celebration Cakes' : 'Catering Dishes'} require at least ${noticeHours} hours notice in US Central Time. Earliest available slot: ${earliestAllowedDate} at ${earliestAllowedTime}.`,
       isPassed: true
     };
   }

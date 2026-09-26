@@ -20,7 +20,10 @@ import {
   getRequiredNoticeHours, 
   validateFulfillmentCutoff,
   getUpcomingDates,
-  isDateSelectable
+  isDateSelectable,
+  findFirstValidFulfillmentSlot,
+  isTimeSlotValidForDate,
+  TIME_SLOTS
 } from '../../utils/centralTime';
 import { fetchCalendarBlackouts, createOrder } from '../../services/supabase';
 import { buildOrderWhatsAppUrl } from '../../utils/whatsapp';
@@ -34,14 +37,6 @@ interface CheckoutModalProps {
   setIsDelivery: (val: boolean) => void;
   onOrderSuccess: (order: CateringOrder, isEstimate: boolean) => void;
 }
-
-const TIME_SLOTS = [
-  '10:00 AM', '10:30 AM', '11:00 AM', '11:30 AM',
-  '12:00 PM', '12:30 PM', '1:00 PM', '1:30 PM',
-  '2:00 PM', '2:30 PM', '3:00 PM', '3:30 PM',
-  '4:00 PM', '4:30 PM', '5:00 PM', '5:30 PM',
-  '6:00 PM', '6:30 PM', '7:00 PM', '7:30 PM', '8:00 PM'
-];
 
 type CheckoutStep = 'schedule' | 'details' | 'payment';
 
@@ -82,7 +77,7 @@ export default function CheckoutModal({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submissionError, setSubmissionError] = useState<string | null>(null);
 
-  // Fetch blackouts on open & set safe initial dates
+  // Fetch blackouts on open & set guaranteed valid initial dates
   useEffect(() => {
     if (isOpen) {
       setStep('schedule');
@@ -92,39 +87,29 @@ export default function CheckoutModal({
       fetchCalendarBlackouts().then(dates => {
         setBlackouts(dates);
 
-        // Find earliest valid date & time slot satisfying notice cutoff in Central Time
-        const check = validateFulfillmentCutoff('', '', dates, cart);
-        let safeDate = check.earliestAllowedDate;
-        let safeTimeSlot = '12:30 PM';
-
-        // Check if safeDate is selectable and not blacked out; step forward if needed
-        const d = new Date(safeDate + 'T12:00:00');
-        for (let offset = 0; offset < 30; offset++) {
-          const candidate = new Date(d.getTime() + offset * 24 * 60 * 60 * 1000);
-          const y = candidate.getFullYear();
-          const m = (candidate.getMonth() + 1).toString().padStart(2, '0');
-          const day = candidate.getDate().toString().padStart(2, '0');
-          const dateStr = `${y}-${m}-${day}`;
-          if (isDateSelectable(dateStr, dates, cart).selectable) {
-            safeDate = dateStr;
-            break;
-          }
-        }
-
-        // Find earliest valid time slot for safeDate
-        for (const slot of TIME_SLOTS) {
-          const testCheck = validateFulfillmentCutoff(safeDate, slot, dates, cart);
-          if (testCheck.isValid) {
-            safeTimeSlot = slot;
-            break;
-          }
-        }
-
-        setFulfillmentDate(safeDate);
-        setFulfillmentTime(safeTimeSlot);
+        // Compute guaranteed earliest valid date & time slot satisfying Central Time cutoff
+        const firstValid = findFirstValidFulfillmentSlot(dates, cart);
+        setFulfillmentDate(firstValid.dateStr);
+        setFulfillmentTime(firstValid.timeSlot);
       });
     }
   }, [isOpen, cart]);
+
+  // Handle user selecting a date (auto-corrects time slot if chosen time is past cutoff on new date)
+  const handleSelectDate = (newDateStr: string) => {
+    setFulfillmentDate(newDateStr);
+    setSubmissionError(null);
+
+    // If currently chosen time is invalid on this date, auto-select first valid slot on this date
+    if (!isTimeSlotValidForDate(newDateStr, fulfillmentTime, cart)) {
+      for (const slot of TIME_SLOTS) {
+        if (isTimeSlotValidForDate(newDateStr, slot, cart)) {
+          setFulfillmentTime(slot);
+          break;
+        }
+      }
+    }
+  };
 
   if (!isOpen) return null;
 
@@ -176,7 +161,11 @@ export default function CheckoutModal({
   // Step 1 -> Step 2 Validation
   const handleProceedToDetails = () => {
     if (!cutoffValidation.isValid) {
-      setSubmissionError(cutoffValidation.message);
+      // Auto-correct to earliest valid slot if somehow invalid
+      const firstValid = findFirstValidFulfillmentSlot(blackouts, cart);
+      setFulfillmentDate(firstValid.dateStr);
+      setFulfillmentTime(firstValid.timeSlot);
+      setSubmissionError(`Adjusted to earliest available window: ${firstValid.dateStr} at ${firstValid.timeSlot}. Click "Continue to Customer Details" to proceed.`);
       modalBodyRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }
@@ -515,7 +504,7 @@ export default function CheckoutModal({
                           key={opt.dateStr}
                           type="button"
                           disabled={!check.selectable}
-                          onClick={() => setFulfillmentDate(opt.dateStr)}
+                          onClick={() => handleSelectDate(opt.dateStr)}
                           className={`flex flex-col items-center justify-center min-w-[70px] py-2 px-2 rounded-xl border text-center transition-all cursor-pointer shrink-0 ${
                             !check.selectable
                               ? 'bg-gray-100 border-gray-200 text-gray-300 cursor-not-allowed opacity-60'
@@ -548,7 +537,7 @@ export default function CheckoutModal({
                       type="date"
                       value={fulfillmentDate}
                       min={cutoffValidation.earliestAllowedDate}
-                      onChange={(e) => setFulfillmentDate(e.target.value)}
+                      onChange={(e) => handleSelectDate(e.target.value)}
                       className="w-full bg-white border border-gray-300 rounded-xl px-3 py-2 text-xs text-gray-800 focus:outline-none focus:border-[#00346f]"
                     />
                   </div>
@@ -562,9 +551,14 @@ export default function CheckoutModal({
                       onChange={(e) => setFulfillmentTime(e.target.value)}
                       className="w-full bg-white border border-gray-300 rounded-xl px-3 py-2 text-xs text-gray-800 focus:outline-none focus:border-[#00346f]"
                     >
-                      {TIME_SLOTS.map(slot => (
-                        <option key={slot} value={slot}>{slot}</option>
-                      ))}
+                      {TIME_SLOTS.map(slot => {
+                        const isSlotValid = isTimeSlotValidForDate(fulfillmentDate, slot, cart);
+                        return (
+                          <option key={slot} value={slot} disabled={!isSlotValid}>
+                            {slot} {!isSlotValid ? '— Unavailable (cutoff)' : ''}
+                          </option>
+                        );
+                      })}
                     </select>
                   </div>
                 </div>

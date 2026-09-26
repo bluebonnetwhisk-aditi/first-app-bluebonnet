@@ -14,7 +14,8 @@ import {
   Flame, 
   Award,
   AlertTriangle,
-  MapPin
+  MapPin,
+  ArrowRight
 } from 'lucide-react';
 import type { CartItem, MenuItem, TiffinSpecialDish } from '../../types/catering';
 import { getCentralTimeNow } from '../../utils/centralTime';
@@ -32,6 +33,7 @@ interface TiffinOrderViewProps {
     customNotes?: string
   ) => void;
   onRemoveCartItem?: (cartItemId: string) => void;
+  onProceedToCheckout?: () => void;
 }
 
 interface DaySchedule {
@@ -68,7 +70,8 @@ const EXTRA_CONTAINERS = [
 export default function TiffinOrderView({
   cart,
   onUpdateCartItem,
-  onRemoveCartItem
+  onRemoveCartItem,
+  onProceedToCheckout
 }: TiffinOrderViewProps) {
   const [settings, setSettings] = useState<TiffinMenuSettings>(DEFAULT_TIFFIN_SETTINGS);
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
@@ -486,9 +489,21 @@ export default function TiffinOrderView({
 
       {/* Floating Alert Notification */}
       {addedAlert && (
-        <div className="p-4 bg-emerald-50 border border-emerald-300 text-emerald-900 rounded-2xl text-xs font-bold flex items-center gap-3 shadow-md animate-fade-in">
-          <Check className="w-5 h-5 text-emerald-600 shrink-0" />
-          <span>{addedAlert}</span>
+        <div className="p-4 bg-emerald-50 border border-emerald-300 text-emerald-900 rounded-2xl text-xs font-bold flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-md animate-fade-in">
+          <div className="flex items-center gap-3">
+            <Check className="w-5 h-5 text-emerald-600 shrink-0" />
+            <span>{addedAlert}</span>
+          </div>
+          {onProceedToCheckout && (
+            <button
+              type="button"
+              onClick={onProceedToCheckout}
+              className="inline-flex items-center justify-center gap-1.5 px-4 py-2 bg-[#00346f] text-white rounded-xl font-bold text-xs hover:bg-[#00224d] transition-colors cursor-pointer shrink-0 shadow-sm"
+            >
+              <span>Proceed to Checkout</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+          )}
         </div>
       )}
 
@@ -995,6 +1010,18 @@ export default function TiffinOrderView({
               </div>
             ))}
           </div>
+
+          {/* Direct Proceed to Checkout with Tiffin Meals Button */}
+          {onProceedToCheckout && (
+            <button
+              type="button"
+              onClick={onProceedToCheckout}
+              className="w-full mt-3 py-3 px-4 rounded-xl bg-[#00346f] hover:bg-[#00224d] text-white text-xs sm:text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-2 shadow-sm cursor-pointer transition-all hover:scale-[1.01]"
+            >
+              <span>Proceed to Checkout with {tiffinCartItems.length} Tiffin Meal{tiffinCartItems.length !== 1 ? 's' : ''} (${tiffinCartItems.reduce((s, i) => s + i.totalPrice, 0).toFixed(2)})</span>
+              <ArrowRight className="w-4 h-4" />
+            </button>
+          )}
         </div>
       )}
 

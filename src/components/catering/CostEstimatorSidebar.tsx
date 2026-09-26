@@ -58,24 +58,47 @@ export default function CostEstimatorSidebar({
   // Cutoff lead time requirement
   const noticeHours = getRequiredNoticeHours(cart);
 
+  const [emptyCartNotice, setEmptyCartNotice] = useState(false);
+
+  const handleEmptyCheckoutClick = () => {
+    setEmptyCartNotice(true);
+    setTimeout(() => setEmptyCartNotice(false), 3000);
+  };
+
   if (cart.length === 0) {
     return (
-      <div className="fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur-md border-t border-gray-200/80 shadow-lg py-2.5 px-4 font-sans">
-        <div className="max-w-7xl mx-auto flex items-center justify-between gap-4 text-xs text-gray-500">
-          <div className="flex items-center gap-2">
+      <div className="fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur-md border-t border-gray-200 shadow-lg py-2.5 px-3 sm:px-6 font-sans">
+        <div className="max-w-7xl mx-auto flex items-center justify-between gap-3 text-xs text-gray-500">
+          <div className="flex items-center gap-2 min-w-0">
             <ShoppingBag className="w-4 h-4 text-gray-400 shrink-0" />
-            <span>
-              Your order selection is empty. Select{' '}
-              {activeSubTab === 'tiffin'
-                ? 'daily homestyle dabbas or weekly plan'
-                : activeSubTab === 'cake'
-                ? 'custom bakery bakes'
-                : 'catering trays, starters, and curries'}{' '}
-              to begin.
+            <span className="truncate">
+              {emptyCartNotice ? (
+                <strong className="text-amber-700">Please add dishes, cakes, or tiffin meals above to begin checkout!</strong>
+              ) : (
+                <>
+                  Your order selection is empty. Select{' '}
+                  {activeSubTab === 'tiffin'
+                    ? 'daily dabbas or weekly plan'
+                    : activeSubTab === 'cake'
+                    ? 'custom bakes'
+                    : 'catering trays & curries'}{' '}
+                  to order.
+                </>
+              )}
             </span>
           </div>
-          <div className="text-[11px] text-gray-400 hidden sm:block">
-            Strict 24h / 48h Advance Notice in US Central Time
+
+          <div className="flex items-center gap-2 shrink-0">
+            <span className="text-[11px] text-gray-400 hidden sm:inline">
+              24h / 48h Notice
+            </span>
+            <button
+              type="button"
+              onClick={handleEmptyCheckoutClick}
+              className="px-3.5 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-600 text-xs font-bold uppercase tracking-wider transition-all cursor-pointer border border-gray-200"
+            >
+              Checkout (0)
+            </button>
           </div>
         </div>
       </div>
@@ -193,7 +216,55 @@ export default function CostEstimatorSidebar({
       )}
 
       {/* ── Main Sticky Bottom Bar ── */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between gap-4">
+      
+      {/* 1. Mobile Screen Layout (< md) */}
+      <div className="md:hidden px-3.5 py-2.5 space-y-2 bg-white">
+        <div className="flex items-center justify-between gap-2">
+          {/* Left: Cart toggle */}
+          <button
+            type="button"
+            onClick={() => setIsExpanded(!isExpanded)}
+            className="flex items-center gap-2 text-left cursor-pointer"
+          >
+            <div className="w-8 h-8 rounded-lg bg-[#00346f] text-[#ffdea5] flex items-center justify-center font-bold text-xs shrink-0 shadow-xs">
+              {totalItemCount}
+            </div>
+            <div>
+              <div className="text-xs font-bold text-gray-900 flex items-center gap-1">
+                <span>{totalItemCount} {totalItemCount === 1 ? 'Item' : 'Items'}</span>
+                {isExpanded ? <ChevronDown className="w-3.5 h-3.5 text-[#00346f]" /> : <ChevronUp className="w-3.5 h-3.5 text-[#00346f]" />}
+              </div>
+              <div className="text-[10px] text-gray-500">
+                {isDelivery ? 'Delivery' : 'Pickup'} • Tap to inspect
+              </div>
+            </div>
+          </button>
+
+          {/* Right: Total */}
+          <div className="text-right">
+            <span className="text-[9px] uppercase font-bold tracking-wider text-gray-400 block">
+              Estimated Total
+            </span>
+            <div className="font-serif font-black text-lg text-[#00346f] leading-none">
+              ${totalAmount.toFixed(2)}
+            </div>
+          </div>
+        </div>
+
+        {/* Full-width, prominent, thumb-friendly Checkout Button */}
+        <button
+          type="button"
+          onClick={onProceedToCheckout}
+          className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-[#00346f] active:bg-[#00224d] text-white text-xs font-bold uppercase tracking-wider shadow-md cursor-pointer transition-transform active:scale-[0.99]"
+        >
+          <span>Proceed to Checkout</span>
+          <span className="font-serif font-bold text-sm text-[#ffdea5]">(${totalAmount.toFixed(2)})</span>
+          <ArrowRight className="w-4 h-4 ml-0.5" />
+        </button>
+      </div>
+
+      {/* 2. Desktop Screen Layout (md and up) */}
+      <div className="hidden md:flex max-w-7xl mx-auto px-6 lg:px-8 py-3.5 items-center justify-between gap-6">
         
         {/* Left: Item Counts & Drawer Toggle */}
         <button
@@ -201,12 +272,12 @@ export default function CostEstimatorSidebar({
           onClick={() => setIsExpanded(!isExpanded)}
           className="flex items-center gap-3 text-left cursor-pointer group"
         >
-          <div className="w-10 h-10 rounded-xl bg-[#00346f] text-[#ffdea5] flex items-center justify-center font-bold text-xs shrink-0 shadow-sm group-hover:scale-105 transition-transform">
+          <div className="w-10 h-10 rounded-xl bg-[#00346f] text-[#ffdea5] flex items-center justify-center font-bold text-sm shrink-0 shadow-sm group-hover:scale-105 transition-transform">
             {totalItemCount}
           </div>
 
           <div>
-            <div className="flex items-center gap-1.5 text-xs sm:text-sm font-bold text-gray-900">
+            <div className="flex items-center gap-2 text-sm font-bold text-gray-900">
               <span>
                 {activeSubTab === 'tiffin' || (totalDabbaCount > 0 && totalTrayCount === 0)
                   ? `${totalDabbaCount} Dabba${totalDabbaCount !== 1 ? 's' : ''}`
@@ -218,7 +289,7 @@ export default function CostEstimatorSidebar({
               </span>
               <span className="text-gray-400">•</span>
               <span className="text-xs font-normal text-gray-500">
-                {isDelivery ? 'Venue Delivery' : 'Self-Pickup'}
+                {isDelivery ? 'Venue Delivery (+$50)' : 'Self-Pickup ($0)'}
               </span>
               {isExpanded ? (
                 <ChevronDown className="w-4 h-4 text-[#00346f]" />
@@ -234,15 +305,15 @@ export default function CostEstimatorSidebar({
         </button>
 
         {/* Center / Right: Grand Total & Checkout CTA */}
-        <div className="flex items-center gap-4 sm:gap-6">
+        <div className="flex items-center gap-6">
           <div className="text-right">
             <span className="text-[10px] uppercase font-bold tracking-wider text-gray-500 block">
               Estimated Total
             </span>
-            <div className="font-serif font-bold text-lg sm:text-2xl text-[#00346f] leading-none">
+            <div className="font-serif font-bold text-2xl text-[#00346f] leading-none">
               ${totalAmount.toFixed(2)}
             </div>
-            <span className="text-[10px] text-gray-500 hidden sm:block mt-0.5">
+            <span className="text-[10px] text-gray-500 block mt-0.5">
               Tax included • No prepayment
             </span>
           </div>
@@ -250,7 +321,7 @@ export default function CostEstimatorSidebar({
           <button
             type="button"
             onClick={onProceedToCheckout}
-            className="inline-flex items-center justify-center gap-2 py-3 px-5 sm:px-7 rounded-xl bg-[#00346f] hover:bg-[#00224d] text-white text-xs sm:text-sm font-bold uppercase tracking-wider transition-all shadow-md hover:shadow-lg hover:scale-102 cursor-pointer shrink-0"
+            className="inline-flex items-center justify-center gap-2 py-3 px-7 rounded-xl bg-[#00346f] hover:bg-[#00224d] text-white text-sm font-bold uppercase tracking-wider transition-all shadow-md hover:shadow-lg hover:scale-102 cursor-pointer shrink-0"
           >
             <span>Proceed to Checkout</span>
             <ArrowRight className="w-4 h-4" />

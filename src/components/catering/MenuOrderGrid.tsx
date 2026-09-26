@@ -13,7 +13,8 @@ import {
   ChevronUp,
   Trash2,
   SlidersHorizontal,
-  ChevronsUpDown
+  ChevronsUpDown,
+  ArrowRight
 } from 'lucide-react';
 import type { CartItem, Category, MenuItem, TraySize, Allergen } from '../../types/catering';
 import { DESI_DABBA_ITEMS } from '../../data/desiDabbaMenu';
@@ -29,6 +30,7 @@ interface MenuOrderGridProps {
     customNotes?: string
   ) => void;
   onRemoveCartItem?: (cartItemId: string) => void;
+  onProceedToCheckout?: () => void;
 }
 
 interface SectionDef {
@@ -107,7 +109,8 @@ const MENU_SECTIONS: SectionDef[] = [
 
 export default function MenuOrderGrid({ 
   cart, 
-  onUpdateCartItem 
+  onUpdateCartItem,
+  onProceedToCheckout
 }: MenuOrderGridProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [allergenFilter, setAllergenFilter] = useState<Allergen[]>([]);
@@ -202,6 +205,31 @@ export default function MenuOrderGrid({
   return (
     <div id="catering-menu-grid" className="w-full font-sans space-y-6">
       
+      {/* Quick Selection Summary & Checkout Trigger */}
+      {cart.length > 0 && onProceedToCheckout && (
+        <div className="bg-blue-50/90 border border-blue-200 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
+          <div className="flex items-center gap-2 text-xs text-[#00346f]">
+            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+            <span className="font-bold">
+              {cart.reduce((s, i) => s + i.quantity, 0)} {cart.reduce((s, i) => s + i.quantity, 0) === 1 ? 'item' : 'items'} in your order
+            </span>
+            <span className="text-gray-400">•</span>
+            <span className="font-serif font-black text-base text-gray-900">
+              ${cart.reduce((s, i) => s + i.totalPrice, 0).toFixed(2)}
+            </span>
+          </div>
+
+          <button
+            type="button"
+            onClick={onProceedToCheckout}
+            className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-[#00346f] hover:bg-[#00224d] text-white rounded-xl font-bold text-xs uppercase tracking-wider transition-all cursor-pointer shadow-xs shrink-0"
+          >
+            <span>Proceed to Checkout</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      )}
+
       {/* ── FILTER & SEARCH BAR ── */}
       <div className="bg-white rounded-2xl border border-gray-200 p-4 shadow-xs">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">

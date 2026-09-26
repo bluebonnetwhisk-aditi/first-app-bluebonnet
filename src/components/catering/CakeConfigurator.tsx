@@ -8,7 +8,8 @@ import {
   Info, 
   AlertCircle,
   Trash2,
-  Leaf
+  Leaf,
+  ArrowRight
 } from 'lucide-react';
 import type { CartItem } from '../../types/catering';
 
@@ -115,12 +116,14 @@ interface CakeConfiguratorProps {
   }) => void;
   cartCakes?: CartItem[];
   onRemoveCake?: (cartItemId: string) => void;
+  onProceedToCheckout?: () => void;
 }
 
 export default function CakeConfigurator({
   onAddCake,
   cartCakes = [],
-  onRemoveCake
+  onRemoveCake,
+  onProceedToCheckout
 }: CakeConfiguratorProps) {
   const [selectedSize, setSelectedSize] = useState<CakeSize>('6inch');
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>('classic');
@@ -491,33 +494,68 @@ export default function CakeConfigurator({
               </button>
             </div>
 
-            {/* Add Button */}
+            {/* Add to Order Button */}
             <button
               type="button"
               onClick={handleAddToCart}
-              className="bg-[#00346f] hover:bg-[#00224d] text-white px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-sm cursor-pointer flex items-center gap-2"
+              className="bg-[#00346f] hover:bg-[#00224d] text-white px-4 sm:px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-sm cursor-pointer flex items-center gap-1.5"
             >
               <Sparkles className="w-4 h-4 text-[#ffdea5]" />
-              <span>Add Cake to Order</span>
+              <span>Add Cake</span>
             </button>
+
+            {/* Direct Add & Checkout Button */}
+            {onProceedToCheckout && (
+              <button
+                type="button"
+                onClick={() => {
+                  handleAddToCart();
+                  setTimeout(() => {
+                    onProceedToCheckout();
+                  }, 120);
+                }}
+                className="bg-emerald-700 hover:bg-emerald-800 text-white px-4 sm:px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-sm cursor-pointer flex items-center gap-1.5"
+              >
+                <span>Add &amp; Checkout</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </button>
+            )}
           </div>
 
         </div>
 
-        {/* Success Alert */}
+        {/* Success Alert with Checkout Button */}
         {addedAlert && (
-          <div className="p-3 bg-emerald-50 border border-emerald-300 rounded-xl text-xs text-emerald-800 flex items-center gap-2 animate-fade-in font-medium">
-            <Check className="w-4 h-4 text-emerald-600 shrink-0" />
-            <span>✓ Custom cake has been added to your catering order estimate!</span>
+          <div className="p-3.5 bg-emerald-50 border border-emerald-300 rounded-xl text-xs text-emerald-900 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 animate-fade-in font-medium">
+            <div className="flex items-center gap-2">
+              <Check className="w-4 h-4 text-emerald-600 shrink-0" />
+              <span>✓ Custom cake has been added to your order estimate!</span>
+            </div>
+            {onProceedToCheckout && (
+              <button
+                type="button"
+                onClick={onProceedToCheckout}
+                className="inline-flex items-center justify-center gap-1.5 px-3.5 py-1.5 bg-[#00346f] text-white rounded-lg font-bold text-xs hover:bg-[#00224d] transition-colors cursor-pointer shrink-0 shadow-xs"
+              >
+                <span>Proceed to Checkout Now</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </button>
+            )}
           </div>
         )}
 
         {/* Existing Configured Cakes List in Cart */}
         {cartCakes.length > 0 && (
-          <div className="pt-2 border-t border-gray-150 space-y-2">
-            <span className="text-xs font-bold text-gray-700 block">
-              Configured Cakes in Current Order ({cartCakes.length})
-            </span>
+          <div className="pt-2 border-t border-gray-150 space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-gray-800 block">
+                Configured Cakes in Current Order ({cartCakes.length})
+              </span>
+              <span className="text-xs font-bold text-[#00346f]">
+                Subtotal: ${cartCakes.reduce((s, c) => s + c.totalPrice, 0).toFixed(2)}
+              </span>
+            </div>
+
             <div className="space-y-2">
               {cartCakes.map(cake => (
                 <div key={cake.id} className="p-3 bg-blue-50/40 rounded-xl border border-blue-200/60 flex items-start justify-between gap-3 text-xs">
@@ -548,6 +586,18 @@ export default function CakeConfigurator({
                 </div>
               ))}
             </div>
+
+            {/* Direct Proceed to Checkout with Cakes Button */}
+            {onProceedToCheckout && (
+              <button
+                type="button"
+                onClick={onProceedToCheckout}
+                className="w-full py-3 px-4 rounded-xl bg-[#00346f] hover:bg-[#00224d] text-white text-xs sm:text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-2 shadow-sm cursor-pointer transition-all hover:scale-[1.01]"
+              >
+                <span>Proceed to Checkout with {cartCakes.length} Cake{cartCakes.length !== 1 ? 's' : ''} (${cartCakes.reduce((s, c) => s + c.totalPrice, 0).toFixed(2)})</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            )}
           </div>
         )}
 

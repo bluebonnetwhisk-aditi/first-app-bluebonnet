@@ -4,7 +4,8 @@ import {
   Cake as CakeIcon, 
   Package, 
   ChefHat, 
-  Lock 
+  Lock,
+  ShoppingBag
 } from 'lucide-react';
 import BrandHeader from './BrandHeader';
 import CakeBrandHeader from './CakeBrandHeader';
@@ -226,6 +227,8 @@ export default function CateringContainer() {
   const cateringDishCount = cart.filter(i => i.category !== 'cakes' && i.category !== 'tiffin').reduce((s, i) => s + i.quantity, 0);
   const cakeCount = cart.filter(i => i.category === 'cakes').reduce((s, i) => s + i.quantity, 0);
   const tiffinCount = cart.filter(i => i.category === 'tiffin').reduce((s, i) => s + i.quantity, 0);
+  const totalCartCount = cart.reduce((s, i) => s + i.quantity, 0);
+  const totalCartAmount = cart.reduce((s, i) => s + i.totalPrice, 0);
 
   return (
     <div className="w-full bg-[#fbfbfa] min-h-screen font-sans selection:bg-[#775a19]/20 overflow-x-hidden">
@@ -315,8 +318,28 @@ export default function CateringContainer() {
               </div>
             </div>
 
-            <div className="text-right text-[11px] text-gray-500 hidden md:block">
-              <span>Little Elm / Frisco, TX • Strict 24h/48h Lead Time Engine</span>
+            <div className="flex items-center gap-2 shrink-0">
+              <div className="text-right text-[11px] text-gray-500 hidden xl:block mr-2">
+                <span>Little Elm / Frisco, TX • Strict 24h/48h Notice</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsCheckoutOpen(true)}
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer shrink-0 ${
+                  totalCartCount > 0
+                    ? 'bg-[#00346f] text-white hover:bg-[#00224d] shadow-sm ring-2 ring-[#ffdea5]/50'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+                title={totalCartCount > 0 ? 'Click to proceed to checkout' : 'Cart is empty'}
+              >
+                <ShoppingBag className="w-3.5 h-3.5 text-[#ffdea5]" />
+                <span>Checkout</span>
+                {totalCartCount > 0 && (
+                  <span className="font-serif font-black text-[#ffdea5] ml-0.5">
+                    (${totalCartAmount.toFixed(2)})
+                  </span>
+                )}
+              </button>
             </div>
 
           </div>
@@ -354,6 +377,7 @@ export default function CateringContainer() {
                   cart={cart}
                   onUpdateCartItem={handleUpdateCartItem}
                   onRemoveCartItem={handleRemoveCartItem}
+                  onProceedToCheckout={() => setIsCheckoutOpen(true)}
                 />
               )}
 
@@ -364,6 +388,7 @@ export default function CateringContainer() {
                     onAddCake={handleAddCakeFromConfigurator}
                     cartCakes={cart.filter(i => i.category === 'cakes')}
                     onRemoveCake={handleRemoveCartItem}
+                    onProceedToCheckout={() => setIsCheckoutOpen(true)}
                   />
                 </div>
               )}
@@ -374,6 +399,7 @@ export default function CateringContainer() {
                   cart={cart}
                   onUpdateCartItem={handleUpdateCartItem}
                   onRemoveCartItem={handleRemoveCartItem}
+                  onProceedToCheckout={() => setIsCheckoutOpen(true)}
                 />
               )}
 
