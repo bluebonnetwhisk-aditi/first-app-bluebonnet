@@ -107,13 +107,13 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
   const [pinChangeError, setPinChangeError] = useState('');
   const [pinChangeSuccess, setPinChangeSuccess] = useState(false);
 
-  // Date Filter state: Defaults to today in America/Chicago
+  // Date Filter state: Defaults to today in America/Chicago, or 'all' for All Upcoming
   const { dateStr: todayDateStr } = getCentralTimeNow();
   const [selectedDate, setSelectedDate] = useState<string>(todayDateStr);
   const [statusFilter, setStatusFilter] = useState<string>('all');
 
   // Orders and loading
-  const [orders, setOrders] = useState<CateringOrder[]>([]);
+  const [allOrders, setAllOrders] = useState<CateringOrder[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
@@ -162,7 +162,7 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
     // 2. Fire OS desktop/mobile notification if granted
     if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
       try {
-        new Notification('🔔 New Order Punched!', {
+        new Notification(`🔔 New ${order.order_type === 'estimate' ? 'Estimate' : 'Order'} Punched!`, {
           body: `${order.customer_name} • $${order.total_amount.toFixed(2)} (${order.fulfillment_date} ${order.fulfillment_time || ''})`,
           icon: '/favicon.ico'
         });
@@ -175,11 +175,46 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
     setNewOrderAlert(order);
   };
 
-  // Load orders
+  // Enable Notifications and test chime (compatible with Chrome, Safari, macOS, iOS PWA)
+  const handleEnableAlerts = async () => {
+    playKitchenChime(); // Warm up Web Audio Context on user click
+
+    if (typeof window !== 'undefined' && 'Notification' in window) {
+      try {
+        let res: NotificationPermission;
+        if (typeof Notification.requestPermission === 'function') {
+          try {
+            res = await Notification.requestPermission();
+          } catch {
+            res = await new Promise(resolve => Notification.requestPermission(resolve));
+          }
+        } else {
+          res = 'denied';
+        }
+        setNotificationPermission(res);
+
+        if (res === 'granted') {
+          new Notification('🔔 Bluebonnet Whisk KDS Active!', {
+            body: 'Live order alerts active! You will hear a bell chime and receive desktop popups whenever an order is punched.',
+            icon: '/favicon.ico'
+          });
+        } else if (res === 'denied') {
+          alert('Notification permission was blocked in browser settings. Please allow notifications for bluebonnetwhisk.com in your browser site settings.');
+        }
+      } catch (err) {
+        console.warn('Notification permission error:', err);
+      }
+    } else {
+      alert('Desktop notifications are not supported in this browser tab. On iPhone / iPad Safari, tap Share ➔ "Add to Home Screen" to enable notifications.');
+    }
+  };
+
+  // Load all orders
   const loadOrders = async () => {
     setIsRefreshing(true);
     try {
-      const data = await fetchOrders(selectedDate);
+      // Fetch all orders from database to calculate badge counts and notify for any upcoming date
+      const data = await fetchOrders();
       
       // If not initial load, check if any newly added order with 'new' status was fetched
       if (!isInitialLoadRef.current) {
@@ -191,7 +226,7 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
 
       data.forEach(o => knownOrderIdsRef.current.add(o.id));
       isInitialLoadRef.current = false;
-      setOrders(data);
+      setAllOrders(data);
     } finally {
       setIsLoading(false);
       setIsRefreshing(false);
@@ -202,6 +237,11 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
     if (isUnlocked) {
       loadOrders();
 
+      // Background periodic polling every 7 seconds to immediately catch newly punched orders
+      const pollTimer = setInterval(() => {
+        loadOrders();
+      }, 7000);
+
       // Subscribe to Realtime Postgres Changes & Local Storage events
       const unsubscribe = subscribeToOrders((eventInfo) => {
         if (eventInfo?.eventType === 'INSERT' && eventInfo?.order) {
@@ -211,10 +251,11 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
       });
 
       return () => {
+        clearInterval(pollTimer);
         unsubscribe();
       };
     }
-  }, [isUnlocked, selectedDate, soundEnabled]);
+  }, [isUnlocked, soundEnabled]);
 
   // Handle PIN entry
   const handlePinSubmit = (e?: React.FormEvent) => {
@@ -224,6 +265,10 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
       sessionStorage.setItem(PIN_STORAGE_KEY, 'true');
       setPinError(false);
       setPinInput('');
+      // Warm up audio context on user gesture
+      if (soundEnabled) {
+        playKitchenChime();
+      }
     } else {
       setPinError(true);
       setPinInput('');
@@ -275,24 +320,44 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
   // Status transition handler
   const handleStatusChange = async (orderId: string, newStatus: OrderStatus) => {
     // Optimistic UI update
-    setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: newStatus } : o));
+    setAllOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: newStatus } : o));
     await updateOrderStatus(orderId, newStatus);
   };
 
-  // Filtered orders list
+  // Orders filtered by the currently selected date tab ('all' or specific YYYY-MM-DD)
+  const ordersForSelectedDate = useMemo(() => {
+    if (selectedDate === 'all') {
+      return allOrders;
+    }
+    return allOrders.filter(o => o.fulfillment_date === selectedDate);
+  }, [allOrders, selectedDate]);
+
+  // Order counts grouped by date for badge counters on date buttons
+  const orderCountsByDate = useMemo(() => {
+    const map = new Map<string, number>();
+    allOrders.filter(o => o.status !== 'cancelled').forEach(o => {
+      map.set(o.fulfillment_date, (map.get(o.fulfillment_date) || 0) + 1);
+    });
+    return map;
+  }, [allOrders]);
+
+  const totalUpcomingOrdersCount = useMemo(() => {
+    return allOrders.filter(o => o.status !== 'cancelled').length;
+  }, [allOrders]);
+
+  // Filtered orders list by status (new, preparing, ready, completed, all)
   const activeOrders = useMemo(() => {
-    return orders.filter(o => {
+    return ordersForSelectedDate.filter(o => {
       if (statusFilter === 'all') return true;
       return o.status === statusFilter;
     });
-  }, [orders, statusFilter]);
+  }, [ordersForSelectedDate, statusFilter]);
 
-  // KPI Header Calculations
-  // Total Orders Today (excluding cancelled)
-  const nonCancelledOrders = orders.filter(o => o.status !== 'cancelled');
-  const totalOrdersToday = nonCancelledOrders.length;
+  // KPI Header Calculations for currently viewed date selection
+  const nonCancelledOrders = ordersForSelectedDate.filter(o => o.status !== 'cancelled');
+  const totalOrdersInView = nonCancelledOrders.length;
 
-  // Total Trays to Prep (Sum of 1/3, Half, Full across all active orders)
+  // Total Trays to Prep (Sum of 1/3, Half, Full across all active orders in view)
   const totalTraysToPrep = nonCancelledOrders.reduce((sum, order) => {
     const traysInOrder = order.items
       .filter(item => item.selectionType === 'third' || item.selectionType === 'half' || item.selectionType === 'full')
@@ -300,8 +365,8 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
     return sum + traysInOrder;
   }, 0);
 
-  // Total Today's Revenue ($) (excluding cancelled)
-  const totalTodayRevenue = nonCancelledOrders.reduce((sum, order) => sum + order.total_amount, 0);
+  // Total Revenue ($) in view (excluding cancelled)
+  const totalRevenueInView = nonCancelledOrders.reduce((sum, order) => sum + order.total_amount, 0);
 
   // Aggregated Prep Sheet Data
   const prepSheetSummary = useMemo(() => {
@@ -494,27 +559,12 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
             </div>
 
             {/* Native Push Notifications Enable (if not yet granted) */}
-            {notificationPermission !== 'granted' && notificationPermission !== 'unsupported' && (
+            {notificationPermission !== 'granted' && (
               <button
                 type="button"
-                onClick={async () => {
-                  if (typeof window !== 'undefined' && 'Notification' in window) {
-                    try {
-                      const res = await Notification.requestPermission();
-                      setNotificationPermission(res);
-                      if (res === 'granted') {
-                        new Notification('🔔 Bluebonnet Whisk KDS', {
-                          body: 'Order notifications active! You will hear a bell and see an alert when an order is punched.',
-                          icon: '/favicon.ico'
-                        });
-                      }
-                    } catch (err) {
-                      console.warn('Notification permission error:', err);
-                    }
-                  }
-                }}
+                onClick={handleEnableAlerts}
                 className="inline-flex items-center gap-1.5 bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-900 px-3 py-2 rounded-xl text-xs font-semibold transition cursor-pointer"
-                title="Enable native desktop/mobile push notifications"
+                title="Enable browser notifications and test kitchen chime"
               >
                 <BellRing className="w-3.5 h-3.5 text-blue-600 animate-pulse" />
                 <span>Enable Alerts</span>
@@ -584,6 +634,44 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
           </div>
         </div>
 
+        {/* ── BROWSER NOTIFICATION & CHIME SETUP BANNER ── */}
+        {notificationPermission !== 'granted' && (
+          <div className="bg-gradient-to-r from-blue-50 via-indigo-50 to-amber-50 border border-blue-200 rounded-2xl p-4 sm:p-5 shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-4 animate-fade-in">
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center shrink-0 mt-0.5 shadow-2xs">
+                <BellRing className="w-5 h-5 text-blue-600 animate-pulse" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h4 className="font-bold text-sm text-blue-950">
+                    Enable Live Order Alerts &amp; Kitchen Chime
+                  </h4>
+                  <span className="text-[10px] bg-blue-200 text-blue-900 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">
+                    Chrome • Safari • Mobile
+                  </span>
+                </div>
+                <p className="text-xs text-blue-800/90 mt-1 leading-relaxed">
+                  Allow browser notifications and audio to hear a restaurant chime and receive instant desktop/mobile popups whenever a customer punches an order.
+                  <span className="text-gray-500 block text-[11px] mt-0.5">
+                    💡 iPhone/iPad Safari users: Tap Share ➔ &quot;Add to Home Screen&quot; to receive system push alerts.
+                  </span>
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 shrink-0 md:self-center">
+              <button
+                type="button"
+                onClick={handleEnableAlerts}
+                className="px-5 py-2.5 bg-[#00346f] hover:bg-[#00224d] text-white text-xs font-bold uppercase tracking-wider rounded-xl shadow-xs transition-all cursor-pointer flex items-center gap-2 hover:scale-101"
+              >
+                <BellRing className="w-4 h-4" />
+                <span>Enable Alerts &amp; Test Chime</span>
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* ── NEW ORDER LIVE ALERT BANNER ── */}
         {newOrderAlert && (
           <div className="bg-gradient-to-r from-amber-500 via-orange-500 to-rose-600 text-white rounded-2xl p-4 sm:p-5 shadow-xl border-2 border-white/40 flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -642,10 +730,10 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
             </div>
             <div>
               <span className="text-[11px] font-bold uppercase tracking-wider text-gray-500">
-                Total Orders ({selectedDate === todayDateStr ? 'Today' : selectedDate})
+                Total Orders ({selectedDate === 'all' ? 'All Upcoming' : selectedDate === todayDateStr ? 'Today' : selectedDate})
               </span>
               <div className="font-serif text-2xl sm:text-3xl font-bold text-gray-900 mt-0.5">
-                {totalOrdersToday}
+                {totalOrdersInView}
               </div>
             </div>
           </div>
@@ -670,10 +758,10 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
             </div>
             <div>
               <span className="text-[11px] font-bold uppercase tracking-wider text-gray-500">
-                Total Today's Revenue
+                Revenue ({selectedDate === 'all' ? 'All Upcoming' : selectedDate === todayDateStr ? 'Today' : selectedDate})
               </span>
               <div className="font-serif text-2xl sm:text-3xl font-bold text-emerald-900 mt-0.5">
-                ${totalTodayRevenue.toFixed(2)}
+                ${totalRevenueInView.toFixed(2)}
               </div>
             </div>
           </div>
@@ -684,42 +772,75 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
         <div className="bg-white rounded-2xl border border-gray-200 p-4 shadow-xs space-y-3">
           
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
-            {/* Quick Date Pills */}
+            {/* Quick Date Pills with Badge Counts */}
             <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
-              <span className="text-xs font-bold text-gray-500 mr-2 flex items-center gap-1">
+              <span className="text-xs font-bold text-gray-500 mr-1.5 flex items-center gap-1 shrink-0">
                 <CalendarIcon className="w-3.5 h-3.5" />
-                Fulfillment Date:
+                <span>Schedule:</span>
               </span>
+
+              {/* All Upcoming Button */}
+              <button
+                type="button"
+                onClick={() => setSelectedDate('all')}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5 shrink-0 ${
+                  selectedDate === 'all'
+                    ? 'bg-[#00346f] text-white shadow-xs'
+                    : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+                }`}
+              >
+                <span>All Upcoming</span>
+                {totalUpcomingOrdersCount > 0 && (
+                  <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-black ${
+                    selectedDate === 'all' ? 'bg-[#ffdea5] text-[#00346f]' : 'bg-gray-200 text-gray-800'
+                  }`}>
+                    {totalUpcomingOrdersCount}
+                  </span>
+                )}
+              </button>
 
               {upcomingDateOptions.map(opt => {
                 const isSelected = selectedDate === opt.dateStr;
                 const isToday = opt.dateStr === todayDateStr;
+                const count = orderCountsByDate.get(opt.dateStr) || 0;
 
                 return (
                   <button
                     key={opt.dateStr}
+                    type="button"
                     onClick={() => setSelectedDate(opt.dateStr)}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5 shrink-0 ${
                       isSelected
                         ? 'bg-[#00346f] text-white shadow-xs'
+                        : count > 0
+                        ? 'bg-blue-50 border border-blue-200 text-[#00346f] hover:bg-blue-100'
                         : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
                     }`}
                   >
-                    {isToday ? 'Today' : `${opt.dayOfWeek} ${opt.label}`}
+                    <span>{isToday ? 'Today' : `${opt.dayOfWeek} ${opt.label}`}</span>
+                    {count > 0 && (
+                      <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-black ${
+                        isSelected
+                          ? 'bg-[#ffdea5] text-[#00346f]'
+                          : 'bg-[#00346f] text-white'
+                      }`}>
+                        {count}
+                      </span>
+                    )}
                   </button>
                 );
               })}
 
               <input
                 type="date"
-                value={selectedDate}
+                value={selectedDate === 'all' ? todayDateStr : selectedDate}
                 onChange={(e) => setSelectedDate(e.target.value)}
-                className="px-2 py-1 bg-gray-50 border border-gray-300 rounded-lg text-xs text-gray-700 focus:outline-none"
+                className="px-2 py-1 bg-gray-50 border border-gray-300 rounded-lg text-xs text-gray-700 focus:outline-none shrink-0"
               />
             </div>
 
             {/* Status Pipeline Filter Tabs */}
-            <div className="flex items-center gap-1 bg-gray-100 p-1 rounded-xl">
+            <div className="flex items-center gap-1 bg-gray-100 p-1 rounded-xl shrink-0">
               {[
                 { key: 'all', label: 'All Orders' },
                 { key: 'new', label: 'New' },
@@ -751,16 +872,36 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
             <p className="text-xs">Loading live kitchen orders...</p>
           </div>
         ) : activeOrders.length === 0 ? (
-          <div className="bg-white rounded-2xl border border-gray-200 p-12 text-center shadow-xs">
-            <ChefHat className="w-12 h-12 mx-auto text-gray-300 mb-3" />
-            <h3 className="font-serif text-lg font-bold text-gray-700">
-              No orders found for {selectedDate}
-            </h3>
-            <p className="text-xs text-gray-500 mt-1">
-              {statusFilter !== 'all' 
-                ? `No orders matching status "${statusFilter}". Try switching to "All Orders".`
-                : 'No catering orders or estimates scheduled for this day yet.'}
-            </p>
+          <div className="bg-white rounded-2xl border border-gray-200 p-8 sm:p-12 text-center shadow-xs space-y-4">
+            <ChefHat className="w-12 h-12 mx-auto text-gray-300" />
+            <div>
+              <h3 className="font-serif text-lg font-bold text-gray-800">
+                No orders found for {selectedDate === 'all' ? 'upcoming schedule' : selectedDate === todayDateStr ? 'Today' : selectedDate}
+              </h3>
+              <p className="text-xs text-gray-500 mt-1">
+                {statusFilter !== 'all' 
+                  ? `No orders matching status "${statusFilter}". Try switching to "All Orders".`
+                  : 'No catering orders or estimates scheduled for this day.'}
+              </p>
+            </div>
+
+            {selectedDate !== 'all' && totalUpcomingOrdersCount > 0 && (
+              <div className="pt-2">
+                <div className="p-3 bg-blue-50 border border-blue-200 rounded-xl inline-block max-w-md mx-auto text-xs text-[#00346f] mb-3">
+                  <strong>Notice:</strong> You have <strong>{totalUpcomingOrdersCount} active orders</strong> scheduled on other dates!
+                </div>
+                <div>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedDate('all')}
+                    className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#00346f] hover:bg-[#00224d] text-white text-xs font-bold uppercase tracking-wider rounded-xl shadow-xs transition cursor-pointer"
+                  >
+                    <span>View All {totalUpcomingOrdersCount} Upcoming Orders</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -817,9 +958,14 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
                     </div>
 
                     <div>
-                      <h3 className="font-serif font-bold text-base text-gray-900">
-                        {order.customer_name}
-                      </h3>
+                      <div className="flex items-start justify-between gap-2">
+                        <h3 className="font-serif font-bold text-base text-gray-900 leading-tight">
+                          {order.customer_name}
+                        </h3>
+                        <span className="text-[10px] font-bold text-[#00346f] bg-blue-50 px-2 py-0.5 rounded-md border border-blue-200 shrink-0 whitespace-nowrap">
+                          📅 {order.fulfillment_date} {order.fulfillment_date === todayDateStr ? '(Today)' : ''}
+                        </span>
+                      </div>
                       <div className="flex items-center gap-3 text-xs text-gray-600 mt-1">
                         <span className="inline-flex items-center gap-1">
                           <Phone className="w-3 h-3 text-gray-400" />
@@ -1015,7 +1161,7 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
                     Aggregated Kitchen Prep Sheet
                   </h2>
                   <p className="text-xs text-gray-500 mt-0.5">
-                    Fulfillment Date: <strong className="text-gray-900">{selectedDate}</strong> • Total Orders: {totalOrdersToday}
+                    Fulfillment Date: <strong className="text-gray-900">{selectedDate === 'all' ? 'All Upcoming Schedule' : selectedDate}</strong> • Total Orders: {totalOrdersInView}
                   </p>
                 </div>
 
