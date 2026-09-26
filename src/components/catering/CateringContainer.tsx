@@ -2,9 +2,7 @@ import { useState, useEffect } from 'react';
 import { 
   UtensilsCrossed, 
   Cake as CakeIcon, 
-  Package, 
-  ChefHat, 
-  Lock
+  Package
 } from 'lucide-react';
 import BrandHeader from './BrandHeader';
 import CakeBrandHeader from './CakeBrandHeader';
@@ -15,20 +13,18 @@ import CostEstimatorSidebar from './CostEstimatorSidebar';
 import CheckoutModal from './CheckoutModal';
 import EstimateReceiptModal from './EstimateReceiptModal';
 import OrderConfirmationModal from './OrderConfirmationModal';
-import KitchenKDS from './KitchenKDS';
 import ErrorBoundary from '../common/ErrorBoundary';
 import type { CartItem, CateringOrder, MenuItem, TraySize } from '../../types/catering';
 
 const CART_STORAGE_KEY = 'bbw_catering_cart_v1';
 
-type SubTab = 'order' | 'cake' | 'tiffin' | 'kitchen';
+type SubTab = 'order' | 'cake' | 'tiffin';
 
 export default function CateringContainer() {
-  // Sub-navigation: 'order' (/catering/food), 'cake' (/catering/cake), 'tiffin' (/catering/tiffin), 'kitchen' (/catering/kitchen)
+  // Sub-navigation: 'order' (/catering/food), 'cake' (/catering/cake), 'tiffin' (/catering/tiffin)
   const [subTab, setSubTab] = useState<SubTab>(() => {
     if (typeof window !== 'undefined') {
       const path = window.location.pathname.toLowerCase();
-      if (path.includes('/kitchen')) return 'kitchen';
       if (path.includes('/cake')) return 'cake';
       if (path.includes('/tiffin')) return 'tiffin';
       if (path.includes('/order')) {
@@ -76,13 +72,6 @@ export default function CateringContainer() {
 
   // Sync route changes with browser history
   const switchSubTab = (tab: SubTab) => {
-    if (tab === 'kitchen') {
-      if (typeof window !== 'undefined') {
-        window.history.pushState(null, '', '/catering/kitchen');
-        window.dispatchEvent(new PopStateEvent('popstate'));
-      }
-      return;
-    }
     setSubTab(tab);
     if (typeof window !== 'undefined') {
       let newPath = '/catering/food';
@@ -98,9 +87,7 @@ export default function CateringContainer() {
   useEffect(() => {
     const handlePopState = () => {
       const path = window.location.pathname.toLowerCase();
-      if (path.includes('/kitchen')) {
-        setSubTab('kitchen');
-      } else if (path.includes('/cake')) {
+      if (path.includes('/cake')) {
         setSubTab('cake');
       } else if (path.includes('/tiffin')) {
         setSubTab('tiffin');
@@ -305,20 +292,6 @@ export default function CateringContainer() {
                   )}
                 </button>
 
-                {/* 4. Kitchen KDS */}
-                <button
-                  type="button"
-                  onClick={() => switchSubTab('kitchen')}
-                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all cursor-pointer whitespace-nowrap ${
-                    subTab === 'kitchen'
-                      ? 'bg-[#00346f] text-white shadow-xs'
-                      : 'text-gray-600 hover:text-gray-900'
-                  }`}
-                >
-                  <ChefHat className="w-3.5 h-3.5" />
-                  <span>Kitchen KDS</span>
-                  <Lock className="w-3 h-3 text-amber-500" />
-                </button>
               </div>
             </div>
 
@@ -333,10 +306,7 @@ export default function CateringContainer() {
       </div>
 
       {/* ── 2. SUB-TAB VIEWPORT ── */}
-      {subTab === 'kitchen' ? (
-        <KitchenKDS onBackToOrder={() => switchSubTab('order')} />
-      ) : (
-        <div className="space-y-8 pb-36 sm:pb-40">
+      <div className="space-y-8 pb-36 sm:pb-40">
           
           {/* SubTab-Specific Brand Headers */}
           {subTab === 'order' && (
@@ -404,7 +374,6 @@ export default function CateringContainer() {
           />
 
         </div>
-      )}
 
       {/* ── 3. MODALS ── */}
       
