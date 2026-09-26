@@ -528,11 +528,11 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
                 </h1>
                 <span className="flex items-center gap-1 bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
                   <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                  Live Sync
+                  Supabase Live Sync
                 </span>
               </div>
               <p className="text-xs text-gray-500 mt-0.5">
-                Real-time Supabase order pipeline &amp; prep orchestration • Central Time (`America/Chicago`)
+                Real-time Supabase cloud database • America/Chicago (Central Time) • <strong className="text-[#00346f] font-bold">{allOrders.filter(o => o.status !== 'cancelled').length} Active Orders</strong>
               </p>
             </div>
           </div>
