@@ -209,11 +209,16 @@ function getStoredOrders(): CateringOrder[] {
   }
 }
 
-function saveStoredOrders(orders: CateringOrder[]): void {
+function saveStoredOrders(orders: CateringOrder[], newOrder?: CateringOrder): void {
   try {
     localStorage.setItem(LOCAL_STORAGE_ORDERS_KEY, JSON.stringify(orders));
-    // Trigger storage event across components / tabs
-    window.dispatchEvent(new CustomEvent('bbw_orders_updated'));
+    // Trigger storage event across components / tabs with payload details
+    window.dispatchEvent(new CustomEvent('bbw_orders_updated', { 
+      detail: { 
+        order: newOrder, 
+        eventType: newOrder ? 'INSERT' : 'UPDATE' 
+      } 
+    }));
   } catch {
     // ignore
   }
@@ -413,7 +418,7 @@ export async function createOrder(orderPayload: Omit<CateringOrder, 'id' | 'crea
       if (!error && data) {
         // Also update local cache
         const current = getStoredOrders();
-        saveStoredOrders([data as CateringOrder, ...current.filter(o => o.id !== data.id)]);
+        saveStoredOrders([data as CateringOrder, ...current.filter(o => o.id !== data.id)], data as CateringOrder);
         return { data: data as CateringOrder, error: null };
       } else if (error) {
         console.warn('Supabase insert warning, persisting to local cache', error);
@@ -426,7 +431,7 @@ export async function createOrder(orderPayload: Omit<CateringOrder, 'id' | 'crea
   // Local fallback
   const current = getStoredOrders();
   const updated = [newOrder, ...current];
-  saveStoredOrders(updated);
+  saveStoredOrders(updated, newOrder);
   return { data: newOrder, error: null };
 }
 
@@ -488,15 +493,29 @@ export async function updateOrderStatus(orderId: string, status: OrderStatus): P
   return updatedSuccessfully;
 }
 
+export interface OrderEventInfo {
+  eventType?: 'INSERT' | 'UPDATE' | 'DELETE' | 'STORAGE' | string;
+  order?: CateringOrder;
+}
+
 /**
  * Subscribe to realtime orders updates.
  */
-export function subscribeToOrders(onUpdate: () => void): () => void {
+export function subscribeToOrders(onUpdate: (eventInfo?: OrderEventInfo) => void): () => void {
   // Local event listener for mock / offline updates
-  const handleLocalUpdate = () => {
-    onUpdate();
+  const handleLocalUpdate = (e: Event) => {
+    const customEvt = e as CustomEvent<OrderEventInfo>;
+    onUpdate(customEvt.detail);
   };
   window.addEventListener('bbw_orders_updated', handleLocalUpdate);
+
+  // Cross-tab storage updates
+  const handleStorageUpdate = (e: StorageEvent) => {
+    if (e.key === LOCAL_STORAGE_ORDERS_KEY) {
+      onUpdate({ eventType: 'STORAGE' });
+    }
+  };
+  window.addEventListener('storage', handleStorageUpdate);
 
   if (supabase) {
     const channel = supabase
@@ -504,20 +523,25 @@ export function subscribeToOrders(onUpdate: () => void): () => void {
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'orders' },
-        () => {
-          onUpdate();
+        (payload) => {
+          onUpdate({
+            eventType: payload.eventType,
+            order: (payload.new as CateringOrder) || undefined
+          });
         }
       )
       .subscribe();
 
     return () => {
       window.removeEventListener('bbw_orders_updated', handleLocalUpdate);
+      window.removeEventListener('storage', handleStorageUpdate);
       supabase.removeChannel(channel);
     };
   }
 
   return () => {
     window.removeEventListener('bbw_orders_updated', handleLocalUpdate);
+    window.removeEventListener('storage', handleStorageUpdate);
   };
 }
 

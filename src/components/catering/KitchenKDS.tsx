@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { 
   Lock, 
   ChefHat, 
@@ -18,7 +18,11 @@ import {
   KeyRound,
   Ban,
   FileEdit,
-  ImageIcon
+  ImageIcon,
+  Volume2,
+  VolumeX,
+  BellRing,
+  Zap
 } from 'lucide-react';
 import type { CateringOrder, OrderStatus } from '../../types/catering';
 import { getCentralTimeNow, getUpcomingDates } from '../../utils/centralTime';
@@ -34,6 +38,49 @@ interface KitchenKDSProps {
 const MASTER_PIN_STORAGE_KEY = 'bbw_kds_master_pin_v1';
 const DEFAULT_INITIAL_PIN = '031686';
 const PIN_STORAGE_KEY = 'bbw_kds_unlocked_session';
+
+/**
+ * High-clarity Web Audio API restaurant chime.
+ * Synthesizes a clean 4-tone ascending bell (D5 -> F#5 -> A5 -> D6)
+ * with natural decay. Works offline, no external audio files required.
+ */
+function playKitchenChime() {
+  try {
+    const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+    if (!AudioContextClass) return;
+    const ctx = new AudioContextClass();
+    if (ctx.state === 'suspended') {
+      ctx.resume();
+    }
+
+    const tones = [
+      { freq: 587.33, time: 0.0, dur: 0.35, gain: 0.22 }, // D5
+      { freq: 739.99, time: 0.12, dur: 0.35, gain: 0.25 }, // F#5
+      { freq: 880.00, time: 0.24, dur: 0.45, gain: 0.28 }, // A5
+      { freq: 1174.66, time: 0.36, dur: 0.9, gain: 0.32 }  // D6
+    ];
+
+    tones.forEach(({ freq, time, dur, gain: targetGain }) => {
+      const osc = ctx.createOscillator();
+      const gainNode = ctx.createGain();
+
+      osc.type = 'triangle'; // Warm, ringing brass bell tone
+      osc.frequency.setValueAtTime(freq, ctx.currentTime + time);
+
+      gainNode.gain.setValueAtTime(0.0001, ctx.currentTime + time);
+      gainNode.gain.exponentialRampToValueAtTime(targetGain, ctx.currentTime + time + 0.02);
+      gainNode.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + time + dur);
+
+      osc.connect(gainNode);
+      gainNode.connect(ctx.destination);
+
+      osc.start(ctx.currentTime + time);
+      osc.stop(ctx.currentTime + time + dur);
+    });
+  } catch (err) {
+    console.warn('Audio chime error:', err);
+  }
+}
 
 export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
   // Authentication PIN state
@@ -83,11 +130,119 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
   // Weekly Tiffin Flyer & Specials Modal
   const [showTiffinModal, setShowTiffinModal] = useState(false);
 
+  // Audio chime settings (persisted in localStorage, default: true)
+  const [soundEnabled, setSoundEnabled] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('bbw_kds_sound_enabled') !== 'false';
+    }
+    return true;
+  });
+
+  // Always-On Screen WakeLock (prevents Android / iPhone / Echo Show screens from sleeping)
+  const [wakeLockActive, setWakeLockActive] = useState(false);
+  const wakeLockSentinelRef = useRef<any>(null);
+
+  // Native Browser Notification Permission state
+  const [notificationPermission, setNotificationPermission] = useState<string>(() => {
+    if (typeof window !== 'undefined' && 'Notification' in window) {
+      return Notification.permission;
+    }
+    return 'unsupported';
+  });
+
+  // High-visibility top banner for newly punched orders
+  const [newOrderAlert, setNewOrderAlert] = useState<CateringOrder | null>(null);
+
+  // Known order IDs tracking to detect new arrivals
+  const knownOrderIdsRef = useRef<Set<string>>(new Set());
+  const isInitialLoadRef = useRef(true);
+
+  // Screen WakeLock request helper
+  const requestWakeLock = async () => {
+    if (typeof navigator !== 'undefined' && 'wakeLock' in navigator) {
+      try {
+        wakeLockSentinelRef.current = await (navigator as any).wakeLock.request('screen');
+        setWakeLockActive(true);
+        wakeLockSentinelRef.current.addEventListener('release', () => {
+          setWakeLockActive(false);
+        });
+      } catch (err) {
+        console.warn('Screen WakeLock error:', err);
+        setWakeLockActive(false);
+      }
+    }
+  };
+
+  const releaseWakeLock = async () => {
+    try {
+      if (wakeLockSentinelRef.current) {
+        await wakeLockSentinelRef.current.release();
+        wakeLockSentinelRef.current = null;
+        setWakeLockActive(false);
+      }
+    } catch (err) {
+      console.warn('Release WakeLock error:', err);
+    }
+  };
+
+  // Screen WakeLock lifecycle: auto-acquire when unlocked, re-acquire when returning to tab
+  useEffect(() => {
+    if (isUnlocked) {
+      requestWakeLock();
+
+      const handleVisibilityChange = () => {
+        if (document.visibilityState === 'visible') {
+          requestWakeLock();
+        }
+      };
+      document.addEventListener('visibilitychange', handleVisibilityChange);
+
+      return () => {
+        document.removeEventListener('visibilitychange', handleVisibilityChange);
+        releaseWakeLock();
+      };
+    }
+  }, [isUnlocked]);
+
+  // Handle incoming newly punched order (audio chime + notification + alert banner)
+  const handleIncomingNewOrder = (order: CateringOrder) => {
+    // 1. Play kitchen bell chime
+    if (soundEnabled) {
+      playKitchenChime();
+    }
+
+    // 2. Fire OS desktop/mobile notification if granted
+    if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
+      try {
+        new Notification('🔔 New Order Punched!', {
+          body: `${order.customer_name} • $${order.total_amount.toFixed(2)} (${order.fulfillment_date} ${order.fulfillment_time || ''})`,
+          icon: '/favicon.ico'
+        });
+      } catch {
+        // ignore notification error
+      }
+    }
+
+    // 3. Display high-visibility flash banner
+    setNewOrderAlert(order);
+  };
+
   // Load orders
   const loadOrders = async () => {
     setIsRefreshing(true);
     try {
       const data = await fetchOrders(selectedDate);
+      
+      // If not initial load, check if any newly added order with 'new' status was fetched
+      if (!isInitialLoadRef.current) {
+        const newlyAdded = data.find(o => !knownOrderIdsRef.current.has(o.id) && o.status === 'new');
+        if (newlyAdded) {
+          handleIncomingNewOrder(newlyAdded);
+        }
+      }
+
+      data.forEach(o => knownOrderIdsRef.current.add(o.id));
+      isInitialLoadRef.current = false;
       setOrders(data);
     } finally {
       setIsLoading(false);
@@ -98,15 +253,20 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
   useEffect(() => {
     if (isUnlocked) {
       loadOrders();
-      // Subscribe to Realtime Postgres Changes
-      const unsubscribe = subscribeToOrders(() => {
+
+      // Subscribe to Realtime Postgres Changes & Local Storage events
+      const unsubscribe = subscribeToOrders((eventInfo) => {
+        if (eventInfo?.eventType === 'INSERT' && eventInfo?.order) {
+          handleIncomingNewOrder(eventInfo.order);
+        }
         loadOrders();
       });
+
       return () => {
         unsubscribe();
       };
     }
-  }, [isUnlocked, selectedDate]);
+  }, [isUnlocked, selectedDate, soundEnabled]);
 
   // Handle PIN entry
   const handlePinSubmit = (e?: React.FormEvent) => {
@@ -352,6 +512,88 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
+            {/* Sound / Bell Alert Toggle & Test */}
+            <div className="inline-flex items-center rounded-xl border border-gray-200 bg-gray-50/90 p-0.5 shadow-2xs">
+              <button
+                type="button"
+                onClick={() => {
+                  const next = !soundEnabled;
+                  setSoundEnabled(next);
+                  localStorage.setItem('bbw_kds_sound_enabled', String(next));
+                  if (next) playKitchenChime();
+                }}
+                className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
+                  soundEnabled 
+                    ? 'bg-emerald-50 text-emerald-800 border border-emerald-200 shadow-2xs' 
+                    : 'text-gray-400 hover:text-gray-600'
+                }`}
+                title={soundEnabled ? "Order chime active (Click to mute)" : "Order chime muted (Click to unmute)"}
+              >
+                {soundEnabled ? <Volume2 className="w-3.5 h-3.5 text-emerald-600" /> : <VolumeX className="w-3.5 h-3.5 text-gray-400" />}
+                <span>{soundEnabled ? 'Bell ON' : 'Muted'}</span>
+              </button>
+
+              {soundEnabled && (
+                <button
+                  type="button"
+                  onClick={() => playKitchenChime()}
+                  className="px-2 py-1.5 text-[11px] font-bold text-gray-500 hover:text-[#00346f] transition cursor-pointer"
+                  title="Test Kitchen Bell Sound"
+                >
+                  Test
+                </button>
+              )}
+            </div>
+
+            {/* Always-On Screen Awake Toggle */}
+            <button
+              type="button"
+              onClick={() => {
+                if (wakeLockActive) {
+                  releaseWakeLock();
+                } else {
+                  requestWakeLock();
+                }
+              }}
+              className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold border transition cursor-pointer ${
+                wakeLockActive
+                  ? 'bg-amber-50 border-amber-300 text-amber-900 shadow-2xs'
+                  : 'bg-gray-50 border-gray-200 text-gray-500 hover:text-gray-700'
+              }`}
+              title={wakeLockActive ? "Screen Awake is active (display will not sleep)" : "Click to keep screen awake indefinitely"}
+            >
+              <Zap className={`w-3.5 h-3.5 ${wakeLockActive ? 'text-amber-600 fill-amber-500' : 'text-gray-400'}`} />
+              <span>{wakeLockActive ? 'Screen Awake' : 'Awake: Off'}</span>
+            </button>
+
+            {/* Native Push Notifications Enable (if not yet granted) */}
+            {notificationPermission !== 'granted' && notificationPermission !== 'unsupported' && (
+              <button
+                type="button"
+                onClick={async () => {
+                  if (typeof window !== 'undefined' && 'Notification' in window) {
+                    try {
+                      const res = await Notification.requestPermission();
+                      setNotificationPermission(res);
+                      if (res === 'granted') {
+                        new Notification('🔔 Bluebonnet Whisk KDS', {
+                          body: 'Order notifications active! You will hear a bell and see an alert when an order is punched.',
+                          icon: '/favicon.ico'
+                        });
+                      }
+                    } catch (err) {
+                      console.warn('Notification permission error:', err);
+                    }
+                  }
+                }}
+                className="inline-flex items-center gap-1.5 bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-900 px-3 py-2 rounded-xl text-xs font-semibold transition cursor-pointer"
+                title="Enable native desktop/mobile push notifications"
+              >
+                <BellRing className="w-3.5 h-3.5 text-blue-600 animate-pulse" />
+                <span>Enable Alerts</span>
+              </button>
+            )}
+
             <button
               onClick={() => setShowPrepSheet(true)}
               className="inline-flex items-center gap-1.5 bg-[#775a19] hover:bg-[#5e4612] text-white px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-xs cursor-pointer"
@@ -414,6 +656,55 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
             </button>
           </div>
         </div>
+
+        {/* ── NEW ORDER LIVE ALERT BANNER ── */}
+        {newOrderAlert && (
+          <div className="bg-gradient-to-r from-amber-500 via-orange-500 to-rose-600 text-white rounded-2xl p-4 sm:p-5 shadow-xl border-2 border-white/40 flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-xl bg-white/20 backdrop-blur-md flex items-center justify-center shrink-0">
+                <BellRing className="w-6 h-6 text-white animate-bounce" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="bg-white text-rose-700 text-xs font-black uppercase px-2 py-0.5 rounded-full tracking-wider">
+                    🔔 New Order Punched!
+                  </span>
+                  <span className="text-xs font-semibold text-white/90">
+                    Just Now
+                  </span>
+                </div>
+                <div className="text-base sm:text-lg font-bold mt-0.5">
+                  {newOrderAlert.customer_name} • ${newOrderAlert.total_amount.toFixed(2)} ({newOrderAlert.items.length} items)
+                </div>
+                <p className="text-xs text-white/90">
+                  Scheduled for: <strong className="text-white">{newOrderAlert.fulfillment_date}</strong> at <strong className="text-white">{newOrderAlert.fulfillment_time || 'Pending time'}</strong> • {newOrderAlert.is_delivery ? '🚚 Delivery' : '🏪 Pickup'}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 shrink-0">
+              {selectedDate !== newOrderAlert.fulfillment_date && (
+                <button
+                  onClick={() => {
+                    setSelectedDate(newOrderAlert.fulfillment_date);
+                    setNewOrderAlert(null);
+                  }}
+                  className="bg-white hover:bg-amber-50 text-rose-700 px-3.5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-md cursor-pointer flex items-center gap-1.5"
+                >
+                  <span>Switch to {newOrderAlert.fulfillment_date}</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+              )}
+              <button
+                onClick={() => setNewOrderAlert(null)}
+                className="bg-black/20 hover:bg-black/40 text-white p-2 rounded-xl text-xs font-semibold transition-all cursor-pointer"
+                title="Dismiss Alert"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* ── REAL-TIME KPI HEADER ── */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
