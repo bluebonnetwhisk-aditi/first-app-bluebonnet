@@ -756,21 +756,7 @@ export default function PortionEstimator({
 
         </div>
 
-        {/* Pan Standard Quick Reference */}
-        <div className="p-4 sm:p-5 rounded-2xl bg-black/40 border border-white/10 text-xs text-gray-300 grid grid-cols-1 sm:grid-cols-3 gap-4 text-center">
-          <div className="p-2 rounded-xl bg-white/5 border border-white/5">
-            <span className="font-bold text-brand-cream block text-sm">1/3 Tray (Small Pan)</span>
-            <span className="text-[11px] text-gray-400">10–12 entree servings • 35–45 appetizer pieces</span>
-          </div>
-          <div className="p-2 rounded-xl bg-white/5 border border-white/5">
-            <span className="font-bold text-brand-cream block text-sm">Half Tray (Medium Pan)</span>
-            <span className="text-[11px] text-gray-400">25–30 entree servings • 80–100 appetizer pieces</span>
-          </div>
-          <div className="p-2 rounded-xl bg-white/5 border border-white/5">
-            <span className="font-bold text-brand-cream block text-sm">Full Tray (Large Pan)</span>
-            <span className="text-[11px] text-gray-400">50–60 entree servings • 160–200 appetizer pieces</span>
-          </div>
-        </div>
+
 
         {/* ── 4. IMMEDIATE ACTION & MULTI-CHANNEL INQUIRY BAR ── */}
         <div className="rounded-3xl bg-gradient-to-br from-[#00346f] via-[#00224d] to-[#121620] p-6 sm:p-8 border border-brand-gold-tint/40 text-center space-y-6 shadow-2xl">
