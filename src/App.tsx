@@ -23,6 +23,9 @@ export default function App() {
   const [activeTab, setActiveTab] = useState(() => {
     if (typeof window !== "undefined") {
       const path = window.location.pathname.toLowerCase();
+      if (path === "/catering/order") {
+        window.history.replaceState(null, "", "/catering/food");
+      }
       if (path.startsWith("/catering") || path.startsWith("/menu")) return "Catering";
       if (path.startsWith("/cakes")) return "Cakes";
       if (path.startsWith("/about")) return "About";
@@ -72,7 +75,7 @@ export default function App() {
     if (typeof window !== "undefined") {
       const currentPath = window.location.pathname.toLowerCase();
       if (activeTab === "Catering" && !currentPath.startsWith("/catering")) {
-        window.history.pushState(null, "", "/catering/order");
+        window.history.pushState(null, "", "/catering/food");
       } else if (activeTab === "Home" && currentPath !== "/" && currentPath !== "") {
         window.history.pushState(null, "", "/");
       }

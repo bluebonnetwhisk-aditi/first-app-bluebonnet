@@ -314,7 +314,7 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
                   onClick={onBackToOrder}
                   className="text-xs text-gray-500 hover:text-gray-800 pt-2 underline cursor-pointer"
                 >
-                  Return to Catering Order Form
+                  Return to Food Order Form
                 </button>
               )}
             </div>

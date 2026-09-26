@@ -23,13 +23,17 @@ const CART_STORAGE_KEY = 'bbw_catering_cart_v1';
 type SubTab = 'order' | 'cake' | 'tiffin' | 'kitchen';
 
 export default function CateringContainer() {
-  // Sub-navigation: 'order' (/catering/order), 'cake' (/catering/cake), 'tiffin' (/catering/tiffin), 'kitchen' (/catering/kitchen)
+  // Sub-navigation: 'order' (/catering/food), 'cake' (/catering/cake), 'tiffin' (/catering/tiffin), 'kitchen' (/catering/kitchen)
   const [subTab, setSubTab] = useState<SubTab>(() => {
     if (typeof window !== 'undefined') {
       const path = window.location.pathname.toLowerCase();
       if (path.includes('/kitchen')) return 'kitchen';
       if (path.includes('/cake')) return 'cake';
       if (path.includes('/tiffin')) return 'tiffin';
+      if (path.includes('/order')) {
+        // Upgrade legacy /catering/order to /catering/food in address bar
+        window.history.replaceState(null, '', '/catering/food');
+      }
     }
     return 'order';
   });
@@ -73,7 +77,7 @@ export default function CateringContainer() {
   const switchSubTab = (tab: SubTab) => {
     setSubTab(tab);
     if (typeof window !== 'undefined') {
-      let newPath = '/catering/order';
+      let newPath = '/catering/food';
       if (tab === 'kitchen') newPath = '/catering/kitchen';
       else if (tab === 'cake') newPath = '/catering/cake';
       else if (tab === 'tiffin') newPath = '/catering/tiffin';
@@ -237,7 +241,7 @@ export default function CateringContainer() {
               </span>
               
               <div className="flex items-center gap-1.5 bg-gray-100 p-1 rounded-xl">
-                {/* 1. Catering Order */}
+                {/* 1. Food Order */}
                 <button
                   type="button"
                   onClick={() => switchSubTab('order')}
@@ -248,7 +252,7 @@ export default function CateringContainer() {
                   }`}
                 >
                   <UtensilsCrossed className="w-3.5 h-3.5" />
-                  <span>Catering Order</span>
+                  <span>Food Order</span>
                   {cateringDishCount > 0 && (
                     <span className="w-4 h-4 rounded-full bg-[#ffdea5] text-[#00346f] text-[10px] flex items-center justify-center font-bold">
                       {cateringDishCount}
@@ -347,7 +351,7 @@ export default function CateringContainer() {
               {/* Left Column: Active Segment (8 Cols) */}
               <div className="lg:col-span-8">
                 
-                {/* SubTab 1: Catering Order */}
+                {/* SubTab 1: Food Order */}
                 {subTab === 'order' && (
                   <MenuOrderGrid
                     cart={cart}
