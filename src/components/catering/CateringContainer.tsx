@@ -17,6 +17,7 @@ import CheckoutModal from './CheckoutModal';
 import EstimateReceiptModal from './EstimateReceiptModal';
 import OrderConfirmationModal from './OrderConfirmationModal';
 import KitchenKDS from './KitchenKDS';
+import ErrorBoundary from '../common/ErrorBoundary';
 import type { CartItem, CateringOrder, MenuItem, TraySize } from '../../types/catering';
 
 const CART_STORAGE_KEY = 'bbw_catering_cart_v1';
@@ -423,14 +424,16 @@ export default function CateringContainer() {
       {/* ── 3. MODALS ── */}
       
       {/* Checkout & Lead-Time Validation Modal */}
-      <CheckoutModal
-        isOpen={isCheckoutOpen}
-        onClose={() => setIsCheckoutOpen(false)}
-        cart={cart}
-        isDelivery={isDelivery}
-        setIsDelivery={setIsDelivery}
-        onOrderSuccess={handleOrderSuccess}
-      />
+      <ErrorBoundary fallbackTitle="Unable to load checkout window">
+        <CheckoutModal
+          isOpen={isCheckoutOpen}
+          onClose={() => setIsCheckoutOpen(false)}
+          cart={cart}
+          isDelivery={isDelivery}
+          setIsDelivery={setIsDelivery}
+          onOrderSuccess={handleOrderSuccess}
+        />
+      </ErrorBoundary>
 
       {/* Printable Estimate Receipt Modal */}
       <EstimateReceiptModal

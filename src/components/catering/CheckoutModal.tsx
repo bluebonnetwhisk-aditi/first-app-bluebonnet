@@ -111,7 +111,14 @@ export default function CheckoutModal({
     }
   };
 
-  if (!isOpen) return null;
+  const hasTiffin = cart.some(item => item.category === 'tiffin');
+
+  // Enforce pickup if cart has tiffin items (hook called unconditionally at top level)
+  useEffect(() => {
+    if (hasTiffin && isDelivery) {
+      setIsDelivery(false);
+    }
+  }, [hasTiffin, isDelivery, setIsDelivery]);
 
   // Lead time calculations
   const noticeHours = getRequiredNoticeHours(cart);
@@ -122,14 +129,6 @@ export default function CheckoutModal({
   const foodSubtotal = cart.reduce((sum, item) => sum + item.totalPrice, 0);
   const cakeSubtotal = cart.filter(item => item.category === 'cakes').reduce((sum, item) => sum + item.totalPrice, 0);
   const nonCakeSubtotal = cart.filter(item => item.category !== 'cakes').reduce((sum, item) => sum + item.totalPrice, 0);
-  const hasTiffin = cart.some(item => item.category === 'tiffin');
-
-  // Enforce pickup if cart has tiffin items
-  useEffect(() => {
-    if (hasTiffin && isDelivery) {
-      setIsDelivery(false);
-    }
-  }, [hasTiffin, isDelivery, setIsDelivery]);
 
   const deliveryFee = isDelivery ? 50.00 : 0.00;
 
@@ -272,6 +271,8 @@ export default function CheckoutModal({
       setIsSubmitting(false);
     }
   };
+
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-xs p-3 sm:p-4 overflow-y-auto animate-fade-in font-sans">
