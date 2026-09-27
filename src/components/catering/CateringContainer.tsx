@@ -225,12 +225,9 @@ export default function CateringContainer() {
     <div className="w-full bg-[#fbfbfa] min-h-screen font-sans selection:bg-[#775a19]/20 overflow-x-hidden">
       
       {/* ── 1. SUB-NAVIGATION BAR (Catering Order, Cake Order, Tiffin Order) ── */}
-      <div 
-        className="sticky z-35 bg-[#fbfbfa]/95 backdrop-blur-md border-b border-gray-200/90 shadow-2xs transition-all"
-        style={{ top: 'var(--header-nav-bottom, 64px)' }}
-      >
+      <div className="relative w-full bg-white border-b border-gray-200/90 shadow-2xs">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between min-h-[52px] py-1.5">
+          <div className="flex items-center justify-between min-h-[52px] py-2">
             
             <div className="flex items-center gap-2 overflow-x-auto py-1 scrollbar-none w-full sm:w-auto">
               <span className="font-serif font-bold text-xs uppercase tracking-widest text-[#00346f] hidden sm:inline mr-1">
