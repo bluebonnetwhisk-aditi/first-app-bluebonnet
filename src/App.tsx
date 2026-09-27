@@ -187,7 +187,7 @@ export default function App() {
     { name: "Home", id: "Home" },
     { name: "Cakes", id: "Cakes" },
     { name: "Catering", id: "Catering" },
-    { name: "Custom Party Packages", id: "Live Counters" },
+    { name: "Party Packages", id: "Live Counters" },
     { name: "Lux Gifting", id: "Gifting" },
     { name: "Gallery", id: "Gallery" },
     { name: "Reviews", id: "Reviews" },
@@ -204,27 +204,27 @@ export default function App() {
       </div>
 
       {/* Header / Navbar */}
-      <nav ref={navRef} className="sticky top-0 z-45 bg-[#fbfbfa]/95 backdrop-blur-md border-b border-gray-150 py-3.5 shadow-xs">
-        <div className="max-w-7xl mx-auto px-4 lg:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-14">
+      <nav ref={navRef} className="sticky top-0 z-45 bg-[#fbfbfa]/95 backdrop-blur-md border-b border-gray-150 py-3 shadow-xs">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-14 gap-4">
             
-            {/* Logo Brand */}
+            {/* Logo Brand - Shrink 0 ensures it is never squished or overshadowed */}
             <div 
               onClick={() => setActiveTab("Home")} 
-              className="flex-shrink-0 flex items-center cursor-pointer group"
+              className="shrink-0 flex items-center cursor-pointer group pr-2"
             >
-              <span className="font-serif text-xl lg:text-2xl font-bold text-[#00346f] tracking-tight transition-colors group-hover:text-[#775a19]">
+              <span className="font-serif text-xl sm:text-2xl font-bold text-[#00346f] tracking-tight transition-colors group-hover:text-[#775a19] whitespace-nowrap">
                 Bluebonnet Whisk
               </span>
             </div>
 
-            {/* Desktop Navigation Links */}
-            <div className="hidden lg:flex space-x-8">
+            {/* Desktop Navigation Links (xl screens & up: 1280px+) */}
+            <div className="hidden xl:flex items-center space-x-4 2xl:space-x-6">
               {navLinks.map((link) => (
                 <button
                   key={link.id}
                   onClick={() => setActiveTab(link.id)}
-                  className={`font-sans text-xs uppercase tracking-widest font-semibold pb-1.5 transition-all border-b-2 hover:text-[#00346f] hover:border-[#00346f] cursor-pointer ${
+                  className={`font-sans text-[11px] 2xl:text-xs uppercase tracking-wider font-semibold pb-1 transition-all border-b-2 hover:text-[#00346f] hover:border-[#00346f] cursor-pointer whitespace-nowrap ${
                     activeTab === link.id
                       ? "text-[#00346f] border-[#00346f] font-bold"
                       : "text-gray-500 border-transparent"
@@ -235,21 +235,11 @@ export default function App() {
               ))}
             </div>
 
-            {/* Right Controls */}
-            <div className="hidden lg:flex items-center space-x-6">
+            {/* Right Controls: Request Quote */}
+            <div className="flex items-center gap-3 shrink-0">
               <button
                 onClick={() => setActiveTab("Catering")}
-                className="bg-[#00346f] hover:bg-[#00346f]/95 text-white px-5 py-2.5 rounded text-xs uppercase tracking-widest font-semibold transition-all duration-200 shadow-sm cursor-pointer"
-              >
-                REQUEST QUOTE
-              </button>
-            </div>
-
-            {/* Mobile Actions: Request Quote */}
-            <div className="lg:hidden flex items-center gap-2">
-              <button
-                onClick={() => setActiveTab("Catering")}
-                className="bg-[#00346f] hover:bg-[#00346f]/95 text-white min-h-[44px] px-4 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider cursor-pointer font-sans inline-flex items-center justify-center transition-all shadow-xs"
+                className="bg-[#00346f] hover:bg-[#00224d] text-white min-h-[40px] px-4 sm:px-5 py-2 rounded-lg text-xs font-bold uppercase tracking-wider cursor-pointer font-sans inline-flex items-center justify-center transition-all shadow-xs whitespace-nowrap"
               >
                 REQUEST QUOTE
               </button>
@@ -258,14 +248,14 @@ export default function App() {
           </div>
         </div>
 
-        {/* Mobile Toolbar (persistent scrollable bar of navigation tabs) */}
-        <div className="lg:hidden bg-[#fbfbfa] border-t border-gray-150 py-1 mt-1 overflow-x-auto scrollbar-none">
+        {/* Secondary Navigation Row for Tablets & Laptops (under 1280px) */}
+        <div className="xl:hidden bg-[#fbfbfa] border-t border-gray-150 py-1.5 mt-1 overflow-x-auto scrollbar-none">
           <div className="flex px-4 space-x-4 whitespace-nowrap min-w-max">
             {navLinks.map((link) => (
               <button
                 key={link.id}
                 onClick={() => setActiveTab(link.id)}
-                className={`font-sans text-xs uppercase tracking-widest font-semibold min-h-[44px] px-1.5 py-2 flex items-center transition-all border-b-2 cursor-pointer ${
+                className={`font-sans text-xs uppercase tracking-widest font-semibold min-h-[36px] px-2 py-1 flex items-center transition-all border-b-2 cursor-pointer ${
                   activeTab === link.id
                     ? "text-[#00346f] border-[#00346f] font-bold"
                     : "text-gray-500 border-transparent hover:text-gray-900"
