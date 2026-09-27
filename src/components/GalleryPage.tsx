@@ -492,9 +492,9 @@ export default function GalleryPage({ onNavigateToAdmin: _onNavigateToAdmin }: G
                   <div className="absolute inset-0 bg-gradient-to-t from-[#1A1614]/60 via-transparent to-transparent pointer-events-none" />
 
                   {/* Multi-Category Pills */}
-                  <div className="absolute top-3 left-3 flex flex-wrap gap-1 max-w-[80%] z-10">
+                  <div className="absolute top-3 left-3 flex flex-wrap gap-2 gap-y-1.5 max-w-[85%] z-10">
                     {categoriesList.map((cat) => (
-                      <span key={cat} className="bg-[#1A1614]/90 backdrop-blur-md text-[#D4AF37] border border-[#D4AF37]/30 px-2.5 py-0.5 rounded-lg text-[10px] font-bold uppercase tracking-wider font-sans shadow-xs">
+                      <span key={cat} className="bg-[#1A1614]/90 backdrop-blur-md text-[#D4AF37] border border-[#D4AF37]/30 px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider font-sans shadow-sm">
                         {cat}
                       </span>
                     ))}
@@ -550,9 +550,9 @@ export default function GalleryPage({ onNavigateToAdmin: _onNavigateToAdmin }: G
                     alt={selectedItem.title}
                     className="w-full h-full object-contain rounded-lg"
                   />
-                  <div className="absolute top-3 left-3 flex flex-wrap gap-1 max-w-[85%] z-10">
+                  <div className="absolute top-3 left-3 flex flex-wrap gap-2 gap-y-1.5 max-w-[85%] z-10">
                     {getItemCategories(selectedItem).map((cat) => (
-                      <span key={cat} className="bg-black/70 backdrop-blur-md px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider text-[#D4AF37] border border-[#D4AF37]/30">
+                      <span key={cat} className="bg-black/70 backdrop-blur-md px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider text-[#D4AF37] border border-[#D4AF37]/30 shadow-sm">
                         {cat}
                       </span>
                     ))}
