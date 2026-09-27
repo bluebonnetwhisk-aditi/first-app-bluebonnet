@@ -28,18 +28,51 @@ export default function Home({ onOpenBaker: _onOpenBaker, onNavigate }: HomeProp
   const [activeFaq, setActiveFaq] = useState<number | null>(null);
   const [activeStage, setActiveStage] = useState<number>(0);
 
-  // Programmatically trigger video autoplay for mobile & tablet Safari / Chrome
+  // Robust programmatically triggered video autoplay for mobile & tablet (Android Chrome / Safari)
   useEffect(() => {
-    if (videoRef.current) {
-      videoRef.current.muted = true;
-      videoRef.current.defaultMuted = true;
-      const playPromise = videoRef.current.play();
-      if (playPromise !== undefined) {
-        playPromise.catch((err) => {
-          console.warn("Mobile video autoplay prevented:", err);
-        });
+    const video = videoRef.current;
+    if (!video) return;
+
+    // Force DOM properties & attributes required by Android Chrome
+    video.muted = true;
+    video.defaultMuted = true;
+    video.setAttribute("muted", "");
+    video.setAttribute("playsinline", "");
+    video.setAttribute("webkit-playsinline", "");
+
+    const attemptPlay = () => {
+      if (video && video.paused) {
+        const playPromise = video.play();
+        if (playPromise !== undefined) {
+          playPromise.catch((err) => {
+            console.warn("Mobile video autoplay waiting for user interaction/ready:", err);
+          });
+        }
       }
-    }
+    };
+
+    // Attempt playback immediately
+    attemptPlay();
+
+    // Attach event listeners to unlock playback on Android Chrome when video buffers or user scrolls/touches
+    video.addEventListener("loadeddata", attemptPlay);
+    video.addEventListener("canplay", attemptPlay);
+
+    const handleUserInteraction = () => {
+      attemptPlay();
+      window.removeEventListener("touchstart", handleUserInteraction);
+      window.removeEventListener("scroll", handleUserInteraction);
+    };
+
+    window.addEventListener("touchstart", handleUserInteraction, { passive: true });
+    window.addEventListener("scroll", handleUserInteraction, { passive: true });
+
+    return () => {
+      video.removeEventListener("loadeddata", attemptPlay);
+      video.removeEventListener("canplay", attemptPlay);
+      window.removeEventListener("touchstart", handleUserInteraction);
+      window.removeEventListener("scroll", handleUserInteraction);
+    };
   }, []);
 
   // Framer Motion scroll hooks for Hero zoom & text fade transitions
@@ -100,17 +133,28 @@ export default function Home({ onOpenBaker: _onOpenBaker, onNavigate }: HomeProp
       {/* ── HERO SECTION WITH SCROLL VIDEO TRANSITION ── */}
       <section ref={containerRef} className="relative h-[120vh] w-full bg-[#050a1a]">
         
-        {/* Sticky video container */}
-        <div className="sticky top-0 h-screen w-full overflow-hidden flex items-center justify-center">
+        {/* Sticky video container with Android fallback image */}
+        <div className="sticky top-0 h-screen w-full overflow-hidden flex items-center justify-center bg-[#050a1a]">
+          {/* Fallback image background for low-power Android modes */}
+          <div className="absolute inset-0 z-0">
+            <img 
+              src="src/assets/images/hero_cakes_desserts_1781194959946.jpg" 
+              alt="Bluebonnet Whisk" 
+              className="w-full h-full object-cover filter brightness-75 scale-105"
+            />
+          </div>
+
           <motion.video 
             ref={videoRef}
-            muted 
-            autoPlay
-            loop
-            playsInline
-            preload="auto"
+            src={heroVideo}
+            poster="src/assets/images/hero_cakes_desserts_1781194959946.jpg"
+            muted={true}
+            autoPlay={true}
+            loop={true}
+            playsInline={true}
+            preload="metadata"
             style={{ scale: videoScale, opacity: videoOpacity }}
-            className="absolute inset-0 w-full h-full object-cover select-none pointer-events-none filter brightness-90 saturate-105"
+            className="absolute inset-0 z-1 w-full h-full object-cover select-none pointer-events-none filter brightness-90 saturate-105"
           >
             <source src={heroVideo} type="video/mp4" />
             <source src="/videos/hero.mp4" type="video/mp4" />
