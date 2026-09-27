@@ -178,15 +178,6 @@ export default function LiveCountersPage({}: LiveCountersPageProps = {}) {
                     </ul>
                   </div>
                 </div>
-
-                <div className="px-6 pb-6 lg:px-8 lg:pb-8">
-                  <a
-                    href={`sms:+19455274566?body=Hi!%20I'd%20like%20to%20select%20the%20${encodeURIComponent(pkg.title)}.`}
-                    className="w-full bg-[#00346f] hover:bg-[#00346f]/95 text-white font-sans text-xs uppercase tracking-widest font-bold py-3.5 rounded shadow-sm transition-all cursor-pointer inline-block text-center"
-                  >
-                    SELECT THIS PACKAGE
-                  </a>
-                </div>
               </div>
             );
           })}

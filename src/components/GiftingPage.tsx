@@ -110,14 +110,6 @@ export default function GiftingPage({}: GiftingPageProps = {}) {
                   <h3 className="font-serif text-xl font-bold text-[#00346f]">{col.title}</h3>
                   <p className="text-gray-600 text-xs lg:text-sm font-sans leading-relaxed">{col.desc}</p>
                 </div>
-                <div className="pt-4 border-t border-gray-100">
-                  <a 
-                    href={`sms:+19455274566?body=Hi!%20I'd%20like%20to%20select%20the%20${encodeURIComponent(col.title)}.`}
-                    className="w-full border border-secondary-brand/60 hover:bg-secondary-brand/5 text-[#775a19] py-2 text-[10px] font-bold tracking-widest uppercase rounded-sm transition-all cursor-pointer font-sans inline-block text-center"
-                  >
-                    Select Hamper
-                  </a>
-                </div>
               </div>
             </div>
           ))}
