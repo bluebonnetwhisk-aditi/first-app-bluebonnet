@@ -87,10 +87,28 @@ export default function CheckoutModal({
       fetchCalendarBlackouts().then(dates => {
         setBlackouts(dates);
 
-        // Compute guaranteed earliest valid date & time slot satisfying Central Time cutoff
-        const firstValid = findFirstValidFulfillmentSlot(dates, cart);
-        setFulfillmentDate(firstValid.dateStr);
-        setFulfillmentTime(firstValid.timeSlot);
+        // Check if cart contains tiffin items with a specific target YYYY-MM-DD date in ID
+        const tiffinItemWithDate = cart.find(i => i.category === 'tiffin' && /\d{4}-\d{2}-\d{2}/.test(i.id));
+        let preferredDate: string | undefined;
+        if (tiffinItemWithDate) {
+          const match = tiffinItemWithDate.id.match(/\d{4}-\d{2}-\d{2}/);
+          if (match) preferredDate = match[0];
+        }
+
+        if (preferredDate && !dates.includes(preferredDate)) {
+          setFulfillmentDate(preferredDate);
+          for (const slot of TIME_SLOTS) {
+            if (isTimeSlotValidForDate(preferredDate, slot, cart)) {
+              setFulfillmentTime(slot);
+              break;
+            }
+          }
+        } else {
+          // Compute guaranteed earliest valid date & time slot satisfying Central Time cutoff
+          const firstValid = findFirstValidFulfillmentSlot(dates, cart);
+          setFulfillmentDate(firstValid.dateStr);
+          setFulfillmentTime(firstValid.timeSlot);
+        }
       });
     }
   }, [isOpen, cart]);

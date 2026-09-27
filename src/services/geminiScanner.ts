@@ -351,7 +351,7 @@ function sanitizeParsedTiffinData(data: any): ScannedTiffinData {
  */
 export function getBundledFlyerParsedData(): ScannedTiffinData {
   return {
-    weekTitle: 'September 21 - 26',
+    weekTitle: 'September 28 - October 3',
     dabbaPricing: {
       singlePrice: 11.99,
       familyPrice: 34.99,

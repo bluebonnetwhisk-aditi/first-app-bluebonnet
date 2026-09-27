@@ -149,17 +149,17 @@ export default function KDSTiffinMenuModal({
       }
 
       // Generate upcoming 8 weeks
-      const { nowDate } = getCentralTimeNow();
+      const { nowDate, dateStr: todayStr } = getCentralTimeNow();
       const currentDayOfWeek = nowDate.getDay(); // 0 is Sunday, 1 is Monday
-      const mondayOffset = currentDayOfWeek === 0 ? -6 : 1 - currentDayOfWeek;
-      const currentMondayMs = nowDate.getTime() + mondayOffset * 24 * 60 * 60 * 1000;
+      const mondayOffset = currentDayOfWeek === 0 ? 1 : (1 - currentDayOfWeek);
+      const baseMonDate = new Date(nowDate.getFullYear(), nowDate.getMonth(), nowDate.getDate() + mondayOffset);
 
       const options: WeekOption[] = [];
       const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
       for (let w = 0; w < 8; w++) {
-        const weekMon = new Date(currentMondayMs + w * 7 * 24 * 60 * 60 * 1000);
-        const weekSun = new Date(weekMon.getTime() + 6 * 24 * 60 * 60 * 1000);
+        const weekMon = new Date(baseMonDate.getFullYear(), baseMonDate.getMonth(), baseMonDate.getDate() + w * 7);
+        const weekSun = new Date(weekMon.getFullYear(), weekMon.getMonth(), weekMon.getDate() + 6);
 
         const mStartStr = `${weekMon.getFullYear()}-${(weekMon.getMonth() + 1).toString().padStart(2, '0')}-${weekMon.getDate().toString().padStart(2, '0')}`;
         const mEndStr = `${weekSun.getFullYear()}-${(weekSun.getMonth() + 1).toString().padStart(2, '0')}-${weekSun.getDate().toString().padStart(2, '0')}`;
@@ -167,7 +167,7 @@ export default function KDSTiffinMenuModal({
         // Count blackouts in this week
         let count = 0;
         for (let d = 0; d < 7; d++) {
-          const checkD = new Date(weekMon.getTime() + d * 24 * 60 * 60 * 1000);
+          const checkD = new Date(weekMon.getFullYear(), weekMon.getMonth(), weekMon.getDate() + d);
           const dateStr = `${checkD.getFullYear()}-${(checkD.getMonth() + 1).toString().padStart(2, '0')}-${checkD.getDate().toString().padStart(2, '0')}`;
           if (bDates.includes(dateStr)) count++;
         }
@@ -185,8 +185,8 @@ export default function KDSTiffinMenuModal({
 
       setWeekOptions(options);
 
-      // Match current week
-      if (data.weekStartDate) {
+      // Match current week (ignore past week dates)
+      if (data.weekStartDate && data.weekStartDate >= todayStr) {
         setSelectedWeekKey(data.weekStartDate);
       } else if (options.length > 0) {
         setSelectedWeekKey(options[0].key);

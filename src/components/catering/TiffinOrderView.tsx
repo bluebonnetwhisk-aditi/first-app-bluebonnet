@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { 
   Plus, 
@@ -21,6 +21,8 @@ import type { CartItem, MenuItem, TiffinSpecialDish, TiffinMenuSettings, Contain
 import { getCentralTimeNow } from '../../utils/centralTime';
 import { 
   fetchTiffinMenuSettings, 
+  getCurrentMondayStr,
+  getCurrentMondayTitle,
   DEFAULT_TIFFIN_SETTINGS, 
   DEFAULT_WEEKDAY_MENUS, 
   DEFAULT_CONTAINER_ADDONS, 
@@ -130,12 +132,33 @@ export default function TiffinOrderView({
 
   // Load tiffin flyer & special settings from Supabase / localStorage
   useEffect(() => {
+    if (typeof localStorage !== 'undefined') {
+      try {
+        const raw = localStorage.getItem('bbw_tiffin_menu_settings_v1');
+        if (raw && (raw.includes('2026-09-21') || raw.includes('September 21'))) {
+          localStorage.removeItem('bbw_tiffin_menu_settings_v1');
+        }
+      } catch {}
+    }
+
     fetchTiffinMenuSettings().then(data => {
+      const curMon = getCurrentMondayStr();
+      if (!data.weekStartDate || data.weekStartDate < curMon || data.weekTitle?.includes('21')) {
+        data.weekStartDate = curMon;
+        data.weekTitle = getCurrentMondayTitle(curMon);
+      }
       setSettings(data);
     });
 
     const handleSettingsUpdate = () => {
-      fetchTiffinMenuSettings().then(data => setSettings(data));
+      fetchTiffinMenuSettings().then(data => {
+        const curMon = getCurrentMondayStr();
+        if (!data.weekStartDate || data.weekStartDate < curMon || data.weekTitle?.includes('21')) {
+          data.weekStartDate = curMon;
+          data.weekTitle = getCurrentMondayTitle(curMon);
+        }
+        setSettings(data);
+      });
     };
     window.addEventListener('bbw_tiffin_settings_updated', handleSettingsUpdate);
     return () => window.removeEventListener('bbw_tiffin_settings_updated', handleSettingsUpdate);
@@ -160,82 +183,16 @@ export default function TiffinOrderView({
     };
   }, [isLightboxOpen]);
 
-  // Compute days of the week in Central Time
-  const schedule: DaySchedule[] = [];
+  // Generate 4 upcoming Monday–Friday / Sunday weeks in Central Time
   const { nowDate, dateStr: todayStr } = getCentralTimeNow();
-  
-  // Find current week Monday through Sunday
-  const currentDayOfWeek = nowDate.getDay(); // 0 is Sunday, 1 is Monday... 6 is Saturday
-  // Normalize so Monday is day 1, Sunday is day 7
-  const mondayOffset = currentDayOfWeek === 0 ? -6 : 1 - currentDayOfWeek;
-  const mondayMs = nowDate.getTime() + mondayOffset * 24 * 60 * 60 * 1000;
 
-  const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+  const upcomingWeeks = useMemo(() => {
+    const curDayOfWeek = nowDate.getDay(); // 0 is Sunday, 1 is Monday... 6 is Saturday
+    const daysToMonday = curDayOfWeek === 0 ? 1 : (1 - curDayOfWeek);
+    const baseMonday = new Date(nowDate.getFullYear(), nowDate.getMonth(), nowDate.getDate() + daysToMonday);
 
-  for (let i = 0; i < 7; i++) {
-    const dayDate = new Date(mondayMs + i * 24 * 60 * 60 * 1000);
-    const y = dayDate.getFullYear();
-    const m = (dayDate.getMonth() + 1).toString().padStart(2, '0');
-    const d = dayDate.getDate().toString().padStart(2, '0');
-    const dateStr = `${y}-${m}-${d}`;
-    const dayName = daysOfWeek[i];
     const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    const displayDate = `${monthNames[dayDate.getMonth()]} ${dayDate.getDate()}`;
-
-    const isSunday = dayName === 'Sunday';
-    const isSaturday = dayName === 'Saturday';
-
-    // Must be strictly after today (next day or later) and not Sunday
-    const isNextDayOrLater = dateStr > todayStr;
-    const isSelectable = isNextDayOrLater && !isSunday;
-
-    let statusLabel = 'Available to Order';
-    if (isSunday) {
-      statusLabel = 'Kitchen Closed';
-    } else if (dateStr < todayStr) {
-      statusLabel = 'Past Date';
-    } else if (dateStr === todayStr) {
-      statusLabel = 'Order Closed (Same-day unavailable)';
-    }
-
-    const activeMenus = settings.weekdayMenus || DEFAULT_WEEKDAY_MENUS;
-    const menu = activeMenus[dayName] || DEFAULT_WEEKDAY_MENUS[dayName] || { dal: 'Special Curry', sabzi: 'Seasonal Sabzi', description: '' };
-
-    schedule.push({
-      dayName,
-      dateStr,
-      displayDate,
-      dalOrCurry: isSaturday ? (settings.saturdaySpecialTitle || menu.dal) : menu.dal,
-      sabzi: isSaturday ? (settings.saturdaySpecialDescription || menu.sabzi) : menu.sabzi,
-      description: menu.description,
-      isSaturdaySpecial: isSaturday,
-      isSundayClosed: isSunday,
-      isSelectable,
-      statusLabel
-    });
-  }
-
-  // Generate 4 upcoming Monday–Friday weeks for Weekly Dabba Subscription
-  const upcomingWeeks: {
-    id: string;
-    label: string;
-    monDateStr: string;
-    friDateStr: string;
-    rangeLabel: string;
-    shortRange: string;
-    days: { dayName: string; displayDate: string; dateStr: string }[];
-  }[] = [];
-
-  const curDayOfWeek = nowDate.getDay(); // 0 is Sunday, 1 is Monday... 6 is Saturday
-  // Days to reach upcoming Monday:
-  // If Sunday (0), next day is Monday (+1)
-  // If Mon-Sat, next Monday is (8 - curDayOfWeek)
-  const daysToUpcomingMonday = curDayOfWeek === 0 ? 1 : (8 - curDayOfWeek);
-  const baseMondayDate = new Date(nowDate.getFullYear(), nowDate.getMonth(), nowDate.getDate() + daysToUpcomingMonday);
-
-  for (let w = 0; w < 4; w++) {
-    const mon = new Date(baseMondayDate.getFullYear(), baseMondayDate.getMonth(), baseMondayDate.getDate() + w * 7);
-    const fri = new Date(mon.getFullYear(), mon.getMonth(), mon.getDate() + 4);
+    const dayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
     const fmtStr = (d: Date) => {
       const y = d.getFullYear();
@@ -244,47 +201,146 @@ export default function TiffinOrderView({
       return `${y}-${m}-${day}`;
     };
 
-    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     const fmtDisplay = (d: Date) => `${monthNames[d.getMonth()]} ${d.getDate()}`;
 
-    const monDateStr = fmtStr(mon);
-    const friDateStr = fmtStr(fri);
-    const shortRange = `${fmtDisplay(mon)} – ${fmtDisplay(fri)}`;
-    const rangeLabel = `${fmtDisplay(mon)} – ${fmtDisplay(fri)}, ${mon.getFullYear()}`;
-    const label = w === 0 ? 'Upcoming Week' : w === 1 ? 'Following Week' : `Week of ${fmtDisplay(mon)}`;
-
-    const weekDays = [];
-    const dayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
-    for (let d = 0; d < 5; d++) {
-      const cur = new Date(mon.getFullYear(), mon.getMonth(), mon.getDate() + d);
-      weekDays.push({
-        dayName: dayNames[d],
-        displayDate: fmtDisplay(cur),
-        dateStr: fmtStr(cur)
-      });
+    // If KDS specifies a weekStartDate from flyer settings, use it if it's not in the past relative to baseMonday
+    let startMonday = baseMonday;
+    const baseMonStr = fmtStr(baseMonday);
+    if (settings?.weekStartDate) {
+      const parts = settings.weekStartDate.split('-').map(Number);
+      if (parts.length === 3 && !isNaN(parts[0]) && !isNaN(parts[1]) && !isNaN(parts[2])) {
+        const kdsMon = new Date(parts[0], parts[1] - 1, parts[2]);
+        if (settings.weekStartDate >= baseMonStr) {
+          startMonday = kdsMon;
+        }
+      }
     }
 
-    upcomingWeeks.push({
-      id: `week-${monDateStr}`,
-      label,
-      monDateStr,
-      friDateStr,
-      shortRange,
-      rangeLabel,
-      days: weekDays
-    });
-  }
+    const weeks = [];
+    for (let w = 0; w < 4; w++) {
+      const mon = new Date(startMonday.getFullYear(), startMonday.getMonth(), startMonday.getDate() + w * 7);
+      const fri = new Date(mon.getFullYear(), mon.getMonth(), mon.getDate() + 4);
+      const sun = new Date(mon.getFullYear(), mon.getMonth(), mon.getDate() + 6);
 
-  const activeWeeklyPlan = upcomingWeeks.find(w => w.id === (selectedWeekId || upcomingWeeks[0]?.id)) || upcomingWeeks[0];
+      const monDateStr = fmtStr(mon);
+      const friDateStr = fmtStr(fri);
+      const shortRange = `${fmtDisplay(mon)} – ${fmtDisplay(fri)}`;
+      const fullRange = `${fmtDisplay(mon)} – ${fmtDisplay(sun)}, ${mon.getFullYear()}`;
+      const rangeLabel = `${fmtDisplay(mon)} – ${fmtDisplay(fri)}, ${mon.getFullYear()}`;
 
-  // Set default selected day to first selectable day
+      let label = `Week of ${fmtDisplay(mon)}`;
+      if (w === 0) {
+        label = (settings?.weekTitle && (settings.weekStartDate === monDateStr || !settings.weekStartDate)) ? settings.weekTitle : `${shortRange}`;
+      } else if (w === 1) {
+        label = 'Following Week';
+      }
+
+      const weekDays = [];
+      for (let d = 0; d < 7; d++) {
+        const cur = new Date(mon.getFullYear(), mon.getMonth(), mon.getDate() + d);
+        weekDays.push({
+          dayName: dayNames[d],
+          displayDate: fmtDisplay(cur),
+          dateStr: fmtStr(cur)
+        });
+      }
+
+      weeks.push({
+        id: `week-${monDateStr}`,
+        label,
+        monDateStr,
+        friDateStr,
+        shortRange,
+        fullRange,
+        rangeLabel,
+        monDate: mon,
+        days: weekDays
+      });
+    }
+    return weeks;
+  }, [nowDate, settings?.weekStartDate, settings?.weekTitle]);
+
+  // Set default selectedWeekId on load or when flyer settings update from KDS
   useEffect(() => {
-    if (!selectedDayTab) {
-      const firstOpen = schedule.find(s => s.isSelectable);
-      if (firstOpen) {
-        setSelectedDayTab(firstOpen.dateStr);
-      } else {
-        setSelectedDayTab(schedule[0]?.dateStr || '');
+    if (settings?.weekStartDate) {
+      const matching = upcomingWeeks.find(w => w.monDateStr === settings.weekStartDate);
+      if (matching) {
+        setSelectedWeekId(matching.id);
+        return;
+      }
+    }
+    if (upcomingWeeks.length > 0) {
+      setSelectedWeekId(upcomingWeeks[0].id);
+    }
+  }, [settings?.weekStartDate, upcomingWeeks]);
+
+  const activeWeeklyPlan = useMemo(() => {
+    return upcomingWeeks.find(w => w.id === selectedWeekId) || upcomingWeeks[0];
+  }, [upcomingWeeks, selectedWeekId]);
+
+  // Compute days of the selected week in Central Time
+  const schedule: DaySchedule[] = useMemo(() => {
+    if (!activeWeeklyPlan) return [];
+    const mon = activeWeeklyPlan.monDate;
+    const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+    const result: DaySchedule[] = [];
+    for (let i = 0; i < 7; i++) {
+      const dayDate = new Date(mon.getFullYear(), mon.getMonth(), mon.getDate() + i);
+      const y = dayDate.getFullYear();
+      const m = (dayDate.getMonth() + 1).toString().padStart(2, '0');
+      const d = dayDate.getDate().toString().padStart(2, '0');
+      const dateStr = `${y}-${m}-${d}`;
+      const dayName = daysOfWeek[i];
+      const displayDate = `${monthNames[dayDate.getMonth()]} ${dayDate.getDate()}`;
+
+      const isSunday = dayName === 'Sunday';
+      const isSaturday = dayName === 'Saturday';
+
+      // Must be strictly after today (next day or later) and not Sunday
+      const isNextDayOrLater = dateStr > todayStr;
+      const isSelectable = isNextDayOrLater && !isSunday;
+
+      let statusLabel = 'Available to Order';
+      if (isSunday) {
+        statusLabel = 'Kitchen Closed';
+      } else if (dateStr < todayStr) {
+        statusLabel = 'Past Date';
+      } else if (dateStr === todayStr) {
+        statusLabel = 'Order Closed (Same-day unavailable)';
+      }
+
+      const activeMenus = settings.weekdayMenus || DEFAULT_WEEKDAY_MENUS;
+      const menu = activeMenus[dayName] || DEFAULT_WEEKDAY_MENUS[dayName] || { dal: 'Special Curry', sabzi: 'Seasonal Sabzi', description: '' };
+
+      result.push({
+        dayName,
+        dateStr,
+        displayDate,
+        dalOrCurry: isSaturday ? (settings.saturdaySpecialTitle || menu.dal) : menu.dal,
+        sabzi: isSaturday ? (settings.saturdaySpecialDescription || menu.sabzi) : menu.sabzi,
+        description: menu.description,
+        isSaturdaySpecial: isSaturday,
+        isSundayClosed: isSunday,
+        isSelectable,
+        statusLabel
+      });
+    }
+    return result;
+  }, [activeWeeklyPlan, todayStr, settings.weekdayMenus, settings.saturdaySpecialTitle, settings.saturdaySpecialDescription]);
+
+  // Auto-select first selectable day tab when schedule changes (e.g. week selected)
+  useEffect(() => {
+    if (schedule.length > 0) {
+      const existsInSchedule = schedule.some(s => s.dateStr === selectedDayTab);
+      if (!existsInSchedule) {
+        const firstOpen = schedule.find(s => s.isSelectable);
+        if (firstOpen) {
+          setSelectedDayTab(firstOpen.dateStr);
+        } else {
+          setSelectedDayTab(schedule[0].dateStr);
+        }
       }
     }
   }, [schedule, selectedDayTab]);
@@ -668,7 +724,7 @@ export default function TiffinOrderView({
         </div>
       </div>
 
-      {/* ── 3. DAILY DABBA SELECTION (NEXT DAY TILL SUNDAY) ── */}
+      {/* ── 3. DAILY DABBA SELECTION (ORDER BY THE DAY) ── */}
       <div className="bg-white rounded-3xl border border-gray-200 p-6 sm:p-8 shadow-xs space-y-6">
         <div>
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
@@ -677,18 +733,45 @@ export default function TiffinOrderView({
                 DAILY HOMESTYLE TIFFIN SELECTION
               </span>
               <h2 className="font-serif text-xl sm:text-2xl font-bold text-[#00346f]">
-                Order by the Day (Next Day through Sunday)
+                Order by the Day — <span className="text-emerald-700 font-semibold">{activeWeeklyPlan?.fullRange}</span>
               </h2>
             </div>
 
             <div className="text-xs text-gray-500 flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block"></span>
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block shrink-0"></span>
               <span>Central Time (Little Elm, TX) • Sunday Closed</span>
             </div>
           </div>
           <p className="text-xs text-gray-500 mt-1">
-            Select a day from tomorrow onwards to view the scheduled menu and order Single or Family Dabbas.
+            Select a week and day to view the scheduled menu and order Single or Family Dabbas for that date.
           </p>
+        </div>
+
+        {/* Week Selector Bar inside Order by the Day */}
+        <div className="p-3 bg-gray-50 rounded-2xl border border-gray-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <span className="text-xs font-bold text-gray-700 shrink-0 flex items-center gap-1.5">
+            <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
+            <span>Select Week for Daily Ordering:</span>
+          </span>
+          <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
+            {upcomingWeeks.map((week) => {
+              const isSelected = activeWeeklyPlan?.id === week.id;
+              return (
+                <button
+                  key={week.id}
+                  type="button"
+                  onClick={() => setSelectedWeekId(week.id)}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
+                    isSelected
+                      ? 'bg-[#00346f] text-white shadow-xs ring-2 ring-[#ffdea5]/40'
+                      : 'bg-white text-gray-700 hover:bg-emerald-50 border border-gray-200'
+                  }`}
+                >
+                  {week.label} ({week.shortRange})
+                </button>
+              );
+            })}
+          </div>
         </div>
 
         {/* Day Pills Bar */}
@@ -697,7 +780,7 @@ export default function TiffinOrderView({
             const isSelected = selectedDayTab === day.dateStr;
             return (
               <button
-                key={day.dateStr}
+                key={day.dayName}
                 type="button"
                 onClick={() => setSelectedDayTab(day.dateStr)}
                 className={`flex-1 min-w-[120px] p-3 rounded-2xl border text-left transition-all cursor-pointer ${
@@ -766,10 +849,10 @@ export default function TiffinOrderView({
                       WEEKEND CHEF'S SPECIAL DISHES
                     </span>
                     <h4 className="font-serif font-bold text-xl text-[#00346f]">
-                      Saturday Specialties &amp; Delicacies
+                      Saturday Specialties &amp; Delicacies ({activeDay.displayDate})
                     </h4>
                     <p className="text-xs text-gray-500 mt-0.5">
-                      Handcrafted authentic delicacies made scratch-to-order for Saturday pickup.
+                      Handcrafted authentic delicacies made scratch-to-order for Saturday ({activeDay.displayDate}) pickup.
                     </p>
                   </div>
                   <span className="text-xs text-purple-900 bg-purple-100 px-3 py-1.5 rounded-full font-bold self-start sm:self-auto">
@@ -834,7 +917,7 @@ export default function TiffinOrderView({
                               className="w-full min-h-[44px] inline-flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl bg-purple-700 hover:bg-purple-800 text-white font-bold text-xs uppercase tracking-wider transition-colors shadow-2xs cursor-pointer"
                             >
                               <Plus className="w-4 h-4 text-[#ffdea5]" />
-                              <span>Add Special • ${(dishPrice * dishQty).toFixed(2)}</span>
+                              <span>Add Special ({activeDay.displayDate}) • ${(dishPrice * dishQty).toFixed(2)}</span>
                             </button>
                           </div>
                         </div>
@@ -845,7 +928,7 @@ export default function TiffinOrderView({
                   <div className="p-6 bg-white rounded-2xl border border-dashed border-gray-300 text-center space-y-2">
                     <AlertCircle className="w-8 h-8 mx-auto text-gray-400" />
                     <h4 className="font-serif font-bold text-base text-gray-700">
-                      Ordering is closed for Saturday
+                      Ordering is closed for Saturday ({activeDay.displayDate})
                     </h4>
                     <p className="text-xs text-gray-500 max-w-md mx-auto">
                       To ensure fresh preparation from scratch, Saturday specials must be ordered at least 24 hours in advance.
@@ -941,7 +1024,7 @@ export default function TiffinOrderView({
                               className="w-full min-h-[44px] inline-flex items-center justify-center gap-2 bg-[#00346f] hover:bg-[#00224d] text-white py-2.5 px-4 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-xs cursor-pointer"
                             >
                               <Plus className="w-4 h-4 text-[#ffdea5]" />
-                              <span>Add Single Dabba • ${(singlePrice * qty).toFixed(2)}</span>
+                              <span>Add Single Dabba ({activeDay.displayDate}) • ${(singlePrice * qty).toFixed(2)}</span>
                             </button>
                           </div>
                         </div>
@@ -994,7 +1077,7 @@ export default function TiffinOrderView({
                               className="w-full min-h-[44px] inline-flex items-center justify-center gap-2 bg-[#775a19] hover:bg-[#5e4612] text-white py-2.5 px-4 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-xs cursor-pointer"
                             >
                               <Plus className="w-4 h-4 text-[#ffdea5]" />
-                              <span>Add Family Dabba • ${(familyPrice * qty).toFixed(2)}</span>
+                              <span>Add Family Dabba ({activeDay.displayDate}) • ${(familyPrice * qty).toFixed(2)}</span>
                             </button>
                           </div>
                         </div>
@@ -1005,7 +1088,7 @@ export default function TiffinOrderView({
                   <div className="p-6 bg-white rounded-2xl border border-dashed border-gray-300 text-center space-y-2">
                     <AlertCircle className="w-8 h-8 mx-auto text-gray-400" />
                     <h4 className="font-serif font-bold text-base text-gray-700">
-                      {activeDay.isSundayClosed ? 'Kitchen Closed on Sundays' : 'Ordering is closed for this day'}
+                      {activeDay.isSundayClosed ? 'Kitchen Closed on Sundays' : `Ordering is closed for ${activeDay.dayName} (${activeDay.displayDate})`}
                     </h4>
                     <p className="text-xs text-gray-500 max-w-md mx-auto">
                       {activeDay.isSundayClosed

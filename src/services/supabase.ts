@@ -930,9 +930,39 @@ export const DEFAULT_DABBA_PRICING: DabbaPricing = {
   weeklyPrice: 54.99
 };
 
+export function getCurrentMondayStr(): string {
+  const { nowDate } = getCentralTimeNow();
+  const curDayOfWeek = nowDate.getDay();
+  const daysToMonday = curDayOfWeek === 0 ? 1 : (1 - curDayOfWeek);
+  const mon = new Date(nowDate.getFullYear(), nowDate.getMonth(), nowDate.getDate() + daysToMonday);
+  const y = mon.getFullYear();
+  const m = (mon.getMonth() + 1).toString().padStart(2, '0');
+  const d = mon.getDate().toString().padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
+export function getCurrentMondayTitle(monStr?: string): string {
+  const targetStr = monStr || getCurrentMondayStr();
+  const parts = targetStr.split('-').map(Number);
+  if (parts.length !== 3 || parts.some(isNaN)) return 'Weekly Menu Plan';
+  const mon = new Date(parts[0], parts[1] - 1, parts[2]);
+  const sat = new Date(mon.getFullYear(), mon.getMonth(), mon.getDate() + 5);
+  const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  const monthShorts = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  if (mon.getMonth() === sat.getMonth()) {
+    return `${monthNames[mon.getMonth()]} ${mon.getDate()} - ${sat.getDate()}`;
+  }
+  return `${monthShorts[mon.getMonth()]} ${mon.getDate()} - ${monthShorts[sat.getMonth()]} ${sat.getDate()}`;
+}
+
 export const DEFAULT_TIFFIN_SETTINGS: TiffinMenuSettings = {
   flyerImageUrl: '/tiffin-flyer.jpg',
-  weekTitle: 'September 21 - 26',
+  get weekTitle() {
+    return getCurrentMondayTitle();
+  },
+  get weekStartDate() {
+    return getCurrentMondayStr();
+  },
   weekdayMenus: DEFAULT_WEEKDAY_MENUS,
   containerAddons: DEFAULT_CONTAINER_ADDONS,
   dabbaPricing: DEFAULT_DABBA_PRICING,
@@ -954,6 +984,19 @@ export const DEFAULT_TIFFIN_SETTINGS: TiffinMenuSettings = {
  * Fetch current Tiffin Weekly flyer and specials settings
  */
 export async function fetchTiffinMenuSettings(): Promise<TiffinMenuSettings> {
+  const currentMondayStr = getCurrentMondayStr();
+  const currentMondayTitle = getCurrentMondayTitle(currentMondayStr);
+
+  // Purge any legacy localStorage cache containing 2026-09-21
+  if (typeof localStorage !== 'undefined') {
+    try {
+      const raw = localStorage.getItem(LOCAL_STORAGE_TIFFIN_KEY);
+      if (raw && (raw.includes('2026-09-21') || raw.includes('September 21'))) {
+        localStorage.removeItem(LOCAL_STORAGE_TIFFIN_KEY);
+      }
+    } catch {}
+  }
+
   if (supabase) {
     try {
       const { data, error } = await supabase
@@ -963,15 +1006,22 @@ export async function fetchTiffinMenuSettings(): Promise<TiffinMenuSettings> {
         .maybeSingle();
 
       if (!error && data && data.value) {
+        const val = { ...data.value };
+        if (!val.weekStartDate || val.weekStartDate < currentMondayStr || val.weekTitle?.includes('21')) {
+          val.weekStartDate = currentMondayStr;
+          val.weekTitle = currentMondayTitle;
+        }
         const merged: TiffinMenuSettings = {
           ...DEFAULT_TIFFIN_SETTINGS,
-          ...data.value,
-          weekdayMenus: { ...DEFAULT_WEEKDAY_MENUS, ...(data.value.weekdayMenus || {}) },
-          containerAddons: data.value.containerAddons?.length ? data.value.containerAddons : DEFAULT_CONTAINER_ADDONS,
-          dabbaPricing: { ...DEFAULT_DABBA_PRICING, ...(data.value.dabbaPricing || {}) },
-          specialDishes: data.value.specialDishes?.length ? data.value.specialDishes : DEFAULT_TIFFIN_SETTINGS.specialDishes
+          ...val,
+          weekdayMenus: { ...DEFAULT_WEEKDAY_MENUS, ...(val.weekdayMenus || {}) },
+          containerAddons: val.containerAddons?.length ? val.containerAddons : DEFAULT_CONTAINER_ADDONS,
+          dabbaPricing: { ...DEFAULT_DABBA_PRICING, ...(val.dabbaPricing || {}) },
+          specialDishes: val.specialDishes?.length ? val.specialDishes : DEFAULT_TIFFIN_SETTINGS.specialDishes
         };
-        localStorage.setItem(LOCAL_STORAGE_TIFFIN_KEY, JSON.stringify(merged));
+        if (typeof localStorage !== 'undefined') {
+          localStorage.setItem(LOCAL_STORAGE_TIFFIN_KEY, JSON.stringify(merged));
+        }
         return merged;
       }
     } catch (err) {
@@ -980,21 +1030,31 @@ export async function fetchTiffinMenuSettings(): Promise<TiffinMenuSettings> {
   }
 
   try {
-    const raw = localStorage.getItem(LOCAL_STORAGE_TIFFIN_KEY);
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      return {
-        ...DEFAULT_TIFFIN_SETTINGS,
-        ...parsed,
-        weekdayMenus: { ...DEFAULT_WEEKDAY_MENUS, ...(parsed.weekdayMenus || {}) },
-        containerAddons: parsed.containerAddons?.length ? parsed.containerAddons : DEFAULT_CONTAINER_ADDONS,
-        dabbaPricing: { ...DEFAULT_DABBA_PRICING, ...(parsed.dabbaPricing || {}) },
-        specialDishes: parsed.specialDishes?.length ? parsed.specialDishes : DEFAULT_TIFFIN_SETTINGS.specialDishes
-      };
+    if (typeof localStorage !== 'undefined') {
+      const raw = localStorage.getItem(LOCAL_STORAGE_TIFFIN_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (!parsed.weekStartDate || parsed.weekStartDate < currentMondayStr || parsed.weekTitle?.includes('21')) {
+          parsed.weekStartDate = currentMondayStr;
+          parsed.weekTitle = currentMondayTitle;
+        }
+        return {
+          ...DEFAULT_TIFFIN_SETTINGS,
+          ...parsed,
+          weekdayMenus: { ...DEFAULT_WEEKDAY_MENUS, ...(parsed.weekdayMenus || {}) },
+          containerAddons: parsed.containerAddons?.length ? parsed.containerAddons : DEFAULT_CONTAINER_ADDONS,
+          dabbaPricing: { ...DEFAULT_DABBA_PRICING, ...(parsed.dabbaPricing || {}) },
+          specialDishes: parsed.specialDishes?.length ? parsed.specialDishes : DEFAULT_TIFFIN_SETTINGS.specialDishes
+        };
+      }
     }
   } catch {}
 
-  return DEFAULT_TIFFIN_SETTINGS;
+  return {
+    ...DEFAULT_TIFFIN_SETTINGS,
+    weekStartDate: currentMondayStr,
+    weekTitle: currentMondayTitle
+  };
 }
 
 /**
