@@ -18,8 +18,9 @@ export interface GalleryItem {
   id: string;
   title: string;
   category: "Artisanal Bakery & Cakes" | "Savory Specialties" | "Traditional Sweets" | "Breads & Starters";
-  autoDescription: string;
+  autoDescription?: string;
   imagePath: string;
+  originalImagePath?: string;
   visible: boolean;
   createdAt?: string;
 }
@@ -37,13 +38,20 @@ export default function GalleryPage({ onNavigateToAdmin: _onNavigateToAdmin }: G
       const saved = localStorage.getItem(GALLERY_STORAGE_KEY);
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed.map((item: any) => ({
+            ...item,
+            originalImagePath: item.originalImagePath || item.imagePath.replace('/gallery/', '/gallery/orig/')
+          }));
+        }
       }
     } catch {
       // fallback
     }
     return initialGalleryData as GalleryItem[];
   });
+
+  const [inspectViewMode, setInspectViewMode] = useState<"original" | "oak">("original");
 
   const [activeTab, setActiveTab] = useState<string>("all");
   const [selectedItem, setSelectedItem] = useState<GalleryItem | null>(null);
@@ -297,38 +305,35 @@ export default function GalleryPage({ onNavigateToAdmin: _onNavigateToAdmin }: G
               )}
 
               {/* Photo Image View */}
-              <div className="relative h-64 sm:h-72 overflow-hidden bg-[#1A1614]">
+              <div className="relative aspect-[6/5] overflow-hidden bg-[#1A1614] p-2 flex items-center justify-center">
                 <img
                   src={item.imagePath}
                   alt={item.title}
-                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                  className="w-full h-full object-contain drop-shadow-xl transition-transform duration-500 group-hover:scale-105"
                   onError={(e) => {
                     (e.target as HTMLImageElement).src = "/gallery/gallery_01.png";
                   }}
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#1A1614] via-transparent to-transparent opacity-80" />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#1A1614]/60 via-transparent to-transparent pointer-events-none" />
 
                 {/* Category Pill */}
-                <div className="absolute top-3 left-3 bg-[#1A1614]/80 backdrop-blur-md text-[#D4AF37] border border-[#D4AF37]/30 px-3 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider font-sans">
+                <div className="absolute top-3 left-3 bg-[#1A1614]/85 backdrop-blur-md text-[#D4AF37] border border-[#D4AF37]/30 px-3 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider font-sans">
                   {item.category}
                 </div>
               </div>
 
               {/* Card Footer Content */}
-              <div className="p-6 flex-1 flex flex-col justify-between space-y-3 bg-[#241E1B]">
+              <div className="p-5 flex-1 flex flex-col justify-between space-y-3 bg-[#241E1B]">
                 <div>
-                  <h3 className="font-serif text-lg font-bold text-white group-hover:text-[#D4AF37] transition-colors leading-snug mb-2">
+                  <h3 className="font-serif text-base sm:text-lg font-bold text-white group-hover:text-[#D4AF37] transition-colors leading-snug">
                     {item.title}
                   </h3>
-                  <p className="text-gray-300 text-xs leading-relaxed font-sans line-clamp-3 font-light">
-                    {item.autoDescription}
-                  </p>
                 </div>
 
                 <div className="pt-3 border-t border-[#382F2A] flex items-center justify-between text-[11px] text-[#D4AF37] font-serif italic">
-                  <span>Authentic DFW Artistry</span>
+                  <span>American Oak Slab Surface</span>
                   <span className="font-sans uppercase text-[10px] font-bold tracking-wider text-gray-400 group-hover:text-[#D4AF37] transition-colors">
-                    Inspect Dish &rarr;
+                    Inspect Photo &rarr;
                   </span>
                 </div>
               </div>
@@ -348,18 +353,21 @@ export default function GalleryPage({ onNavigateToAdmin: _onNavigateToAdmin }: G
             >
               <button
                 onClick={() => setSelectedItem(null)}
-                className="absolute top-4 right-4 z-10 bg-black/60 hover:bg-black text-white p-2 rounded-full backdrop-blur-md transition-colors cursor-pointer"
+                className="absolute top-4 right-4 z-10 bg-black/70 hover:bg-black text-white p-2 rounded-full backdrop-blur-md transition-colors cursor-pointer border border-white/20"
               >
                 <X className="w-5 h-5" />
               </button>
 
               <div className="grid grid-cols-1 sm:grid-cols-2">
-                <div className="relative h-72 sm:h-full bg-black">
+                <div className="relative h-72 sm:h-auto min-h-[320px] bg-black flex items-center justify-center p-2">
                   <img
-                    src={selectedItem.imagePath}
+                    src={inspectViewMode === "original" ? (selectedItem.originalImagePath || selectedItem.imagePath) : selectedItem.imagePath}
                     alt={selectedItem.title}
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-contain rounded-lg"
                   />
+                  <div className="absolute top-3 left-3 bg-black/70 backdrop-blur-md px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider text-[#D4AF37] border border-[#D4AF37]/30">
+                    {inspectViewMode === "original" ? "Original Authentic Photo" : "Clean Studio Oak Slab"}
+                  </div>
                 </div>
 
                 <div className="p-6 sm:p-8 flex flex-col justify-between space-y-6">
@@ -367,12 +375,33 @@ export default function GalleryPage({ onNavigateToAdmin: _onNavigateToAdmin }: G
                     <span className="text-[11px] font-bold text-[#D4AF37] uppercase tracking-widest block mb-2 font-sans">
                       {selectedItem.category}
                     </span>
-                    <h2 className="font-serif text-2xl font-bold text-white mb-3 leading-snug">
+                    <h2 className="font-serif text-2xl font-bold text-white mb-4 leading-snug">
                       {selectedItem.title}
                     </h2>
-                    <p className="text-gray-300 text-xs sm:text-sm leading-relaxed font-light">
-                      {selectedItem.autoDescription}
-                    </p>
+
+                    {/* View Mode Toggle */}
+                    <div className="flex items-center gap-2 bg-[#1A1614] p-1.5 rounded-xl border border-[#382F2A] mb-4">
+                      <button
+                        onClick={() => setInspectViewMode("original")}
+                        className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-bold font-sans transition-all cursor-pointer ${
+                          inspectViewMode === "original"
+                            ? "bg-[#D4AF37] text-[#1A1614] shadow"
+                            : "text-gray-400 hover:text-white"
+                        }`}
+                      >
+                        📷 Original Photo
+                      </button>
+                      <button
+                        onClick={() => setInspectViewMode("oak")}
+                        className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-bold font-sans transition-all cursor-pointer ${
+                          inspectViewMode === "oak"
+                            ? "bg-[#D4AF37] text-[#1A1614] shadow"
+                            : "text-gray-400 hover:text-white"
+                        }`}
+                      >
+                        🪵 Clean Oak Slab View
+                      </button>
+                    </div>
                   </div>
 
                   <div className="space-y-3 pt-4 border-t border-[#382F2A]">

@@ -6,7 +6,8 @@
     "autoDescription": "Infused with saffron-cardamom milk, layered with soft rabri cream, pistachios, and delicate rose petals over a light sponge.",
     "imagePath": "/gallery/gallery_01.png",
     "visible": true,
-    "createdAt": "2026-09-26T18:56:52.920Z"
+    "createdAt": "2026-09-26T18:56:52.920Z",
+    "originalImagePath": "/gallery/orig/gallery_01.png"
   },
   {
     "id": "item-2",
@@ -15,7 +16,8 @@
     "autoDescription": "Decadent cream cheese filling baked over a cardamom cookie crust, crowned with mini gulab jamuns and edible gold vark.",
     "imagePath": "/gallery/gallery_02.png",
     "visible": true,
-    "createdAt": "2026-09-25T18:56:52.924Z"
+    "createdAt": "2026-09-25T18:56:52.924Z",
+    "originalImagePath": "/gallery/orig/gallery_02.png"
   },
   {
     "id": "item-3",
@@ -24,7 +26,8 @@
     "autoDescription": "Black lentils simmered overnight for 16 hours over charcoal, finished with churned butter, fresh cream, and aromatic garam masala.",
     "imagePath": "/gallery/gallery_03.png",
     "visible": true,
-    "createdAt": "2026-09-24T18:56:52.927Z"
+    "createdAt": "2026-09-24T18:56:52.927Z",
+    "originalImagePath": "/gallery/orig/gallery_03.png"
   },
   {
     "id": "item-4",
@@ -33,7 +36,8 @@
     "autoDescription": "Cottage cheese cubes tossed in a velvety tomato-cashew reduction, spiced with roasted Kasuri methi and green cardamom.",
     "imagePath": "/gallery/gallery_04.png",
     "visible": true,
-    "createdAt": "2026-09-23T18:56:52.932Z"
+    "createdAt": "2026-09-23T18:56:52.932Z",
+    "originalImagePath": "/gallery/orig/gallery_04.png"
   },
   {
     "id": "item-5",
@@ -42,7 +46,8 @@
     "autoDescription": "Flaky, tandoor-baked spiced potato kulcha served with tangy Pindi chole, pickled onions, and fresh mint chutney.",
     "imagePath": "/gallery/gallery_05.png",
     "visible": true,
-    "createdAt": "2026-09-22T18:56:52.935Z"
+    "createdAt": "2026-09-22T18:56:52.935Z",
+    "originalImagePath": "/gallery/orig/gallery_05.png"
   },
   {
     "id": "item-6",
@@ -51,7 +56,8 @@
     "autoDescription": "Freshly slapped flatbreads baked in clay tandoor, brushed with garlic butter, cilantro, and toasted nigella seeds.",
     "imagePath": "/gallery/gallery_06.jpg",
     "visible": true,
-    "createdAt": "2026-09-21T18:56:52.939Z"
+    "createdAt": "2026-09-21T18:56:52.939Z",
+    "originalImagePath": "/gallery/orig/gallery_06.jpg"
   },
   {
     "id": "item-7",
@@ -60,7 +66,8 @@
     "autoDescription": "Crispy urad dal-stuffed puri paired with tangy, slow-simmered street-style potato curry spiced with hing and amchur.",
     "imagePath": "/gallery/gallery_07.jpg",
     "visible": true,
-    "createdAt": "2026-09-20T18:56:52.944Z"
+    "createdAt": "2026-09-20T18:56:52.944Z",
+    "originalImagePath": "/gallery/orig/gallery_07.jpg"
   },
   {
     "id": "item-8",
@@ -69,7 +76,8 @@
     "autoDescription": "Gold-crusted potato and green pea croquettes infused with roasted cumin, ginger, and served with coriander chutney.",
     "imagePath": "/gallery/gallery_08.jpg",
     "visible": true,
-    "createdAt": "2026-09-19T18:56:52.947Z"
+    "createdAt": "2026-09-19T18:56:52.947Z",
+    "originalImagePath": "/gallery/orig/gallery_08.jpg"
   },
   {
     "id": "item-9",
@@ -78,7 +86,8 @@
     "autoDescription": "Steamed rice flour dumplings filled with freshly grated coconut, jaggery, and fragrant nutmeg cardamom paste.",
     "imagePath": "/gallery/gallery_09.jpg",
     "visible": true,
-    "createdAt": "2026-09-18T18:56:52.951Z"
+    "createdAt": "2026-09-18T18:56:52.951Z",
+    "originalImagePath": "/gallery/orig/gallery_09.jpg"
   },
   {
     "id": "item-10",
@@ -87,7 +96,8 @@
     "autoDescription": "Silky pistachio bavarian cream paired with cardamom chiffon layers, crowned with crushed Iranian pistachios.",
     "imagePath": "/gallery/gallery_10.jpg",
     "visible": true,
-    "createdAt": "2026-09-17T18:56:52.956Z"
+    "createdAt": "2026-09-17T18:56:52.956Z",
+    "originalImagePath": "/gallery/orig/gallery_10.jpg"
   },
   {
     "id": "item-11",
@@ -96,7 +106,8 @@
     "autoDescription": "Wok-tossed vegetable balls in garlic-soy glaze served alongside Hakka noodles with charred scallions.",
     "imagePath": "/gallery/gallery_11.jpg",
     "visible": true,
-    "createdAt": "2026-09-16T18:56:52.961Z"
+    "createdAt": "2026-09-16T18:56:52.961Z",
+    "originalImagePath": "/gallery/orig/gallery_11.jpg"
   },
   {
     "id": "item-12",
@@ -105,7 +116,8 @@
     "autoDescription": "Crispy semolina puris filled with spiced potato chickpeas, chilled mint-coriander water, and date tamarind chutney.",
     "imagePath": "/gallery/gallery_12.jpg",
     "visible": true,
-    "createdAt": "2026-09-15T18:56:52.965Z"
+    "createdAt": "2026-09-15T18:56:52.965Z",
+    "originalImagePath": "/gallery/orig/gallery_12.jpg"
   },
   {
     "id": "item-13",
@@ -114,7 +126,8 @@
     "autoDescription": "Giant thick-style cookie rolled with organic European butter, bursting with molten Biscoff cookie butter center.",
     "imagePath": "/gallery/gallery_13.jpg",
     "visible": true,
-    "createdAt": "2026-09-14T18:56:52.969Z"
+    "createdAt": "2026-09-14T18:56:52.969Z",
+    "originalImagePath": "/gallery/orig/gallery_13.jpg"
   },
   {
     "id": "item-14",
@@ -123,7 +136,8 @@
     "autoDescription": "Hand-rolled whole wheat parathas stuffed with spiced roasted gram flour (sattu) and fresh paneer, served with white butter.",
     "imagePath": "/gallery/gallery_14.jpg",
     "visible": true,
-    "createdAt": "2026-09-13T18:56:52.973Z"
+    "createdAt": "2026-09-13T18:56:52.973Z",
+    "originalImagePath": "/gallery/orig/gallery_14.jpg"
   },
   {
     "id": "item-15",
@@ -132,7 +146,8 @@
     "autoDescription": "Crispy onion fritters simmered in a creamy sour yogurt and besan gravy, tempered with dried red chillies and curry leaves.",
     "imagePath": "/gallery/gallery_15.jpg",
     "visible": true,
-    "createdAt": "2026-09-12T18:56:52.978Z"
+    "createdAt": "2026-09-12T18:56:52.978Z",
+    "originalImagePath": "/gallery/orig/gallery_15.jpg"
   },
   {
     "id": "item-16",
@@ -141,7 +156,8 @@
     "autoDescription": "Pan-roasted okra and stuffed baby eggplants tossed in roasted coriander, fennel, and dry mango powder.",
     "imagePath": "/gallery/gallery_16.jpg",
     "visible": true,
-    "createdAt": "2026-09-11T18:56:52.985Z"
+    "createdAt": "2026-09-11T18:56:52.985Z",
+    "originalImagePath": "/gallery/orig/gallery_16.jpg"
   },
   {
     "id": "item-17",
@@ -150,7 +166,8 @@
     "autoDescription": "Traditional rice pudding slow-cooked in full-cream milk, infused with Kashmiri saffron strands, green cardamom, and almonds.",
     "imagePath": "/gallery/gallery_17.jpg",
     "visible": true,
-    "createdAt": "2026-09-10T18:56:52.992Z"
+    "createdAt": "2026-09-10T18:56:52.992Z",
+    "originalImagePath": "/gallery/orig/gallery_17.jpg"
   },
   {
     "id": "item-18",
@@ -159,7 +176,8 @@
     "autoDescription": "Infused with saffron-cardamom milk, layered with soft rabri cream, pistachios, and delicate rose petals over a light sponge.",
     "imagePath": "/gallery/gallery_18.jpg",
     "visible": true,
-    "createdAt": "2026-09-09T18:56:52.998Z"
+    "createdAt": "2026-09-09T18:56:52.998Z",
+    "originalImagePath": "/gallery/orig/gallery_18.jpg"
   },
   {
     "id": "item-19",
@@ -168,7 +186,8 @@
     "autoDescription": "Decadent cream cheese filling baked over a cardamom cookie crust, crowned with mini gulab jamuns and edible gold vark.",
     "imagePath": "/gallery/gallery_19.jpg",
     "visible": true,
-    "createdAt": "2026-09-08T18:56:53.003Z"
+    "createdAt": "2026-09-08T18:56:53.003Z",
+    "originalImagePath": "/gallery/orig/gallery_19.jpg"
   },
   {
     "id": "item-20",
@@ -177,7 +196,8 @@
     "autoDescription": "Black lentils simmered overnight for 16 hours over charcoal, finished with churned butter, fresh cream, and aromatic garam masala.",
     "imagePath": "/gallery/gallery_20.jpg",
     "visible": true,
-    "createdAt": "2026-09-07T18:56:53.009Z"
+    "createdAt": "2026-09-07T18:56:53.009Z",
+    "originalImagePath": "/gallery/orig/gallery_20.jpg"
   },
   {
     "id": "item-21",
@@ -186,7 +206,8 @@
     "autoDescription": "Cottage cheese cubes tossed in a velvety tomato-cashew reduction, spiced with roasted Kasuri methi and green cardamom.",
     "imagePath": "/gallery/gallery_21.jpg",
     "visible": true,
-    "createdAt": "2026-09-06T18:56:53.012Z"
+    "createdAt": "2026-09-06T18:56:53.012Z",
+    "originalImagePath": "/gallery/orig/gallery_21.jpg"
   },
   {
     "id": "item-22",
@@ -195,7 +216,8 @@
     "autoDescription": "Flaky, tandoor-baked spiced potato kulcha served with tangy Pindi chole, pickled onions, and fresh mint chutney.",
     "imagePath": "/gallery/gallery_22.jpg",
     "visible": true,
-    "createdAt": "2026-09-05T18:56:53.015Z"
+    "createdAt": "2026-09-05T18:56:53.015Z",
+    "originalImagePath": "/gallery/orig/gallery_22.jpg"
   },
   {
     "id": "item-23",
@@ -204,7 +226,8 @@
     "autoDescription": "Freshly slapped flatbreads baked in clay tandoor, brushed with garlic butter, cilantro, and toasted nigella seeds.",
     "imagePath": "/gallery/gallery_23.jpg",
     "visible": true,
-    "createdAt": "2026-09-04T18:56:53.018Z"
+    "createdAt": "2026-09-04T18:56:53.018Z",
+    "originalImagePath": "/gallery/orig/gallery_23.jpg"
   },
   {
     "id": "item-24",
@@ -213,7 +236,8 @@
     "autoDescription": "Crispy urad dal-stuffed puri paired with tangy, slow-simmered street-style potato curry spiced with hing and amchur.",
     "imagePath": "/gallery/gallery_24.jpg",
     "visible": true,
-    "createdAt": "2026-09-03T18:56:53.024Z"
+    "createdAt": "2026-09-03T18:56:53.024Z",
+    "originalImagePath": "/gallery/orig/gallery_24.jpg"
   },
   {
     "id": "item-25",
@@ -222,7 +246,8 @@
     "autoDescription": "Gold-crusted potato and green pea croquettes infused with roasted cumin, ginger, and served with coriander chutney.",
     "imagePath": "/gallery/gallery_25.jpg",
     "visible": true,
-    "createdAt": "2026-09-02T18:56:53.029Z"
+    "createdAt": "2026-09-02T18:56:53.029Z",
+    "originalImagePath": "/gallery/orig/gallery_25.jpg"
   },
   {
     "id": "item-26",
@@ -231,7 +256,8 @@
     "autoDescription": "Steamed rice flour dumplings filled with freshly grated coconut, jaggery, and fragrant nutmeg cardamom paste.",
     "imagePath": "/gallery/gallery_26.jpg",
     "visible": true,
-    "createdAt": "2026-09-01T18:56:53.036Z"
+    "createdAt": "2026-09-01T18:56:53.036Z",
+    "originalImagePath": "/gallery/orig/gallery_26.jpg"
   },
   {
     "id": "item-27",
@@ -240,7 +266,8 @@
     "autoDescription": "Silky pistachio bavarian cream paired with cardamom chiffon layers, crowned with crushed Iranian pistachios.",
     "imagePath": "/gallery/gallery_27.jpg",
     "visible": true,
-    "createdAt": "2026-08-31T18:56:53.041Z"
+    "createdAt": "2026-08-31T18:56:53.041Z",
+    "originalImagePath": "/gallery/orig/gallery_27.jpg"
   },
   {
     "id": "item-28",
@@ -249,7 +276,8 @@
     "autoDescription": "Wok-tossed vegetable balls in garlic-soy glaze served alongside Hakka noodles with charred scallions.",
     "imagePath": "/gallery/gallery_28.jpg",
     "visible": true,
-    "createdAt": "2026-08-30T18:56:53.047Z"
+    "createdAt": "2026-08-30T18:56:53.047Z",
+    "originalImagePath": "/gallery/orig/gallery_28.jpg"
   },
   {
     "id": "item-29",
@@ -258,7 +286,8 @@
     "autoDescription": "Crispy semolina puris filled with spiced potato chickpeas, chilled mint-coriander water, and date tamarind chutney.",
     "imagePath": "/gallery/gallery_29.jpg",
     "visible": true,
-    "createdAt": "2026-08-29T18:56:53.053Z"
+    "createdAt": "2026-08-29T18:56:53.053Z",
+    "originalImagePath": "/gallery/orig/gallery_29.jpg"
   },
   {
     "id": "item-30",
@@ -267,7 +296,8 @@
     "autoDescription": "Giant thick-style cookie rolled with organic European butter, bursting with molten Biscoff cookie butter center.",
     "imagePath": "/gallery/gallery_30.jpg",
     "visible": true,
-    "createdAt": "2026-08-28T18:56:53.056Z"
+    "createdAt": "2026-08-28T18:56:53.056Z",
+    "originalImagePath": "/gallery/orig/gallery_30.jpg"
   },
   {
     "id": "item-31",
@@ -276,7 +306,8 @@
     "autoDescription": "Hand-rolled whole wheat parathas stuffed with spiced roasted gram flour (sattu) and fresh paneer, served with white butter.",
     "imagePath": "/gallery/gallery_31.jpg",
     "visible": true,
-    "createdAt": "2026-08-27T18:56:53.061Z"
+    "createdAt": "2026-08-27T18:56:53.061Z",
+    "originalImagePath": "/gallery/orig/gallery_31.jpg"
   },
   {
     "id": "item-32",
@@ -285,7 +316,8 @@
     "autoDescription": "Crispy onion fritters simmered in a creamy sour yogurt and besan gravy, tempered with dried red chillies and curry leaves.",
     "imagePath": "/gallery/gallery_32.jpg",
     "visible": true,
-    "createdAt": "2026-08-26T18:56:53.065Z"
+    "createdAt": "2026-08-26T18:56:53.065Z",
+    "originalImagePath": "/gallery/orig/gallery_32.jpg"
   },
   {
     "id": "item-33",
@@ -294,7 +326,8 @@
     "autoDescription": "Pan-roasted okra and stuffed baby eggplants tossed in roasted coriander, fennel, and dry mango powder.",
     "imagePath": "/gallery/gallery_33.jpg",
     "visible": true,
-    "createdAt": "2026-08-25T18:56:53.069Z"
+    "createdAt": "2026-08-25T18:56:53.069Z",
+    "originalImagePath": "/gallery/orig/gallery_33.jpg"
   },
   {
     "id": "item-34",
@@ -303,7 +336,8 @@
     "autoDescription": "Traditional rice pudding slow-cooked in full-cream milk, infused with Kashmiri saffron strands, green cardamom, and almonds.",
     "imagePath": "/gallery/gallery_34.jpg",
     "visible": true,
-    "createdAt": "2026-08-24T18:56:53.072Z"
+    "createdAt": "2026-08-24T18:56:53.072Z",
+    "originalImagePath": "/gallery/orig/gallery_34.jpg"
   },
   {
     "id": "item-35",
@@ -312,7 +346,8 @@
     "autoDescription": "Infused with saffron-cardamom milk, layered with soft rabri cream, pistachios, and delicate rose petals over a light sponge.",
     "imagePath": "/gallery/gallery_35.jpg",
     "visible": true,
-    "createdAt": "2026-08-23T18:56:53.075Z"
+    "createdAt": "2026-08-23T18:56:53.075Z",
+    "originalImagePath": "/gallery/orig/gallery_35.jpg"
   },
   {
     "id": "item-36",
@@ -321,7 +356,8 @@
     "autoDescription": "Decadent cream cheese filling baked over a cardamom cookie crust, crowned with mini gulab jamuns and edible gold vark.",
     "imagePath": "/gallery/gallery_36.jpg",
     "visible": true,
-    "createdAt": "2026-08-22T18:56:53.079Z"
+    "createdAt": "2026-08-22T18:56:53.079Z",
+    "originalImagePath": "/gallery/orig/gallery_36.jpg"
   },
   {
     "id": "item-37",
@@ -330,7 +366,8 @@
     "autoDescription": "Black lentils simmered overnight for 16 hours over charcoal, finished with churned butter, fresh cream, and aromatic garam masala.",
     "imagePath": "/gallery/gallery_37.jpg",
     "visible": true,
-    "createdAt": "2026-08-21T18:56:53.084Z"
+    "createdAt": "2026-08-21T18:56:53.084Z",
+    "originalImagePath": "/gallery/orig/gallery_37.jpg"
   },
   {
     "id": "item-38",
@@ -339,7 +376,8 @@
     "autoDescription": "Cottage cheese cubes tossed in a velvety tomato-cashew reduction, spiced with roasted Kasuri methi and green cardamom.",
     "imagePath": "/gallery/gallery_38.jpg",
     "visible": true,
-    "createdAt": "2026-08-20T18:56:53.089Z"
+    "createdAt": "2026-08-20T18:56:53.089Z",
+    "originalImagePath": "/gallery/orig/gallery_38.jpg"
   },
   {
     "id": "item-39",
@@ -348,7 +386,8 @@
     "autoDescription": "Flaky, tandoor-baked spiced potato kulcha served with tangy Pindi chole, pickled onions, and fresh mint chutney.",
     "imagePath": "/gallery/gallery_39.jpg",
     "visible": true,
-    "createdAt": "2026-08-19T18:56:53.092Z"
+    "createdAt": "2026-08-19T18:56:53.092Z",
+    "originalImagePath": "/gallery/orig/gallery_39.jpg"
   },
   {
     "id": "item-40",
@@ -357,7 +396,8 @@
     "autoDescription": "Freshly slapped flatbreads baked in clay tandoor, brushed with garlic butter, cilantro, and toasted nigella seeds.",
     "imagePath": "/gallery/gallery_40.jpg",
     "visible": true,
-    "createdAt": "2026-08-18T18:56:53.094Z"
+    "createdAt": "2026-08-18T18:56:53.094Z",
+    "originalImagePath": "/gallery/orig/gallery_40.jpg"
   },
   {
     "id": "item-41",
@@ -366,7 +406,8 @@
     "autoDescription": "Crispy urad dal-stuffed puri paired with tangy, slow-simmered street-style potato curry spiced with hing and amchur.",
     "imagePath": "/gallery/gallery_41.jpg",
     "visible": true,
-    "createdAt": "2026-08-17T18:56:53.097Z"
+    "createdAt": "2026-08-17T18:56:53.097Z",
+    "originalImagePath": "/gallery/orig/gallery_41.jpg"
   },
   {
     "id": "item-42",
@@ -375,7 +416,8 @@
     "autoDescription": "Gold-crusted potato and green pea croquettes infused with roasted cumin, ginger, and served with coriander chutney.",
     "imagePath": "/gallery/gallery_42.jpg",
     "visible": true,
-    "createdAt": "2026-08-16T18:56:53.100Z"
+    "createdAt": "2026-08-16T18:56:53.100Z",
+    "originalImagePath": "/gallery/orig/gallery_42.jpg"
   },
   {
     "id": "item-43",
@@ -384,7 +426,8 @@
     "autoDescription": "Steamed rice flour dumplings filled with freshly grated coconut, jaggery, and fragrant nutmeg cardamom paste.",
     "imagePath": "/gallery/gallery_43.jpg",
     "visible": true,
-    "createdAt": "2026-08-15T18:56:53.102Z"
+    "createdAt": "2026-08-15T18:56:53.102Z",
+    "originalImagePath": "/gallery/orig/gallery_43.jpg"
   },
   {
     "id": "item-44",
@@ -393,7 +436,8 @@
     "autoDescription": "Silky pistachio bavarian cream paired with cardamom chiffon layers, crowned with crushed Iranian pistachios.",
     "imagePath": "/gallery/gallery_44.jpg",
     "visible": true,
-    "createdAt": "2026-08-14T18:56:53.105Z"
+    "createdAt": "2026-08-14T18:56:53.105Z",
+    "originalImagePath": "/gallery/orig/gallery_44.jpg"
   },
   {
     "id": "item-45",
@@ -402,7 +446,8 @@
     "autoDescription": "Wok-tossed vegetable balls in garlic-soy glaze served alongside Hakka noodles with charred scallions.",
     "imagePath": "/gallery/gallery_45.jpg",
     "visible": true,
-    "createdAt": "2026-08-13T18:56:53.107Z"
+    "createdAt": "2026-08-13T18:56:53.107Z",
+    "originalImagePath": "/gallery/orig/gallery_45.jpg"
   },
   {
     "id": "item-46",
@@ -411,7 +456,8 @@
     "autoDescription": "Crispy semolina puris filled with spiced potato chickpeas, chilled mint-coriander water, and date tamarind chutney.",
     "imagePath": "/gallery/gallery_46.jpg",
     "visible": true,
-    "createdAt": "2026-08-12T18:56:53.110Z"
+    "createdAt": "2026-08-12T18:56:53.110Z",
+    "originalImagePath": "/gallery/orig/gallery_46.jpg"
   },
   {
     "id": "item-47",
@@ -420,7 +466,8 @@
     "autoDescription": "Giant thick-style cookie rolled with organic European butter, bursting with molten Biscoff cookie butter center.",
     "imagePath": "/gallery/gallery_47.jpg",
     "visible": true,
-    "createdAt": "2026-08-11T18:56:53.112Z"
+    "createdAt": "2026-08-11T18:56:53.112Z",
+    "originalImagePath": "/gallery/orig/gallery_47.jpg"
   },
   {
     "id": "item-48",
@@ -429,7 +476,8 @@
     "autoDescription": "Hand-rolled whole wheat parathas stuffed with spiced roasted gram flour (sattu) and fresh paneer, served with white butter.",
     "imagePath": "/gallery/gallery_48.jpg",
     "visible": true,
-    "createdAt": "2026-08-10T18:56:53.114Z"
+    "createdAt": "2026-08-10T18:56:53.114Z",
+    "originalImagePath": "/gallery/orig/gallery_48.jpg"
   },
   {
     "id": "item-49",
@@ -438,7 +486,8 @@
     "autoDescription": "Crispy onion fritters simmered in a creamy sour yogurt and besan gravy, tempered with dried red chillies and curry leaves.",
     "imagePath": "/gallery/gallery_49.jpg",
     "visible": true,
-    "createdAt": "2026-08-09T18:56:53.117Z"
+    "createdAt": "2026-08-09T18:56:53.117Z",
+    "originalImagePath": "/gallery/orig/gallery_49.jpg"
   },
   {
     "id": "item-50",
@@ -447,7 +496,8 @@
     "autoDescription": "Pan-roasted okra and stuffed baby eggplants tossed in roasted coriander, fennel, and dry mango powder.",
     "imagePath": "/gallery/gallery_50.jpg",
     "visible": true,
-    "createdAt": "2026-08-08T18:56:53.120Z"
+    "createdAt": "2026-08-08T18:56:53.120Z",
+    "originalImagePath": "/gallery/orig/gallery_50.jpg"
   },
   {
     "id": "item-51",
@@ -456,7 +506,8 @@
     "autoDescription": "Traditional rice pudding slow-cooked in full-cream milk, infused with Kashmiri saffron strands, green cardamom, and almonds.",
     "imagePath": "/gallery/gallery_51.jpg",
     "visible": true,
-    "createdAt": "2026-08-07T18:56:53.123Z"
+    "createdAt": "2026-08-07T18:56:53.123Z",
+    "originalImagePath": "/gallery/orig/gallery_51.jpg"
   },
   {
     "id": "item-52",
@@ -465,7 +516,8 @@
     "autoDescription": "Infused with saffron-cardamom milk, layered with soft rabri cream, pistachios, and delicate rose petals over a light sponge.",
     "imagePath": "/gallery/gallery_52.jpg",
     "visible": true,
-    "createdAt": "2026-08-06T18:56:53.126Z"
+    "createdAt": "2026-08-06T18:56:53.126Z",
+    "originalImagePath": "/gallery/orig/gallery_52.jpg"
   },
   {
     "id": "item-53",
@@ -474,7 +526,8 @@
     "autoDescription": "Decadent cream cheese filling baked over a cardamom cookie crust, crowned with mini gulab jamuns and edible gold vark.",
     "imagePath": "/gallery/gallery_53.jpg",
     "visible": true,
-    "createdAt": "2026-08-05T18:56:53.130Z"
+    "createdAt": "2026-08-05T18:56:53.130Z",
+    "originalImagePath": "/gallery/orig/gallery_53.jpg"
   },
   {
     "id": "item-54",
@@ -483,7 +536,8 @@
     "autoDescription": "Black lentils simmered overnight for 16 hours over charcoal, finished with churned butter, fresh cream, and aromatic garam masala.",
     "imagePath": "/gallery/gallery_54.jpg",
     "visible": true,
-    "createdAt": "2026-08-04T18:56:53.132Z"
+    "createdAt": "2026-08-04T18:56:53.132Z",
+    "originalImagePath": "/gallery/orig/gallery_54.jpg"
   },
   {
     "id": "item-55",
@@ -492,7 +546,8 @@
     "autoDescription": "Cottage cheese cubes tossed in a velvety tomato-cashew reduction, spiced with roasted Kasuri methi and green cardamom.",
     "imagePath": "/gallery/gallery_55.jpg",
     "visible": true,
-    "createdAt": "2026-08-03T18:56:53.134Z"
+    "createdAt": "2026-08-03T18:56:53.134Z",
+    "originalImagePath": "/gallery/orig/gallery_55.jpg"
   },
   {
     "id": "item-56",
@@ -501,7 +556,8 @@
     "autoDescription": "Flaky, tandoor-baked spiced potato kulcha served with tangy Pindi chole, pickled onions, and fresh mint chutney.",
     "imagePath": "/gallery/gallery_56.jpg",
     "visible": true,
-    "createdAt": "2026-08-02T18:56:53.136Z"
+    "createdAt": "2026-08-02T18:56:53.136Z",
+    "originalImagePath": "/gallery/orig/gallery_56.jpg"
   },
   {
     "id": "item-57",
@@ -510,6 +566,7 @@
     "autoDescription": "Freshly slapped flatbreads baked in clay tandoor, brushed with garlic butter, cilantro, and toasted nigella seeds.",
     "imagePath": "/gallery/gallery_57.jpg",
     "visible": true,
-    "createdAt": "2026-08-01T18:56:53.140Z"
+    "createdAt": "2026-08-01T18:56:53.140Z",
+    "originalImagePath": "/gallery/orig/gallery_57.jpg"
   }
 ]
