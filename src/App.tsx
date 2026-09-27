@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from "react";
 import { 
   Instagram, 
-  X
+  X,
+  ShoppingBag
 } from "lucide-react";
 import { submitToGoogleSheets } from "./services/googleSheets";
 
@@ -223,8 +224,8 @@ export default function App() {
               />
             </div>
 
-            {/* Desktop Navigation Links */}
-            <div className="hidden lg:flex items-center space-x-5 xl:space-x-8">
+            {/* Desktop Navigation Links & Create Order Button */}
+            <div className="hidden lg:flex items-center space-x-4 xl:space-x-6">
               {navLinks.map((link) => (
                 <button
                   key={link.id}
@@ -238,6 +239,37 @@ export default function App() {
                   {link.name}
                 </button>
               ))}
+
+              <button
+                onClick={() => {
+                  setActiveTab("Catering");
+                  if (typeof window !== "undefined") {
+                    window.history.pushState(null, "", "/catering/food");
+                  }
+                  window.scrollTo({ top: 0, behavior: "smooth" });
+                }}
+                className="bg-[#00346f] hover:bg-[#00224d] text-white font-sans text-xs uppercase tracking-wider font-bold px-4 py-2 rounded-xl shadow-md transition-all cursor-pointer whitespace-nowrap border border-[#00346f] hover:scale-105 flex items-center gap-1.5 ml-2"
+              >
+                <ShoppingBag className="w-3.5 h-3.5 text-[#ffdea5]" />
+                <span>Create Order</span>
+              </button>
+            </div>
+
+            {/* Mobile Create Order Button */}
+            <div className="lg:hidden flex items-center gap-2">
+              <button
+                onClick={() => {
+                  setActiveTab("Catering");
+                  if (typeof window !== "undefined") {
+                    window.history.pushState(null, "", "/catering/food");
+                  }
+                  window.scrollTo({ top: 0, behavior: "smooth" });
+                }}
+                className="bg-[#00346f] hover:bg-[#00224d] text-white font-sans text-[11px] uppercase tracking-wider font-bold px-3 py-1.5 rounded-lg shadow-sm transition-all cursor-pointer whitespace-nowrap flex items-center gap-1"
+              >
+                <ShoppingBag className="w-3 h-3 text-[#ffdea5]" />
+                <span>Create Order</span>
+              </button>
             </div>
 
           </div>
