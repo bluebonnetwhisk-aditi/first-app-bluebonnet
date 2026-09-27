@@ -353,7 +353,7 @@ export default function Home({ onOpenBaker: _onOpenBaker, onNavigate }: HomeProp
             <div className="h-0.5 w-12 bg-brand-gold-tint mx-auto mt-2" />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {[
               {
                 name: "Meenakshi & Alok V.",
@@ -378,30 +378,6 @@ export default function Home({ onOpenBaker: _onOpenBaker, onNavigate }: HomeProp
                 quote: "The custom 2-tier theme cake was a showstopper! Not only was the cake design gorgeous, but the flavor was divine. For brunch, their Bedmi Poori with Halwai Waale Aalu was nostalgic perfection.",
                 rating: 5,
                 date: "July 2026"
-              },
-              {
-                name: "Pooja & Vikram S.",
-                occasion: "Housewarming Party • Little Elm, TX",
-                itemsOrdered: "Catering: Railway Cutlets, Paneer Lababdar & Parathas",
-                quote: "Hosted 45 guests for our housewarming. Bluebonnet Whisk handled the catering seamlessly. The Railway Cutlets were a huge crowd pleaser, and the fresh Gobhi and Paneer Parathas were stuffed generously!",
-                rating: 5,
-                date: "June 2026"
-              },
-              {
-                name: "Rajiv M.",
-                occasion: "Executive Tiffin Subscriber • Plano, TX",
-                itemsOrdered: "Daily Tiffin: Parathas, Homestyle Kadhi & Baigan",
-                quote: "I've been subscribing to their weekly tiffin service. The homestyle Kadhi and Bharwa Baigan taste just like home. Spotless hygiene, homestyle health, and authentic North Indian taste!",
-                rating: 5,
-                date: "August 2026"
-              },
-              {
-                name: "Deepak & Archana T.",
-                occasion: "Son's 10th Birthday • McKinney, TX",
-                itemsOrdered: "Custom Chocolate Pistachio Cake & Live Pani Puri Bar",
-                quote: "Cakes are definitely Bluebonnet Whisk's superpower! Our son wanted a custom chocolate cake with eggless requirements, and they delivered a masterpiece. The live Pani Puri bar kept everyone super happy!",
-                rating: 5,
-                date: "May 2026"
               }
             ].map((t, idx) => (
               <div 
