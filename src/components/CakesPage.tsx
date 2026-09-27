@@ -1,16 +1,42 @@
-import { ArrowRight, MessageSquare, ChevronRight, Sparkles } from "lucide-react";
+import { MessageSquare, Sparkles } from "lucide-react";
 import { flavorCategories } from "../types";
 
 interface CakesPageProps {
   onOpenBaker: () => void;
-  onOpenPriceList: () => void;
+  onOpenPriceList?: () => void;
 }
 
-export default function CakesPage({ onOpenBaker, onOpenPriceList }: CakesPageProps) {
+export default function CakesPage({ onOpenBaker }: CakesPageProps) {
   return (
     <div className="animate-fade-in bg-brand-cream-light min-h-screen">
+      
+      {/* ── STICKY FLOATING ACTION BAR FOR CAKES TAB ── */}
+      <div className="sticky top-0 lg:top-[var(--header-nav-bottom,64px)] z-40 bg-[#00346f]/95 backdrop-blur-md text-white border-b border-[#775a19]/30 py-2.5 px-4 shadow-md transition-all">
+        <div className="max-w-7xl mx-auto flex flex-row items-center justify-between gap-3">
+          <div className="hidden sm:flex items-center gap-2 font-serif text-sm font-bold text-brand-cream">
+            <Sparkles className="h-4 w-4 text-brand-gold-tint" />
+            <span>Custom Cakes &amp; Patisserie</span>
+          </div>
+          <div className="flex items-center gap-3 w-full sm:w-auto justify-center sm:justify-end">
+            <a
+              href="sms:+19455274566?body=Hi!%20I'd%20like%20to%20create%20a%20quote%20for%20a%20custom%20cake."
+              className="flex-1 sm:flex-none min-h-[40px] inline-flex items-center justify-center bg-[#775a19] hover:bg-[#5d4201] text-white font-sans text-xs uppercase tracking-wider font-bold px-5 py-2 rounded-lg shadow-sm transition-all text-center"
+            >
+              Create A Quote
+            </a>
+            <button
+              onClick={onOpenBaker}
+              className="flex-1 sm:flex-none min-h-[40px] inline-flex items-center justify-center gap-1.5 border border-brand-gold-tint hover:bg-white/10 text-brand-cream font-sans text-xs uppercase tracking-wider font-bold px-5 py-2 rounded-lg transition-all cursor-pointer text-center"
+            >
+              <MessageSquare className="h-3.5 w-3.5" />
+              <span>Talk to the Baker</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
       {/* Elegant Hero Section */}
-      <header className="relative py-24 lg:py-36 overflow-hidden">
+      <header className="relative py-20 lg:py-32 overflow-hidden">
         {/* Background with soft luxury overlay */}
         <div className="absolute inset-0 z-0">
           <img 
@@ -28,7 +54,7 @@ export default function CakesPage({ onOpenBaker, onOpenPriceList }: CakesPagePro
             SWEET MOMENTS, BEAUTIFULLY BAKED
           </span>
           <h1 className="font-serif text-4xl lg:text-6xl font-bold tracking-tight mb-6 max-w-3xl drop-shadow-xs text-brand-cream leading-tight">
-            Cakes & <span className="italic text-brand-gold-tint">Desserts</span>
+            Cakes &amp; <span className="italic text-brand-gold-tint">Desserts</span>
           </h1>
           <p className="font-sans text-sm lg:text-base text-gray-100 max-w-xl mb-8 leading-relaxed font-medium drop-shadow-xs">
             From custom celebration cakes to bite-sized treats and Indian-inspired desserts, every creation at Bluebonnet Whisk is handcrafted with quality ingredients, creativity, and love.
@@ -36,18 +62,23 @@ export default function CakesPage({ onOpenBaker, onOpenPriceList }: CakesPagePro
 
           <div className="flex flex-col sm:flex-row items-center gap-4">
             <a
-              href="sms:+19455274566?body=Hi!%20I'd%20like%20to%20request%20a%20quote%20for%20a%20custom%20cake."
+              href="sms:+19455274566?body=Hi!%20I'd%20like%20to%20create%20a%20quote%20for%20a%20custom%20cake."
               className="w-full sm:w-auto min-h-[44px] inline-flex items-center justify-center bg-[#00346f] hover:bg-[#00224d] text-white font-sans text-xs uppercase tracking-widest font-bold px-8 py-3.5 rounded-xl shadow-lg transition-all duration-300 cursor-pointer"
             >
-              REQUEST QUOTE
+              Create A Quote
             </a>
-            <p className="flex items-center gap-2.5 text-sm lg:text-base text-brand-gold-tint font-sans font-semibold">
-              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500 text-white font-black text-xs">✓</span>
-              Custom flavors & Eggless options available
-            </p>
+            <button
+              onClick={onOpenBaker}
+              className="w-full sm:w-auto min-h-[44px] inline-flex items-center justify-center gap-2 border border-brand-gold-tint hover:bg-white/10 text-brand-cream font-sans text-xs uppercase tracking-widest font-bold px-8 py-3.5 rounded-xl transition-all cursor-pointer"
+            >
+              <MessageSquare className="h-4 w-4" />
+              <span>Talk to the Baker</span>
+            </button>
           </div>
         </div>
-      </header>      {/* Our Collections Section */}
+      </header>
+
+      {/* Our Collections Section */}
       <section className="max-w-7xl mx-auto px-4 lg:px-6 lg:px-8 py-16">
         <div className="mb-12 text-center lg:text-left">
           <h2 className="font-serif text-3xl lg:text-4xl font-bold text-primary-brand tracking-tight">Our Collections</h2>
@@ -75,19 +106,13 @@ export default function CakesPage({ onOpenBaker, onOpenPriceList }: CakesPagePro
               <p className="text-gray-600 text-xs lg:text-sm font-sans mb-4 leading-normal">
                 Made-to-order cakes for birthdays, anniversaries, and milestones. Theme Cakes, Kids Birthdays, and Elegant Florals. Hand-decorated by master artists.
               </p>
-              <div className="flex flex-wrap gap-2 mb-6">
+              <div className="flex flex-wrap gap-2">
                 {["Butterscotch Drizzle", "Racing Legend", "Jungle Adventure", "Berry Chantilly"].map((tag) => (
                   <span key={tag} className="text-[10px] font-sans tracking-wider bg-gray-50 border border-gray-100 text-gray-500 px-2.5 py-1 rounded">
                     {tag}
                   </span>
                 ))}
               </div>
-              <a
-                href="sms:+19455274566?body=Hi!%20I'd%20like%20to%20inquire%20about%20Custom%20Celebration%20Cakes."
-                className="inline-block border border-secondary-brand/60 hover:bg-secondary-brand/5 px-6 py-3 text-[11px] font-bold tracking-widest text-[#775a19] uppercase rounded transition-all cursor-pointer font-semibold text-center"
-              >
-                INQUIRE VIA SMS
-              </a>
             </div>
           </div>
 
@@ -112,7 +137,7 @@ export default function CakesPage({ onOpenBaker, onOpenPriceList }: CakesPagePro
                   Custom celebration boxes for Diwali, Rakhi, Eid, and Holi. Elegantly themed embellishments, custom greeting tags, and luxury packaging.
                 </p>
                 
-                {/* Festival box thumbnails to fill empty space */}
+                {/* Festival box thumbnails */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-6 pt-6 border-t border-gray-150">
                   <div className="flex items-center gap-3">
                     <div className="h-14 w-14 rounded-md overflow-hidden shrink-0 border border-gray-200 shadow-2xs">
@@ -126,7 +151,7 @@ export default function CakesPage({ onOpenBaker, onOpenPriceList }: CakesPagePro
                     <div className="space-y-0.5">
                       <span className="text-[8px] font-bold tracking-wider text-secondary-brand uppercase block font-sans">Ganesh Chaturthi</span>
                       <h4 className="text-[11px] font-serif font-bold text-primary-brand leading-tight">Pooja Box</h4>
-                      <p className="text-gray-500 text-[9px] font-sans leading-none">Mithais & nuts</p>
+                      <p className="text-gray-500 text-[9px] font-sans leading-none">Mithais &amp; nuts</p>
                     </div>
                   </div>
                   
@@ -148,14 +173,8 @@ export default function CakesPage({ onOpenBaker, onOpenPriceList }: CakesPagePro
                 </div>
               </div>
             </div>
-            <div className="p-6 pt-0 flex justify-between items-end border-t border-gray-100 mt-2">
+            <div className="p-6 pt-0 border-t border-gray-100 mt-2">
               <span className="text-[10px] text-gray-500 font-bold block font-sans uppercase">Starting from $20</span>
-              <a 
-                href="sms:+19455274566?body=Hi!%20I'd%20like%20to%20inquire%20about%20Festival%20Specials."
-                className="text-[#775a19] text-xs font-bold tracking-widest uppercase flex items-center gap-1.5 hover:gap-2.5 transition-all cursor-pointer font-semibold"
-              >
-                INQUIRE VIA SMS <ArrowRight className="h-3.5 w-3.5" />
-              </a>
             </div>
           </div>
 
@@ -170,20 +189,14 @@ export default function CakesPage({ onOpenBaker, onOpenPriceList }: CakesPagePro
               />
             </div>
             <div className="p-6">
-              <h3 className="font-serif text-lg font-bold text-primary-brand mb-2">Cupcakes & Cake Pops</h3>
-              <p className="text-gray-600 text-xs font-sans leading-relaxed mb-5">
+              <h3 className="font-serif text-lg font-bold text-primary-brand mb-2">Cupcakes &amp; Cake Pops</h3>
+              <p className="text-gray-600 text-xs font-sans leading-relaxed">
                 Bite-sized treats, big smiles! Our custom cupcakes and cake pops are loved by kids and adults alike, making every celebration sweet.
               </p>
-              <a
-                href="sms:+19455274566?body=Hi!%20I'd%20like%20to%20inquire%20about%20Cupcakes%20%26%20Cake%20Pops."
-                className="text-[#775a19] text-xs font-bold tracking-widest uppercase flex items-center gap-1.5 hover:gap-2.5 transition-all cursor-pointer font-semibold"
-              >
-                INQUIRE VIA SMS <ArrowRight className="h-3.5 w-3.5" />
-              </a>
             </div>
           </div>
 
-          {/* Bottom Row - Item 4: Cake Jars & Mini Cake Loaves (spans 2 columns on desktop) */}
+          {/* Bottom Row - Item 4: Cake Jars & Mini Cake Loaves */}
           <div className="lg:col-span-2 border border-gray-150 rounded-md bg-white overflow-hidden shadow-xs flex flex-col lg:flex-row group">
             {/* Left Column: Image */}
             <div className="w-full lg:w-1/2 h-[200px] lg:h-auto overflow-hidden relative">
@@ -198,13 +211,13 @@ export default function CakesPage({ onOpenBaker, onOpenPriceList }: CakesPagePro
             <div className="w-full lg:w-1/2 p-6 lg:p-8 flex flex-col justify-between">
               <div>
                 <span className="text-[9px] font-bold tracking-widest text-[#775a19] uppercase block mb-1">Classic Favorites</span>
-                <h3 className="font-serif text-xl font-bold text-primary-brand mb-2">Cake Jars & Mini Cake Loaves</h3>
+                <h3 className="font-serif text-xl font-bold text-primary-brand mb-2">Cake Jars &amp; Mini Cake Loaves</h3>
                 <p className="text-gray-600 text-xs lg:text-sm font-sans leading-relaxed mb-4">
                   Individual elegance. Strawberry, Chocolate Pistachio, Funfetti, Chocolate, Tiramisu, and Seasonal Specials. Perfect for display cases or party bags.
                 </p>
                 
                 {/* Small detail thumbnails */}
-                <div className="grid grid-cols-2 gap-3 mb-4">
+                <div className="grid grid-cols-2 gap-3">
                   <div className="relative h-16 rounded overflow-hidden">
                     <img 
                       src="src/assets/images/cake_jars_detail_1_1781195027694.jpg" 
@@ -223,13 +236,6 @@ export default function CakesPage({ onOpenBaker, onOpenPriceList }: CakesPagePro
                   </div>
                 </div>
               </div>
-              
-              <a 
-                href="sms:+19455274566?body=Hi!%20I'd%20like%20to%20inquire%20about%20Cake%20Jars%20%26%20Mini%20Loaves."
-                className="text-[#775a19] text-xs font-bold tracking-widest uppercase flex items-center gap-1.5 hover:gap-2.5 transition-all cursor-pointer w-fit font-semibold"
-              >
-                INQUIRE VIA SMS <ArrowRight className="h-3.5 w-3.5" />
-              </a>
             </div>
           </div>
 
@@ -243,7 +249,7 @@ export default function CakesPage({ onOpenBaker, onOpenPriceList }: CakesPagePro
           <div className="text-center mb-16 max-w-3xl mx-auto">
             <span className="text-[10px] font-bold tracking-widest text-[#775a19] uppercase block mb-1">Signature Fusion Line</span>
             <h2 className="font-serif text-3xl lg:text-5xl font-bold text-primary-brand tracking-tight animate-fade-in">
-              Indian Fusion Cakes & Desserts
+              Indian Fusion Cakes &amp; Desserts
             </h2>
             <p className="text-gray-600 text-xs lg:text-sm font-sans leading-relaxed mt-3 max-w-xl mx-auto">
               Traditional Indian flavors reimagined into handcrafted cakes and desserts.
@@ -267,19 +273,11 @@ export default function CakesPage({ onOpenBaker, onOpenPriceList }: CakesPagePro
                   Best Seller
                 </div>
               </div>
-              <div className="p-5 flex-1 flex flex-col justify-between">
-                <div className="space-y-2 mb-4">
-                  <h3 className="font-serif text-base font-bold text-primary-brand">Rasmalai Cake</h3>
-                  <p className="text-gray-600 text-[11px] font-sans leading-relaxed">
-                    Cardamom-infused sponge soaked in rich saffron rabri milk, frosted with pistachio cream and rose petals.
-                  </p>
-                </div>
-                <a 
-                  href="sms:+19455274566?body=Hi!%20I'd%20like%20to%20inquire%20about%20the%20Rasmalai%20Cake."
-                  className="w-full bg-[#faf7f2] hover:bg-[#775a19] hover:text-white border border-brand-gold-tint/40 text-[#775a19] text-[10px] font-bold tracking-widest uppercase py-2.5 rounded-sm transition-all duration-300 font-semibold text-center inline-block"
-                >
-                  Inquire
-                </a>
+              <div className="p-5 flex-1 flex flex-col justify-between space-y-2">
+                <h3 className="font-serif text-base font-bold text-primary-brand">Rasmalai Cake</h3>
+                <p className="text-gray-600 text-[11px] font-sans leading-relaxed">
+                  Cardamom-infused sponge soaked in rich saffron rabri milk, frosted with pistachio cream and rose petals.
+                </p>
               </div>
             </div>
 
@@ -296,19 +294,11 @@ export default function CakesPage({ onOpenBaker, onOpenPriceList }: CakesPagePro
                   Classic
                 </div>
               </div>
-              <div className="p-5 flex-1 flex flex-col justify-between">
-                <div className="space-y-2 mb-4">
-                  <h3 className="font-serif text-base font-bold text-primary-brand">Gulab Jamun Cake</h3>
-                  <p className="text-gray-600 text-[11px] font-sans leading-relaxed">
-                    Saffron cardamom cake layers drenched in rose syrup and combined with pieces of slow-cooked gulab jamuns.
-                  </p>
-                </div>
-                <a 
-                  href="sms:+19455274566?body=Hi!%20I'd%20like%20to%20inquire%20about%20the%20Gulab%20Jamun%20Cake."
-                  className="w-full bg-[#faf7f2] hover:bg-[#775a19] hover:text-white border border-brand-gold-tint/40 text-[#775a19] text-[10px] font-bold tracking-widest uppercase py-2.5 rounded-sm transition-all duration-300 font-semibold text-center inline-block"
-                >
-                  Inquire
-                </a>
+              <div className="p-5 flex-1 flex flex-col justify-between space-y-2">
+                <h3 className="font-serif text-base font-bold text-primary-brand">Gulab Jamun Cake</h3>
+                <p className="text-gray-600 text-[11px] font-sans leading-relaxed">
+                  Saffron cardamom cake layers drenched in rose syrup and combined with pieces of slow-cooked gulab jamuns.
+                </p>
               </div>
             </div>
 
@@ -325,19 +315,11 @@ export default function CakesPage({ onOpenBaker, onOpenPriceList }: CakesPagePro
                   Seasonal
                 </div>
               </div>
-              <div className="p-5 flex-1 flex flex-col justify-between">
-                <div className="space-y-2 mb-4">
-                  <h3 className="font-serif text-base font-bold text-primary-brand">Mango Cake</h3>
-                  <p className="text-gray-600 text-[11px] font-sans leading-relaxed">
-                    Pure Alphonso mango pulp cream layered with white chocolate chips and fluffy cardamon-infused sponge.
-                  </p>
-                </div>
-                <a 
-                  href="sms:+19455274566?body=Hi!%20I'd%20like%20to%20inquire%20about%20the%20Mango%20Cake."
-                  className="w-full bg-[#faf7f2] hover:bg-[#775a19] hover:text-white border border-brand-gold-tint/40 text-[#775a19] text-[10px] font-bold tracking-widest uppercase py-2.5 rounded-sm transition-all duration-300 font-semibold text-center inline-block"
-                >
-                  Inquire
-                </a>
+              <div className="p-5 flex-1 flex flex-col justify-between space-y-2">
+                <h3 className="font-serif text-base font-bold text-primary-brand">Mango Cake</h3>
+                <p className="text-gray-600 text-[11px] font-sans leading-relaxed">
+                  Pure Alphonso mango pulp cream layered with white chocolate chips and fluffy cardamon-infused sponge.
+                </p>
               </div>
             </div>
 
@@ -354,19 +336,11 @@ export default function CakesPage({ onOpenBaker, onOpenPriceList }: CakesPagePro
                   Popular
                 </div>
               </div>
-              <div className="p-5 flex-1 flex flex-col justify-between">
-                <div className="space-y-2 mb-4">
-                  <h3 className="font-serif text-base font-bold text-primary-brand">Indian Fusion Jars</h3>
-                  <p className="text-gray-600 text-[11px] font-sans leading-relaxed">
-                    Layered glass jars of cardamom sponge, rich cream, and traditional sweets. Ideal for individual servings and gifting.
-                  </p>
-                </div>
-                <a 
-                  href="sms:+19455274566?body=Hi!%20I'd%20like%20to%20inquire%20about%20Indian%20Fusion%20Jars."
-                  className="w-full bg-[#faf7f2] hover:bg-[#775a19] hover:text-white border border-brand-gold-tint/40 text-[#775a19] text-[10px] font-bold tracking-widest uppercase py-2.5 rounded-sm transition-all duration-300 font-semibold text-center inline-block"
-                >
-                  Inquire
-                </a>
+              <div className="p-5 flex-1 flex flex-col justify-between space-y-2">
+                <h3 className="font-serif text-base font-bold text-primary-brand">Indian Fusion Jars</h3>
+                <p className="text-gray-600 text-[11px] font-sans leading-relaxed">
+                  Layered glass jars of cardamom sponge, rich cream, and traditional sweets. Ideal for individual servings and gifting.
+                </p>
               </div>
             </div>
 
@@ -383,19 +357,11 @@ export default function CakesPage({ onOpenBaker, onOpenPriceList }: CakesPagePro
                   Party Pack
                 </div>
               </div>
-              <div className="p-5 flex-1 flex flex-col justify-between">
-                <div className="space-y-2 mb-4">
-                  <h3 className="font-serif text-base font-bold text-primary-brand">Fusion Dessert Cups</h3>
-                  <p className="text-gray-600 text-[11px] font-sans leading-relaxed">
-                    Sleek shooters and mini cups displaying layered mango mousse, vanilla panna cotta, and kheer crumbs.
-                  </p>
-                </div>
-                <a 
-                  href="sms:+19455274566?body=Hi!%20I'd%20like%20to%20inquire%20about%20Fusion%20Dessert%20Cups."
-                  className="w-full bg-[#faf7f2] hover:bg-[#775a19] hover:text-white border border-brand-gold-tint/40 text-[#775a19] text-[10px] font-bold tracking-widest uppercase py-2.5 rounded-sm transition-all duration-300 font-semibold text-center inline-block"
-                >
-                  Inquire
-                </a>
+              <div className="p-5 flex-1 flex flex-col justify-between space-y-2">
+                <h3 className="font-serif text-base font-bold text-primary-brand">Fusion Dessert Cups</h3>
+                <p className="text-gray-600 text-[11px] font-sans leading-relaxed">
+                  Sleek shooters and mini cups displaying layered mango mousse, vanilla panna cotta, and kheer crumbs.
+                </p>
               </div>
             </div>
 
@@ -440,16 +406,10 @@ export default function CakesPage({ onOpenBaker, onOpenPriceList }: CakesPagePro
             </div>
 
             {/* Customization Note Banner */}
-            <div className="border-t border-gray-100 pt-6 flex flex-col lg:flex-row items-center justify-between gap-4">
-              <p className="text-gray-700 text-xs font-semibold font-sans italic text-center lg:text-left">
+            <div className="border-t border-gray-100 pt-6">
+              <p className="text-gray-700 text-xs font-semibold font-sans italic text-center">
                 Custom themes, personalized designs, and eggless options available.
               </p>
-              <a 
-                href="sms:+19455274566?body=Hi!%20I'd%20like%20to%20place%20a%20custom%20fusion%20order."
-                className="bg-primary-brand hover:bg-[#775a19] text-white text-xs font-bold tracking-widest uppercase px-6 py-3 rounded-sm shadow-xs transition-all cursor-pointer font-semibold inline-block text-center"
-              >
-                REQUEST CUSTOM FUSION ORDER
-              </a>
             </div>
           </div>
 
@@ -564,17 +524,11 @@ export default function CakesPage({ onOpenBaker, onOpenPriceList }: CakesPagePro
 
           </div>
 
-          {/* Cookie CTA & Description */}
-          <div className="mt-8 flex flex-col lg:flex-row justify-between items-center bg-[#faf7f2]/55 border border-gray-150 rounded-2xl p-6 gap-6">
-            <p className="text-gray-700 text-xs lg:text-sm font-sans leading-relaxed text-center lg:text-left max-w-2xl font-medium">
+          {/* Cookie Description Banner */}
+          <div className="mt-8 bg-[#faf7f2]/55 border border-gray-150 rounded-2xl p-6 text-center">
+            <p className="text-gray-700 text-xs lg:text-sm font-sans leading-relaxed max-w-3xl mx-auto font-medium">
               ★ Our premium thick-style cookies are hand-rolled daily in our Frisco kitchen, using slow-churned butter and organic flour. Perfect for family sweet cravings or custom event cookie boxes.
             </p>
-            <a
-              href="sms:+19455274566?body=Hi!%20I'd%20like%20to%20order%20gourmet%20cookies."
-              className="w-full sm:w-auto min-h-[44px] inline-flex items-center justify-center bg-[#00346f] hover:bg-[#00224d] text-white font-sans text-xs uppercase tracking-widest font-bold px-8 py-3.5 rounded-xl transition-all cursor-pointer whitespace-nowrap shadow-sm"
-            >
-              ORDER COOKIES
-            </a>
           </div>
         </div>
       </section>
@@ -610,15 +564,6 @@ export default function CakesPage({ onOpenBaker, onOpenPriceList }: CakesPagePro
                     ))}
                   </ul>
                 </div>
-
-                <div className="mt-6 pt-4 border-t border-gray-250/20">
-                  <a
-                    href={`sms:+19455274566?body=Hi!%20I'd%20like%20to%20request%20flavor%20details%20for%20${encodeURIComponent(cat.title)}.`}
-                    className="text-[10px] font-bold tracking-widest uppercase flex items-center gap-1 hover:gap-1.5 transition-all text-secondary-brand opacity-90 cursor-pointer font-sans"
-                  >
-                    Request Flavor <ChevronRight className="h-3 my-auto" />
-                  </a>
-                </div>
               </div>
             ))}
 
@@ -643,32 +588,6 @@ export default function CakesPage({ onOpenBaker, onOpenPriceList }: CakesPagePro
         </div>
       </section>
 
-      {/* Create Your Masterpiece Final CTA Section */}
-      <section className="bg-gradient-to-br from-[#faf7f2] to-[#fbfbfa] py-20 text-center border-b border-gray-150">
-        <div className="max-w-4xl mx-auto px-4">
-          <h2 className="font-serif text-3xl lg:text-4xl font-bold text-primary-brand tracking-tight mb-5 leading-tight">
-            Create Your <span className="italic text-secondary-brand">Masterpiece</span>
-          </h2>
-          <p className="text-gray-600 font-sans text-sm lg:text-base max-w-2xl mx-auto mb-8 leading-relaxed">
-            Ready to bring your dream cake to life? Let&apos;s discuss your vision and make your next event unforgettable.
-          </p>
-
-          <div className="flex flex-col lg:flex-row justify-center items-center gap-4">
-            <a
-              href="sms:+19455274566?body=Hi!%20I'd%20like%20to%20request%20a%20quote%20for%20a%20custom%20cake."
-              className="w-full lg:w-auto bg-[#00346f] hover:bg-primary-brand/90 text-white font-sans text-xs uppercase tracking-widest font-bold px-8 py-4 rounded shadow-md transition-all cursor-pointer text-center inline-block"
-            >
-              REQUEST QUOTE
-            </a>
-            <button
-              onClick={onOpenPriceList}
-              className="w-full lg:w-auto border border-gray-400 hover:bg-gray-50 text-gray-700 font-sans text-xs uppercase tracking-widest font-bold px-8 py-4 rounded transition-all cursor-pointer"
-            >
-              DOWNLOAD PRICE LIST
-            </button>
-          </div>
-        </div>
-      </section>
     </div>
   );
 }
