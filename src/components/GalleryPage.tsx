@@ -51,7 +51,6 @@ export default function GalleryPage({ onNavigateToAdmin: _onNavigateToAdmin }: G
     return initialGalleryData as GalleryItem[];
   });
 
-  const [inspectViewMode, setInspectViewMode] = useState<"original" | "oak">("original");
 
   const [activeTab, setActiveTab] = useState<string>("all");
   const [selectedItem, setSelectedItem] = useState<GalleryItem | null>(null);
@@ -331,7 +330,7 @@ export default function GalleryPage({ onNavigateToAdmin: _onNavigateToAdmin }: G
                 </div>
 
                 <div className="pt-3 border-t border-[#382F2A] flex items-center justify-between text-[11px] text-[#D4AF37] font-serif italic">
-                  <span>American Oak Slab Surface</span>
+                  <span>Authentic DFW Artistry</span>
                   <span className="font-sans uppercase text-[10px] font-bold tracking-wider text-gray-400 group-hover:text-[#D4AF37] transition-colors">
                     Inspect Photo &rarr;
                   </span>
@@ -361,12 +360,12 @@ export default function GalleryPage({ onNavigateToAdmin: _onNavigateToAdmin }: G
               <div className="grid grid-cols-1 sm:grid-cols-2">
                 <div className="relative h-72 sm:h-auto min-h-[320px] bg-black flex items-center justify-center p-2">
                   <img
-                    src={inspectViewMode === "original" ? (selectedItem.originalImagePath || selectedItem.imagePath) : selectedItem.imagePath}
+                    src={selectedItem.originalImagePath || selectedItem.imagePath}
                     alt={selectedItem.title}
                     className="w-full h-full object-contain rounded-lg"
                   />
                   <div className="absolute top-3 left-3 bg-black/70 backdrop-blur-md px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider text-[#D4AF37] border border-[#D4AF37]/30">
-                    {inspectViewMode === "original" ? "Original Authentic Photo" : "Clean Studio Oak Slab"}
+                    Original Authentic Photo
                   </div>
                 </div>
 
@@ -378,30 +377,6 @@ export default function GalleryPage({ onNavigateToAdmin: _onNavigateToAdmin }: G
                     <h2 className="font-serif text-2xl font-bold text-white mb-4 leading-snug">
                       {selectedItem.title}
                     </h2>
-
-                    {/* View Mode Toggle */}
-                    <div className="flex items-center gap-2 bg-[#1A1614] p-1.5 rounded-xl border border-[#382F2A] mb-4">
-                      <button
-                        onClick={() => setInspectViewMode("original")}
-                        className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-bold font-sans transition-all cursor-pointer ${
-                          inspectViewMode === "original"
-                            ? "bg-[#D4AF37] text-[#1A1614] shadow"
-                            : "text-gray-400 hover:text-white"
-                        }`}
-                      >
-                        📷 Original Photo
-                      </button>
-                      <button
-                        onClick={() => setInspectViewMode("oak")}
-                        className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-bold font-sans transition-all cursor-pointer ${
-                          inspectViewMode === "oak"
-                            ? "bg-[#D4AF37] text-[#1A1614] shadow"
-                            : "text-gray-400 hover:text-white"
-                        }`}
-                      >
-                        🪵 Clean Oak Slab View
-                      </button>
-                    </div>
                   </div>
 
                   <div className="space-y-3 pt-4 border-t border-[#382F2A]">
