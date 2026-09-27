@@ -419,9 +419,14 @@ export default function GalleryPage({ onNavigateToAdmin: _onNavigateToAdmin }: G
 
                 <button
                   onClick={async () => {
-                    await saveGalleryItemsToSupabase(items);
-                    setSyncStatus("Synced live with Supabase & site!");
-                    setTimeout(() => setSyncStatus(""), 3000);
+                    setSyncStatus("Syncing live to Supabase...");
+                    const ok = await saveGalleryItemsToSupabase(items);
+                    if (ok) {
+                      setSyncStatus("✓ Synced live with Supabase & site!");
+                    } else {
+                      setSyncStatus("❌ Sync warning: Check browser console or network connection.");
+                    }
+                    setTimeout(() => setSyncStatus(""), 4000);
                   }}
                   className="bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all cursor-pointer flex items-center gap-1.5 shadow"
                   title="Push current gallery items live to Supabase & all visitors"

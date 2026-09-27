@@ -1077,11 +1077,14 @@ export async function saveTiffinMenuSettings(settings: TiffinMenuSettings): Prom
     try {
       const { error } = await supabase
         .from('app_settings')
-        .upsert({
-          key: 'tiffin_menu_settings',
-          value: updatedSettings,
-          updated_at: new Date().toISOString()
-        });
+        .upsert(
+          {
+            key: 'tiffin_menu_settings',
+            value: updatedSettings,
+            updated_at: new Date().toISOString()
+          },
+          { onConflict: 'key' }
+        );
 
       if (!error) return true;
       console.warn('Supabase saveTiffinMenuSettings warning:', error);
@@ -1121,11 +1124,14 @@ export function recordDeletedGalleryId(id: string) {
       supabase.from('app_settings').select('value').eq('key', 'deleted_gallery_ids').maybeSingle().then(({ data }) => {
         const remoteList: string[] = Array.isArray(data?.value) ? data.value : [];
         if (!remoteList.includes(id)) {
-          supabase.from('app_settings').upsert({
-            key: 'deleted_gallery_ids',
-            value: [...remoteList, id],
-            updated_at: new Date().toISOString()
-          });
+          supabase.from('app_settings').upsert(
+            {
+              key: 'deleted_gallery_ids',
+              value: [...remoteList, id],
+              updated_at: new Date().toISOString()
+            },
+            { onConflict: 'key' }
+          );
         }
       });
     } catch (err) {
@@ -1140,11 +1146,14 @@ export function clearDeletedGalleryIds() {
   } catch {}
   if (supabase) {
     try {
-      supabase.from('app_settings').upsert({
-        key: 'deleted_gallery_ids',
-        value: [],
-        updated_at: new Date().toISOString()
-      });
+      supabase.from('app_settings').upsert(
+        {
+          key: 'deleted_gallery_ids',
+          value: [],
+          updated_at: new Date().toISOString()
+        },
+        { onConflict: 'key' }
+      );
     } catch {}
   }
 }
@@ -1197,16 +1206,21 @@ export async function saveGalleryItemsToSupabase(items: any[]): Promise<boolean>
     try {
       const { error } = await supabase
         .from('app_settings')
-        .upsert({
-          key: 'gallery_items',
-          value: items,
-          updated_at: new Date().toISOString()
-        });
+        .upsert(
+          {
+            key: 'gallery_items',
+            value: items,
+            updated_at: new Date().toISOString()
+          },
+          { onConflict: 'key' }
+        );
 
       if (!error) return true;
       console.warn('Supabase saveGalleryItems warning:', error);
+      return false;
     } catch (err) {
       console.warn('Supabase saveGalleryItems failed:', err);
+      return false;
     }
   }
   return true;
