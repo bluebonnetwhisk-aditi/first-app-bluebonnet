@@ -207,19 +207,19 @@ export default function App() {
       </div>
 
       {/* Header / Navbar */}
-      <nav ref={navRef} className="sticky top-0 z-45 bg-[#fbfbfa]/95 backdrop-blur-md border-b border-gray-150 py-2 shadow-xs">
+      <nav ref={navRef} className="sticky top-0 z-45 bg-[#fbfbfa]/95 backdrop-blur-md border-b border-gray-150 py-2 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16 gap-6">
+          <div className="flex items-center justify-between h-20 sm:h-24 gap-6">
             
             {/* Logo Brand */}
             <div 
               onClick={() => setActiveTab("Home")} 
-              className="shrink-0 flex items-center cursor-pointer group py-0.5"
+              className="shrink-0 flex items-center cursor-pointer group py-1"
             >
               <img 
                 src={brandLogo} 
                 alt="Bluebonnet Whisk" 
-                className="h-12 sm:h-14 max-h-14 w-auto object-contain transition-transform duration-300 group-hover:scale-105"
+                className="h-16 sm:h-20 max-h-20 w-auto object-contain transition-transform duration-300 group-hover:scale-105 filter drop-shadow-sm"
               />
             </div>
 
@@ -311,7 +311,7 @@ export default function App() {
               <img 
                 src={brandLogo} 
                 alt="Bluebonnet Whisk" 
-                className="h-14 sm:h-16 w-auto object-contain transition-transform duration-300 group-hover:scale-105"
+                className="h-16 sm:h-20 w-auto object-contain transition-transform duration-300 group-hover:scale-105"
               />
             </div>
             <p className="text-gray-500 text-xs leading-relaxed max-w-xs font-sans">
