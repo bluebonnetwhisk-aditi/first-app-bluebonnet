@@ -9,7 +9,7 @@ import {
   AlertCircle, 
   Save, 
   FileEdit,
-  Tag
+  Percent
 } from 'lucide-react';
 import type { CateringOrder, CartItem } from '../../types/catering';
 import { updateOrderDetails } from '../../services/supabase';
@@ -29,11 +29,14 @@ export default function KDSEditOrderModal({
     return Array.isArray(order.items) ? JSON.parse(JSON.stringify(order.items)) : [];
   });
 
-  // Discount & Rebate state
-  const [discountAmount, setDiscountAmount] = useState<number>(order.discount_amount || 0);
-  const [discountReason, setDiscountReason] = useState<string>(order.discount_reason || '');
-  const [rebateAmount, setRebateAmount] = useState<number>(order.rebate_amount || 0);
-  const [rebateReason, setRebateReason] = useState<string>(order.rebate_reason || '');
+  // Two discount sections: Percent (%) discount and Fixed Amount ($) discount
+  // Do NOT prepopulate any numbers in the discount inputs
+  const [percentDiscountInput, setPercentDiscountInput] = useState<string>('');
+  const [percentDiscountReason, setPercentDiscountReason] = useState<string>('');
+  const [fixedDiscountInput, setFixedDiscountInput] = useState<string>(() => {
+    return order.discount_amount && order.discount_amount > 0 ? String(order.discount_amount) : '';
+  });
+  const [fixedDiscountReason, setFixedDiscountReason] = useState<string>(order.discount_reason || '');
 
   // Add new item state
   const [showAddItem, setShowAddItem] = useState(false);
@@ -51,14 +54,32 @@ export default function KDSEditOrderModal({
   const foodSubtotal = items.reduce((sum, item) => sum + (item.unitPrice * item.quantity), 0);
   const deliveryFee = order.delivery_fee || 0;
   
-  // Net after discount & rebate
-  const netBeforeTax = Math.max(0, foodSubtotal - discountAmount - rebateAmount + deliveryFee);
+  // Percent discount calculation
+  const percentVal = Math.max(0, parseFloat(percentDiscountInput) || 0);
+  const percentDiscountDollars = Math.round((foodSubtotal * percentVal / 100) * 100) / 100;
+
+  // Fixed number discount calculation
+  const fixedDiscountDollars = Math.max(0, parseFloat(fixedDiscountInput) || 0);
+
+  const totalDiscountDollars = Math.min(foodSubtotal, Math.round((percentDiscountDollars + fixedDiscountDollars) * 100) / 100);
+
+  // Net after discount & delivery
+  const netBeforeTax = Math.max(0, foodSubtotal - totalDiscountDollars + deliveryFee);
   const taxAmount = Math.round(netBeforeTax * 0.0825 * 100) / 100;
   
   const isCreditCard = order.payment_method === 'credit_card';
   const processingFee = isCreditCard ? Math.round((netBeforeTax + taxAmount) * 0.035 * 100) / 100 : 0;
   
   const grandTotal = Math.round((netBeforeTax + taxAmount + processingFee) * 100) / 100;
+
+  // Change name of item
+  const handleItemNameChange = (idx: number, newName: string) => {
+    setItems(prev => {
+      const copy = [...prev];
+      copy[idx].name = newName;
+      return copy;
+    });
+  };
 
   // Change quantity of item
   const handleItemQtyChange = (idx: number, delta: number) => {
@@ -126,15 +147,20 @@ export default function KDSEditOrderModal({
       .map(i => `${i.name}${i.notes ? ` [${i.notes}]` : ''} (${i.selectionLabel} × ${i.quantity}) [$${(i.unitPrice * i.quantity).toFixed(2)}]`)
       .join('; ');
 
+    const combinedReason = [
+      percentVal > 0 ? `${percentVal}% off${percentDiscountReason ? ` (${percentDiscountReason})` : ''}` : '',
+      fixedDiscountDollars > 0 ? `$${fixedDiscountDollars.toFixed(2)} off${fixedDiscountReason ? ` (${fixedDiscountReason})` : ''}` : ''
+    ].filter(Boolean).join(' + ');
+
     const updates: Partial<CateringOrder> = {
       items,
       food_subtotal: Math.round(foodSubtotal * 100) / 100,
       tax_amount: taxAmount,
       processing_fee: processingFee,
-      discount_amount: discountAmount > 0 ? discountAmount : 0,
-      discount_reason: discountAmount > 0 ? discountReason.trim() : null,
-      rebate_amount: rebateAmount > 0 ? rebateAmount : 0,
-      rebate_reason: rebateAmount > 0 ? rebateReason.trim() : null,
+      discount_amount: totalDiscountDollars,
+      discount_reason: totalDiscountDollars > 0 ? combinedReason : null,
+      rebate_amount: 0,
+      rebate_reason: null,
       total_amount: grandTotal,
       order_description: orderDescription
     };
@@ -270,18 +296,24 @@ export default function KDSEditOrderModal({
               <div className="space-y-2">
                 {items.map((item, idx) => (
                   <div key={item.id || idx} className="p-3.5 bg-white border border-gray-250 rounded-xl flex items-center justify-between gap-3 shadow-2xs">
-                    <div className="flex-1 min-w-0">
-                      <span className="font-bold text-xs sm:text-sm text-gray-900 block truncate">
-                        {item.name}
-                      </span>
-                      <span className="text-[11px] text-gray-500 block">
-                        {item.selectionLabel}
-                      </span>
-                      {item.notes && (
-                        <span className="text-[10px] text-gray-600 italic block mt-0.5">
-                          {item.notes}
+                    <div className="flex-1 min-w-0 space-y-1">
+                      <input
+                        type="text"
+                        value={item.name}
+                        onChange={(e) => handleItemNameChange(idx, e.target.value)}
+                        placeholder="Dish / Item Name"
+                        className="w-full font-bold text-xs sm:text-sm text-gray-900 bg-white border border-gray-300 rounded px-2 py-1 focus:border-[#00346f] focus:outline-none focus:ring-1 focus:ring-[#00346f]"
+                      />
+                      <div className="flex items-center gap-2">
+                        <span className="text-[11px] text-gray-500 block">
+                          {item.selectionLabel}
                         </span>
-                      )}
+                        {item.notes && (
+                          <span className="text-[10px] text-gray-600 italic block">
+                            • {item.notes}
+                          </span>
+                        )}
+                      </div>
                     </div>
 
                     <div className="flex items-center gap-3 shrink-0">
@@ -338,57 +370,76 @@ export default function KDSEditOrderModal({
             )}
           </div>
 
-          {/* ── 2. DISCOUNTS & REBATES ── */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 rounded-xl bg-purple-50/50 border border-purple-200">
-            {/* Discount */}
+          {/* ── 2. DISCOUNTS (PERCENT & FIXED NUMBER) ── */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 rounded-xl bg-purple-50/60 border border-purple-200">
+            {/* Percent Discount */}
             <div className="space-y-1.5">
-              <label className="block text-xs font-bold text-purple-950 flex items-center gap-1.5">
-                <Tag className="w-3.5 h-3.5 text-purple-700" />
-                <span>Apply Discount ($)</span>
+              <label className="block text-xs font-bold text-purple-950 flex items-center justify-between">
+                <span className="flex items-center gap-1.5">
+                  <Percent className="w-3.5 h-3.5 text-purple-700" />
+                  <span>Percent Discount (%)</span>
+                </span>
+                {percentVal > 0 && (
+                  <span className="text-[11px] font-mono font-bold text-purple-700">
+                    -${percentDiscountDollars.toFixed(2)}
+                  </span>
+                )}
               </label>
               <div className="flex items-center gap-2">
-                <span className="text-xs text-purple-800 font-bold">$</span>
-                <input
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  placeholder="0.00"
-                  value={discountAmount}
-                  onChange={(e) => setDiscountAmount(Math.max(0, parseFloat(e.target.value) || 0))}
-                  className="w-24 px-2.5 py-1.5 text-xs bg-white border border-purple-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500"
-                />
+                <div className="relative w-24">
+                  <input
+                    type="number"
+                    step="1"
+                    min="0"
+                    max="100"
+                    placeholder="Enter %"
+                    value={percentDiscountInput}
+                    onChange={(e) => setPercentDiscountInput(e.target.value)}
+                    className="w-full pl-2.5 pr-6 py-1.5 text-xs bg-white border border-purple-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500 font-semibold"
+                  />
+                  <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-purple-700 font-bold pointer-events-none">%</span>
+                </div>
                 <input
                   type="text"
-                  placeholder="Reason / Code (e.g. VIP Promo)"
-                  value={discountReason}
-                  onChange={(e) => setDiscountReason(e.target.value)}
+                  placeholder="Reason (e.g. VIP 10% Family)"
+                  value={percentDiscountReason}
+                  onChange={(e) => setPercentDiscountReason(e.target.value)}
                   className="flex-1 px-2.5 py-1.5 text-xs bg-white border border-purple-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500"
                 />
               </div>
             </div>
 
-            {/* Rebate */}
+            {/* Fixed Dollar Discount */}
             <div className="space-y-1.5">
-              <label className="block text-xs font-bold text-purple-950 flex items-center gap-1.5">
-                <DollarSign className="w-3.5 h-3.5 text-purple-700" />
-                <span>Apply Rebate / Concession ($)</span>
+              <label className="block text-xs font-bold text-purple-950 flex items-center justify-between">
+                <span className="flex items-center gap-1.5">
+                  <DollarSign className="w-3.5 h-3.5 text-purple-700" />
+                  <span>Fixed Discount ($)</span>
+                </span>
+                {fixedDiscountDollars > 0 && (
+                  <span className="text-[11px] font-mono font-bold text-purple-700">
+                    -${fixedDiscountDollars.toFixed(2)}
+                  </span>
+                )}
               </label>
               <div className="flex items-center gap-2">
-                <span className="text-xs text-purple-800 font-bold">$</span>
-                <input
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  placeholder="0.00"
-                  value={rebateAmount}
-                  onChange={(e) => setRebateAmount(Math.max(0, parseFloat(e.target.value) || 0))}
-                  className="w-24 px-2.5 py-1.5 text-xs bg-white border border-purple-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500"
-                />
+                <div className="relative w-28">
+                  <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-purple-700 font-bold pointer-events-none">$</span>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    placeholder="Enter amount"
+                    value={fixedDiscountInput}
+                    onChange={(e) => setFixedDiscountInput(e.target.value)}
+                    className="w-full pl-6 pr-2.5 py-1.5 text-xs bg-white border border-purple-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500 font-semibold"
+                  />
+                </div>
                 <input
                   type="text"
                   placeholder="Reason (e.g. Goodwill credit)"
-                  value={rebateReason}
-                  onChange={(e) => setRebateReason(e.target.value)}
+                  value={fixedDiscountReason}
+                  onChange={(e) => setFixedDiscountReason(e.target.value)}
                   className="flex-1 px-2.5 py-1.5 text-xs bg-white border border-purple-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500"
                 />
               </div>
@@ -402,17 +453,17 @@ export default function KDSEditOrderModal({
               <span className="font-bold text-gray-900">${foodSubtotal.toFixed(2)}</span>
             </div>
 
-            {discountAmount > 0 && (
+            {percentDiscountDollars > 0 && (
               <div className="flex justify-between text-purple-800 font-semibold">
-                <span>Discount Applied {discountReason ? `(${discountReason})` : ''}:</span>
-                <span>-${discountAmount.toFixed(2)}</span>
+                <span>Percent Discount ({percentVal}%{percentDiscountReason ? ` - ${percentDiscountReason}` : ''}):</span>
+                <span>-${percentDiscountDollars.toFixed(2)}</span>
               </div>
             )}
 
-            {rebateAmount > 0 && (
+            {fixedDiscountDollars > 0 && (
               <div className="flex justify-between text-purple-800 font-semibold">
-                <span>Rebate / Credit {rebateReason ? `(${rebateReason})` : ''}:</span>
-                <span>-${rebateAmount.toFixed(2)}</span>
+                <span>Fixed Discount {fixedDiscountReason ? `(${fixedDiscountReason})` : ''}:</span>
+                <span>-${fixedDiscountDollars.toFixed(2)}</span>
               </div>
             )}
 

@@ -61,7 +61,7 @@ export interface CartItem {
 
 export type OrderType = 'order' | 'estimate';
 
-export type OrderStatus = 'new' | 'preparing' | 'ready' | 'completed' | 'cancelled';
+export type OrderStatus = 'new' | 'accepted' | 'preparing' | 'ready' | 'completed' | 'cancelled';
 
 export type PaymentMethod = 'cash' | 'zelle' | 'credit_card';
 

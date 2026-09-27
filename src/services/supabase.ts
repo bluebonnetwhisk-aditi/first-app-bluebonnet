@@ -699,11 +699,19 @@ export async function fetchOrders(fulfillmentDate?: string): Promise<CateringOrd
       }
       const { data, error } = await query;
       if (!error && data) {
+        // Map [ACCEPTED] flag in order_description to 'accepted' status
+        const parsed = (data as CateringOrder[]).map(o => {
+          if (o.status === 'new' && o.order_description?.includes('[ACCEPTED]')) {
+            return { ...o, status: 'accepted' as OrderStatus };
+          }
+          return o;
+        });
+
         // Cache live Supabase orders into localStorage
         try {
-          localStorage.setItem(LOCAL_STORAGE_ORDERS_KEY, JSON.stringify(data));
+          localStorage.setItem(LOCAL_STORAGE_ORDERS_KEY, JSON.stringify(parsed));
         } catch {}
-        return data as CateringOrder[];
+        return parsed;
       }
       if (error) {
         console.error('Supabase fetchOrders error:', error);
@@ -715,26 +723,69 @@ export async function fetchOrders(fulfillmentDate?: string): Promise<CateringOrd
 
   // Local fallback
   const all = getStoredOrders();
+  const parsed = all.map(o => {
+    if (o.status === 'new' && o.order_description?.includes('[ACCEPTED]')) {
+      return { ...o, status: 'accepted' as OrderStatus };
+    }
+    return o;
+  });
+
   if (fulfillmentDate) {
-    return all.filter(o => o.fulfillment_date === fulfillmentDate);
+    return parsed.filter(o => o.fulfillment_date === fulfillmentDate);
   }
-  return all;
+  return parsed;
 }
 
 /**
- * Update an order's status (new -> preparing -> ready -> completed / cancelled)
+ * Update an order's status (new -> accepted -> preparing -> ready -> completed / cancelled)
  */
 export async function updateOrderStatus(orderId: string, status: OrderStatus): Promise<boolean> {
   let updatedSuccessfully = false;
 
   if (supabase) {
     try {
-      const { error } = await supabase
-        .from('orders')
-        .update({ status })
-        .eq('id', orderId);
-      
-      if (!error) updatedSuccessfully = true;
+      if (status === 'accepted') {
+        // Postgres check constraint expects status IN ('new', 'preparing', 'ready', 'completed', 'cancelled')
+        // We preserve 'new' in Postgres status and store [ACCEPTED] in order_description
+        const { data: currentOrder } = await supabase
+          .from('orders')
+          .select('order_description')
+          .eq('id', orderId)
+          .single();
+        
+        const curDesc = currentOrder?.order_description || '';
+        const newDesc = curDesc.includes('[ACCEPTED]') ? curDesc : `[ACCEPTED] ${curDesc}`;
+        
+        const { error } = await supabase
+          .from('orders')
+          .update({ 
+            status: 'new',
+            order_description: newDesc
+          })
+          .eq('id', orderId);
+        
+        if (!error) updatedSuccessfully = true;
+      } else {
+        // Moving to preparing, ready, completed, or cancelled: clean up [ACCEPTED] marker
+        const { data: currentOrder } = await supabase
+          .from('orders')
+          .select('order_description')
+          .eq('id', orderId)
+          .single();
+        
+        const curDesc = currentOrder?.order_description || '';
+        const cleanDesc = curDesc.replace(/\[ACCEPTED\]\s*/g, '').trim();
+
+        const { error } = await supabase
+          .from('orders')
+          .update({ 
+            status,
+            order_description: cleanDesc || curDesc
+          })
+          .eq('id', orderId);
+
+        if (!error) updatedSuccessfully = true;
+      }
     } catch (err) {
       console.warn('Supabase update failed, updating local cache', err);
     }
@@ -745,6 +796,14 @@ export async function updateOrderStatus(orderId: string, status: OrderStatus): P
   const index = all.findIndex(o => o.id === orderId);
   if (index !== -1) {
     all[index].status = status;
+    const curDesc = all[index].order_description || '';
+    if (status === 'accepted') {
+      if (!curDesc.includes('[ACCEPTED]')) {
+        all[index].order_description = `[ACCEPTED] ${curDesc}`;
+      }
+    } else {
+      all[index].order_description = curDesc.replace(/\[ACCEPTED\]\s*/g, '').trim();
+    }
     saveStoredOrders(all);
     updatedSuccessfully = true;
   }

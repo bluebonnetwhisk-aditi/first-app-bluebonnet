@@ -22,7 +22,9 @@ import {
   ImageIcon,
   Volume2,
   VolumeX,
-  BellRing
+  BellRing,
+  Check,
+  MessageCircle
 } from 'lucide-react';
 import type { CateringOrder, OrderStatus } from '../../types/catering';
 import { getCentralTimeNow, getUpcomingDates } from '../../utils/centralTime';
@@ -79,6 +81,93 @@ function playKitchenChime() {
     });
   } catch (err) {
     console.warn('Audio chime error:', err);
+  }
+}
+
+/**
+ * Normalizes phone number into E.164 digits for WhatsApp wa.me links.
+ * E.g., "(945) 555-4081" -> "19455554081"
+ */
+function formatWhatsAppPhone(phone: string): string {
+  const digits = (phone || '').replace(/\D/g, '');
+  if (!digits) return '';
+  if (digits.length === 10) {
+    return `1${digits}`;
+  }
+  return digits;
+}
+
+/**
+ * Parses time strings like "11:00 AM - 12:00 PM" or "1:00 PM" into minutes from midnight for sorting
+ */
+function parseTimeToMinutes(timeStr?: string): number {
+  if (!timeStr) return 9999;
+  const match = timeStr.trim().match(/(\d{1,2})(?::(\d{2}))?\s*(AM|PM)?/i);
+  if (!match) return 9999;
+  let hours = parseInt(match[1], 10);
+  const minutes = match[2] ? parseInt(match[2], 10) : 0;
+  const meridian = match[3]?.toUpperCase();
+  if (meridian === 'PM' && hours < 12) hours += 12;
+  if (meridian === 'AM' && hours === 12) hours = 0;
+  return hours * 60 + minutes;
+}
+
+/**
+ * Generates WhatsApp message template for Order Accepted or Order Ready
+ */
+function buildWhatsAppMessage(order: CateringOrder, eventType: 'accepted' | 'ready'): string {
+  const shortId = order.id ? order.id.slice(0, 8).toUpperCase() : '';
+  const customerName = order.customer_name || 'Valued Customer';
+  const dateStr = order.fulfillment_date || '';
+  const timeStr = order.fulfillment_time || '';
+  
+  // Format items list with quantities
+  const itemsText = order.items && order.items.length > 0
+    ? order.items.map(i => `• ${i.quantity}x ${i.name} (${i.selectionLabel}${i.notes ? ` - ${i.notes}` : ''})`).join('\n')
+    : (order.order_description || 'Catering items');
+
+  const fulfillmentDetails = order.is_delivery
+    ? `🚚 *Delivery Address:*\n${order.delivery_address || 'Address provided on file'}`
+    : `🏪 *Self-Pickup Location:*\n11504 Deerwood Dr, Frisco, TX 75035`;
+
+  if (eventType === 'accepted') {
+    return (
+`Namaste ${customerName}! 🙏
+
+Your catering order #${shortId} has been *ACCEPTED* by Bluebonnet Whisk / Desi Dabba Kitchen! 👨‍🍳✨
+
+📅 *Scheduled Date:* ${dateStr}
+⏰ *Time:* ${timeStr}
+
+📋 *Order Details:*
+${itemsText}
+
+${fulfillmentDetails}
+
+💰 *Total Amount:* $${order.total_amount.toFixed(2)}
+
+Our kitchen team has scheduled your preparation fresh. If you need any adjustments, please reply directly to this message.
+
+Thank you for choosing Bluebonnet Whisk! 💙`
+    );
+  } else {
+    return (
+`Namaste ${customerName}! 🙏
+
+Great news! Your order #${shortId} is *READY* ${order.is_delivery ? 'for delivery' : 'for pickup'}! 🎉🍲
+
+📅 *Date:* ${dateStr}
+⏰ *Scheduled Time:* ${timeStr}
+
+📋 *Items Ready:*
+${itemsText}
+
+${fulfillmentDetails}
+
+${order.is_delivery ? 'Our delivery driver is packing your order now and will be on the way shortly. 🚗💨' : 'Please come to 11504 Deerwood Dr for pickup. We look forward to seeing you! 😊'}
+
+Thank you for choosing Bluebonnet Whisk! 💙`
+    );
   }
 }
 
@@ -329,6 +418,18 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
     sessionStorage.removeItem(PIN_STORAGE_KEY);
   };
 
+  // Open WhatsApp in new tab with pre-filled message
+  const openWhatsAppForOrder = (order: CateringOrder, eventType: 'accepted' | 'ready') => {
+    const phone = formatWhatsAppPhone(order.phone_number);
+    if (!phone) {
+      alert(`No valid phone number on file for ${order.customer_name}.`);
+      return;
+    }
+    const text = buildWhatsAppMessage(order, eventType);
+    const url = `https://wa.me/${phone}?text=${encodeURIComponent(text)}`;
+    window.open(url, '_blank');
+  };
+
   // Status transition handler
   const handleStatusChange = async (orderId: string, newStatus: OrderStatus) => {
     // Optimistic UI update
@@ -337,11 +438,27 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
   };
 
   // Orders filtered by the currently selected date tab ('all' or specific YYYY-MM-DD)
+  // Sorted chronologically from left to right: fulfillment_date ASC, fulfillment_time ASC
   const ordersForSelectedDate = useMemo(() => {
-    if (selectedDate === 'all') {
-      return allOrders;
-    }
-    return allOrders.filter(o => o.fulfillment_date === selectedDate);
+    const list = selectedDate === 'all'
+      ? [...allOrders]
+      : allOrders.filter(o => o.fulfillment_date === selectedDate);
+
+    return list.sort((a, b) => {
+      // 1. Sort by fulfillment_date ascending (earliest date first / on left)
+      const dateA = a.fulfillment_date || '';
+      const dateB = b.fulfillment_date || '';
+      const dateCmp = dateA.localeCompare(dateB);
+      if (dateCmp !== 0) return dateCmp;
+
+      // 2. Sort by fulfillment_time ascending within same date
+      const timeA = parseTimeToMinutes(a.fulfillment_time);
+      const timeB = parseTimeToMinutes(b.fulfillment_time);
+      if (timeA !== timeB) return timeA - timeB;
+
+      // 3. Fallback to order creation time
+      return (a.created_at || '').localeCompare(b.created_at || '');
+    });
   }, [allOrders, selectedDate]);
 
   // Order counts grouped by date for badge counters on date buttons
@@ -747,53 +864,6 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
           </div>
         )}
 
-        {/* ── REAL-TIME KPI HEADER ── */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          
-          <div className="bg-white rounded-2xl border border-gray-200 p-5 shadow-xs flex items-center gap-4">
-            <div className="p-3 rounded-xl bg-blue-50 text-[#00346f]">
-              <Package className="w-6 h-6" />
-            </div>
-            <div>
-              <span className="text-[11px] font-bold uppercase tracking-wider text-gray-500">
-                Total Orders ({selectedDate === 'all' ? 'All Upcoming' : selectedDate === todayDateStr ? 'Today' : selectedDate})
-              </span>
-              <div className="font-serif text-2xl sm:text-3xl font-bold text-gray-900 mt-0.5">
-                {totalOrdersInView}
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-2xl border border-gray-200 p-5 shadow-xs flex items-center gap-4">
-            <div className="p-3 rounded-xl bg-amber-50 text-[#775a19]">
-              <ChefHat className="w-6 h-6" />
-            </div>
-            <div>
-              <span className="text-[11px] font-bold uppercase tracking-wider text-gray-500">
-                Total Trays to Prep
-              </span>
-              <div className="font-serif text-2xl sm:text-3xl font-bold text-[#775a19] mt-0.5">
-                {totalTraysToPrep} <span className="text-xs font-normal text-gray-500">Trays</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-2xl border border-gray-200 p-5 shadow-xs flex items-center gap-4">
-            <div className="p-3 rounded-xl bg-emerald-50 text-emerald-800">
-              <DollarSign className="w-6 h-6" />
-            </div>
-            <div>
-              <span className="text-[11px] font-bold uppercase tracking-wider text-gray-500">
-                Revenue ({selectedDate === 'all' ? 'All Upcoming' : selectedDate === todayDateStr ? 'Today' : selectedDate})
-              </span>
-              <div className="font-serif text-2xl sm:text-3xl font-bold text-emerald-900 mt-0.5">
-                ${totalRevenueInView.toFixed(2)}
-              </div>
-            </div>
-          </div>
-
-        </div>
-
         {/* ── DATE PICKER & STATUS PIPELINE TABS ── */}
         <div className="bg-white rounded-2xl border border-gray-200 p-4 shadow-xs space-y-3">
           
@@ -878,6 +948,7 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
               {[
                 { key: 'all', label: 'All Orders' },
                 { key: 'new', label: 'New' },
+                { key: 'accepted', label: 'Accepted' },
                 { key: 'preparing', label: 'Preparing' },
                 { key: 'ready', label: 'Ready' },
                 { key: 'completed', label: 'Completed' },
@@ -954,10 +1025,12 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
                   className={`bg-white rounded-2xl border transition-all flex flex-col justify-between shadow-xs ${
                     order.status === 'new'
                       ? 'border-blue-400 ring-2 ring-blue-100'
+                      : order.status === 'accepted'
+                      ? 'border-emerald-500 ring-2 ring-emerald-100'
                       : order.status === 'preparing'
                       ? 'border-amber-400 ring-2 ring-amber-100'
                       : order.status === 'ready'
-                      ? 'border-emerald-500 ring-2 ring-emerald-100'
+                      ? 'border-teal-500 ring-2 ring-teal-100'
                       : order.status === 'cancelled'
                       ? 'border-rose-200 opacity-60'
                       : 'border-gray-200'
@@ -979,15 +1052,17 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
                         <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
                           order.status === 'new'
                             ? 'bg-blue-100 text-blue-900'
+                            : order.status === 'accepted'
+                            ? 'bg-emerald-100 text-emerald-900 font-extrabold'
                             : order.status === 'preparing'
                             ? 'bg-amber-100 text-amber-900'
                             : order.status === 'ready'
-                            ? 'bg-emerald-100 text-emerald-900'
+                            ? 'bg-teal-100 text-teal-900'
                             : order.status === 'cancelled'
                             ? 'bg-rose-100 text-rose-800'
                             : 'bg-gray-100 text-gray-700'
                         }`}>
-                          {order.status}
+                          {order.status === 'new' ? 'New (Pending)' : order.status}
                         </span>
                       </div>
                     </div>
@@ -1099,37 +1174,88 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
                         <FileEdit className="w-3.5 h-3.5 text-[#00346f]" />
                         <span>Edit</span>
                       </button>
+                      {/* Status: new -> Accept Order */}
                       {order.status === 'new' && (
                         <button
-                          onClick={() => handleStatusChange(order.id, 'preparing')}
-                          className="bg-amber-600 hover:bg-amber-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-all shadow-xs cursor-pointer flex items-center gap-1"
+                          type="button"
+                          onClick={() => {
+                            handleStatusChange(order.id, 'accepted');
+                            openWhatsAppForOrder(order, 'accepted');
+                          }}
+                          className="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-all shadow-xs cursor-pointer flex items-center gap-1.5"
+                          title="Accept order and notify customer via WhatsApp"
                         >
-                          <span>Start Prep</span>
-                          <ArrowRight className="w-3 h-3" />
+                          <Check className="w-3.5 h-3.5" />
+                          <span>Accept Order</span>
+                          <MessageCircle className="w-3.5 h-3.5 text-emerald-200" />
                         </button>
                       )}
 
+                      {/* Status: accepted -> Start Prep */}
+                      {order.status === 'accepted' && (
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => openWhatsAppForOrder(order, 'accepted')}
+                            className="bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 px-2 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1"
+                            title="Resend WhatsApp confirmation to customer"
+                          >
+                            <MessageCircle className="w-3.5 h-3.5 text-emerald-700" />
+                            <span className="hidden sm:inline">WhatsApp</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleStatusChange(order.id, 'preparing')}
+                            className="bg-amber-600 hover:bg-amber-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-all shadow-xs cursor-pointer flex items-center gap-1"
+                          >
+                            <span>Start Prep</span>
+                            <ArrowRight className="w-3 h-3" />
+                          </button>
+                        </div>
+                      )}
+
+                      {/* Status: preparing -> Mark Ready */}
                       {order.status === 'preparing' && (
                         <button
-                          onClick={() => handleStatusChange(order.id, 'ready')}
-                          className="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-all shadow-xs cursor-pointer flex items-center gap-1"
+                          type="button"
+                          onClick={() => {
+                            handleStatusChange(order.id, 'ready');
+                            openWhatsAppForOrder(order, 'ready');
+                          }}
+                          className="bg-teal-600 hover:bg-teal-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-all shadow-xs cursor-pointer flex items-center gap-1.5"
+                          title="Mark order ready and notify customer via WhatsApp"
                         >
                           <CheckCircle2 className="w-3.5 h-3.5" />
                           <span>Mark Ready</span>
+                          <MessageCircle className="w-3.5 h-3.5 text-teal-200" />
                         </button>
                       )}
 
+                      {/* Status: ready -> Complete & Archive */}
                       {order.status === 'ready' && (
-                        <button
-                          onClick={() => handleStatusChange(order.id, 'completed')}
-                          className="bg-[#00346f] hover:bg-[#00224d] text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-all shadow-xs cursor-pointer"
-                        >
-                          <span>Complete &amp; Archive</span>
-                        </button>
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => openWhatsAppForOrder(order, 'ready')}
+                            className="bg-teal-50 hover:bg-teal-100 text-teal-800 border border-teal-300 px-2 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1"
+                            title="Resend Ready WhatsApp message to customer"
+                          >
+                            <MessageCircle className="w-3.5 h-3.5 text-teal-700" />
+                            <span className="hidden sm:inline">WhatsApp</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleStatusChange(order.id, 'completed')}
+                            className="bg-[#00346f] hover:bg-[#00224d] text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-all shadow-xs cursor-pointer"
+                          >
+                            <span>Complete &amp; Archive</span>
+                          </button>
+                        </div>
                       )}
 
                       {order.status === 'completed' && (
                         <button
+                          type="button"
                           onClick={() => handleStatusChange(order.id, 'ready')}
                           className="text-[10px] text-gray-500 hover:text-gray-800 underline cursor-pointer"
                         >
@@ -1139,6 +1265,7 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
 
                       {order.status !== 'cancelled' && order.status !== 'completed' && (
                         <button
+                          type="button"
                           onClick={() => handleStatusChange(order.id, 'cancelled')}
                           className="text-[10px] text-gray-400 hover:text-rose-600 p-1"
                           title="Cancel order"
@@ -1154,6 +1281,53 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
             })}
           </div>
         )}
+
+        {/* ── 3 SUMMARY METRICS TABS (MOVED TO BOTTOM) ── */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4 border-t border-gray-200">
+          
+          <div className="bg-white rounded-2xl border border-gray-200 p-5 shadow-xs flex items-center gap-4">
+            <div className="p-3 rounded-xl bg-blue-50 text-[#00346f]">
+              <Package className="w-6 h-6" />
+            </div>
+            <div>
+              <span className="text-[11px] font-bold uppercase tracking-wider text-gray-500">
+                Total Orders ({selectedDate === 'all' ? 'All Upcoming' : selectedDate === todayDateStr ? 'Today' : selectedDate})
+              </span>
+              <div className="font-serif text-2xl sm:text-3xl font-bold text-gray-900 mt-0.5">
+                {totalOrdersInView}
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-2xl border border-gray-200 p-5 shadow-xs flex items-center gap-4">
+            <div className="p-3 rounded-xl bg-amber-50 text-[#775a19]">
+              <ChefHat className="w-6 h-6" />
+            </div>
+            <div>
+              <span className="text-[11px] font-bold uppercase tracking-wider text-gray-500">
+                Total Trays to Prep
+              </span>
+              <div className="font-serif text-2xl sm:text-3xl font-bold text-[#775a19] mt-0.5">
+                {totalTraysToPrep} <span className="text-xs font-normal text-gray-500">Trays</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-2xl border border-gray-200 p-5 shadow-xs flex items-center gap-4">
+            <div className="p-3 rounded-xl bg-emerald-50 text-emerald-800">
+              <DollarSign className="w-6 h-6" />
+            </div>
+            <div>
+              <span className="text-[11px] font-bold uppercase tracking-wider text-gray-500">
+                Revenue ({selectedDate === 'all' ? 'All Upcoming' : selectedDate === todayDateStr ? 'Today' : selectedDate})
+              </span>
+              <div className="font-serif text-2xl sm:text-3xl font-bold text-emerald-900 mt-0.5">
+                ${totalRevenueInView.toFixed(2)}
+              </div>
+            </div>
+          </div>
+
+        </div>
 
       </div>
 
