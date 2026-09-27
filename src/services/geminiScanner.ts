@@ -121,6 +121,10 @@ export async function urlToBase64(url: string): Promise<{ mimeType: string; base
 }
 
 const GEMINI_MODELS = [
+  'gemini-3.8-flash',
+  'gemini-3.5-flash',
+  'gemini-3-flash-preview',
+  'gemini-flash-latest',
   'gemini-2.5-flash',
   'gemini-2.0-flash',
   'gemini-1.5-flash'
@@ -248,8 +252,8 @@ export async function scanTiffinFlyerWithGemini(
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         const msg = errorData.error?.message || `HTTP ${response.status} from ${model}`;
-        // If 404 or model not found, try the next model
-        if (response.status === 404 || response.status === 400 && msg.includes('models/')) {
+        // If 404, 503, 500 or model not found, try the next model
+        if (response.status === 404 || response.status === 503 || response.status === 500 || (response.status === 400 && msg.includes('models/'))) {
           lastError = new Error(msg);
           continue;
         }
