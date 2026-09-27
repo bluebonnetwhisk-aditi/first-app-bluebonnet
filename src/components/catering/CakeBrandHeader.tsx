@@ -1,88 +1,29 @@
-import brandLogo from '../../assets/images/brand_logo_transparent.png';
 import { 
   Sparkles, 
   Leaf, 
-  Clock, 
   Palette, 
-  ChefHat, 
-  CheckCircle2,
-  Cake as CakeIcon
+  ChefHat 
 } from 'lucide-react';
 
-interface CakeBrandHeaderProps {
-  onScrollToConfigurator?: () => void;
-}
-
-export default function CakeBrandHeader({ onScrollToConfigurator }: CakeBrandHeaderProps) {
+export default function CakeBrandHeader() {
   return (
-    <div className="w-full bg-[#fbfbfa] border-b border-[#775a19]/20 font-sans animate-fade-in">
-      
-      {/* ── TOP HERO BANNER: BLUEBONNET WHISK ARTISAN BAKERY ── */}
-      <div className="relative overflow-hidden bg-gradient-to-b from-[#1a120b] via-[#2c1d11] to-[#120c07] text-white py-12 px-4 sm:px-6 lg:px-8 text-center shadow-inner">
-        {/* Subtle decorative pattern */}
-        <div className="absolute inset-0 bg-grid-pattern opacity-10 pointer-events-none" />
-
-        <div className="relative z-10 max-w-4xl mx-auto space-y-4">
-          <div className="inline-flex items-center gap-2 bg-[#ffdea5]/15 border border-[#ffdea5]/30 text-[#ffdea5] px-4 py-1 rounded-full text-[11px] font-bold tracking-widest uppercase shadow-xs">
-            <Sparkles className="w-3.5 h-3.5" />
-            <span>Bluebonnet Whisk • Artisan Home Bakery</span>
-            <span>•</span>
-            <span>Little Elm &amp; Frisco, TX</span>
-          </div>
-
-          <div className="py-1">
-            <img 
-              src={brandLogo} 
-              alt="Bluebonnet Whisk" 
-              className="h-6 sm:h-8 w-auto mx-auto object-contain drop-shadow-md"
-            />
-          </div>
-          <p className="font-serif text-lg sm:text-2xl text-[#ffdea5] italic font-medium">
-            Handcrafted Celebration Cakes &amp; Specialty Bakes
-          </p>
-
-          <p className="text-sm sm:text-base text-gray-200 max-w-2xl mx-auto font-light leading-relaxed">
-            Every celebration deserves a cake as unique as your milestone. Freshly whipped, custom-tailored, and scratch-baked in small batches using pure European butter, Belgian chocolate, and gourmet fillings.
-          </p>
-
-          {/* Key Standards Badges */}
-          <div className="flex flex-wrap items-center justify-center gap-2.5 pt-2">
-            <span className="inline-flex items-center gap-1.5 bg-emerald-500/20 border border-emerald-400/40 px-3.5 py-1.5 rounded-full text-xs text-emerald-200 font-semibold">
-              <Leaf className="w-3.5 h-3.5 text-emerald-300" />
-              Eggless Available on Request
-            </span>
-
-            <span className="inline-flex items-center gap-1.5 bg-[#ffdea5]/20 border border-[#ffdea5]/40 px-3.5 py-1.5 rounded-full text-xs text-[#ffdea5] font-semibold">
-              <CheckCircle2 className="w-3.5 h-3.5 text-[#ffdea5]" />
-              Texas Sales Tax Exempt (0% Bakery Tax)
-            </span>
-
-            <span className="inline-flex items-center gap-1.5 bg-white/10 border border-white/20 px-3.5 py-1.5 rounded-full text-xs text-gray-200 font-semibold">
-              <Clock className="w-3.5 h-3.5 text-[#ffdea5]" />
-              Strict 48-Hour Advance Notice Required
-            </span>
-          </div>
-
-          {/* Action Button */}
-          <div className="pt-4 flex flex-wrap justify-center gap-3">
-            <button
-              type="button"
-              onClick={onScrollToConfigurator}
-              className="inline-flex items-center gap-2 bg-[#ffdea5] hover:bg-[#ffe7be] text-[#2c1d11] px-6 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider transition-all shadow-md cursor-pointer hover:scale-102"
-            >
-              <CakeIcon className="w-4 h-4 text-[#2c1d11]" />
-              <span>Configure Your Cake Now</span>
-            </button>
-          </div>
+    <div className="w-full pt-10 pb-6 font-sans border-t border-[#775a19]/15 mt-10 animate-fade-in">
+      <div className="max-w-7xl mx-auto">
+        <div className="text-center max-w-xl mx-auto mb-8">
+          <span className="text-[11px] font-bold text-[#775a19] uppercase tracking-widest block mb-1">
+            WHY BLUEBONNET WHISK
+          </span>
+          <h2 className="font-serif text-2xl font-bold text-gray-900">
+            Our 4 Artisan Baking Pillars
+          </h2>
+          <div className="h-0.5 w-12 bg-[#775a19] mx-auto mt-2" />
         </div>
-      </div>
 
-      {/* ── THE 4 PILLARS ── */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-6 relative z-20">
+        {/* ── THE 4 PILLARS ── */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           
           {/* Pillar 1 */}
-          <div className="bg-white rounded-2xl p-5 shadow-md border border-[#775a19]/15 flex items-start gap-3.5 transition-transform hover:-translate-y-0.5">
+          <div className="bg-white rounded-2xl p-5 shadow-sm border border-[#775a19]/15 flex items-start gap-3.5 transition-transform hover:-translate-y-0.5">
             <div className="p-2.5 bg-amber-50 text-amber-800 rounded-xl shrink-0">
               <Sparkles className="w-5 h-5" />
             </div>
@@ -95,7 +36,7 @@ export default function CakeBrandHeader({ onScrollToConfigurator }: CakeBrandHea
           </div>
 
           {/* Pillar 2 */}
-          <div className="bg-white rounded-2xl p-5 shadow-md border border-[#775a19]/15 flex items-start gap-3.5 transition-transform hover:-translate-y-0.5">
+          <div className="bg-white rounded-2xl p-5 shadow-sm border border-[#775a19]/15 flex items-start gap-3.5 transition-transform hover:-translate-y-0.5">
             <div className="p-2.5 bg-emerald-50 text-emerald-800 rounded-xl shrink-0">
               <Leaf className="w-5 h-5" />
             </div>
@@ -108,7 +49,7 @@ export default function CakeBrandHeader({ onScrollToConfigurator }: CakeBrandHea
           </div>
 
           {/* Pillar 3 */}
-          <div className="bg-white rounded-2xl p-5 shadow-md border border-[#775a19]/15 flex items-start gap-3.5 transition-transform hover:-translate-y-0.5">
+          <div className="bg-white rounded-2xl p-5 shadow-sm border border-[#775a19]/15 flex items-start gap-3.5 transition-transform hover:-translate-y-0.5">
             <div className="p-2.5 bg-rose-50 text-rose-800 rounded-xl shrink-0">
               <Palette className="w-5 h-5" />
             </div>
@@ -121,7 +62,7 @@ export default function CakeBrandHeader({ onScrollToConfigurator }: CakeBrandHea
           </div>
 
           {/* Pillar 4 */}
-          <div className="bg-white rounded-2xl p-5 shadow-md border border-[#775a19]/15 flex items-start gap-3.5 transition-transform hover:-translate-y-0.5">
+          <div className="bg-white rounded-2xl p-5 shadow-sm border border-[#775a19]/15 flex items-start gap-3.5 transition-transform hover:-translate-y-0.5">
             <div className="p-2.5 bg-purple-50 text-purple-800 rounded-xl shrink-0">
               <ChefHat className="w-5 h-5" />
             </div>
@@ -135,7 +76,6 @@ export default function CakeBrandHeader({ onScrollToConfigurator }: CakeBrandHea
 
         </div>
       </div>
-
     </div>
   );
 }

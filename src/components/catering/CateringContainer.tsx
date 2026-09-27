@@ -317,13 +317,6 @@ export default function CateringContainer() {
             }} />
           )}
 
-          {subTab === 'cake' && (
-            <CakeBrandHeader onScrollToConfigurator={() => {
-              const el = document.getElementById('catering-content-area');
-              if (el) el.scrollIntoView({ behavior: 'smooth' });
-            }} />
-          )}
-
           {/* Main Full-Width Content Viewport */}
           <div id="catering-content-area" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 scroll-mt-48 sm:scroll-mt-52">
             <div className="w-full">
@@ -338,7 +331,7 @@ export default function CateringContainer() {
                 />
               )}
 
-              {/* SubTab 2: Cake Order */}
+              {/* SubTab 2: Cake Order (Starts directly from CakeConfigurator, 4 Differentiators at end) */}
               {subTab === 'cake' && (
                 <div className="space-y-6">
                   <CakeConfigurator
@@ -347,6 +340,8 @@ export default function CateringContainer() {
                     onRemoveCake={handleRemoveCartItem}
                     onProceedToCheckout={() => setIsCheckoutOpen(true)}
                   />
+                  {/* 4 Differentiators at end of page */}
+                  <CakeBrandHeader />
                 </div>
               )}
 
