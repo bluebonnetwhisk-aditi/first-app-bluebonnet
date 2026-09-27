@@ -83,7 +83,7 @@ export default function Home({ onOpenBaker: _onOpenBaker, onNavigate }: HomeProp
 
 
   const videoScale = useTransform(scrollYProgress, [0, 0.25], [1, 1.15]);
-  const videoOpacity = useTransform(scrollYProgress, [0, 0.2, 0.4], [0.5, 0.7, 0.8]);
+  const videoOpacity = useTransform(scrollYProgress, [0, 0.4], [1, 0.8]);
   const heroTextOpacity = useTransform(scrollYProgress, [0, 0.175], [1, 0]);
   const heroTextY = useTransform(scrollYProgress, [0, 0.175], [0, -60]);
 
@@ -133,28 +133,18 @@ export default function Home({ onOpenBaker: _onOpenBaker, onNavigate }: HomeProp
       {/* ── HERO SECTION WITH SCROLL VIDEO TRANSITION ── */}
       <section ref={containerRef} className="relative h-[120vh] w-full bg-[#050a1a]">
         
-        {/* Sticky video container with Android fallback image */}
+        {/* Sticky video container */}
         <div className="sticky top-0 h-screen w-full overflow-hidden flex items-center justify-center bg-[#050a1a]">
-          {/* Fallback image background for low-power Android modes */}
-          <div className="absolute inset-0 z-0">
-            <img 
-              src="src/assets/images/hero_cakes_desserts_1781194959946.jpg" 
-              alt="Bluebonnet Whisk" 
-              className="w-full h-full object-cover filter brightness-75 scale-105"
-            />
-          </div>
-
           <motion.video 
             ref={videoRef}
             src={heroVideo}
-            poster="src/assets/images/hero_cakes_desserts_1781194959946.jpg"
             muted={true}
             autoPlay={true}
             loop={true}
             playsInline={true}
-            preload="metadata"
+            preload="auto"
             style={{ scale: videoScale, opacity: videoOpacity }}
-            className="absolute inset-0 z-1 w-full h-full object-cover select-none pointer-events-none filter brightness-90 saturate-105"
+            className="absolute inset-0 w-full h-full object-cover select-none pointer-events-none filter brightness-90 saturate-105"
           >
             <source src={heroVideo} type="video/mp4" />
             <source src="/videos/hero.mp4" type="video/mp4" />
