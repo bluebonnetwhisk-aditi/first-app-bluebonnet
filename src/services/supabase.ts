@@ -1,5 +1,5 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
-import type { CateringOrder, CalendarBlackout, OrderStatus, TiffinMenuSettings } from '../types/catering';
+import type { CateringOrder, CalendarBlackout, OrderStatus, TiffinMenuSettings, WeekdayMenuEntry, ContainerAddonItem, DabbaPricing } from '../types/catering';
 import { getCentralTimeNow } from '../utils/centralTime';
 
 // Production Supabase Database Configuration
@@ -905,9 +905,37 @@ export async function updateOrderDetails(orderId: string, updates: Partial<Cater
 
 const LOCAL_STORAGE_TIFFIN_KEY = 'bbw_tiffin_menu_settings_v1';
 
+export const DEFAULT_WEEKDAY_MENUS: Record<string, WeekdayMenuEntry> = {
+  Monday: { dal: 'Palak Dal', sabzi: 'Cabbage Sabzi', description: 'Fresh spinach dal & tender cabbage sabzi' },
+  Tuesday: { dal: 'Lauki Kofta Curry', sabzi: 'Shimla Mirch Sabzi', description: 'Gourmet bottle gourd koftas in spiced gravy & bell pepper sabzi' },
+  Wednesday: { dal: 'Rajma Chawal', sabzi: 'Aloo Sabzi', description: 'Slow-simmered Punjabi rajma & homestyle spiced potato sabzi' },
+  Thursday: { dal: 'Dal Tadka', sabzi: 'Bhindi Sabzi', description: 'Golden garlic tempered dal & pan-roasted okra bhindi' },
+  Friday: { dal: 'Kala Chana Curry', sabzi: 'Beans Sabzi', description: 'Nutritious black chickpea curry & fresh green beans sabzi' },
+  Saturday: { dal: 'Chef’s Special Dish', sabzi: 'Weekend Surprise Recipe', description: 'You decide! What would you like to eat this Saturday? DM your requests!' },
+  Sunday: { dal: 'Kitchen Closed', sabzi: 'Rest & Clean Day', description: 'Weekly deep sanitation and market prep' }
+};
+
+export const DEFAULT_CONTAINER_ADDONS: ContainerAddonItem[] = [
+  { id: 'dal-reg', name: 'Dal / Curry (Regular)', price: 9.99, description: '16 oz tub of slow-simmered daily dal or homestyle curry' },
+  { id: 'dal-prem', name: 'Dal / Curry (Premium)', price: 11.49, description: '16 oz tub of rich specialty curry or premium dal' },
+  { id: 'paneer-16oz', name: 'Paneer Specialty', price: 14.99, description: '16 oz tub of fresh spiced cottage cheese main' },
+  { id: 'dry-sabzi-16oz', name: 'Dry Sabzi', price: 10.99, description: '16 oz tub of homestyle spiced seasonal dry sabzi' },
+  { id: 'rice-16oz', name: 'Steamed Rice', price: 4.99, description: '16 oz container of fragrant long-grain basmati rice' },
+  { id: 'raita-16oz', name: 'Cooling Raita', price: 4.99, description: '16 oz chilled seasoned spiced yogurt with boondi or veggies' }
+];
+
+export const DEFAULT_DABBA_PRICING: DabbaPricing = {
+  singlePrice: 11.99,
+  familyPrice: 34.99,
+  weeklyPrice: 54.99
+};
+
 export const DEFAULT_TIFFIN_SETTINGS: TiffinMenuSettings = {
   flyerImageUrl: '/tiffin-flyer.jpg',
   weekTitle: 'September 21 - 26',
+  weekdayMenus: DEFAULT_WEEKDAY_MENUS,
+  containerAddons: DEFAULT_CONTAINER_ADDONS,
+  dabbaPricing: DEFAULT_DABBA_PRICING,
   specialDishes: [
     {
       id: 'spec-1',
@@ -935,8 +963,16 @@ export async function fetchTiffinMenuSettings(): Promise<TiffinMenuSettings> {
         .maybeSingle();
 
       if (!error && data && data.value) {
-        localStorage.setItem(LOCAL_STORAGE_TIFFIN_KEY, JSON.stringify(data.value));
-        return data.value as TiffinMenuSettings;
+        const merged: TiffinMenuSettings = {
+          ...DEFAULT_TIFFIN_SETTINGS,
+          ...data.value,
+          weekdayMenus: { ...DEFAULT_WEEKDAY_MENUS, ...(data.value.weekdayMenus || {}) },
+          containerAddons: data.value.containerAddons?.length ? data.value.containerAddons : DEFAULT_CONTAINER_ADDONS,
+          dabbaPricing: { ...DEFAULT_DABBA_PRICING, ...(data.value.dabbaPricing || {}) },
+          specialDishes: data.value.specialDishes?.length ? data.value.specialDishes : DEFAULT_TIFFIN_SETTINGS.specialDishes
+        };
+        localStorage.setItem(LOCAL_STORAGE_TIFFIN_KEY, JSON.stringify(merged));
+        return merged;
       }
     } catch (err) {
       console.warn('Supabase fetchTiffinMenuSettings failed, using local fallback', err);
@@ -945,7 +981,17 @@ export async function fetchTiffinMenuSettings(): Promise<TiffinMenuSettings> {
 
   try {
     const raw = localStorage.getItem(LOCAL_STORAGE_TIFFIN_KEY);
-    if (raw) return JSON.parse(raw);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      return {
+        ...DEFAULT_TIFFIN_SETTINGS,
+        ...parsed,
+        weekdayMenus: { ...DEFAULT_WEEKDAY_MENUS, ...(parsed.weekdayMenus || {}) },
+        containerAddons: parsed.containerAddons?.length ? parsed.containerAddons : DEFAULT_CONTAINER_ADDONS,
+        dabbaPricing: { ...DEFAULT_DABBA_PRICING, ...(parsed.dabbaPricing || {}) },
+        specialDishes: parsed.specialDishes?.length ? parsed.specialDishes : DEFAULT_TIFFIN_SETTINGS.specialDishes
+      };
+    }
   } catch {}
 
   return DEFAULT_TIFFIN_SETTINGS;

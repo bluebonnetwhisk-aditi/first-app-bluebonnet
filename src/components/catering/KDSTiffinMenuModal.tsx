@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   X, 
   Upload, 
@@ -9,10 +9,27 @@ import {
   Calendar,
   Utensils,
   Plus,
-  Trash2
+  Trash2,
+  Package,
+  DollarSign,
+  Award
 } from 'lucide-react';
-import type { TiffinMenuSettings, TiffinSpecialDish } from '../../types/catering';
-import { fetchTiffinMenuSettings, saveTiffinMenuSettings, fetchCalendarBlackouts, DEFAULT_TIFFIN_SETTINGS } from '../../services/supabase';
+import type { 
+  TiffinMenuSettings, 
+  TiffinSpecialDish, 
+  WeekdayMenuEntry, 
+  ContainerAddonItem, 
+  DabbaPricing 
+} from '../../types/catering';
+import { 
+  fetchTiffinMenuSettings, 
+  saveTiffinMenuSettings, 
+  fetchCalendarBlackouts, 
+  DEFAULT_TIFFIN_SETTINGS,
+  DEFAULT_WEEKDAY_MENUS,
+  DEFAULT_CONTAINER_ADDONS,
+  DEFAULT_DABBA_PRICING
+} from '../../services/supabase';
 import { getCentralTimeNow } from '../../utils/centralTime';
 
 interface KDSTiffinMenuModalProps {
@@ -29,19 +46,33 @@ interface WeekOption {
   blackoutCount: number;
 }
 
+type ModalSection = 'flyer' | 'daily' | 'addons' | 'pricing' | 'specials';
+
+const WEEKDAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'] as const;
+
 export default function KDSTiffinMenuModal({
   onClose,
   onSettingsSaved
 }: KDSTiffinMenuModalProps) {
+  const [activeSection, setActiveSection] = useState<ModalSection>('flyer');
+  
+  // Section 1: Flyer & Dates
   const [flyerUrl, setFlyerUrl] = useState('');
   const [weekTitle, setWeekTitle] = useState('');
   const [selectedWeekKey, setSelectedWeekKey] = useState('');
-  
-  // Special dishes (max 3)
-  const [specialDishes, setSpecialDishes] = useState<TiffinSpecialDish[]>([]);
-
-  // Week options
   const [weekOptions, setWeekOptions] = useState<WeekOption[]>([]);
+
+  // Section 2: Daily Homestyle Menu (Monday - Saturday)
+  const [weekdayMenus, setWeekdayMenus] = useState<Record<string, WeekdayMenuEntry>>(DEFAULT_WEEKDAY_MENUS);
+
+  // Section 3: 16 oz Containers (Add-ons & Sides)
+  const [containerAddons, setContainerAddons] = useState<ContainerAddonItem[]>(DEFAULT_CONTAINER_ADDONS);
+
+  // Section 4: Dabba Pricing
+  const [dabbaPricing, setDabbaPricing] = useState<DabbaPricing>(DEFAULT_DABBA_PRICING);
+
+  // Section 5: Chef's Specials
+  const [specialDishes, setSpecialDishes] = useState<TiffinSpecialDish[]>([]);
 
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
@@ -52,6 +83,24 @@ export default function KDSTiffinMenuModal({
     Promise.all([fetchTiffinMenuSettings(), fetchCalendarBlackouts()]).then(([data, bDates]) => {
       setFlyerUrl(data.flyerImageUrl || DEFAULT_TIFFIN_SETTINGS.flyerImageUrl);
       setWeekTitle(data.weekTitle || DEFAULT_TIFFIN_SETTINGS.weekTitle);
+
+      if (data.weekdayMenus) {
+        setWeekdayMenus({ ...DEFAULT_WEEKDAY_MENUS, ...data.weekdayMenus });
+      } else {
+        setWeekdayMenus(DEFAULT_WEEKDAY_MENUS);
+      }
+
+      if (Array.isArray(data.containerAddons) && data.containerAddons.length > 0) {
+        setContainerAddons(data.containerAddons);
+      } else {
+        setContainerAddons(DEFAULT_CONTAINER_ADDONS);
+      }
+
+      if (data.dabbaPricing) {
+        setDabbaPricing({ ...DEFAULT_DABBA_PRICING, ...data.dabbaPricing });
+      } else {
+        setDabbaPricing(DEFAULT_DABBA_PRICING);
+      }
 
       // Populate special dishes (convert legacy format if needed)
       if (Array.isArray(data.specialDishes) && data.specialDishes.length > 0) {
@@ -146,7 +195,52 @@ export default function KDSTiffinMenuModal({
     reader.readAsDataURL(file);
   };
 
-  // Add Special Dish (max 3)
+  // Daily Menu update
+  const handleUpdateWeekdayMenu = (day: string, field: 'dal' | 'sabzi' | 'description', value: string) => {
+    setWeekdayMenus(prev => ({
+      ...prev,
+      [day]: {
+        ...(prev[day] || { dal: '', sabzi: '', description: '' }),
+        [field]: value
+      }
+    }));
+  };
+
+  // 16 oz Container Add-on management
+  const handleAddContainer = () => {
+    const newId = `addon-${Date.now().toString(36)}`;
+    setContainerAddons(prev => [
+      ...prev,
+      {
+        id: newId,
+        name: 'New 16 oz Specialty Side',
+        price: 9.99,
+        description: '16 oz tub of freshly prepared homestyle side'
+      }
+    ]);
+  };
+
+  const handleRemoveContainer = (index: number) => {
+    setContainerAddons(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleUpdateContainer = (index: number, field: keyof ContainerAddonItem, value: any) => {
+    setContainerAddons(prev => {
+      const copy = [...prev];
+      copy[index] = { ...copy[index], [field]: value };
+      return copy;
+    });
+  };
+
+  // Dabba Pricing update
+  const handleUpdatePricing = (field: keyof DabbaPricing, value: number) => {
+    setDabbaPricing(prev => ({
+      ...prev,
+      [field]: Math.max(0, value)
+    }));
+  };
+
+  // Special Dish management (max 3)
   const handleAddSpecial = () => {
     if (specialDishes.length >= 3) return;
     const newSpecial: TiffinSpecialDish = {
@@ -159,12 +253,10 @@ export default function KDSTiffinMenuModal({
     setSpecialDishes([...specialDishes, newSpecial]);
   };
 
-  // Remove Special Dish
   const handleRemoveSpecial = (idx: number) => {
     setSpecialDishes(specialDishes.filter((_, i) => i !== idx));
   };
 
-  // Update Special Dish field
   const handleUpdateSpecial = (idx: number, field: keyof TiffinSpecialDish, value: any) => {
     setSpecialDishes(prev => {
       const copy = [...prev];
@@ -173,7 +265,7 @@ export default function KDSTiffinMenuModal({
     });
   };
 
-  // Save Settings
+  // Save Settings to Supabase and Local Storage
   const handleSave = async () => {
     setIsSaving(true);
     setErrorMsg(null);
@@ -185,6 +277,18 @@ export default function KDSTiffinMenuModal({
       weekTitle: weekTitle.trim() || DEFAULT_TIFFIN_SETTINGS.weekTitle,
       weekStartDate: activeWeek?.startDate,
       weekEndDate: activeWeek?.endDate,
+      weekdayMenus,
+      containerAddons: containerAddons.map(c => ({
+        ...c,
+        name: c.name.trim(),
+        price: Number(c.price) || 0,
+        description: c.description.trim()
+      })),
+      dabbaPricing: {
+        singlePrice: Number(dabbaPricing.singlePrice) || 11.99,
+        familyPrice: Number(dabbaPricing.familyPrice) || 34.99,
+        weeklyPrice: Number(dabbaPricing.weeklyPrice) || 54.99
+      },
       specialDishes: specialDishes.map(s => ({
         ...s,
         title: s.title.trim(),
@@ -217,7 +321,7 @@ export default function KDSTiffinMenuModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-xs p-3 sm:p-4 overflow-y-auto animate-fade-in font-sans">
-      <div className="relative w-full max-w-3xl bg-white rounded-2xl shadow-2xl border border-gray-200 overflow-hidden my-6 max-h-[92vh] flex flex-col">
+      <div className="relative w-full max-w-4xl bg-white rounded-2xl shadow-2xl border border-gray-200 overflow-hidden my-6 max-h-[92vh] flex flex-col">
         
         {/* Header */}
         <div className="bg-[#00346f] text-white p-5 flex items-center justify-between shrink-0">
@@ -241,13 +345,42 @@ export default function KDSTiffinMenuModal({
           </button>
         </div>
 
-        {/* Body */}
-        <div className="p-6 overflow-y-auto space-y-6">
+        {/* Section Navigation Tabs */}
+        <div className="bg-gray-100 border-b border-gray-200 px-4 py-2 flex items-center gap-1.5 overflow-x-auto scrollbar-none shrink-0">
+          {[
+            { id: 'flyer', label: 'Flyer & Dates', icon: ImageIcon },
+            { id: 'daily', label: 'Daily Menu (Mon–Sat)', icon: Utensils },
+            { id: 'addons', label: '16 oz Containers', icon: Package },
+            { id: 'pricing', label: 'Dabba Pricing', icon: DollarSign },
+            { id: 'specials', label: "Chef's Specials", icon: Award }
+          ].map(tab => {
+            const Icon = tab.icon;
+            const isCurrent = activeSection === tab.id;
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setActiveSection(tab.id as ModalSection)}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 cursor-pointer ${
+                  isCurrent
+                    ? 'bg-[#00346f] text-white shadow-xs'
+                    : 'bg-white text-gray-700 hover:bg-gray-200 border border-gray-200'
+                }`}
+              >
+                <Icon className={`w-3.5 h-3.5 ${isCurrent ? 'text-[#ffdea5]' : 'text-gray-500'}`} />
+                <span>{tab.label}</span>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Body Content */}
+        <div className="p-6 overflow-y-auto space-y-6 flex-1">
           
           {saveSuccess && (
             <div className="p-3 bg-emerald-50 border border-emerald-300 text-emerald-900 rounded-xl text-xs font-bold flex items-center gap-2">
               <Check className="w-4 h-4 text-emerald-600" />
-              <span>✓ Weekly Tiffin Flyer and Chef's Specials synced to Supabase!</span>
+              <span>✓ Weekly Tiffin Flyer, Menus, Containers &amp; Specials synced to Supabase!</span>
             </div>
           )}
 
@@ -258,197 +391,471 @@ export default function KDSTiffinMenuModal({
             </div>
           )}
 
-          {/* ── 1. INTERACTIVE WEEK SELECTOR (EXCLUDING BLACKOUTS) ── */}
-          <div className="p-4 bg-blue-50/60 border border-blue-200 rounded-2xl space-y-3">
-            <div className="flex items-center justify-between">
-              <label className="block text-xs font-bold text-[#00346f] uppercase tracking-wider flex items-center gap-1.5">
-                <Calendar className="w-4 h-4 text-[#775a19]" />
-                <span>Select Week Date Range (Interactive Calendar Cycle)</span>
-              </label>
-              <span className="text-[10px] text-gray-500 font-semibold">Excludes or flags kitchen blackouts</span>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <label className="block text-[11px] font-bold text-gray-700 mb-1">
-                  Choose Upcoming Monday–Sunday Cycle:
-                </label>
-                <select
-                  value={selectedWeekKey}
-                  onChange={(e) => handleSelectWeek(e.target.value)}
-                  className="w-full px-3 py-2 text-xs bg-white border border-gray-300 rounded-xl focus:outline-none focus:border-[#00346f] font-medium"
-                >
-                  {weekOptions.map(opt => (
-                    <option key={opt.key} value={opt.key}>
-                      {opt.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-[11px] font-bold text-gray-700 mb-1">
-                  Custom Display Title / Heading:
-                </label>
-                <input
-                  type="text"
-                  placeholder="e.g. September 21 - 26"
-                  value={weekTitle}
-                  onChange={(e) => setWeekTitle(e.target.value)}
-                  className="w-full px-3 py-2 text-xs bg-white border border-gray-300 rounded-xl focus:outline-none focus:border-[#00346f]"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* ── 2. WEEKLY FLYER IMAGE ── */}
-          <div className="space-y-3 p-4 bg-gray-50 border border-gray-250 rounded-2xl">
-            <div className="flex items-center justify-between">
-              <label className="block text-xs font-bold text-gray-900 uppercase tracking-wider flex items-center gap-1.5">
-                <ImageIcon className="w-4 h-4 text-[#00346f]" />
-                <span>Weekly Tiffin Menu Flyer Image</span>
-              </label>
-              <span className="text-[10px] text-gray-500 font-semibold">Visible to customers in Tiffin tab</span>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-start">
-              {/* Image Preview */}
-              <div className="relative rounded-xl border border-gray-300 overflow-hidden bg-white max-h-48 flex items-center justify-center">
-                <img 
-                  src={flyerUrl || '/tiffin-flyer.jpg'} 
-                  alt="Flyer Preview" 
-                  className="w-full object-contain max-h-48"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).src = '/tiffin-flyer.jpg';
-                  }}
-                />
-              </div>
-
-              {/* Upload & URL inputs */}
-              <div className="sm:col-span-2 space-y-3">
-                <div>
-                  <label className="block text-[11px] font-bold text-gray-700 mb-1">
-                    Upload Flyer Image File:
+          {/* ── SECTION 1: FLYER & WEEKLY SCHEDULE ── */}
+          {activeSection === 'flyer' && (
+            <div className="space-y-4 animate-fade-in">
+              {/* Interactive Week Selector */}
+              <div className="p-4 bg-blue-50/60 border border-blue-200 rounded-2xl space-y-3">
+                <div className="flex items-center justify-between">
+                  <label className="block text-xs font-bold text-[#00346f] uppercase tracking-wider flex items-center gap-1.5">
+                    <Calendar className="w-4 h-4 text-[#775a19]" />
+                    <span>Select Week Date Range (Interactive Calendar Cycle)</span>
                   </label>
-                  <label className="flex items-center justify-center gap-2 p-2.5 bg-white border border-dashed border-gray-300 rounded-xl hover:border-[#00346f] cursor-pointer text-xs font-bold text-gray-700 hover:text-[#00346f] transition-colors">
-                    <Upload className="w-4 h-4" />
-                    <span>Choose Image File (PNG, JPG, WebP)</span>
-                    <input 
-                      type="file" 
-                      accept="image/*" 
-                      onChange={handleFlyerFileUpload}
-                      className="hidden" 
+                  <span className="text-[10px] text-gray-500 font-semibold">Excludes or flags kitchen blackouts</span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[11px] font-bold text-gray-700 mb-1">
+                      Choose Upcoming Monday–Sunday Cycle:
+                    </label>
+                    <select
+                      value={selectedWeekKey}
+                      onChange={(e) => handleSelectWeek(e.target.value)}
+                      className="w-full px-3 py-2 text-xs bg-white border border-gray-300 rounded-xl focus:outline-none focus:border-[#00346f] font-medium"
+                    >
+                      {weekOptions.map(opt => (
+                        <option key={opt.key} value={opt.key}>
+                          {opt.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-bold text-gray-700 mb-1">
+                      Custom Display Title / Heading:
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. September 21 - 26"
+                      value={weekTitle}
+                      onChange={(e) => setWeekTitle(e.target.value)}
+                      className="w-full px-3 py-2 text-xs bg-white border border-gray-300 rounded-xl focus:outline-none focus:border-[#00346f]"
                     />
+                  </div>
+                </div>
+              </div>
+
+              {/* Weekly Flyer Image */}
+              <div className="space-y-3 p-4 bg-gray-50 border border-gray-250 rounded-2xl">
+                <div className="flex items-center justify-between">
+                  <label className="block text-xs font-bold text-gray-900 uppercase tracking-wider flex items-center gap-1.5">
+                    <ImageIcon className="w-4 h-4 text-[#00346f]" />
+                    <span>Weekly Tiffin Menu Flyer Image</span>
                   </label>
+                  <span className="text-[10px] text-gray-500 font-semibold">Visible to customers in Tiffin tab</span>
                 </div>
 
-                <div>
-                  <label className="block text-[11px] font-bold text-gray-700 mb-1">
-                    Or Enter Image URL:
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="https://example.com/weekly-flyer.jpg or /tiffin-flyer.jpg"
-                    value={flyerUrl}
-                    onChange={(e) => setFlyerUrl(e.target.value)}
-                    className="w-full px-3 py-2 text-xs bg-white border border-gray-300 rounded-xl focus:outline-none focus:border-[#00346f]"
-                  />
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-start">
+                  <div className="relative rounded-xl border border-gray-300 overflow-hidden bg-white max-h-48 flex items-center justify-center">
+                    <img 
+                      src={flyerUrl || '/tiffin-flyer.jpg'} 
+                      alt="Flyer Preview" 
+                      className="w-full object-contain max-h-48"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = '/tiffin-flyer.jpg';
+                      }}
+                    />
+                  </div>
+
+                  <div className="sm:col-span-2 space-y-3">
+                    <div>
+                      <label className="block text-[11px] font-bold text-gray-700 mb-1">
+                        Upload Flyer Image File:
+                      </label>
+                      <label className="flex items-center justify-center gap-2 p-2.5 bg-white border border-dashed border-gray-300 rounded-xl hover:border-[#00346f] cursor-pointer text-xs font-bold text-gray-700 hover:text-[#00346f] transition-colors">
+                        <Upload className="w-4 h-4" />
+                        <span>Choose Image File (PNG, JPG, WebP)</span>
+                        <input 
+                          type="file" 
+                          accept="image/*" 
+                          onChange={handleFlyerFileUpload}
+                          className="hidden" 
+                        />
+                      </label>
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-bold text-gray-700 mb-1">
+                        Or Enter Image URL:
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="https://example.com/weekly-flyer.jpg or /tiffin-flyer.jpg"
+                        value={flyerUrl}
+                        onChange={(e) => setFlyerUrl(e.target.value)}
+                        className="w-full px-3 py-2 text-xs bg-white border border-gray-300 rounded-xl focus:outline-none focus:border-[#00346f]"
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
+          )}
 
-          {/* ── 3. SATURDAY / CHEF'S SPECIAL DISHES (UP TO 3 SPECIALS WITH PRICES) ── */}
-          <div className="space-y-4 p-4 bg-purple-50/60 border border-purple-200 rounded-2xl">
-            <div className="flex items-center justify-between">
-              <div>
-                <label className="block text-xs font-bold text-purple-950 uppercase tracking-wider flex items-center gap-1.5">
-                  <Utensils className="w-4 h-4 text-purple-700" />
-                  <span>Chef's Special Dishes (Max 3 Dishes with Unit Pricing)</span>
-                </label>
-                <p className="text-[11px] text-purple-800 mt-0.5">
-                  Customers can select quantity and order each special individually.
-                </p>
+          {/* ── SECTION 2: DAILY HOMESTYLE MENU (MON–SAT) ── */}
+          {activeSection === 'daily' && (
+            <div className="space-y-4 animate-fade-in">
+              <div className="p-4 bg-emerald-50/70 border border-emerald-200 rounded-2xl flex items-center justify-between">
+                <div>
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-emerald-950 flex items-center gap-1.5">
+                    <Utensils className="w-4 h-4 text-emerald-700" />
+                    <span>Daily Homestyle Tiffin Selection (Monday – Saturday)</span>
+                  </h4>
+                  <p className="text-[11px] text-emerald-800 mt-0.5">
+                    Update the daily dal / curry course and dry sabzi course from the weekly flyer.
+                  </p>
+                </div>
+                <span className="text-[11px] font-bold px-2.5 py-1 bg-white text-emerald-900 border border-emerald-300 rounded-xl">
+                  Sunday Closed
+                </span>
               </div>
 
-              {specialDishes.length < 3 && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {WEEKDAYS.map(day => {
+                  const item = weekdayMenus[day] || { dal: '', sabzi: '', description: '' };
+                  const isSaturday = day === 'Saturday';
+
+                  return (
+                    <div 
+                      key={day} 
+                      className={`p-4 rounded-2xl border shadow-2xs space-y-3 ${
+                        isSaturday ? 'bg-purple-50/50 border-purple-200' : 'bg-white border-gray-200'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between border-b border-gray-150 pb-2">
+                        <span className={`font-serif font-bold text-sm ${isSaturday ? 'text-purple-900' : 'text-[#00346f]'}`}>
+                          {day}
+                        </span>
+                        {isSaturday && (
+                          <span className="text-[10px] font-black uppercase tracking-wider bg-purple-100 text-purple-800 px-2 py-0.5 rounded">
+                            Special Day
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="space-y-2">
+                        <div>
+                          <label className="block text-[10px] font-bold text-gray-600 mb-0.5">
+                            Dal / Curry Course:
+                          </label>
+                          <input
+                            type="text"
+                            placeholder="e.g. Palak Dal, Rajma, Lauki Kofta Curry"
+                            value={item.dal}
+                            onChange={(e) => handleUpdateWeekdayMenu(day, 'dal', e.target.value)}
+                            className="w-full px-3 py-1.5 text-xs border border-gray-300 rounded-lg focus:border-[#00346f]"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-[10px] font-bold text-gray-600 mb-0.5">
+                            Dry Sabzi Course:
+                          </label>
+                          <input
+                            type="text"
+                            placeholder="e.g. Cabbage Sabzi, Shimla Mirch, Aloo Sabzi"
+                            value={item.sabzi}
+                            onChange={(e) => handleUpdateWeekdayMenu(day, 'sabzi', e.target.value)}
+                            className="w-full px-3 py-1.5 text-xs border border-gray-300 rounded-lg focus:border-[#00346f]"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-[10px] font-bold text-gray-600 mb-0.5">
+                            Notes / Item Description:
+                          </label>
+                          <input
+                            type="text"
+                            placeholder="e.g. Fresh spinach dal & tender cabbage sabzi"
+                            value={item.description || ''}
+                            onChange={(e) => handleUpdateWeekdayMenu(day, 'description', e.target.value)}
+                            className="w-full px-3 py-1.5 text-xs border border-gray-300 rounded-lg focus:border-[#00346f]"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* ── SECTION 3: 16 OZ A LA CARTE CONTAINERS ── */}
+          {activeSection === 'addons' && (
+            <div className="space-y-4 animate-fade-in">
+              <div className="p-4 bg-amber-50/70 border border-amber-200 rounded-2xl flex items-center justify-between">
+                <div>
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-amber-950 flex items-center gap-1.5">
+                    <Package className="w-4 h-4 text-amber-700" />
+                    <span>Individual Add-Ons &amp; Sides (16 oz Containers)</span>
+                  </h4>
+                  <p className="text-[11px] text-amber-800 mt-0.5">
+                    Customers can order standalone 16 oz tubs of curries, sabzis, paneer, rice and raita.
+                  </p>
+                </div>
                 <button
                   type="button"
-                  onClick={handleAddSpecial}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple-700 hover:bg-purple-800 text-white text-xs font-bold shadow-2xs transition-colors cursor-pointer"
+                  onClick={handleAddContainer}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-700 hover:bg-amber-800 text-white text-xs font-bold shadow-2xs transition-colors cursor-pointer"
                 >
                   <Plus className="w-3.5 h-3.5" />
-                  <span>Add Special Dish ({specialDishes.length}/3)</span>
+                  <span>Add Container</span>
                 </button>
-              )}
-            </div>
-
-            {specialDishes.length === 0 ? (
-              <div className="p-6 text-center bg-white rounded-xl border border-dashed border-purple-300 text-purple-700 text-xs">
-                No special dishes configured. Click "+ Add Special Dish" above to add up to 3 weekend specials.
               </div>
-            ) : (
-              <div className="space-y-3">
-                {specialDishes.map((dish, idx) => (
-                  <div key={dish.id || idx} className="p-4 bg-white rounded-xl border border-purple-200 shadow-2xs space-y-3">
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {containerAddons.map((container, idx) => (
+                  <div key={container.id || idx} className="p-4 bg-white rounded-xl border border-gray-250 shadow-2xs space-y-3">
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-black uppercase text-purple-900 flex items-center gap-1">
-                        <span>Special Dish #{idx + 1}</span>
+                      <span className="text-xs font-bold text-gray-900">
+                        Container #{idx + 1}
                       </span>
                       <button
                         type="button"
-                        onClick={() => handleRemoveSpecial(idx)}
+                        onClick={() => handleRemoveContainer(idx)}
                         className="text-rose-500 hover:text-rose-700 p-1 rounded hover:bg-rose-50 cursor-pointer"
-                        title="Delete special dish"
+                        title="Delete container"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                       <div className="sm:col-span-2">
-                        <label className="block text-[10px] font-bold text-gray-600 mb-0.5">Dish Name:</label>
+                        <label className="block text-[10px] font-bold text-gray-600 mb-0.5">Item Name:</label>
                         <input
                           type="text"
-                          placeholder="e.g. Pav Bhaji Feast, Chole Bhature, Vegetable Biryani"
-                          value={dish.title}
-                          onChange={(e) => handleUpdateSpecial(idx, 'title', e.target.value)}
-                          className="w-full px-3 py-1.5 text-xs border border-gray-300 rounded-lg focus:border-purple-600"
+                          value={container.name}
+                          onChange={(e) => handleUpdateContainer(idx, 'name', e.target.value)}
+                          className="w-full px-2.5 py-1.5 text-xs border border-gray-300 rounded-lg focus:border-[#00346f]"
                         />
                       </div>
 
                       <div>
-                        <label className="block text-[10px] font-bold text-gray-600 mb-0.5">Unit Price ($):</label>
+                        <label className="block text-[10px] font-bold text-gray-600 mb-0.5">Price ($):</label>
                         <div className="flex items-center gap-1">
                           <span className="text-xs text-gray-500 font-bold">$</span>
                           <input
                             type="number"
                             step="0.01"
                             min="0"
-                            placeholder="13.99"
-                            value={dish.price}
-                            onChange={(e) => handleUpdateSpecial(idx, 'price', parseFloat(e.target.value) || 0)}
-                            className="w-full px-2.5 py-1.5 text-xs border border-gray-300 rounded-lg focus:border-purple-600 font-mono font-bold"
+                            value={container.price}
+                            onChange={(e) => handleUpdateContainer(idx, 'price', parseFloat(e.target.value) || 0)}
+                            className="w-full px-2 py-1.5 text-xs border border-gray-300 rounded-lg focus:border-[#00346f] font-mono font-bold"
                           />
                         </div>
                       </div>
                     </div>
 
                     <div>
-                      <label className="block text-[10px] font-bold text-gray-600 mb-0.5">Serving Description:</label>
+                      <label className="block text-[10px] font-bold text-gray-600 mb-0.5">Description:</label>
                       <input
                         type="text"
-                        placeholder="e.g. 2 Buttered Pavs with rich vegetable bhaji, lemon & spiced onions"
-                        value={dish.description}
-                        onChange={(e) => handleUpdateSpecial(idx, 'description', e.target.value)}
-                        className="w-full px-3 py-1.5 text-xs border border-gray-300 rounded-lg focus:border-purple-600"
+                        value={container.description}
+                        onChange={(e) => handleUpdateContainer(idx, 'description', e.target.value)}
+                        className="w-full px-2.5 py-1.5 text-xs border border-gray-300 rounded-lg focus:border-[#00346f]"
                       />
                     </div>
                   </div>
                 ))}
               </div>
-            )}
-          </div>
+            </div>
+          )}
+
+          {/* ── SECTION 4: DABBA PRICING ── */}
+          {activeSection === 'pricing' && (
+            <div className="space-y-4 animate-fade-in">
+              <div className="p-4 bg-blue-50/70 border border-blue-200 rounded-2xl">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-[#00346f] flex items-center gap-1.5">
+                  <DollarSign className="w-4 h-4 text-[#775a19]" />
+                  <span>Dabba Package Prices (Single, Family &amp; Weekly Plans)</span>
+                </h4>
+                <p className="text-[11px] text-gray-600 mt-0.5">
+                  Set the tier prices reflected in the Dabba Options and Daily Homestyle Tiffin sections.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                {/* Single Dabba */}
+                <div className="p-5 bg-white rounded-2xl border border-gray-300 shadow-2xs space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-sm text-gray-900">Single Dabba</span>
+                    <span className="px-2 py-0.5 bg-gray-100 rounded text-[10px] font-bold uppercase text-gray-600">Serves 1</span>
+                  </div>
+                  <p className="text-xs text-gray-500">1 cup rice, 1 cup curry, 1/2 cup sabzi, 2 tawa roti.</p>
+                  <div>
+                    <label className="block text-[11px] font-bold text-gray-700 mb-1">Unit Price ($):</label>
+                    <div className="flex items-center gap-1">
+                      <span className="text-sm font-bold text-gray-500">$</span>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={dabbaPricing.singlePrice}
+                        onChange={(e) => handleUpdatePricing('singlePrice', parseFloat(e.target.value) || 0)}
+                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-xl focus:border-[#00346f] font-mono font-bold"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Family Dabba */}
+                <div className="p-5 bg-white rounded-2xl border border-gray-300 shadow-2xs space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-sm text-gray-900">Family Dabba</span>
+                    <span className="px-2 py-0.5 bg-[#ffdea5]/40 text-[#775a19] rounded text-[10px] font-bold uppercase">Serves 4</span>
+                  </div>
+                  <p className="text-xs text-gray-500">4 complete meals: larger family portions of dal, sabzi, 4 cups rice, 8 rotis.</p>
+                  <div>
+                    <label className="block text-[11px] font-bold text-gray-700 mb-1">Unit Price ($):</label>
+                    <div className="flex items-center gap-1">
+                      <span className="text-sm font-bold text-gray-500">$</span>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={dabbaPricing.familyPrice}
+                        onChange={(e) => handleUpdatePricing('familyPrice', parseFloat(e.target.value) || 0)}
+                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-xl focus:border-[#00346f] font-mono font-bold"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Weekly Dabba Plan */}
+                <div className="p-5 bg-white rounded-2xl border border-gray-300 shadow-2xs space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-sm text-gray-900">Weekly Dabba Plan</span>
+                    <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded text-[10px] font-bold uppercase">5 Days</span>
+                  </div>
+                  <p className="text-xs text-gray-500">5-day subscription (Mon–Fri) delivered or picked up daily.</p>
+                  <div>
+                    <label className="block text-[11px] font-bold text-gray-700 mb-1">Package Price ($):</label>
+                    <div className="flex items-center gap-1">
+                      <span className="text-sm font-bold text-gray-500">$</span>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={dabbaPricing.weeklyPrice}
+                        onChange={(e) => handleUpdatePricing('weeklyPrice', parseFloat(e.target.value) || 0)}
+                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-xl focus:border-[#00346f] font-mono font-bold"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ── SECTION 5: SATURDAY / CHEF'S SPECIAL DISHES ── */}
+          {activeSection === 'specials' && (
+            <div className="space-y-4 animate-fade-in">
+              <div className="flex items-center justify-between p-4 bg-purple-50/70 border border-purple-200 rounded-2xl">
+                <div>
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-purple-950 flex items-center gap-1.5">
+                    <Award className="w-4 h-4 text-purple-700" />
+                    <span>Chef's Special Dishes (Max 3 Specials with Unit Pricing)</span>
+                  </h4>
+                  <p className="text-[11px] text-purple-800 mt-0.5">
+                    Handcrafted Saturday specialties with dynamic prices and customer quantity selectors.
+                  </p>
+                </div>
+
+                {specialDishes.length < 3 && (
+                  <button
+                    type="button"
+                    onClick={handleAddSpecial}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-purple-700 hover:bg-purple-800 text-white text-xs font-bold shadow-2xs transition-colors cursor-pointer"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>Add Special Dish ({specialDishes.length}/3)</span>
+                  </button>
+                )}
+              </div>
+
+              {specialDishes.length === 0 ? (
+                <div className="p-6 text-center bg-white rounded-xl border border-dashed border-purple-300 text-purple-700 text-xs">
+                  No special dishes configured. Click "+ Add Special Dish" above to add up to 3 weekend specials.
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {specialDishes.map((dish, idx) => (
+                    <div key={dish.id || idx} className="p-4 bg-white rounded-xl border border-purple-200 shadow-2xs space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-black uppercase text-purple-900 flex items-center gap-1">
+                          <span>Special Dish #{idx + 1}</span>
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveSpecial(idx)}
+                          className="text-rose-500 hover:text-rose-700 p-1 rounded hover:bg-rose-50 cursor-pointer"
+                          title="Delete special dish"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div className="sm:col-span-2">
+                          <label className="block text-[10px] font-bold text-gray-600 mb-0.5">Dish Name:</label>
+                          <input
+                            type="text"
+                            placeholder="e.g. Pav Bhaji Feast, Chole Bhature, Vegetable Biryani"
+                            value={dish.title}
+                            onChange={(e) => handleUpdateSpecial(idx, 'title', e.target.value)}
+                            className="w-full px-3 py-1.5 text-xs border border-gray-300 rounded-lg focus:border-purple-600"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-[10px] font-bold text-gray-600 mb-0.5">Unit Price ($):</label>
+                          <div className="flex items-center gap-1">
+                            <span className="text-xs text-gray-500 font-bold">$</span>
+                            <input
+                              type="number"
+                              step="0.01"
+                              min="0"
+                              placeholder="13.99"
+                              value={dish.price}
+                              onChange={(e) => handleUpdateSpecial(idx, 'price', parseFloat(e.target.value) || 0)}
+                              className="w-full px-2.5 py-1.5 text-xs border border-gray-300 rounded-lg focus:border-purple-600 font-mono font-bold"
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-[10px] font-bold text-gray-600 mb-0.5">Serving Description:</label>
+                          <input
+                            type="text"
+                            placeholder="e.g. 2 Buttered Pavs with rich vegetable bhaji, lemon & spiced onions"
+                            value={dish.description}
+                            onChange={(e) => handleUpdateSpecial(idx, 'description', e.target.value)}
+                            className="w-full px-3 py-1.5 text-xs border border-gray-300 rounded-lg focus:border-purple-600"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-[10px] font-bold text-gray-600 mb-0.5">Optional Image URL:</label>
+                          <input
+                            type="text"
+                            placeholder="https://example.com/special.jpg"
+                            value={dish.imageUrl || ''}
+                            onChange={(e) => handleUpdateSpecial(idx, 'imageUrl', e.target.value)}
+                            className="w-full px-3 py-1.5 text-xs border border-gray-300 rounded-lg focus:border-purple-600"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
 
         </div>
 

@@ -100,6 +100,25 @@ export interface TiffinSpecialDish {
   imageUrl?: string;
 }
 
+export interface WeekdayMenuEntry {
+  dal: string;
+  sabzi: string;
+  description?: string;
+}
+
+export interface ContainerAddonItem {
+  id: string;
+  name: string;
+  price: number;
+  description: string;
+}
+
+export interface DabbaPricing {
+  singlePrice: number;
+  familyPrice: number;
+  weeklyPrice: number;
+}
+
 export interface TiffinMenuSettings {
   flyerImageUrl: string;
   weekTitle: string; // e.g., "September 21 - 26"
@@ -109,6 +128,9 @@ export interface TiffinMenuSettings {
   saturdaySpecialTitle?: string;
   saturdaySpecialDescription?: string;
   saturdaySpecialImageUrl?: string;
+  weekdayMenus?: Record<string, WeekdayMenuEntry>;
+  containerAddons?: ContainerAddonItem[];
+  dabbaPricing?: DabbaPricing;
   updatedAt?: string;
 }
 

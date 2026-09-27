@@ -17,10 +17,15 @@ import {
   MapPin,
   ArrowRight
 } from 'lucide-react';
-import type { CartItem, MenuItem, TiffinSpecialDish } from '../../types/catering';
+import type { CartItem, MenuItem, TiffinSpecialDish, TiffinMenuSettings, ContainerAddonItem } from '../../types/catering';
 import { getCentralTimeNow } from '../../utils/centralTime';
-import { fetchTiffinMenuSettings, DEFAULT_TIFFIN_SETTINGS } from '../../services/supabase';
-import type { TiffinMenuSettings } from '../../types/catering';
+import { 
+  fetchTiffinMenuSettings, 
+  DEFAULT_TIFFIN_SETTINGS, 
+  DEFAULT_WEEKDAY_MENUS, 
+  DEFAULT_CONTAINER_ADDONS, 
+  DEFAULT_DABBA_PRICING 
+} from '../../services/supabase';
 
 interface TiffinOrderViewProps {
   cart: CartItem[];
@@ -42,30 +47,12 @@ interface DaySchedule {
   displayDate: string; // "Sep 22"
   dalOrCurry: string;
   sabzi: string;
+  description?: string;
   isSaturdaySpecial?: boolean;
   isSundayClosed?: boolean;
   isSelectable: boolean; // next day till end of week
   statusLabel?: string;
 }
-
-const WEEKDAY_MENUS: Record<string, { dal: string; sabzi: string }> = {
-  Monday: { dal: 'Palak Dal', sabzi: 'Cabbage Sabzi' },
-  Tuesday: { dal: 'Lauki Kofta Curry', sabzi: 'Shimla Mirch Sabzi' },
-  Wednesday: { dal: 'Rajma Chawal', sabzi: 'Aloo Sabzi' },
-  Thursday: { dal: 'Dal Tadka', sabzi: 'Bhindi Sabzi' },
-  Friday: { dal: 'Kala Chana Curry', sabzi: 'Beans Sabzi' },
-  Saturday: { dal: 'Chef’s Special Dish', sabzi: 'Weekend Surprise Recipe' },
-  Sunday: { dal: 'Kitchen Closed', sabzi: 'Rest & Clean Day' }
-};
-
-const EXTRA_CONTAINERS = [
-  { id: 'dal-reg', name: 'Dal / Curry (Regular)', price: 9.99, description: '16 oz tub of slow-simmered daily dal or homestyle curry' },
-  { id: 'dal-prem', name: 'Dal / Curry (Premium)', price: 11.49, description: '16 oz tub of rich specialty curry or premium dal' },
-  { id: 'paneer-16oz', name: 'Paneer Specialty', price: 14.99, description: '16 oz tub of fresh spiced cottage cheese main' },
-  { id: 'dry-sabzi-16oz', name: 'Dry Sabzi', price: 10.99, description: '16 oz tub of homestyle spiced seasonal dry sabzi' },
-  { id: 'rice-16oz', name: 'Steamed Rice', price: 4.99, description: '16 oz container of fragrant long-grain basmati rice' },
-  { id: 'raita-16oz', name: 'Cooling Raita', price: 4.99, description: '16 oz chilled seasoned spiced yogurt with boondi or veggies' }
-];
 
 export default function TiffinOrderView({
   cart,
@@ -79,7 +66,46 @@ export default function TiffinOrderView({
   const [weeklyQty, setWeeklyQty] = useState<number>(1);
   const [selectedWeekId, setSelectedWeekId] = useState<string>('');
   const [addedAlert, setAddedAlert] = useState<string | null>(null);
+
+  // Dynamic pricing from settings or flyer defaults
+  const singlePrice = settings.dabbaPricing?.singlePrice || DEFAULT_DABBA_PRICING.singlePrice;
+  const familyPrice = settings.dabbaPricing?.familyPrice || DEFAULT_DABBA_PRICING.familyPrice;
+  const weeklyPrice = settings.dabbaPricing?.weeklyPrice || DEFAULT_DABBA_PRICING.weeklyPrice;
+
+  // Active containers list
+  const containerList: ContainerAddonItem[] = (settings.containerAddons && settings.containerAddons.length > 0)
+    ? settings.containerAddons
+    : DEFAULT_CONTAINER_ADDONS;
+
+  // Quantity selectors state
+  const [singleQuantities, setSingleQuantities] = useState<Record<string, number>>({});
+  const [familyQuantities, setFamilyQuantities] = useState<Record<string, number>>({});
+  const [containerQuantities, setContainerQuantities] = useState<Record<string, number>>({});
   const [specialQuantities, setSpecialQuantities] = useState<Record<string, number>>({});
+
+  const getSingleQty = (dateStr: string) => singleQuantities[dateStr] || 1;
+  const updateSingleQty = (dateStr: string, delta: number) => {
+    setSingleQuantities(prev => ({
+      ...prev,
+      [dateStr]: Math.max(1, (prev[dateStr] || 1) + delta)
+    }));
+  };
+
+  const getFamilyQty = (dateStr: string) => familyQuantities[dateStr] || 1;
+  const updateFamilyQty = (dateStr: string, delta: number) => {
+    setFamilyQuantities(prev => ({
+      ...prev,
+      [dateStr]: Math.max(1, (prev[dateStr] || 1) + delta)
+    }));
+  };
+
+  const getContainerQty = (id: string) => containerQuantities[id] || 1;
+  const updateContainerQty = (id: string, delta: number) => {
+    setContainerQuantities(prev => ({
+      ...prev,
+      [id]: Math.max(1, (prev[id] || 1) + delta)
+    }));
+  };
 
   const getSpecialQty = (dishId: string) => specialQuantities[dishId] || 1;
   const updateSpecialQty = (dishId: string, delta: number) => {
@@ -172,7 +198,8 @@ export default function TiffinOrderView({
       statusLabel = 'Order Closed (Same-day unavailable)';
     }
 
-    const menu = WEEKDAY_MENUS[dayName] || { dal: 'Special Curry', sabzi: 'Seasonal Sabzi' };
+    const activeMenus = settings.weekdayMenus || DEFAULT_WEEKDAY_MENUS;
+    const menu = activeMenus[dayName] || DEFAULT_WEEKDAY_MENUS[dayName] || { dal: 'Special Curry', sabzi: 'Seasonal Sabzi', description: '' };
 
     schedule.push({
       dayName,
@@ -180,6 +207,7 @@ export default function TiffinOrderView({
       displayDate,
       dalOrCurry: isSaturday ? (settings.saturdaySpecialTitle || menu.dal) : menu.dal,
       sabzi: isSaturday ? (settings.saturdaySpecialDescription || menu.sabzi) : menu.sabzi,
+      description: menu.description,
       isSaturdaySpecial: isSaturday,
       isSundayClosed: isSunday,
       isSelectable,
@@ -272,7 +300,8 @@ export default function TiffinOrderView({
   // Add Daily Dabba to Cart
   const handleAddDailyDabba = (type: 'single' | 'family', day: DaySchedule) => {
     const isFamily = type === 'family';
-    const unitPrice = isFamily ? 34.99 : 11.99;
+    const unitPrice = isFamily ? familyPrice : singlePrice;
+    const qty = isFamily ? getFamilyQty(day.dateStr) : getSingleQty(day.dateStr);
     const sizeName = isFamily ? 'Family Dabba (Serves 4)' : 'Single Dabba (Serves 1)';
     const itemId = `tiffin-${type}-${day.dateStr}`;
 
@@ -295,13 +324,13 @@ export default function TiffinOrderView({
     onUpdateCartItem(
       menuItem,
       isFamily ? 'tiffin_family' : 'tiffin_single',
-      1,
+      qty,
       `${sizeName} - ${day.dayName} (${day.displayDate})`,
       unitPrice,
       notes
     );
 
-    triggerAddedAlert(`✓ Added ${sizeName} for ${day.dayName} (${day.displayDate}) to your order!`);
+    triggerAddedAlert(`✓ Added ${qty} × ${sizeName} for ${day.dayName} (${day.displayDate}) ($${(unitPrice * qty).toFixed(2)}) to your order!`);
   };
 
   // Add Chef's Special Dish to Cart
@@ -337,7 +366,7 @@ export default function TiffinOrderView({
   // Add Weekly Dabba to Cart
   const handleAddWeeklyDabba = () => {
     if (!activeWeeklyPlan) return;
-    const unitPrice = 54.99;
+    const unitPrice = weeklyPrice;
     const itemId = `tiffin-weekly-${activeWeeklyPlan.monDateStr}`;
 
     const menuItem: MenuItem = {
@@ -367,7 +396,8 @@ export default function TiffinOrderView({
   };
 
   // Add 16 oz Container to Cart
-  const handleAddContainer = (container: typeof EXTRA_CONTAINERS[0]) => {
+  const handleAddContainer = (container: ContainerAddonItem) => {
+    const qty = getContainerQty(container.id);
     const itemId = `tiffin-container-${container.id}`;
 
     const menuItem: MenuItem = {
@@ -385,13 +415,13 @@ export default function TiffinOrderView({
     onUpdateCartItem(
       menuItem,
       'container_16oz',
-      1,
+      qty,
       '16 oz Container',
       container.price,
-      `16 oz portion of ${container.name}`
+      `16 oz portion of ${container.name} (Qty: ${qty})`
     );
 
-    triggerAddedAlert(`✓ Added 16 oz ${container.name} ($${container.price.toFixed(2)}) to your order!`);
+    triggerAddedAlert(`✓ Added ${qty} × 16 oz ${container.name} ($${(container.price * qty).toFixed(2)}) to your order!`);
   };
 
   // Cart items under tiffin category
@@ -422,19 +452,19 @@ export default function TiffinOrderView({
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-2">
               <div className="p-3 rounded-2xl bg-white/10 backdrop-blur-xs border border-white/15">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-gray-300 block">Single Dabba</span>
-                <span className="font-serif text-xl sm:text-2xl font-black text-[#ffdea5]">$11.99</span>
+                <span className="font-serif text-xl sm:text-2xl font-black text-[#ffdea5]">${singlePrice.toFixed(2)}</span>
                 <span className="text-[11px] text-gray-300 block">Serves 1 meal</span>
               </div>
 
               <div className="p-3 rounded-2xl bg-white/10 backdrop-blur-xs border border-white/15">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-gray-300 block">Family Dabba</span>
-                <span className="font-serif text-xl sm:text-2xl font-black text-[#ffdea5]">$34.99</span>
+                <span className="font-serif text-xl sm:text-2xl font-black text-[#ffdea5]">${familyPrice.toFixed(2)}</span>
                 <span className="text-[11px] text-gray-300 block">Serves 4 complete</span>
               </div>
 
               <div className="p-3 rounded-2xl bg-emerald-500/20 backdrop-blur-xs border border-emerald-400/30 col-span-2 sm:col-span-1">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-300 block">Weekly Dabba</span>
-                <span className="font-serif text-xl sm:text-2xl font-black text-white">$54.99</span>
+                <span className="font-serif text-xl sm:text-2xl font-black text-white">${weeklyPrice.toFixed(2)}</span>
                 <span className="text-[11px] text-emerald-200 block">5 days (Mon–Fri)</span>
               </div>
             </div>
@@ -515,7 +545,7 @@ export default function TiffinOrderView({
               🌟 BEST VALUE • 5-DAY HOMEMADE PLAN
             </div>
             <h2 className="font-serif text-2xl sm:text-3xl font-bold text-[#00346f]">
-              Weekly Dabba Subscription — $54.99
+              Weekly Dabba Subscription — ${weeklyPrice.toFixed(2)}
             </h2>
             <p className="text-xs sm:text-sm text-gray-700 leading-relaxed">
               Enjoy 1 Single Dabba every day from <strong>Monday through Friday</strong> for your selected week. 
@@ -532,8 +562,8 @@ export default function TiffinOrderView({
           <div className="bg-white p-5 rounded-2xl border border-emerald-200 shadow-md flex flex-col items-center gap-3 shrink-0 w-full sm:w-auto">
             <div className="text-center">
               <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500 block">Weekly Package</span>
-              <span className="font-serif text-3xl font-black text-emerald-800">$54.99</span>
-              <span className="text-[11px] text-gray-500 block">Just ~$11.00 / day</span>
+              <span className="font-serif text-3xl font-black text-emerald-800">${weeklyPrice.toFixed(2)}</span>
+              <span className="text-[11px] text-gray-500 block">Just ~${(weeklyPrice / 5).toFixed(2)} / day</span>
             </div>
 
             <div className="flex flex-wrap sm:flex-nowrap items-center gap-3 w-full sm:w-auto">
@@ -865,51 +895,111 @@ export default function TiffinOrderView({
                 {/* Dabba Size Options Ordering Cards */}
                 {activeDay.isSelectable ? (
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
-                    {/* Single Dabba ($11.99) */}
-                    <div className="p-5 bg-white rounded-2xl border border-gray-300 hover:border-[#00346f] transition-all flex flex-col justify-between shadow-2xs space-y-4">
-                      <div>
-                        <div className="flex items-center justify-between">
-                          <h4 className="font-serif font-bold text-lg text-gray-900">Single Dabba</h4>
-                          <span className="px-2 py-0.5 bg-gray-100 rounded text-[10px] font-bold uppercase text-gray-600">Serves 1</span>
+                    {/* Single Dabba */}
+                    {(() => {
+                      const qty = getSingleQty(activeDay.dateStr);
+                      return (
+                        <div className="p-5 bg-white rounded-2xl border border-gray-300 hover:border-[#00346f] transition-all flex flex-col justify-between shadow-2xs space-y-4">
+                          <div>
+                            <div className="flex items-center justify-between">
+                              <h4 className="font-serif font-bold text-lg text-gray-900">Single Dabba</h4>
+                              <span className="px-2 py-0.5 bg-gray-100 rounded text-[10px] font-bold uppercase text-gray-600">Serves 1</span>
+                            </div>
+                            <span className="font-serif text-2xl font-black text-[#00346f] block mt-1">${singlePrice.toFixed(2)}</span>
+                            <p className="text-xs text-gray-500 mt-1 leading-relaxed">
+                              1 complete individual meal: 1 cup rice, 1 cup curry, 1/2 cup sabzi, 2 tawa roti. Perfect for dinner after work!
+                            </p>
+                          </div>
+
+                          <div className="space-y-2 pt-2 border-t border-gray-150">
+                            <div className="flex items-center justify-between">
+                              <span className="text-[11px] font-semibold text-gray-600">Quantity:</span>
+                              <div className="flex items-center bg-gray-100 rounded-lg p-0.5 border border-gray-200">
+                                <button
+                                  type="button"
+                                  onClick={() => updateSingleQty(activeDay.dateStr, -1)}
+                                  className="w-8 h-8 rounded-md flex items-center justify-center hover:bg-white text-gray-700 cursor-pointer"
+                                  aria-label="Decrease single dabba quantity"
+                                >
+                                  <Minus className="w-4 h-4" />
+                                </button>
+                                <span className="w-7 text-center font-bold text-xs">{qty}</span>
+                                <button
+                                  type="button"
+                                  onClick={() => updateSingleQty(activeDay.dateStr, 1)}
+                                  className="w-8 h-8 rounded-md flex items-center justify-center hover:bg-white text-gray-700 cursor-pointer"
+                                  aria-label="Increase single dabba quantity"
+                                >
+                                  <Plus className="w-4 h-4" />
+                                </button>
+                              </div>
+                            </div>
+
+                            <button
+                              type="button"
+                              onClick={() => handleAddDailyDabba('single', activeDay)}
+                              className="w-full min-h-[44px] inline-flex items-center justify-center gap-2 bg-[#00346f] hover:bg-[#00224d] text-white py-2.5 px-4 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-xs cursor-pointer"
+                            >
+                              <Plus className="w-4 h-4 text-[#ffdea5]" />
+                              <span>Add Single Dabba • ${(singlePrice * qty).toFixed(2)}</span>
+                            </button>
+                          </div>
                         </div>
-                        <span className="font-serif text-2xl font-black text-[#00346f] block mt-1">$11.99</span>
-                        <p className="text-xs text-gray-500 mt-1 leading-relaxed">
-                          1 complete individual meal: 1 cup rice, 1 cup curry, 1/2 cup sabzi, 2 tawa roti. Perfect for dinner after work!
-                        </p>
-                      </div>
+                      );
+                    })()}
 
-                      <button
-                        type="button"
-                        onClick={() => handleAddDailyDabba('single', activeDay)}
-                        className="w-full min-h-[44px] inline-flex items-center justify-center gap-2 bg-[#00346f] hover:bg-[#00224d] text-white py-2.5 px-4 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-xs cursor-pointer"
-                      >
-                        <Plus className="w-4 h-4 text-[#ffdea5]" />
-                        <span>Add Single Dabba ($11.99)</span>
-                      </button>
-                    </div>
+                    {/* Family Dabba */}
+                    {(() => {
+                      const qty = getFamilyQty(activeDay.dateStr);
+                      return (
+                        <div className="p-5 bg-white rounded-2xl border border-gray-300 hover:border-[#00346f] transition-all flex flex-col justify-between shadow-2xs space-y-4">
+                          <div>
+                            <div className="flex items-center justify-between">
+                              <h4 className="font-serif font-bold text-lg text-gray-900">Family Dabba</h4>
+                              <span className="px-2 py-0.5 bg-[#ffdea5]/40 text-[#775a19] rounded text-[10px] font-bold uppercase">Serves 4</span>
+                            </div>
+                            <span className="font-serif text-2xl font-black text-[#00346f] block mt-1">${familyPrice.toFixed(2)}</span>
+                            <p className="text-xs text-gray-500 mt-1 leading-relaxed">
+                              4 complete meals: larger family portions of dal/curry, sabzi, 4 cups rice, 8 tawa rotis. Ideal for the entire family!
+                            </p>
+                          </div>
 
-                    {/* Family Dabba ($34.99) */}
-                    <div className="p-5 bg-white rounded-2xl border border-gray-300 hover:border-[#00346f] transition-all flex flex-col justify-between shadow-2xs space-y-4">
-                      <div>
-                        <div className="flex items-center justify-between">
-                          <h4 className="font-serif font-bold text-lg text-gray-900">Family Dabba</h4>
-                          <span className="px-2 py-0.5 bg-[#ffdea5]/40 text-[#775a19] rounded text-[10px] font-bold uppercase">Serves 4</span>
+                          <div className="space-y-2 pt-2 border-t border-gray-150">
+                            <div className="flex items-center justify-between">
+                              <span className="text-[11px] font-semibold text-gray-600">Quantity:</span>
+                              <div className="flex items-center bg-gray-100 rounded-lg p-0.5 border border-gray-200">
+                                <button
+                                  type="button"
+                                  onClick={() => updateFamilyQty(activeDay.dateStr, -1)}
+                                  className="w-8 h-8 rounded-md flex items-center justify-center hover:bg-white text-gray-700 cursor-pointer"
+                                  aria-label="Decrease family dabba quantity"
+                                >
+                                  <Minus className="w-4 h-4" />
+                                </button>
+                                <span className="w-7 text-center font-bold text-xs">{qty}</span>
+                                <button
+                                  type="button"
+                                  onClick={() => updateFamilyQty(activeDay.dateStr, 1)}
+                                  className="w-8 h-8 rounded-md flex items-center justify-center hover:bg-white text-gray-700 cursor-pointer"
+                                  aria-label="Increase family dabba quantity"
+                                >
+                                  <Plus className="w-4 h-4" />
+                                </button>
+                              </div>
+                            </div>
+
+                            <button
+                              type="button"
+                              onClick={() => handleAddDailyDabba('family', activeDay)}
+                              className="w-full min-h-[44px] inline-flex items-center justify-center gap-2 bg-[#775a19] hover:bg-[#5e4612] text-white py-2.5 px-4 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-xs cursor-pointer"
+                            >
+                              <Plus className="w-4 h-4 text-[#ffdea5]" />
+                              <span>Add Family Dabba • ${(familyPrice * qty).toFixed(2)}</span>
+                            </button>
+                          </div>
                         </div>
-                        <span className="font-serif text-2xl font-black text-[#00346f] block mt-1">$34.99</span>
-                        <p className="text-xs text-gray-500 mt-1 leading-relaxed">
-                          4 complete meals: larger family portions of dal/curry, sabzi, 4 cups rice, 8 tawa rotis. Ideal for the entire family!
-                        </p>
-                      </div>
-
-                      <button
-                        type="button"
-                        onClick={() => handleAddDailyDabba('family', activeDay)}
-                        className="w-full min-h-[44px] inline-flex items-center justify-center gap-2 bg-[#775a19] hover:bg-[#5e4612] text-white py-2.5 px-4 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-xs cursor-pointer"
-                      >
-                        <Plus className="w-4 h-4 text-[#ffdea5]" />
-                        <span>Add Family Dabba ($34.99)</span>
-                      </button>
-                    </div>
+                      );
+                    })()}
                   </div>
                 ) : (
                   <div className="p-6 bg-white rounded-2xl border border-dashed border-gray-300 text-center space-y-2">
@@ -947,26 +1037,54 @@ export default function TiffinOrderView({
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 pt-2">
-          {EXTRA_CONTAINERS.map(c => (
-            <div key={c.id} className="p-4 rounded-2xl border border-gray-200 bg-gray-50/70 hover:bg-white hover:border-[#00346f] transition-all flex flex-col justify-between gap-3 shadow-2xs">
-              <div>
-                <div className="flex items-center justify-between">
-                  <h4 className="font-bold text-xs sm:text-sm text-gray-900">{c.name}</h4>
-                  <span className="font-serif font-black text-sm text-[#00346f]">${c.price.toFixed(2)}</span>
+          {containerList.map(c => {
+            const qty = getContainerQty(c.id);
+            return (
+              <div key={c.id} className="p-4 rounded-2xl border border-gray-200 bg-gray-50/70 hover:bg-white hover:border-[#00346f] transition-all flex flex-col justify-between gap-3 shadow-2xs">
+                <div>
+                  <div className="flex items-center justify-between">
+                    <h4 className="font-bold text-xs sm:text-sm text-gray-900">{c.name}</h4>
+                    <span className="font-serif font-black text-sm text-[#00346f]">${c.price.toFixed(2)}</span>
+                  </div>
+                  <p className="text-[11px] text-gray-500 mt-1">{c.description}</p>
                 </div>
-                <p className="text-[11px] text-gray-500 mt-1">{c.description}</p>
-              </div>
 
-              <button
-                type="button"
-                onClick={() => handleAddContainer(c)}
-                className="w-full min-h-[44px] inline-flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl border border-[#00346f] text-[#00346f] hover:bg-[#00346f] hover:text-white transition-colors text-xs font-bold uppercase tracking-wider cursor-pointer"
-              >
-                <Plus className="w-4 h-4" />
-                <span>Add 16 oz Tub</span>
-              </button>
-            </div>
-          ))}
+                <div className="space-y-2 pt-2 border-t border-gray-200">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-semibold text-gray-600">Quantity:</span>
+                    <div className="flex items-center bg-gray-100 rounded-lg p-0.5 border border-gray-200">
+                      <button
+                        type="button"
+                        onClick={() => updateContainerQty(c.id, -1)}
+                        className="w-7 h-7 rounded-md flex items-center justify-center hover:bg-white text-gray-700 cursor-pointer"
+                        aria-label="Decrease quantity"
+                      >
+                        <Minus className="w-3.5 h-3.5" />
+                      </button>
+                      <span className="w-7 text-center font-bold text-xs">{qty}</span>
+                      <button
+                        type="button"
+                        onClick={() => updateContainerQty(c.id, 1)}
+                        className="w-7 h-7 rounded-md flex items-center justify-center hover:bg-white text-gray-700 cursor-pointer"
+                        aria-label="Increase quantity"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => handleAddContainer(c)}
+                    className="w-full min-h-[44px] inline-flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl border border-[#00346f] text-[#00346f] hover:bg-[#00346f] hover:text-white transition-colors text-xs font-bold uppercase tracking-wider cursor-pointer"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>Add {qty} Tub{qty !== 1 ? 's' : ''} • ${(c.price * qty).toFixed(2)}</span>
+                  </button>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
 

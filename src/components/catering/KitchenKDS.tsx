@@ -128,7 +128,7 @@ function buildWhatsAppMessage(order: CateringOrder, eventType: 'accepted' | 'rea
 
   const fulfillmentDetails = order.is_delivery
     ? `🚚 *Delivery Address:*\n${order.delivery_address || 'Address provided on file'}`
-    : `🏪 *Self-Pickup Location:*\n11504 Deerwood Dr, Frisco, TX 75035`;
+    : `🏪 *Self-Pickup Location:*\n2437 Deerwood Dr, Little Elm, TX`;
 
   if (eventType === 'accepted') {
     return (
@@ -164,7 +164,7 @@ ${itemsText}
 
 ${fulfillmentDetails}
 
-${order.is_delivery ? 'Our delivery driver is packing your order now and will be on the way shortly. 🚗💨' : 'Please come to 11504 Deerwood Dr for pickup. We look forward to seeing you! 😊'}
+${order.is_delivery ? 'Our delivery driver is packing your order now and will be on the way shortly. 🚗💨' : 'Please come to 2437 Deerwood Dr, Little Elm, TX for pickup. We look forward to seeing you! 😊'}
 
 Thank you for choosing Bluebonnet Whisk! 💙`
     );
@@ -461,23 +461,49 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
     });
   }, [allOrders, selectedDate]);
 
-  // Order counts grouped by date for badge counters on date buttons
+  // Order counts grouped by date for badge counters on date buttons (active uncompleted orders)
   const orderCountsByDate = useMemo(() => {
     const map = new Map<string, number>();
-    allOrders.filter(o => o.status !== 'cancelled').forEach(o => {
+    allOrders.filter(o => o.status !== 'cancelled' && o.status !== 'completed').forEach(o => {
       map.set(o.fulfillment_date, (map.get(o.fulfillment_date) || 0) + 1);
     });
     return map;
   }, [allOrders]);
 
-  const totalUpcomingOrdersCount = useMemo(() => {
-    return allOrders.filter(o => o.status !== 'cancelled').length;
+  const totalActiveOrdersCount = useMemo(() => {
+    return allOrders.filter(o => o.status !== 'cancelled' && o.status !== 'completed').length;
   }, [allOrders]);
 
+  // Status counts for the selected date schedule
+  const statusCounts = useMemo(() => {
+    const counts = {
+      all: 0,
+      new: 0,
+      accepted: 0,
+      preparing: 0,
+      ready: 0,
+      completed: 0,
+      cancelled: 0
+    };
+    ordersForSelectedDate.forEach(o => {
+      if (o.status !== 'cancelled' && o.status !== 'completed') {
+        counts.all++;
+      }
+      if (o.status === 'new') counts.new++;
+      else if (o.status === 'accepted') counts.accepted++;
+      else if (o.status === 'preparing') counts.preparing++;
+      else if (o.status === 'ready') counts.ready++;
+      else if (o.status === 'completed') counts.completed++;
+      else if (o.status === 'cancelled') counts.cancelled++;
+    });
+    return counts;
+  }, [ordersForSelectedDate]);
+
   // Filtered orders list by status (new, preparing, ready, completed, all active)
+  // When statusFilter is 'all': only show active uncompleted orders (completed orders are moved to the 'completed' tab)
   const activeOrders = useMemo(() => {
     return ordersForSelectedDate.filter(o => {
-      if (statusFilter === 'all') return o.status !== 'cancelled';
+      if (statusFilter === 'all') return o.status !== 'cancelled' && o.status !== 'completed';
       return o.status === statusFilter;
     });
   }, [ordersForSelectedDate, statusFilter]);
@@ -865,76 +891,77 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
         )}
 
         {/* ── DATE PICKER & STATUS PIPELINE TABS ── */}
-        <div className="bg-white rounded-2xl border border-gray-200 p-4 shadow-xs space-y-3">
+        <div className="bg-white rounded-2xl border border-gray-200 p-4 shadow-xs space-y-3.5">
           
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
-            {/* Quick Date Pills with Badge Counts */}
-            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
-              <span className="text-xs font-bold text-gray-500 mr-1.5 flex items-center gap-1 shrink-0">
-                <CalendarIcon className="w-3.5 h-3.5" />
-                <span>Schedule:</span>
-              </span>
+          {/* 1. Schedule Ribbon (Row 1) */}
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none w-full">
+            <span className="text-xs font-bold text-gray-500 mr-1.5 flex items-center gap-1 shrink-0">
+              <CalendarIcon className="w-3.5 h-3.5" />
+              <span>Schedule:</span>
+            </span>
 
-              {/* All Upcoming Button */}
-              <button
-                type="button"
-                onClick={() => setSelectedDate('all')}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5 shrink-0 ${
-                  selectedDate === 'all'
-                    ? 'bg-[#00346f] text-white shadow-xs'
-                    : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
-                }`}
-              >
-                <span>All Upcoming</span>
-                {totalUpcomingOrdersCount > 0 && (
-                  <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-black ${
-                    selectedDate === 'all' ? 'bg-[#ffdea5] text-[#00346f]' : 'bg-gray-200 text-gray-800'
-                  }`}>
-                    {totalUpcomingOrdersCount}
-                  </span>
-                )}
-              </button>
+            {/* All Orders Button */}
+            <button
+              type="button"
+              onClick={() => setSelectedDate('all')}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5 shrink-0 ${
+                selectedDate === 'all'
+                  ? 'bg-[#00346f] text-white shadow-xs'
+                  : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+              }`}
+            >
+              <span>All Orders</span>
+              {totalActiveOrdersCount > 0 && (
+                <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-black ${
+                  selectedDate === 'all' ? 'bg-[#ffdea5] text-[#00346f]' : 'bg-gray-200 text-gray-800'
+                }`}>
+                  {totalActiveOrdersCount}
+                </span>
+              )}
+            </button>
 
-              {upcomingDateOptions.map(opt => {
-                const isSelected = selectedDate === opt.dateStr;
-                const isToday = opt.dateStr === todayDateStr;
-                const count = orderCountsByDate.get(opt.dateStr) || 0;
+            {upcomingDateOptions.map(opt => {
+              const isSelected = selectedDate === opt.dateStr;
+              const isToday = opt.dateStr === todayDateStr;
+              const count = orderCountsByDate.get(opt.dateStr) || 0;
 
-                return (
-                  <button
-                    key={opt.dateStr}
-                    type="button"
-                    onClick={() => setSelectedDate(opt.dateStr)}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5 shrink-0 ${
+              return (
+                <button
+                  key={opt.dateStr}
+                  type="button"
+                  onClick={() => setSelectedDate(opt.dateStr)}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5 shrink-0 ${
+                    isSelected
+                      ? isToday
+                        ? 'bg-amber-600 text-white shadow-xs ring-2 ring-amber-300'
+                        : 'bg-[#00346f] text-white shadow-xs'
+                      : isToday
+                      ? count > 0
+                        ? 'bg-amber-100 text-amber-950 border border-amber-300 hover:bg-amber-200 font-extrabold shadow-2xs'
+                        : 'bg-amber-50 text-amber-900 border border-amber-200 hover:bg-amber-100 font-bold'
+                      : count > 0
+                      ? 'bg-blue-50 border border-blue-200 text-[#00346f] hover:bg-blue-100'
+                      : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+                  }`}
+                >
+                  <span>{isToday ? 'Today' : `${opt.dayOfWeek} ${opt.label}`}</span>
+                  {count > 0 && (
+                    <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-black ${
                       isSelected
-                        ? isToday
-                          ? 'bg-amber-600 text-white shadow-xs ring-2 ring-amber-300'
-                          : 'bg-[#00346f] text-white shadow-xs'
+                        ? 'bg-[#ffdea5] text-[#00346f]'
                         : isToday
-                        ? count > 0
-                          ? 'bg-amber-100 text-amber-950 border border-amber-300 hover:bg-amber-200 font-extrabold shadow-2xs'
-                          : 'bg-amber-50 text-amber-900 border border-amber-200 hover:bg-amber-100 font-bold'
-                        : count > 0
-                        ? 'bg-blue-50 border border-blue-200 text-[#00346f] hover:bg-blue-100'
-                        : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
-                    }`}
-                  >
-                    <span>{isToday ? 'Today' : `${opt.dayOfWeek} ${opt.label}`}</span>
-                    {count > 0 && (
-                      <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-black ${
-                        isSelected
-                          ? 'bg-[#ffdea5] text-[#00346f]'
-                          : isToday
-                          ? 'bg-amber-700 text-white'
-                          : 'bg-[#00346f] text-white'
-                      }`}>
-                        {count}
-                      </span>
-                    )}
-                  </button>
-                );
-              })}
+                        ? 'bg-amber-700 text-white'
+                        : 'bg-[#00346f] text-white'
+                    }`}>
+                      {count}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
 
+            <div className="flex items-center gap-1.5 ml-auto pl-2 shrink-0">
+              <span className="text-[11px] font-medium text-gray-500 hidden sm:inline">Pick date:</span>
               <input
                 type="date"
                 value={selectedDate === 'all' ? todayDateStr : selectedDate}
@@ -942,28 +969,46 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
                 className="px-2 py-1 bg-gray-50 border border-gray-300 rounded-lg text-xs text-gray-700 focus:outline-none shrink-0"
               />
             </div>
+          </div>
 
-            {/* Status Pipeline Filter Tabs */}
-            <div className="flex items-center gap-1 bg-gray-100 p-1 rounded-xl shrink-0">
+          {/* 2. Status Pipeline Filter Ribbon (Row 2 - Moved below the Schedule Ribbon) */}
+          <div className="pt-2.5 border-t border-gray-150 flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none w-full">
+            <span className="text-xs font-bold text-gray-500 mr-1.5 flex items-center gap-1 shrink-0">
+              <span>Status:</span>
+            </span>
+
+            <div className="flex items-center gap-1.5 bg-gray-100 p-1 rounded-xl shrink-0 overflow-x-auto">
               {[
-                { key: 'all', label: 'All Orders' },
-                { key: 'new', label: 'New' },
-                { key: 'accepted', label: 'Accepted' },
-                { key: 'preparing', label: 'Preparing' },
-                { key: 'ready', label: 'Ready' },
-                { key: 'completed', label: 'Completed' },
-                { key: 'cancelled', label: 'Cancelled' }
+                { key: 'all', label: 'All Orders', count: statusCounts.all },
+                { key: 'new', label: 'New', count: statusCounts.new },
+                { key: 'accepted', label: 'Accepted', count: statusCounts.accepted },
+                { key: 'preparing', label: 'Preparing', count: statusCounts.preparing },
+                { key: 'ready', label: 'Ready', count: statusCounts.ready },
+                { key: 'completed', label: 'Completed', count: statusCounts.completed },
+                { key: 'cancelled', label: 'Cancelled', count: statusCounts.cancelled }
               ].map(tab => (
                 <button
                   key={tab.key}
+                  type="button"
                   onClick={() => setStatusFilter(tab.key)}
-                  className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 ${
                     statusFilter === tab.key
-                      ? 'bg-white text-[#00346f] shadow-xs'
+                      ? 'bg-white text-[#00346f] shadow-xs ring-1 ring-black/5'
                       : 'text-gray-600 hover:text-gray-900'
                   }`}
                 >
-                  {tab.label}
+                  <span>{tab.label}</span>
+                  {tab.count > 0 && (
+                    <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
+                      statusFilter === tab.key
+                        ? tab.key === 'completed'
+                          ? 'bg-emerald-100 text-emerald-800'
+                          : 'bg-[#ffdea5] text-[#00346f]'
+                        : 'bg-gray-200 text-gray-700'
+                    }`}>
+                      {tab.count}
+                    </span>
+                  )}
                 </button>
               ))}
             </div>
@@ -982,7 +1027,7 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
             <ChefHat className="w-12 h-12 mx-auto text-gray-300" />
             <div>
               <h3 className="font-serif text-lg font-bold text-gray-800">
-                No orders found for {selectedDate === 'all' ? 'upcoming schedule' : selectedDate === todayDateStr ? 'Today' : selectedDate}
+                No orders found for {selectedDate === 'all' ? 'All Orders schedule' : selectedDate === todayDateStr ? 'Today' : selectedDate}
               </h3>
               <p className="text-xs text-gray-500 mt-1">
                 {statusFilter !== 'all' 
@@ -991,10 +1036,10 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
               </p>
             </div>
 
-            {selectedDate !== 'all' && totalUpcomingOrdersCount > 0 && (
+            {selectedDate !== 'all' && totalActiveOrdersCount > 0 && (
               <div className="pt-2">
                 <div className="p-3 bg-blue-50 border border-blue-200 rounded-xl inline-block max-w-md mx-auto text-xs text-[#00346f] mb-3">
-                  <strong>Notice:</strong> You have <strong>{totalUpcomingOrdersCount} active orders</strong> scheduled on other dates!
+                  <strong>Notice:</strong> You have <strong>{totalActiveOrdersCount} active orders</strong> scheduled on other dates!
                 </div>
                 <div>
                   <button
@@ -1002,7 +1047,7 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
                     onClick={() => setSelectedDate('all')}
                     className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#00346f] hover:bg-[#00224d] text-white text-xs font-bold uppercase tracking-wider rounded-xl shadow-xs transition cursor-pointer"
                   >
-                    <span>View All {totalUpcomingOrdersCount} Upcoming Orders</span>
+                    <span>View All {totalActiveOrdersCount} Orders</span>
                     <ArrowRight className="w-4 h-4" />
                   </button>
                 </div>
