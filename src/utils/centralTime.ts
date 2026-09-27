@@ -292,12 +292,12 @@ export function format12Hour(time24: string): string {
   return `${h}:${m} ${ampm}`;
 }
 
-export function getUpcomingDates(daysCount = 14): { dateStr: string; label: string; dayOfWeek: string }[] {
+export function getUpcomingDates(daysCount = 14, includeToday = false): { dateStr: string; label: string; dayOfWeek: string }[] {
   const { nowDate } = getCentralTimeNow();
   const list = [];
+  const start = includeToday ? 0 : 1;
   
-  // Start from i = 1 (tomorrow), strictly excluding today
-  for (let i = 1; i <= daysCount; i++) {
+  for (let i = start; list.length < daysCount; i++) {
     const d = new Date(nowDate.getTime() + i * 24 * 60 * 60 * 1000);
     const y = d.getFullYear();
     const m = (d.getMonth() + 1).toString().padStart(2, '0');

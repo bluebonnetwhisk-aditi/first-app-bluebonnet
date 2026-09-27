@@ -423,7 +423,8 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
     return Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name));
   }, [nonCancelledOrders]);
 
-  const upcomingDateOptions = getUpcomingDates(7);
+  // Include Today + next 7 upcoming days in quick date tabs
+  const upcomingDateOptions = getUpcomingDates(8, true);
 
   // ── PIN AUTHENTICATION MODAL ──
   if (!isUnlocked) {
@@ -532,7 +533,7 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
                 </span>
               </div>
               <p className="text-xs text-gray-500 mt-0.5">
-                Real-time Supabase cloud database • America/Chicago (Central Time) • <strong className="text-[#00346f] font-bold">{allOrders.filter(o => o.status !== 'cancelled').length} Active Orders</strong>
+                Real-time Supabase cloud database • Central Time: <strong>{new Date().toLocaleDateString('en-US', { timeZone: 'America/Chicago', weekday: 'short', month: 'short', day: 'numeric' })}</strong> • <strong className="text-[#00346f] font-bold">{allOrders.filter(o => o.status !== 'cancelled').length} Active Orders</strong>
               </p>
             </div>
           </div>
@@ -836,7 +837,13 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
                     onClick={() => setSelectedDate(opt.dateStr)}
                     className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5 shrink-0 ${
                       isSelected
-                        ? 'bg-[#00346f] text-white shadow-xs'
+                        ? isToday
+                          ? 'bg-amber-600 text-white shadow-xs ring-2 ring-amber-300'
+                          : 'bg-[#00346f] text-white shadow-xs'
+                        : isToday
+                        ? count > 0
+                          ? 'bg-amber-100 text-amber-950 border border-amber-300 hover:bg-amber-200 font-extrabold shadow-2xs'
+                          : 'bg-amber-50 text-amber-900 border border-amber-200 hover:bg-amber-100 font-bold'
                         : count > 0
                         ? 'bg-blue-50 border border-blue-200 text-[#00346f] hover:bg-blue-100'
                         : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
@@ -847,6 +854,8 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
                       <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-black ${
                         isSelected
                           ? 'bg-[#ffdea5] text-[#00346f]'
+                          : isToday
+                          ? 'bg-amber-700 text-white'
                           : 'bg-[#00346f] text-white'
                       }`}>
                         {count}
@@ -988,7 +997,11 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
                         <h3 className="font-serif font-bold text-base text-gray-900 leading-tight">
                           {order.customer_name}
                         </h3>
-                        <span className="text-[10px] font-bold text-[#00346f] bg-blue-50 px-2 py-0.5 rounded-md border border-blue-200 shrink-0 whitespace-nowrap">
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md border shrink-0 whitespace-nowrap ${
+                          order.fulfillment_date === todayDateStr
+                            ? 'bg-amber-100 text-amber-900 border-amber-300 font-extrabold'
+                            : 'bg-blue-50 text-[#00346f] border-blue-200'
+                        }`}>
                           📅 {order.fulfillment_date} {order.fulfillment_date === todayDateStr ? '(Today)' : ''}
                         </span>
                       </div>
@@ -1154,7 +1167,7 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
               <div className="flex items-center gap-2">
                 <ChefHat className="w-5 h-5 text-[#ffdea5]" />
                 <h3 className="font-serif font-bold text-lg">
-                  Daily Kitchen Prep Sheet — {selectedDate}
+                  Daily Kitchen Prep Sheet — {selectedDate === 'all' ? 'All Upcoming Schedule' : selectedDate === todayDateStr ? `Today (${selectedDate})` : selectedDate}
                 </h3>
               </div>
 
@@ -1187,7 +1200,7 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
                     Aggregated Kitchen Prep Sheet
                   </h2>
                   <p className="text-xs text-gray-500 mt-0.5">
-                    Fulfillment Date: <strong className="text-gray-900">{selectedDate === 'all' ? 'All Upcoming Schedule' : selectedDate}</strong> • Total Orders: {totalOrdersInView}
+                    Fulfillment Date: <strong className="text-gray-900">{selectedDate === 'all' ? 'All Upcoming Schedule' : selectedDate === todayDateStr ? `Today (${selectedDate})` : selectedDate}</strong> • Total Orders: {totalOrdersInView}
                   </p>
                 </div>
 
