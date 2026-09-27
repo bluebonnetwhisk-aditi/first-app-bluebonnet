@@ -2,12 +2,8 @@ import {
   Sparkles, 
   Leaf, 
   Clock, 
-  Phone, 
-  Mail, 
-  Globe, 
   Palette, 
   ChefHat, 
-  MapPin, 
   CheckCircle2,
   Cake as CakeIcon
 } from 'lucide-react';
@@ -132,66 +128,6 @@ export default function CakeBrandHeader({ onScrollToConfigurator }: CakeBrandHea
             </div>
           </div>
 
-        </div>
-      </div>
-
-      {/* ── SIZING & TEXAS TAX EXEMPTION OVERVIEW BANNER ── */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8 mb-4">
-        <div className="bg-white rounded-2xl border border-gray-200 p-4 sm:p-6 shadow-xs">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 pb-3 border-b border-gray-150">
-            <div>
-              <span className="text-[10px] font-bold uppercase tracking-widest text-[#775a19] block">
-                HANDCRAFTED CAKE SIZING &amp; FLAVOR TIERS
-              </span>
-              <h2 className="font-serif font-bold text-base sm:text-lg text-[#00346f]">
-                Two Perfect Sizes for Every Milestone
-              </h2>
-            </div>
-            <div className="flex items-center gap-2 text-xs font-semibold text-emerald-800 bg-emerald-50 px-3 py-1.5 rounded-xl border border-emerald-200">
-              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-              <span>Texas Sales Tax Exempt (0% Sales Tax on Bakery Products)</span>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
-            {/* 6" Card */}
-            <div className="p-4 rounded-xl bg-amber-50/50 border border-amber-200/80 flex items-start justify-between gap-3">
-              <div>
-                <span className="text-[10px] uppercase font-bold tracking-widest text-amber-900 block">STANDARD CELEBRATION</span>
-                <span className="font-serif text-lg font-bold text-gray-900 block">6″ Celebration Cake</span>
-                <span className="text-xs text-gray-600 block mt-0.5">Serves 8–10 guests • ~2 lb weight</span>
-                <div className="mt-2 text-xs font-bold text-[#775a19]">
-                  Tier Pricing: Classic $40 • Fusion $50 • Fruity $60 • Premium $70
-                </div>
-              </div>
-              <span className="font-serif text-2xl font-black text-amber-900 shrink-0">From $40</span>
-            </div>
-
-            {/* 8" Card */}
-            <div className="p-4 rounded-xl bg-purple-50/50 border border-purple-200/80 flex items-start justify-between gap-3">
-              <div>
-                <span className="text-[10px] uppercase font-bold tracking-widest text-purple-900 block">LARGE PARTY &amp; GATHERING</span>
-                <span className="font-serif text-lg font-bold text-gray-900 block">8″ Party Cake</span>
-                <span className="text-xs text-gray-600 block mt-0.5">Serves 16–20 guests • ~4 lb weight</span>
-                <div className="mt-2 text-xs font-bold text-purple-900">
-                  Tier Pricing: Classic $80 • Fusion $100 • Fruity $120 • Premium $140
-                </div>
-              </div>
-              <span className="font-serif text-2xl font-black text-purple-900 shrink-0">From $80</span>
-            </div>
-          </div>
-
-          <div className="mt-4 pt-3 border-t border-gray-150 flex flex-wrap items-center justify-between text-[11px] text-gray-600 gap-2">
-            <span className="flex items-center gap-1.5 font-medium text-gray-800">
-              <MapPin className="w-3.5 h-3.5 text-[#775a19]" />
-              <span>Self-Pickup: <strong>Home Kitchen - Deerwood Dr, Little Elm, TX</strong> ($0.00) • DFW Delivery Available ($50)</span>
-            </span>
-            <div className="flex items-center gap-4 text-gray-700 font-medium">
-              <span className="inline-flex items-center gap-1"><Phone className="w-3 h-3 text-[#00346f]" /> 945-527-4566</span>
-              <span className="inline-flex items-center gap-1"><Mail className="w-3 h-3 text-[#00346f]" /> bluebonnetwhisk@gmail.com</span>
-              <span className="inline-flex items-center gap-1"><Globe className="w-3 h-3 text-[#00346f]" /> www.bluebonnetwhisk.com</span>
-            </div>
-          </div>
         </div>
       </div>
 

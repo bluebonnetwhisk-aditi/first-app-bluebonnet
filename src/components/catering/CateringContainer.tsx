@@ -225,7 +225,10 @@ export default function CateringContainer() {
     <div className="w-full bg-[#fbfbfa] min-h-screen font-sans selection:bg-[#775a19]/20 overflow-x-hidden">
       
       {/* ── 1. SUB-NAVIGATION BAR (Catering Order, Cake Order, Tiffin Order) ── */}
-      <div className="sticky top-[125px] lg:top-[84px] z-30 bg-white border-b border-gray-200 shadow-2xs">
+      <div 
+        className="sticky z-30 bg-white border-b border-gray-200 shadow-2xs"
+        style={{ top: 'var(--header-nav-bottom, 84px)' }}
+      >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between min-h-[56px] py-1.5">
             
@@ -324,7 +327,7 @@ export default function CateringContainer() {
           )}
 
           {/* Main Full-Width Content Viewport */}
-          <div id="catering-content-area" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div id="catering-content-area" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 scroll-mt-48 sm:scroll-mt-52">
             <div className="w-full">
               
               {/* SubTab 1: Food Order */}

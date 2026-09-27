@@ -363,7 +363,7 @@ export default function MenuOrderGrid({
             <div 
               key={section.key} 
               id={`section-${section.key}`}
-              className="bg-white rounded-2xl border border-gray-200 shadow-xs overflow-hidden transition-all scroll-mt-28"
+              className="bg-white rounded-2xl border border-gray-200 shadow-xs overflow-hidden transition-all scroll-mt-48 sm:scroll-mt-52"
             >
               
               {/* Accordion Header */}

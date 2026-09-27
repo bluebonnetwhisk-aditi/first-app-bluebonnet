@@ -20,6 +20,16 @@
   --color-brand-pistachio-dark: #2e7d32;
 }
 
+:root {
+  --header-nav-bottom: 84px;
+}
+
+@media (max-width: 1023px) {
+  :root {
+    --header-nav-bottom: 137px;
+  }
+}
+
 html {
   box-sizing: border-box;
   -webkit-text-size-adjust: 100%;

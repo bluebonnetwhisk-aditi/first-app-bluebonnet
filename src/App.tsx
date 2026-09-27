@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { 
   Instagram, 
   X
@@ -50,11 +50,39 @@ export default function App() {
     return "Home";
   });
   const [isWizardOpen, setIsWizardOpen] = useState(false);
+  const navRef = useRef<HTMLElement>(null);
   
   // Interactive UI states
   const [showPriceList, setShowPriceList] = useState(false);
   const [newsletterEmail, setNewsletterEmail] = useState("");
   const [newsletterAlert, setNewsletterAlert] = useState(false);
+
+  // Dynamically measure navbar height and expose to CSS as --header-nav-bottom
+  useEffect(() => {
+    if (isKitchenMode) return;
+    const updateNavHeight = () => {
+      if (navRef.current) {
+        const height = navRef.current.offsetHeight;
+        document.documentElement.style.setProperty('--header-nav-bottom', `${height}px`);
+      }
+    };
+
+    updateNavHeight();
+    window.addEventListener('resize', updateNavHeight);
+
+    let observer: ResizeObserver | null = null;
+    if (typeof ResizeObserver !== 'undefined' && navRef.current) {
+      observer = new ResizeObserver(() => {
+        updateNavHeight();
+      });
+      observer.observe(navRef.current);
+    }
+
+    return () => {
+      window.removeEventListener('resize', updateNavHeight);
+      if (observer) observer.disconnect();
+    };
+  }, [isKitchenMode, activeTab]);
 
   const [selectedFlavor, setSelectedFlavor] = useState<string>("");
   const [selectedCategory, setSelectedCategory] = useState<string>("");
@@ -153,7 +181,7 @@ export default function App() {
       </div>
 
       {/* Header / Navbar */}
-      <nav className="sticky top-0 z-45 bg-[#fbfbfa]/95 backdrop-blur-md border-b border-gray-150 py-3.5 shadow-xs">
+      <nav ref={navRef} className="sticky top-0 z-45 bg-[#fbfbfa]/95 backdrop-blur-md border-b border-gray-150 py-3.5 shadow-xs">
         <div className="max-w-7xl mx-auto px-4 lg:px-6 lg:px-8">
           <div className="flex justify-between items-center h-14">
             
