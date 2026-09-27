@@ -342,53 +342,107 @@ export default function Home({ onOpenBaker: _onOpenBaker, onNavigate }: HomeProp
 
 
 
-      {/* ── LUXURY CLIENT TESTIMONIALS ── */}
+      {/* ── LUXURY CLIENT TESTIMONIALS (FROM REVIEWS PAGE) ── */}
       <section className="py-24 border-t border-white/5 bg-[#0a1128]">
         <div className="max-w-7xl mx-auto px-4 space-y-12">
           
           <div className="text-center max-w-xl mx-auto space-y-2">
-            <span className="text-[10px] font-bold text-brand-gold-tint tracking-widest uppercase">REVIEWS</span>
-            <h2 className="font-serif text-3xl font-bold text-brand-cream">Client Experiences</h2>
-            <p className="text-xs text-gray-400 font-sans">Read reviews from our lovely hosts across the DFW Metroplex.</p>
+            <span className="text-[10px] font-bold text-brand-gold-tint tracking-widest uppercase">CLIENT REVIEWS</span>
+            <h2 className="font-serif text-3xl font-bold text-brand-cream">Verified Host Experiences</h2>
+            <p className="text-xs text-gray-400 font-sans">Read authentic reviews from our lovely event hosts across Frisco, Plano, &amp; DFW.</p>
             <div className="h-0.5 w-12 bg-brand-gold-tint mx-auto mt-2" />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[
               {
-                quote: "The Rasmalai Royale Cake was the star of our wedding! Incredibly light, not too sweet, and 100% eggless. Our guests were absolutely amazed.",
-                author: "Priyanka S.",
-                role: "Bridal Client • Plano, TX"
+                name: "Meenakshi & Alok V.",
+                occasion: "Daughter's 5th Birthday Party • Frisco, TX",
+                itemsOrdered: "Custom Mango & Rasmalai Cake + Live Pani Puri Station",
+                quote: "The custom eggless Mango Rasmalai cake was the absolute highlight of the dessert table—so fresh and beautifully decorated. The live Pani Puri station and crispy Railway Cutlets had guests lining up for seconds!",
+                rating: 5,
+                date: "September 2026"
               },
               {
-                quote: "Our corporate lunch was next level with the Live Pani Puri counter. The brass cart setup looked stunning and the service was absolutely top-notch.",
-                author: "David M.",
-                role: "Event Director • Frisco, TX"
+                name: "Siddharth & Neha P.",
+                occasion: "25th Anniversary Dinner • Frisco, TX",
+                itemsOrdered: "Grand Catering: Paneer Lababdar, Dal Makhni & Kheer",
+                quote: "The Paneer Lababdar was velvety and rich, and the slow-cooked Dal Makhni tasted straight out of a royal Dhaba in Delhi! Topped off with their slow-simmered cardamom Kheer.",
+                rating: 5,
+                date: "September 2026"
               },
               {
-                quote: "Impeccable service and the Paneer Tikka Crostinis were delicious. The digital price guide made estimating so easy. Highly recommend for any DFW event!",
-                author: "Ananya R.",
-                role: "Anniversary Host • Dallas, TX"
+                name: "Ananya & Harish K.",
+                occasion: "1st Birthday Brunch • Plano, TX",
+                itemsOrdered: "Custom 2-Tier Theme Cake + Bedmi Poori & Aalu",
+                quote: "The custom 2-tier theme cake was a showstopper! Not only was the cake design gorgeous, but the flavor was divine. For brunch, their Bedmi Poori with Halwai Waale Aalu was nostalgic perfection.",
+                rating: 5,
+                date: "July 2026"
+              },
+              {
+                name: "Pooja & Vikram S.",
+                occasion: "Housewarming Party • Little Elm, TX",
+                itemsOrdered: "Catering: Railway Cutlets, Paneer Lababdar & Parathas",
+                quote: "Hosted 45 guests for our housewarming. Bluebonnet Whisk handled the catering seamlessly. The Railway Cutlets were a huge crowd pleaser, and the fresh Gobhi and Paneer Parathas were stuffed generously!",
+                rating: 5,
+                date: "June 2026"
+              },
+              {
+                name: "Rajiv M.",
+                occasion: "Executive Tiffin Subscriber • Plano, TX",
+                itemsOrdered: "Daily Tiffin: Parathas, Homestyle Kadhi & Baigan",
+                quote: "I've been subscribing to their weekly tiffin service. The homestyle Kadhi and Bharwa Baigan taste just like home. Spotless hygiene, homestyle health, and authentic North Indian taste!",
+                rating: 5,
+                date: "August 2026"
+              },
+              {
+                name: "Deepak & Archana T.",
+                occasion: "Son's 10th Birthday • McKinney, TX",
+                itemsOrdered: "Custom Chocolate Pistachio Cake & Live Pani Puri Bar",
+                quote: "Cakes are definitely Bluebonnet Whisk's superpower! Our son wanted a custom chocolate cake with eggless requirements, and they delivered a masterpiece. The live Pani Puri bar kept everyone super happy!",
+                rating: 5,
+                date: "May 2026"
               }
             ].map((t, idx) => (
               <div 
                 key={idx} 
-                className="glass-panel-dark rounded-lg p-6 flex flex-col justify-between hover:border-brand-gold-tint/40 transition-all duration-300"
+                className="glass-panel-dark rounded-xl p-6 flex flex-col justify-between hover:border-brand-gold-tint/40 transition-all duration-300 border border-white/10 bg-[#0f1938]/40"
               >
-                <p className="text-gray-300 text-xs lg:text-sm italic leading-relaxed font-sans">
-                  &quot;{t.quote}&quot;
-                </p>
-                <div className="mt-6 pt-4 border-t border-white/5 flex items-center justify-between">
-                  <div>
-                    <span className="font-serif text-sm font-bold text-brand-cream block">{t.author}</span>
-                    <span className="text-[9px] text-gray-500 font-sans tracking-wide uppercase font-semibold">{t.role}</span>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 px-2 py-0.5 rounded-full uppercase tracking-wider">
+                      ✓ Verified Review
+                    </span>
+                    <div className="text-brand-gold-tint text-xs font-bold">
+                      ★★★★★
+                    </div>
                   </div>
-                  <div className="text-brand-gold-tint text-xs flex gap-0.5 font-bold">
-                    ★★★★★
+
+                  <p className="text-gray-300 text-xs lg:text-sm italic leading-relaxed font-sans">
+                    &quot;{t.quote}&quot;
+                  </p>
+                </div>
+
+                <div className="mt-6 pt-4 border-t border-white/10 space-y-1">
+                  <div className="flex items-center justify-between">
+                    <span className="font-serif text-sm font-bold text-brand-cream">{t.name}</span>
+                    <span className="text-[10px] text-gray-400">{t.date}</span>
                   </div>
+                  <span className="text-[10px] text-brand-gold-tint font-sans tracking-wide uppercase font-semibold block">{t.occasion}</span>
+                  <span className="text-[10px] text-gray-400 font-sans block italic font-light truncate">Ordered: {t.itemsOrdered}</span>
                 </div>
               </div>
             ))}
+          </div>
+
+          <div className="text-center pt-2">
+            <button
+              onClick={() => onNavigate("Reviews")}
+              className="inline-flex items-center gap-2 bg-[#00346f] hover:bg-[#00224d] text-white font-sans text-xs uppercase tracking-widest font-bold px-6 py-3 rounded-xl shadow-md transition-all cursor-pointer border border-[#00346f] hover:scale-102"
+            >
+              <span>Read All Customer Reviews &amp; Submit Feedback</span>
+              <ArrowRight className="w-4 h-4 text-[#ffdea5]" />
+            </button>
           </div>
 
         </div>
