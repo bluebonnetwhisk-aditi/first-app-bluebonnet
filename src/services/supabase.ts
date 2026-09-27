@@ -1094,6 +1094,60 @@ export async function saveTiffinMenuSettings(settings: TiffinMenuSettings): Prom
 }
 
 export const LOCAL_STORAGE_GALLERY_KEY = 'bbw_gallery_data_v2';
+export const LOCAL_STORAGE_DELETED_GALLERY_KEY = 'bbw_deleted_gallery_ids_v2';
+
+export function getDeletedGalleryIds(): string[] {
+  try {
+    const raw = localStorage.getItem(LOCAL_STORAGE_DELETED_GALLERY_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) return parsed;
+    }
+  } catch {}
+  return [];
+}
+
+export function recordDeletedGalleryId(id: string) {
+  try {
+    const current = getDeletedGalleryIds();
+    if (!current.includes(id)) {
+      const updated = [...current, id];
+      localStorage.setItem(LOCAL_STORAGE_DELETED_GALLERY_KEY, JSON.stringify(updated));
+    }
+  } catch {}
+
+  if (supabase) {
+    try {
+      supabase.from('app_settings').select('value').eq('key', 'deleted_gallery_ids').maybeSingle().then(({ data }) => {
+        const remoteList: string[] = Array.isArray(data?.value) ? data.value : [];
+        if (!remoteList.includes(id)) {
+          supabase.from('app_settings').upsert({
+            key: 'deleted_gallery_ids',
+            value: [...remoteList, id],
+            updated_at: new Date().toISOString()
+          });
+        }
+      });
+    } catch (err) {
+      console.warn('Supabase recordDeletedGalleryId warning:', err);
+    }
+  }
+}
+
+export function clearDeletedGalleryIds() {
+  try {
+    localStorage.removeItem(LOCAL_STORAGE_DELETED_GALLERY_KEY);
+  } catch {}
+  if (supabase) {
+    try {
+      supabase.from('app_settings').upsert({
+        key: 'deleted_gallery_ids',
+        value: [],
+        updated_at: new Date().toISOString()
+      });
+    } catch {}
+  }
+}
 
 /**
  * Fetch remote gallery items from Supabase app_settings
@@ -1101,11 +1155,23 @@ export const LOCAL_STORAGE_GALLERY_KEY = 'bbw_gallery_data_v2';
 export async function fetchGalleryItemsFromSupabase(): Promise<any[] | null> {
   if (supabase) {
     try {
+      const { data: delData } = await supabase
+        .from('app_settings')
+        .select('value')
+        .eq('key', 'deleted_gallery_ids')
+        .maybeSingle();
+
+      if (delData?.value && Array.isArray(delData.value)) {
+        const localDel = getDeletedGalleryIds();
+        const mergedDel = Array.from(new Set([...localDel, ...delData.value]));
+        localStorage.setItem(LOCAL_STORAGE_DELETED_GALLERY_KEY, JSON.stringify(mergedDel));
+      }
+
       const { data, error } = await supabase
         .from('app_settings')
         .select('value')
         .eq('key', 'gallery_items')
-        .single();
+        .maybeSingle();
 
       if (!error && data?.value && Array.isArray(data.value) && data.value.length > 0) {
         localStorage.setItem(LOCAL_STORAGE_GALLERY_KEY, JSON.stringify(data.value));

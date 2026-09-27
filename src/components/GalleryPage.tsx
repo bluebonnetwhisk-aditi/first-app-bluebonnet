@@ -19,7 +19,10 @@ import initialGalleryData from "../data/galleryData.json";
 import { 
   fetchGalleryItemsFromSupabase, 
   saveGalleryItemsToSupabase, 
-  LOCAL_STORAGE_GALLERY_KEY 
+  LOCAL_STORAGE_GALLERY_KEY,
+  getDeletedGalleryIds,
+  recordDeletedGalleryId,
+  clearDeletedGalleryIds
 } from "../services/supabase";
 
 export type CategoryType = "Artisanal Cakes & Bakes" | "Specialty Culinary Fare" | "Heritage Sweets & Confectionery";
@@ -59,33 +62,38 @@ interface GalleryPageProps {
 }
 
 const mergeWithInitialData = (sourceItems: any[]): GalleryItem[] => {
+  const deletedSet = new Set(getDeletedGalleryIds());
+
+  let baseList: any[] = sourceItems;
   if (!Array.isArray(sourceItems) || sourceItems.length === 0) {
-    return initialGalleryData as GalleryItem[];
+    baseList = initialGalleryData as GalleryItem[];
   }
 
   const initMap = new Map((initialGalleryData as any[]).map(i => [i.id, i]));
   
-  return sourceItems.map((item: any) => {
-    const initMatch = initMap.get(item.id);
-    if (!initMatch) return item as GalleryItem;
+  return baseList
+    .filter((item: any) => !deletedSet.has(item.id))
+    .map((item: any) => {
+      const initMatch = initMap.get(item.id);
+      if (!initMatch) return item as GalleryItem;
 
-    if (item.isCustomEdited) {
+      if (item.isCustomEdited) {
+        return {
+          ...initMatch,
+          ...item
+        };
+      }
+
       return {
-        ...initMatch,
-        ...item
+        ...item,
+        title: initMatch.title || item.title,
+        category: initMatch.category || item.category,
+        autoDescription: initMatch.autoDescription || item.autoDescription,
+        imagePath: item.imagePath || initMatch.imagePath,
+        originalImagePath: item.originalImagePath || initMatch.originalImagePath || (item.imagePath ? item.imagePath.replace('/gallery/', '/gallery/orig/') : ''),
+        visible: item.visible !== undefined ? item.visible : true
       };
-    }
-
-    return {
-      ...item,
-      title: initMatch.title || item.title,
-      category: initMatch.category || item.category,
-      autoDescription: initMatch.autoDescription || item.autoDescription,
-      imagePath: item.imagePath || initMatch.imagePath,
-      originalImagePath: item.originalImagePath || initMatch.originalImagePath || (item.imagePath ? item.imagePath.replace('/gallery/', '/gallery/orig/') : ''),
-      visible: item.visible !== undefined ? item.visible : true
-    };
-  });
+    });
 };
 
 export default function GalleryPage({ onNavigateToAdmin: _onNavigateToAdmin }: GalleryPageProps) {
@@ -101,7 +109,7 @@ export default function GalleryPage({ onNavigateToAdmin: _onNavigateToAdmin }: G
     } catch {
       // fallback
     }
-    return initialGalleryData as GalleryItem[];
+    return mergeWithInitialData(initialGalleryData as GalleryItem[]);
   });
 
   const [syncStatus, setSyncStatus] = useState<string>("");
@@ -185,6 +193,7 @@ export default function GalleryPage({ onNavigateToAdmin: _onNavigateToAdmin }: G
   const handleDeleteItem = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     if (window.confirm("Are you sure you want to delete this gallery photo?")) {
+      recordDeletedGalleryId(id);
       setItems(prev => {
         const next = prev.filter(item => item.id !== id);
         saveGalleryItemsToSupabase(next);
@@ -383,6 +392,7 @@ export default function GalleryPage({ onNavigateToAdmin: _onNavigateToAdmin }: G
                 <button
                   onClick={() => {
                     if (window.confirm("Reset gallery cache to initial site defaults?")) {
+                      clearDeletedGalleryIds();
                       setItems(initialGalleryData as GalleryItem[]);
                       saveGalleryItemsToSupabase(initialGalleryData as GalleryItem[]);
                     }
