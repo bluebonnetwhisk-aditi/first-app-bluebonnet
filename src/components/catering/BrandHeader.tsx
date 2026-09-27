@@ -37,11 +37,11 @@ export default function BrandHeader({ onScrollToMenu }: BrandHeaderProps) {
             <span>Vegetarian Catering</span>
           </div>
 
-          <div className="py-1">
+          <div className="py-2">
             <img 
               src={brandLogo} 
               alt="Bluebonnet Whisk" 
-              className="h-12 sm:h-16 w-auto mx-auto object-contain drop-shadow-md"
+              className="h-20 sm:h-28 w-auto mx-auto object-contain drop-shadow-lg"
             />
           </div>
           <h1 className="font-serif text-2xl sm:text-4xl font-bold tracking-tight text-white leading-tight drop-shadow-sm">
