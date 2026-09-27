@@ -493,93 +493,6 @@ export default function TiffinOrderView({
   return (
     <div className="w-full font-sans space-y-8 animate-fade-in">
 
-      {/* ── 1. HERO BRAND BANNER & FLYER PREVIEW ── */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#00346f] via-[#00224d] to-[#121620] text-white p-6 sm:p-8 md:p-10 shadow-xl border border-[#00346f]/40">
-        <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-          
-          <div className="lg:col-span-7 space-y-4">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#ffdea5]/15 border border-[#ffdea5]/30 text-[#ffdea5] text-xs font-bold uppercase tracking-widest">
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>Ghar Ka Khana. Dil Se. • Fresh Homestyle Tiffin</span>
-            </div>
-
-            <h1 className="font-serif text-3xl sm:text-4xl md:text-5xl font-black text-white tracking-tight leading-tight">
-              Desi Dabba <span className="text-[#ffdea5] font-normal italic">Weekly Tiffin</span>
-            </h1>
-
-            <p className="text-sm sm:text-base text-gray-200 font-light leading-relaxed max-w-xl">
-              Fresh, homemade vegetarian Indian meals prepared in small batches with zero preservatives. 
-              Each daily Dabba includes <strong>1 cup rice, 1 cup curry/dal, 1/2 cup dry sabzi, and 2 fresh tawa rotis</strong>.
-            </p>
-
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-2">
-              <div className="p-3 rounded-2xl bg-white/10 backdrop-blur-xs border border-white/15">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-gray-300 block">Single Dabba</span>
-                <span className="font-serif text-xl sm:text-2xl font-black text-[#ffdea5]">${singlePrice.toFixed(2)}</span>
-                <span className="text-[11px] text-gray-300 block">Serves 1 meal</span>
-              </div>
-
-              <div className="p-3 rounded-2xl bg-white/10 backdrop-blur-xs border border-white/15">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-gray-300 block">Family Dabba</span>
-                <span className="font-serif text-xl sm:text-2xl font-black text-[#ffdea5]">${familyPrice.toFixed(2)}</span>
-                <span className="text-[11px] text-gray-300 block">Serves 4 complete</span>
-              </div>
-
-              <div className="p-3 rounded-2xl bg-emerald-500/20 backdrop-blur-xs border border-emerald-400/30 col-span-2 sm:col-span-1">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-300 block">Weekly Dabba</span>
-                <span className="font-serif text-xl sm:text-2xl font-black text-white">${weeklyPrice.toFixed(2)}</span>
-                <span className="text-[11px] text-emerald-200 block">5 days (Mon–Fri)</span>
-              </div>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-3 pt-1 text-xs text-gray-300">
-              <span className="flex items-center gap-1.5 bg-black/20 px-2.5 py-1 rounded-lg">
-                <Clock className="w-3.5 h-3.5 text-[#ffdea5]" /> Order for tomorrow through Sunday
-              </span>
-              <span className="flex items-center gap-1.5 bg-black/20 px-2.5 py-1 rounded-lg">
-                <Award className="w-3.5 h-3.5 text-emerald-400" /> Weekend Chef's Specials
-              </span>
-              <span className="flex items-center gap-1.5 bg-black/20 px-2.5 py-1 rounded-lg">
-                <AlertCircle className="w-3.5 h-3.5 text-amber-300" /> Sunday Closed
-              </span>
-              <span className="flex items-center gap-1.5 bg-[#ffdea5]/20 text-[#ffdea5] border border-[#ffdea5]/30 px-2.5 py-1 rounded-lg font-semibold">
-                <MapPin className="w-3.5 h-3.5 text-[#ffdea5]" /> Pickup Only: Home Kitchen - Deerwood Dr, Little Elm
-              </span>
-            </div>
-          </div>
-
-          {/* Interactive Weekly Flyer Card */}
-          <div className="lg:col-span-5 flex flex-col items-center">
-            <div 
-              onClick={() => setIsLightboxOpen(true)}
-              className="group relative cursor-pointer overflow-hidden rounded-2xl border-2 border-white/20 shadow-2xl bg-white hover:border-[#ffdea5] transition-all transform hover:scale-101 max-w-sm"
-              title="Click to view full-size weekly flyer"
-            >
-              <img 
-                src={settings.flyerImageUrl || '/tiffin-flyer.jpg'} 
-                alt="Desi Dabba This Week's Menu"
-                className="w-full object-cover max-h-[380px] group-hover:opacity-95 transition-opacity"
-                onError={(e) => {
-                  // fallback if image fails
-                  (e.target as HTMLImageElement).src = '/tiffin-flyer.jpg';
-                }}
-              />
-              <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 text-white font-bold text-xs uppercase tracking-wider">
-                <Maximize2 className="w-4 h-4" />
-                <span>Click to Expand Flyer</span>
-              </div>
-              <div className="absolute bottom-2 right-2 bg-black/70 backdrop-blur-xs text-white text-[10px] px-2.5 py-1 rounded-lg font-bold">
-                {settings.weekTitle || "This Week's Menu"}
-              </div>
-            </div>
-            <p className="text-[11px] text-gray-400 mt-2 text-center">
-              Click flyer to zoom in &amp; inspect full ingredients &amp; nutrition
-            </p>
-          </div>
-
-        </div>
-      </div>
-
       {/* Floating Alert Notification */}
       {addedAlert && (
         <div className="p-4 bg-emerald-50 border border-emerald-300 text-emerald-900 rounded-2xl text-xs font-bold flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-md animate-fade-in">
@@ -600,138 +513,7 @@ export default function TiffinOrderView({
         </div>
       )}
 
-      {/* ── 2. FEATURED: WEEKLY DABBA SUBSCRIPTION (MON–FRI 5-DAY PLAN) ── */}
-      <div className="rounded-3xl bg-gradient-to-r from-emerald-50 via-teal-50 to-blue-50 border-2 border-emerald-200/80 p-6 sm:p-8 shadow-sm space-y-6">
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-          <div className="space-y-2 max-w-2xl">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-100 text-emerald-900 text-[10px] font-black uppercase tracking-widest">
-              🌟 BEST VALUE • 5-DAY HOMEMADE PLAN
-            </div>
-            <h2 className="font-serif text-2xl sm:text-3xl font-bold text-[#00346f]">
-              Weekly Dabba Subscription — ${weeklyPrice.toFixed(2)}
-            </h2>
-            <p className="text-xs sm:text-sm text-gray-700 leading-relaxed">
-              Enjoy 1 Single Dabba every day from <strong>Monday through Friday</strong> for your selected week. 
-              Zero preservatives, rotated daily menus, freshly packed and ready for dinner pickup. Same great taste, more convenience!
-            </p>
-            <div className="flex flex-wrap items-center gap-4 text-xs font-medium text-emerald-900 pt-1">
-              <span>✓ 5 Hot Meals (Mon to Fri)</span>
-              <span>✓ 10 Fresh Tawa Rotis</span>
-              <span>✓ 5 Cups Fragrant Rice</span>
-              <span>✓ 5 Chef Curries &amp; Dry Sabzis</span>
-            </div>
-          </div>
-
-          <div className="bg-white p-5 rounded-2xl border border-emerald-200 shadow-md flex flex-col items-center gap-3 shrink-0 w-full sm:w-auto">
-            <div className="text-center">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500 block">Weekly Package</span>
-              <span className="font-serif text-3xl font-black text-emerald-800">${weeklyPrice.toFixed(2)}</span>
-              <span className="text-[11px] text-gray-500 block">Just ~${(weeklyPrice / 5).toFixed(2)} / day</span>
-            </div>
-
-            <div className="flex flex-wrap sm:flex-nowrap items-center gap-3 w-full sm:w-auto">
-              <div className="flex items-center bg-gray-100 rounded-xl p-1 border border-gray-200">
-                <button
-                  type="button"
-                  onClick={() => setWeeklyQty(Math.max(1, weeklyQty - 1))}
-                  className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-white text-gray-700 cursor-pointer"
-                  aria-label="Decrease quantity"
-                >
-                  <Minus className="w-4 h-4" />
-                </button>
-                <span className="w-8 text-center font-bold text-xs">{weeklyQty}</span>
-                <button
-                  type="button"
-                  onClick={() => setWeeklyQty(weeklyQty + 1)}
-                  className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-white text-gray-700 cursor-pointer"
-                  aria-label="Increase quantity"
-                >
-                  <Plus className="w-4 h-4" />
-                </button>
-              </div>
-
-              <button
-                type="button"
-                onClick={handleAddWeeklyDabba}
-                className="flex-1 sm:flex-initial min-h-[44px] inline-flex items-center justify-center gap-2 bg-[#00346f] hover:bg-[#00224d] text-white px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-sm cursor-pointer"
-              >
-                <ShoppingBag className="w-4 h-4 text-[#ffdea5]" />
-                <span>Add Weekly Plan ({activeWeeklyPlan?.shortRange})</span>
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* ── Interactive Selection of the Whole Week ── */}
-        <div className="pt-4 border-t border-emerald-200/60 space-y-3">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
-            <label className="text-xs font-bold uppercase tracking-wider text-emerald-950 flex items-center gap-1.5">
-              <Sparkles className="w-3.5 h-3.5 text-emerald-700" />
-              <span>Select the 5-Day Week for Your Order:</span>
-            </label>
-            <span className="text-[11px] text-emerald-800 font-medium">
-              Click any upcoming week below (Monday through Friday)
-            </span>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-            {upcomingWeeks.map((week) => {
-              const isSelected = activeWeeklyPlan?.id === week.id;
-              return (
-                <button
-                  key={week.id}
-                  type="button"
-                  onClick={() => setSelectedWeekId(week.id)}
-                  className={`p-3.5 rounded-2xl border text-left transition-all cursor-pointer relative ${
-                    isSelected
-                      ? 'bg-[#00346f] text-white border-[#00346f] shadow-md ring-2 ring-[#ffdea5]/50 scale-[1.01]'
-                      : 'bg-white hover:bg-emerald-50/80 border-emerald-200 text-gray-800 shadow-2xs'
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <span className={`text-[10px] font-bold uppercase tracking-wider ${isSelected ? 'text-[#ffdea5]' : 'text-emerald-700'}`}>
-                      {week.label}
-                    </span>
-                    {isSelected && (
-                      <span className="w-2 h-2 rounded-full bg-[#ffdea5]" />
-                    )}
-                  </div>
-                  <div className={`font-serif font-bold text-sm sm:text-base mt-1 ${isSelected ? 'text-white' : 'text-gray-900'}`}>
-                    {week.shortRange}
-                  </div>
-                  <div className={`text-[11px] mt-0.5 ${isSelected ? 'text-emerald-100' : 'text-gray-500'}`}>
-                    Monday to Friday
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Active Selected Week Daily Schedule Preview */}
-          {activeWeeklyPlan && (
-            <div className="p-3.5 bg-white/95 rounded-2xl border border-emerald-200 text-xs text-emerald-950 flex flex-col md:flex-row items-start md:items-center justify-between gap-3 shadow-2xs">
-              <div className="space-y-0.5">
-                <span className="font-bold text-emerald-900 flex items-center gap-1.5">
-                  <Check className="w-4 h-4 text-emerald-600" />
-                  <span>Selected: <strong>{activeWeeklyPlan.label}</strong> ({activeWeeklyPlan.rangeLabel})</span>
-                </span>
-                <span className="text-[11px] text-gray-500 block">
-                  Includes 1 daily homestyle dabba (fresh roti, rice, dal &amp; sabzi) prepared fresh for pickup on each day:
-                </span>
-              </div>
-              <div className="flex flex-wrap items-center gap-1.5 font-mono text-[11px]">
-                {activeWeeklyPlan.days.map((day) => (
-                  <span key={day.dateStr} className="px-2.5 py-1 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-900 font-semibold shadow-2xs">
-                    {day.dayName.slice(0, 3)}: {day.displayDate}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* ── 3. DAILY DABBA SELECTION (ORDER BY THE DAY) ── */}
+      {/* ── 1. DAILY DABBA SELECTION (ORDER BY THE DAY) ── */}
       <div className="bg-white rounded-3xl border border-gray-200 p-6 sm:p-8 shadow-xs space-y-6">
         <div>
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
@@ -1112,7 +894,138 @@ export default function TiffinOrderView({
 
       </div>
 
-      {/* ── 4. 16 OZ A LA CARTE CONTAINERS (FROM FLYER) ── */}
+      {/* ── 2. FEATURED: WEEKLY DABBA SUBSCRIPTION (MON–FRI 5-DAY PLAN) ── */}
+      <div className="rounded-3xl bg-gradient-to-r from-emerald-50 via-teal-50 to-blue-50 border-2 border-emerald-200/80 p-6 sm:p-8 shadow-sm space-y-6">
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+          <div className="space-y-2 max-w-2xl">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-100 text-emerald-900 text-[10px] font-black uppercase tracking-widest">
+              🌟 BEST VALUE • 5-DAY HOMEMADE PLAN
+            </div>
+            <h2 className="font-serif text-2xl sm:text-3xl font-bold text-[#00346f]">
+              Weekly Dabba Subscription — ${weeklyPrice.toFixed(2)}
+            </h2>
+            <p className="text-xs sm:text-sm text-gray-700 leading-relaxed">
+              Enjoy 1 Single Dabba every day from <strong>Monday through Friday</strong> for your selected week. 
+              Zero preservatives, rotated daily menus, freshly packed and ready for dinner pickup. Same great taste, more convenience!
+            </p>
+            <div className="flex flex-wrap items-center gap-4 text-xs font-medium text-emerald-900 pt-1">
+              <span>✓ 5 Hot Meals (Mon to Fri)</span>
+              <span>✓ 10 Fresh Tawa Rotis</span>
+              <span>✓ 5 Cups Fragrant Rice</span>
+              <span>✓ 5 Chef Curries &amp; Dry Sabzis</span>
+            </div>
+          </div>
+
+          <div className="bg-white p-5 rounded-2xl border border-emerald-200 shadow-md flex flex-col items-center gap-3 shrink-0 w-full sm:w-auto">
+            <div className="text-center">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500 block">Weekly Package</span>
+              <span className="font-serif text-3xl font-black text-emerald-800">${weeklyPrice.toFixed(2)}</span>
+              <span className="text-[11px] text-gray-500 block">Just ~${(weeklyPrice / 5).toFixed(2)} / day</span>
+            </div>
+
+            <div className="flex flex-wrap sm:flex-nowrap items-center gap-3 w-full sm:w-auto">
+              <div className="flex items-center bg-gray-100 rounded-xl p-1 border border-gray-200">
+                <button
+                  type="button"
+                  onClick={() => setWeeklyQty(Math.max(1, weeklyQty - 1))}
+                  className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-white text-gray-700 cursor-pointer"
+                  aria-label="Decrease quantity"
+                >
+                  <Minus className="w-4 h-4" />
+                </button>
+                <span className="w-8 text-center font-bold text-xs">{weeklyQty}</span>
+                <button
+                  type="button"
+                  onClick={() => setWeeklyQty(weeklyQty + 1)}
+                  className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-white text-gray-700 cursor-pointer"
+                  aria-label="Increase quantity"
+                >
+                  <Plus className="w-4 h-4" />
+                </button>
+              </div>
+
+              <button
+                type="button"
+                onClick={handleAddWeeklyDabba}
+                className="flex-1 sm:flex-initial min-h-[44px] inline-flex items-center justify-center gap-2 bg-[#00346f] hover:bg-[#00224d] text-white px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-sm cursor-pointer"
+              >
+                <ShoppingBag className="w-4 h-4 text-[#ffdea5]" />
+                <span>Add Weekly Plan ({activeWeeklyPlan?.shortRange})</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* ── Interactive Selection of the Whole Week ── */}
+        <div className="pt-4 border-t border-emerald-200/60 space-y-3">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+            <label className="text-xs font-bold uppercase tracking-wider text-emerald-950 flex items-center gap-1.5">
+              <Sparkles className="w-3.5 h-3.5 text-emerald-700" />
+              <span>Select the 5-Day Week for Your Order:</span>
+            </label>
+            <span className="text-[11px] text-emerald-800 font-medium">
+              Click any upcoming week below (Monday through Friday)
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            {upcomingWeeks.map((week) => {
+              const isSelected = activeWeeklyPlan?.id === week.id;
+              return (
+                <button
+                  key={week.id}
+                  type="button"
+                  onClick={() => setSelectedWeekId(week.id)}
+                  className={`p-3.5 rounded-2xl border text-left transition-all cursor-pointer relative ${
+                    isSelected
+                      ? 'bg-[#00346f] text-white border-[#00346f] shadow-md ring-2 ring-[#ffdea5]/50 scale-[1.01]'
+                      : 'bg-white hover:bg-emerald-50/80 border-emerald-200 text-gray-800 shadow-2xs'
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className={`text-[10px] font-bold uppercase tracking-wider ${isSelected ? 'text-[#ffdea5]' : 'text-emerald-700'}`}>
+                      {week.label}
+                    </span>
+                    {isSelected && (
+                      <span className="w-2 h-2 rounded-full bg-[#ffdea5]" />
+                    )}
+                  </div>
+                  <div className={`font-serif font-bold text-sm sm:text-base mt-1 ${isSelected ? 'text-white' : 'text-gray-900'}`}>
+                    {week.shortRange}
+                  </div>
+                  <div className={`text-[11px] mt-0.5 ${isSelected ? 'text-emerald-100' : 'text-gray-500'}`}>
+                    Monday to Friday
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Active Selected Week Daily Schedule Preview */}
+          {activeWeeklyPlan && (
+            <div className="p-3.5 bg-white/95 rounded-2xl border border-emerald-200 text-xs text-emerald-950 flex flex-col md:flex-row items-start md:items-center justify-between gap-3 shadow-2xs">
+              <div className="space-y-0.5">
+                <span className="font-bold text-emerald-900 flex items-center gap-1.5">
+                  <Check className="w-4 h-4 text-emerald-600" />
+                  <span>Selected: <strong>{activeWeeklyPlan.label}</strong> ({activeWeeklyPlan.rangeLabel})</span>
+                </span>
+                <span className="text-[11px] text-gray-500 block">
+                  Includes 1 daily homestyle dabba (fresh roti, rice, dal &amp; sabzi) prepared fresh for pickup on each day:
+                </span>
+              </div>
+              <div className="flex flex-wrap items-center gap-1.5 font-mono text-[11px]">
+                {activeWeeklyPlan.days.map((day) => (
+                  <span key={day.dateStr} className="px-2.5 py-1 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-900 font-semibold shadow-2xs">
+                    {day.dayName.slice(0, 3)}: {day.displayDate}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* ── 3. 16 OZ A LA CARTE CONTAINERS (FROM FLYER) ── */}
       <div className="bg-white rounded-3xl border border-gray-200 p-6 sm:p-8 shadow-xs space-y-4">
         <div>
           <span className="text-[10px] font-bold uppercase tracking-widest text-[#775a19] block">
@@ -1178,7 +1091,7 @@ export default function TiffinOrderView({
         </div>
       </div>
 
-      {/* ── 5. CURRENT TIFFIN CART ITEMS SUMMARY ── */}
+      {/* ── 4. CURRENT TIFFIN CART ITEMS SUMMARY ── */}
       {tiffinCartItems.length > 0 && (
         <div className="p-5 bg-blue-50/50 rounded-2xl border border-blue-200 space-y-3">
           <div className="flex items-center justify-between">
@@ -1233,6 +1146,92 @@ export default function TiffinOrderView({
           )}
         </div>
       )}
+
+      {/* ── 5. HERO BRAND BANNER & FLYER PREVIEW (MOVED TO END) ── */}
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#00346f] via-[#00224d] to-[#121620] text-white p-6 sm:p-8 md:p-10 shadow-xl border border-[#00346f]/40">
+        <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+          
+          <div className="lg:col-span-7 space-y-4">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#ffdea5]/15 border border-[#ffdea5]/30 text-[#ffdea5] text-xs font-bold uppercase tracking-widest">
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>Ghar Ka Khana. Dil Se. • Fresh Homestyle Tiffin</span>
+            </div>
+
+            <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-black text-white tracking-tight leading-tight">
+              Desi Dabba <span className="text-[#ffdea5] font-normal italic">Weekly Tiffin</span>
+            </h2>
+
+            <p className="text-sm sm:text-base text-gray-200 font-light leading-relaxed max-w-xl">
+              Fresh, homemade vegetarian Indian meals prepared in small batches with zero preservatives. 
+              Each daily Dabba includes <strong>1 cup rice, 1 cup curry/dal, 1/2 cup dry sabzi, and 2 fresh tawa rotis</strong>.
+            </p>
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-2">
+              <div className="p-3 rounded-2xl bg-white/10 backdrop-blur-xs border border-white/15">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-gray-300 block">Single Dabba</span>
+                <span className="font-serif text-xl sm:text-2xl font-black text-[#ffdea5]">${singlePrice.toFixed(2)}</span>
+                <span className="text-[11px] text-gray-300 block">Serves 1 meal</span>
+              </div>
+
+              <div className="p-3 rounded-2xl bg-white/10 backdrop-blur-xs border border-white/15">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-gray-300 block">Family Dabba</span>
+                <span className="font-serif text-xl sm:text-2xl font-black text-[#ffdea5]">${familyPrice.toFixed(2)}</span>
+                <span className="text-[11px] text-gray-300 block">Serves 4 complete</span>
+              </div>
+
+              <div className="p-3 rounded-2xl bg-emerald-500/20 backdrop-blur-xs border border-emerald-400/30 col-span-2 sm:col-span-1">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-300 block">Weekly Dabba</span>
+                <span className="font-serif text-xl sm:text-2xl font-black text-white">${weeklyPrice.toFixed(2)}</span>
+                <span className="text-[11px] text-emerald-200 block">5 days (Mon–Fri)</span>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-3 pt-1 text-xs text-gray-300">
+              <span className="flex items-center gap-1.5 bg-black/20 px-2.5 py-1 rounded-lg">
+                <Clock className="w-3.5 h-3.5 text-[#ffdea5]" /> Order for tomorrow through Sunday
+              </span>
+              <span className="flex items-center gap-1.5 bg-black/20 px-2.5 py-1 rounded-lg">
+                <Award className="w-3.5 h-3.5 text-emerald-400" /> Weekend Chef's Specials
+              </span>
+              <span className="flex items-center gap-1.5 bg-black/20 px-2.5 py-1 rounded-lg">
+                <AlertCircle className="w-3.5 h-3.5 text-amber-300" /> Sunday Closed
+              </span>
+              <span className="flex items-center gap-1.5 bg-[#ffdea5]/20 text-[#ffdea5] border border-[#ffdea5]/30 px-2.5 py-1 rounded-lg font-semibold">
+                <MapPin className="w-3.5 h-3.5 text-[#ffdea5]" /> Pickup Only: Home Kitchen - Deerwood Dr, Little Elm
+              </span>
+            </div>
+          </div>
+
+          {/* Interactive Weekly Flyer Card */}
+          <div className="lg:col-span-5 flex flex-col items-center">
+            <div 
+              onClick={() => setIsLightboxOpen(true)}
+              className="group relative cursor-pointer overflow-hidden rounded-2xl border-2 border-white/20 shadow-2xl bg-white hover:border-[#ffdea5] transition-all transform hover:scale-101 max-w-sm"
+              title="Click to view full-size weekly flyer"
+            >
+              <img 
+                src={settings.flyerImageUrl || '/tiffin-flyer.jpg'} 
+                alt="Desi Dabba This Week's Menu"
+                className="w-full object-cover max-h-[380px] group-hover:opacity-95 transition-opacity"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).src = '/tiffin-flyer.jpg';
+                }}
+              />
+              <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 text-[#ffdea5] font-bold text-xs uppercase tracking-wider">
+                <Maximize2 className="w-4 h-4" />
+                <span>Click to Expand Flyer</span>
+              </div>
+              <div className="absolute bottom-2 right-2 bg-black/70 backdrop-blur-xs text-white text-[10px] px-2.5 py-1 rounded-lg font-bold">
+                {settings.weekTitle || "This Week's Menu"}
+              </div>
+            </div>
+            <p className="text-[11px] text-gray-400 mt-2 text-center">
+              Click flyer to zoom in &amp; inspect full ingredients &amp; nutrition
+            </p>
+          </div>
+
+        </div>
+      </div>
 
       {/* ── 6. TEXAS COTTAGE FOOD & HOME KITCHEN LEGAL DISCLAIMER ── */}
       <div className="rounded-2xl border border-amber-300/80 bg-gradient-to-r from-amber-50/90 via-orange-50/40 to-amber-50/90 p-5 sm:p-6 text-xs text-amber-950 space-y-3 shadow-xs">
