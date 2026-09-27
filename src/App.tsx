@@ -206,25 +206,25 @@ export default function App() {
       {/* Header / Navbar */}
       <nav ref={navRef} className="sticky top-0 z-45 bg-[#fbfbfa]/95 backdrop-blur-md border-b border-gray-150 py-3 shadow-xs">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-14 gap-4">
+          <div className="flex items-center justify-between h-14 gap-6">
             
-            {/* Logo Brand - Shrink 0 ensures it is never squished or overshadowed */}
+            {/* Logo Brand */}
             <div 
               onClick={() => setActiveTab("Home")} 
-              className="shrink-0 flex items-center cursor-pointer group pr-2"
+              className="shrink-0 flex items-center cursor-pointer group"
             >
               <span className="font-serif text-xl sm:text-2xl font-bold text-[#00346f] tracking-tight transition-colors group-hover:text-[#775a19] whitespace-nowrap">
                 Bluebonnet Whisk
               </span>
             </div>
 
-            {/* Desktop Navigation Links (xl screens & up: 1280px+) */}
-            <div className="hidden xl:flex items-center space-x-4 2xl:space-x-6">
+            {/* Desktop Navigation Links */}
+            <div className="hidden lg:flex items-center space-x-5 xl:space-x-8">
               {navLinks.map((link) => (
                 <button
                   key={link.id}
                   onClick={() => setActiveTab(link.id)}
-                  className={`font-sans text-[11px] 2xl:text-xs uppercase tracking-wider font-semibold pb-1 transition-all border-b-2 hover:text-[#00346f] hover:border-[#00346f] cursor-pointer whitespace-nowrap ${
+                  className={`font-sans text-xs uppercase tracking-wider font-semibold pb-1 transition-all border-b-2 hover:text-[#00346f] hover:border-[#00346f] cursor-pointer whitespace-nowrap ${
                     activeTab === link.id
                       ? "text-[#00346f] border-[#00346f] font-bold"
                       : "text-gray-500 border-transparent"
@@ -235,21 +235,11 @@ export default function App() {
               ))}
             </div>
 
-            {/* Right Controls: Request Quote */}
-            <div className="flex items-center gap-3 shrink-0">
-              <button
-                onClick={() => setActiveTab("Catering")}
-                className="bg-[#00346f] hover:bg-[#00224d] text-white min-h-[40px] px-4 sm:px-5 py-2 rounded-lg text-xs font-bold uppercase tracking-wider cursor-pointer font-sans inline-flex items-center justify-center transition-all shadow-xs whitespace-nowrap"
-              >
-                REQUEST QUOTE
-              </button>
-            </div>
-
           </div>
         </div>
 
-        {/* Secondary Navigation Row for Tablets & Laptops (under 1280px) */}
-        <div className="xl:hidden bg-[#fbfbfa] border-t border-gray-150 py-1.5 mt-1 overflow-x-auto scrollbar-none">
+        {/* Secondary Mobile/Tablet Toolbar (under 1024px) */}
+        <div className="lg:hidden bg-[#fbfbfa] border-t border-gray-150 py-1.5 mt-1 overflow-x-auto scrollbar-none">
           <div className="flex px-4 space-x-4 whitespace-nowrap min-w-max">
             {navLinks.map((link) => (
               <button
