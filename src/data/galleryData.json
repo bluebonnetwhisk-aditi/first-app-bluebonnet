@@ -1,0 +1,515 @@
+[
+  {
+    "id": "item-1",
+    "title": "Rasmalai Tres Leches Cake #1",
+    "category": "Artisanal Bakery & Cakes",
+    "autoDescription": "Infused with saffron-cardamom milk, layered with soft rabri cream, pistachios, and delicate rose petals over a light sponge.",
+    "imagePath": "/gallery/gallery_01.png",
+    "visible": true,
+    "createdAt": "2026-09-26T18:56:52.920Z"
+  },
+  {
+    "id": "item-2",
+    "title": "Gulab Jamun Fusion Cheesecake #2",
+    "category": "Artisanal Bakery & Cakes",
+    "autoDescription": "Decadent cream cheese filling baked over a cardamom cookie crust, crowned with mini gulab jamuns and edible gold vark.",
+    "imagePath": "/gallery/gallery_02.png",
+    "visible": true,
+    "createdAt": "2026-09-25T18:56:52.924Z"
+  },
+  {
+    "id": "item-3",
+    "title": "Slow-Cooked Royal Dal Makhani #3",
+    "category": "Savory Specialties",
+    "autoDescription": "Black lentils simmered overnight for 16 hours over charcoal, finished with churned butter, fresh cream, and aromatic garam masala.",
+    "imagePath": "/gallery/gallery_03.png",
+    "visible": true,
+    "createdAt": "2026-09-24T18:56:52.927Z"
+  },
+  {
+    "id": "item-4",
+    "title": "Paneer Lababdar & Makhani Gravy #4",
+    "category": "Savory Specialties",
+    "autoDescription": "Cottage cheese cubes tossed in a velvety tomato-cashew reduction, spiced with roasted Kasuri methi and green cardamom.",
+    "imagePath": "/gallery/gallery_04.png",
+    "visible": true,
+    "createdAt": "2026-09-23T18:56:52.932Z"
+  },
+  {
+    "id": "item-5",
+    "title": "Crispy Amritsari Kulcha & Chole #5",
+    "category": "Breads & Starters",
+    "autoDescription": "Flaky, tandoor-baked spiced potato kulcha served with tangy Pindi chole, pickled onions, and fresh mint chutney.",
+    "imagePath": "/gallery/gallery_05.png",
+    "visible": true,
+    "createdAt": "2026-09-22T18:56:52.935Z"
+  },
+  {
+    "id": "item-6",
+    "title": "Tandoori Garlic Naan & Kulcha Basket #6",
+    "category": "Breads & Starters",
+    "autoDescription": "Freshly slapped flatbreads baked in clay tandoor, brushed with garlic butter, cilantro, and toasted nigella seeds.",
+    "imagePath": "/gallery/gallery_06.jpg",
+    "visible": true,
+    "createdAt": "2026-09-21T18:56:52.939Z"
+  },
+  {
+    "id": "item-7",
+    "title": "Bedmi Poori & Halwai Waale Aalu #7",
+    "category": "Breads & Starters",
+    "autoDescription": "Crispy urad dal-stuffed puri paired with tangy, slow-simmered street-style potato curry spiced with hing and amchur.",
+    "imagePath": "/gallery/gallery_07.jpg",
+    "visible": true,
+    "createdAt": "2026-09-20T18:56:52.944Z"
+  },
+  {
+    "id": "item-8",
+    "title": "Vintage Railway Potato Cutlets #8",
+    "category": "Breads & Starters",
+    "autoDescription": "Gold-crusted potato and green pea croquettes infused with roasted cumin, ginger, and served with coriander chutney.",
+    "imagePath": "/gallery/gallery_08.jpg",
+    "visible": true,
+    "createdAt": "2026-09-19T18:56:52.947Z"
+  },
+  {
+    "id": "item-9",
+    "title": "Authentic Ukadiche Modak #9",
+    "category": "Traditional Sweets",
+    "autoDescription": "Steamed rice flour dumplings filled with freshly grated coconut, jaggery, and fragrant nutmeg cardamom paste.",
+    "imagePath": "/gallery/gallery_09.jpg",
+    "visible": true,
+    "createdAt": "2026-09-18T18:56:52.951Z"
+  },
+  {
+    "id": "item-10",
+    "title": "Pistachio Cardamom Mousse Cake #10",
+    "category": "Artisanal Bakery & Cakes",
+    "autoDescription": "Silky pistachio bavarian cream paired with cardamom chiffon layers, crowned with crushed Iranian pistachios.",
+    "imagePath": "/gallery/gallery_10.jpg",
+    "visible": true,
+    "createdAt": "2026-09-17T18:56:52.956Z"
+  },
+  {
+    "id": "item-11",
+    "title": "Indo-Chinese Manchurian & Noodle Station #11",
+    "category": "Savory Specialties",
+    "autoDescription": "Wok-tossed vegetable balls in garlic-soy glaze served alongside Hakka noodles with charred scallions.",
+    "imagePath": "/gallery/gallery_11.jpg",
+    "visible": true,
+    "createdAt": "2026-09-16T18:56:52.961Z"
+  },
+  {
+    "id": "item-12",
+    "title": "Live Street Chaat & Pani Puri Bar #12",
+    "category": "Savory Specialties",
+    "autoDescription": "Crispy semolina puris filled with spiced potato chickpeas, chilled mint-coriander water, and date tamarind chutney.",
+    "imagePath": "/gallery/gallery_12.jpg",
+    "visible": true,
+    "createdAt": "2026-09-15T18:56:52.965Z"
+  },
+  {
+    "id": "item-13",
+    "title": "Lotus Biscoff Stuffed Gourmet Cookie #13",
+    "category": "Artisanal Bakery & Cakes",
+    "autoDescription": "Giant thick-style cookie rolled with organic European butter, bursting with molten Biscoff cookie butter center.",
+    "imagePath": "/gallery/gallery_13.jpg",
+    "visible": true,
+    "createdAt": "2026-09-14T18:56:52.969Z"
+  },
+  {
+    "id": "item-14",
+    "title": "Stuffed Sattu & Paneer Paratha Platter #14",
+    "category": "Breads & Starters",
+    "autoDescription": "Hand-rolled whole wheat parathas stuffed with spiced roasted gram flour (sattu) and fresh paneer, served with white butter.",
+    "imagePath": "/gallery/gallery_14.jpg",
+    "visible": true,
+    "createdAt": "2026-09-13T18:56:52.973Z"
+  },
+  {
+    "id": "item-15",
+    "title": "Tangy Punjabi Kadhi Pakora #15",
+    "category": "Savory Specialties",
+    "autoDescription": "Crispy onion fritters simmered in a creamy sour yogurt and besan gravy, tempered with dried red chillies and curry leaves.",
+    "imagePath": "/gallery/gallery_15.jpg",
+    "visible": true,
+    "createdAt": "2026-09-12T18:56:52.978Z"
+  },
+  {
+    "id": "item-16",
+    "title": "Homestyle Bhindi Masala & Bharwa Baigan #16",
+    "category": "Savory Specialties",
+    "autoDescription": "Pan-roasted okra and stuffed baby eggplants tossed in roasted coriander, fennel, and dry mango powder.",
+    "imagePath": "/gallery/gallery_16.jpg",
+    "visible": true,
+    "createdAt": "2026-09-11T18:56:52.985Z"
+  },
+  {
+    "id": "item-17",
+    "title": "Kesar Pista Chawal Kheer #17",
+    "category": "Traditional Sweets",
+    "autoDescription": "Traditional rice pudding slow-cooked in full-cream milk, infused with Kashmiri saffron strands, green cardamom, and almonds.",
+    "imagePath": "/gallery/gallery_17.jpg",
+    "visible": true,
+    "createdAt": "2026-09-10T18:56:52.992Z"
+  },
+  {
+    "id": "item-18",
+    "title": "Rasmalai Tres Leches Cake #18",
+    "category": "Artisanal Bakery & Cakes",
+    "autoDescription": "Infused with saffron-cardamom milk, layered with soft rabri cream, pistachios, and delicate rose petals over a light sponge.",
+    "imagePath": "/gallery/gallery_18.jpg",
+    "visible": true,
+    "createdAt": "2026-09-09T18:56:52.998Z"
+  },
+  {
+    "id": "item-19",
+    "title": "Gulab Jamun Fusion Cheesecake #19",
+    "category": "Artisanal Bakery & Cakes",
+    "autoDescription": "Decadent cream cheese filling baked over a cardamom cookie crust, crowned with mini gulab jamuns and edible gold vark.",
+    "imagePath": "/gallery/gallery_19.jpg",
+    "visible": true,
+    "createdAt": "2026-09-08T18:56:53.003Z"
+  },
+  {
+    "id": "item-20",
+    "title": "Slow-Cooked Royal Dal Makhani #20",
+    "category": "Savory Specialties",
+    "autoDescription": "Black lentils simmered overnight for 16 hours over charcoal, finished with churned butter, fresh cream, and aromatic garam masala.",
+    "imagePath": "/gallery/gallery_20.jpg",
+    "visible": true,
+    "createdAt": "2026-09-07T18:56:53.009Z"
+  },
+  {
+    "id": "item-21",
+    "title": "Paneer Lababdar & Makhani Gravy #21",
+    "category": "Savory Specialties",
+    "autoDescription": "Cottage cheese cubes tossed in a velvety tomato-cashew reduction, spiced with roasted Kasuri methi and green cardamom.",
+    "imagePath": "/gallery/gallery_21.jpg",
+    "visible": true,
+    "createdAt": "2026-09-06T18:56:53.012Z"
+  },
+  {
+    "id": "item-22",
+    "title": "Crispy Amritsari Kulcha & Chole #22",
+    "category": "Breads & Starters",
+    "autoDescription": "Flaky, tandoor-baked spiced potato kulcha served with tangy Pindi chole, pickled onions, and fresh mint chutney.",
+    "imagePath": "/gallery/gallery_22.jpg",
+    "visible": true,
+    "createdAt": "2026-09-05T18:56:53.015Z"
+  },
+  {
+    "id": "item-23",
+    "title": "Tandoori Garlic Naan & Kulcha Basket #23",
+    "category": "Breads & Starters",
+    "autoDescription": "Freshly slapped flatbreads baked in clay tandoor, brushed with garlic butter, cilantro, and toasted nigella seeds.",
+    "imagePath": "/gallery/gallery_23.jpg",
+    "visible": true,
+    "createdAt": "2026-09-04T18:56:53.018Z"
+  },
+  {
+    "id": "item-24",
+    "title": "Bedmi Poori & Halwai Waale Aalu #24",
+    "category": "Breads & Starters",
+    "autoDescription": "Crispy urad dal-stuffed puri paired with tangy, slow-simmered street-style potato curry spiced with hing and amchur.",
+    "imagePath": "/gallery/gallery_24.jpg",
+    "visible": true,
+    "createdAt": "2026-09-03T18:56:53.024Z"
+  },
+  {
+    "id": "item-25",
+    "title": "Vintage Railway Potato Cutlets #25",
+    "category": "Breads & Starters",
+    "autoDescription": "Gold-crusted potato and green pea croquettes infused with roasted cumin, ginger, and served with coriander chutney.",
+    "imagePath": "/gallery/gallery_25.jpg",
+    "visible": true,
+    "createdAt": "2026-09-02T18:56:53.029Z"
+  },
+  {
+    "id": "item-26",
+    "title": "Authentic Ukadiche Modak #26",
+    "category": "Traditional Sweets",
+    "autoDescription": "Steamed rice flour dumplings filled with freshly grated coconut, jaggery, and fragrant nutmeg cardamom paste.",
+    "imagePath": "/gallery/gallery_26.jpg",
+    "visible": true,
+    "createdAt": "2026-09-01T18:56:53.036Z"
+  },
+  {
+    "id": "item-27",
+    "title": "Pistachio Cardamom Mousse Cake #27",
+    "category": "Artisanal Bakery & Cakes",
+    "autoDescription": "Silky pistachio bavarian cream paired with cardamom chiffon layers, crowned with crushed Iranian pistachios.",
+    "imagePath": "/gallery/gallery_27.jpg",
+    "visible": true,
+    "createdAt": "2026-08-31T18:56:53.041Z"
+  },
+  {
+    "id": "item-28",
+    "title": "Indo-Chinese Manchurian & Noodle Station #28",
+    "category": "Savory Specialties",
+    "autoDescription": "Wok-tossed vegetable balls in garlic-soy glaze served alongside Hakka noodles with charred scallions.",
+    "imagePath": "/gallery/gallery_28.jpg",
+    "visible": true,
+    "createdAt": "2026-08-30T18:56:53.047Z"
+  },
+  {
+    "id": "item-29",
+    "title": "Live Street Chaat & Pani Puri Bar #29",
+    "category": "Savory Specialties",
+    "autoDescription": "Crispy semolina puris filled with spiced potato chickpeas, chilled mint-coriander water, and date tamarind chutney.",
+    "imagePath": "/gallery/gallery_29.jpg",
+    "visible": true,
+    "createdAt": "2026-08-29T18:56:53.053Z"
+  },
+  {
+    "id": "item-30",
+    "title": "Lotus Biscoff Stuffed Gourmet Cookie #30",
+    "category": "Artisanal Bakery & Cakes",
+    "autoDescription": "Giant thick-style cookie rolled with organic European butter, bursting with molten Biscoff cookie butter center.",
+    "imagePath": "/gallery/gallery_30.jpg",
+    "visible": true,
+    "createdAt": "2026-08-28T18:56:53.056Z"
+  },
+  {
+    "id": "item-31",
+    "title": "Stuffed Sattu & Paneer Paratha Platter #31",
+    "category": "Breads & Starters",
+    "autoDescription": "Hand-rolled whole wheat parathas stuffed with spiced roasted gram flour (sattu) and fresh paneer, served with white butter.",
+    "imagePath": "/gallery/gallery_31.jpg",
+    "visible": true,
+    "createdAt": "2026-08-27T18:56:53.061Z"
+  },
+  {
+    "id": "item-32",
+    "title": "Tangy Punjabi Kadhi Pakora #32",
+    "category": "Savory Specialties",
+    "autoDescription": "Crispy onion fritters simmered in a creamy sour yogurt and besan gravy, tempered with dried red chillies and curry leaves.",
+    "imagePath": "/gallery/gallery_32.jpg",
+    "visible": true,
+    "createdAt": "2026-08-26T18:56:53.065Z"
+  },
+  {
+    "id": "item-33",
+    "title": "Homestyle Bhindi Masala & Bharwa Baigan #33",
+    "category": "Savory Specialties",
+    "autoDescription": "Pan-roasted okra and stuffed baby eggplants tossed in roasted coriander, fennel, and dry mango powder.",
+    "imagePath": "/gallery/gallery_33.jpg",
+    "visible": true,
+    "createdAt": "2026-08-25T18:56:53.069Z"
+  },
+  {
+    "id": "item-34",
+    "title": "Kesar Pista Chawal Kheer #34",
+    "category": "Traditional Sweets",
+    "autoDescription": "Traditional rice pudding slow-cooked in full-cream milk, infused with Kashmiri saffron strands, green cardamom, and almonds.",
+    "imagePath": "/gallery/gallery_34.jpg",
+    "visible": true,
+    "createdAt": "2026-08-24T18:56:53.072Z"
+  },
+  {
+    "id": "item-35",
+    "title": "Rasmalai Tres Leches Cake #35",
+    "category": "Artisanal Bakery & Cakes",
+    "autoDescription": "Infused with saffron-cardamom milk, layered with soft rabri cream, pistachios, and delicate rose petals over a light sponge.",
+    "imagePath": "/gallery/gallery_35.jpg",
+    "visible": true,
+    "createdAt": "2026-08-23T18:56:53.075Z"
+  },
+  {
+    "id": "item-36",
+    "title": "Gulab Jamun Fusion Cheesecake #36",
+    "category": "Artisanal Bakery & Cakes",
+    "autoDescription": "Decadent cream cheese filling baked over a cardamom cookie crust, crowned with mini gulab jamuns and edible gold vark.",
+    "imagePath": "/gallery/gallery_36.jpg",
+    "visible": true,
+    "createdAt": "2026-08-22T18:56:53.079Z"
+  },
+  {
+    "id": "item-37",
+    "title": "Slow-Cooked Royal Dal Makhani #37",
+    "category": "Savory Specialties",
+    "autoDescription": "Black lentils simmered overnight for 16 hours over charcoal, finished with churned butter, fresh cream, and aromatic garam masala.",
+    "imagePath": "/gallery/gallery_37.jpg",
+    "visible": true,
+    "createdAt": "2026-08-21T18:56:53.084Z"
+  },
+  {
+    "id": "item-38",
+    "title": "Paneer Lababdar & Makhani Gravy #38",
+    "category": "Savory Specialties",
+    "autoDescription": "Cottage cheese cubes tossed in a velvety tomato-cashew reduction, spiced with roasted Kasuri methi and green cardamom.",
+    "imagePath": "/gallery/gallery_38.jpg",
+    "visible": true,
+    "createdAt": "2026-08-20T18:56:53.089Z"
+  },
+  {
+    "id": "item-39",
+    "title": "Crispy Amritsari Kulcha & Chole #39",
+    "category": "Breads & Starters",
+    "autoDescription": "Flaky, tandoor-baked spiced potato kulcha served with tangy Pindi chole, pickled onions, and fresh mint chutney.",
+    "imagePath": "/gallery/gallery_39.jpg",
+    "visible": true,
+    "createdAt": "2026-08-19T18:56:53.092Z"
+  },
+  {
+    "id": "item-40",
+    "title": "Tandoori Garlic Naan & Kulcha Basket #40",
+    "category": "Breads & Starters",
+    "autoDescription": "Freshly slapped flatbreads baked in clay tandoor, brushed with garlic butter, cilantro, and toasted nigella seeds.",
+    "imagePath": "/gallery/gallery_40.jpg",
+    "visible": true,
+    "createdAt": "2026-08-18T18:56:53.094Z"
+  },
+  {
+    "id": "item-41",
+    "title": "Bedmi Poori & Halwai Waale Aalu #41",
+    "category": "Breads & Starters",
+    "autoDescription": "Crispy urad dal-stuffed puri paired with tangy, slow-simmered street-style potato curry spiced with hing and amchur.",
+    "imagePath": "/gallery/gallery_41.jpg",
+    "visible": true,
+    "createdAt": "2026-08-17T18:56:53.097Z"
+  },
+  {
+    "id": "item-42",
+    "title": "Vintage Railway Potato Cutlets #42",
+    "category": "Breads & Starters",
+    "autoDescription": "Gold-crusted potato and green pea croquettes infused with roasted cumin, ginger, and served with coriander chutney.",
+    "imagePath": "/gallery/gallery_42.jpg",
+    "visible": true,
+    "createdAt": "2026-08-16T18:56:53.100Z"
+  },
+  {
+    "id": "item-43",
+    "title": "Authentic Ukadiche Modak #43",
+    "category": "Traditional Sweets",
+    "autoDescription": "Steamed rice flour dumplings filled with freshly grated coconut, jaggery, and fragrant nutmeg cardamom paste.",
+    "imagePath": "/gallery/gallery_43.jpg",
+    "visible": true,
+    "createdAt": "2026-08-15T18:56:53.102Z"
+  },
+  {
+    "id": "item-44",
+    "title": "Pistachio Cardamom Mousse Cake #44",
+    "category": "Artisanal Bakery & Cakes",
+    "autoDescription": "Silky pistachio bavarian cream paired with cardamom chiffon layers, crowned with crushed Iranian pistachios.",
+    "imagePath": "/gallery/gallery_44.jpg",
+    "visible": true,
+    "createdAt": "2026-08-14T18:56:53.105Z"
+  },
+  {
+    "id": "item-45",
+    "title": "Indo-Chinese Manchurian & Noodle Station #45",
+    "category": "Savory Specialties",
+    "autoDescription": "Wok-tossed vegetable balls in garlic-soy glaze served alongside Hakka noodles with charred scallions.",
+    "imagePath": "/gallery/gallery_45.jpg",
+    "visible": true,
+    "createdAt": "2026-08-13T18:56:53.107Z"
+  },
+  {
+    "id": "item-46",
+    "title": "Live Street Chaat & Pani Puri Bar #46",
+    "category": "Savory Specialties",
+    "autoDescription": "Crispy semolina puris filled with spiced potato chickpeas, chilled mint-coriander water, and date tamarind chutney.",
+    "imagePath": "/gallery/gallery_46.jpg",
+    "visible": true,
+    "createdAt": "2026-08-12T18:56:53.110Z"
+  },
+  {
+    "id": "item-47",
+    "title": "Lotus Biscoff Stuffed Gourmet Cookie #47",
+    "category": "Artisanal Bakery & Cakes",
+    "autoDescription": "Giant thick-style cookie rolled with organic European butter, bursting with molten Biscoff cookie butter center.",
+    "imagePath": "/gallery/gallery_47.jpg",
+    "visible": true,
+    "createdAt": "2026-08-11T18:56:53.112Z"
+  },
+  {
+    "id": "item-48",
+    "title": "Stuffed Sattu & Paneer Paratha Platter #48",
+    "category": "Breads & Starters",
+    "autoDescription": "Hand-rolled whole wheat parathas stuffed with spiced roasted gram flour (sattu) and fresh paneer, served with white butter.",
+    "imagePath": "/gallery/gallery_48.jpg",
+    "visible": true,
+    "createdAt": "2026-08-10T18:56:53.114Z"
+  },
+  {
+    "id": "item-49",
+    "title": "Tangy Punjabi Kadhi Pakora #49",
+    "category": "Savory Specialties",
+    "autoDescription": "Crispy onion fritters simmered in a creamy sour yogurt and besan gravy, tempered with dried red chillies and curry leaves.",
+    "imagePath": "/gallery/gallery_49.jpg",
+    "visible": true,
+    "createdAt": "2026-08-09T18:56:53.117Z"
+  },
+  {
+    "id": "item-50",
+    "title": "Homestyle Bhindi Masala & Bharwa Baigan #50",
+    "category": "Savory Specialties",
+    "autoDescription": "Pan-roasted okra and stuffed baby eggplants tossed in roasted coriander, fennel, and dry mango powder.",
+    "imagePath": "/gallery/gallery_50.jpg",
+    "visible": true,
+    "createdAt": "2026-08-08T18:56:53.120Z"
+  },
+  {
+    "id": "item-51",
+    "title": "Kesar Pista Chawal Kheer #51",
+    "category": "Traditional Sweets",
+    "autoDescription": "Traditional rice pudding slow-cooked in full-cream milk, infused with Kashmiri saffron strands, green cardamom, and almonds.",
+    "imagePath": "/gallery/gallery_51.jpg",
+    "visible": true,
+    "createdAt": "2026-08-07T18:56:53.123Z"
+  },
+  {
+    "id": "item-52",
+    "title": "Rasmalai Tres Leches Cake #52",
+    "category": "Artisanal Bakery & Cakes",
+    "autoDescription": "Infused with saffron-cardamom milk, layered with soft rabri cream, pistachios, and delicate rose petals over a light sponge.",
+    "imagePath": "/gallery/gallery_52.jpg",
+    "visible": true,
+    "createdAt": "2026-08-06T18:56:53.126Z"
+  },
+  {
+    "id": "item-53",
+    "title": "Gulab Jamun Fusion Cheesecake #53",
+    "category": "Artisanal Bakery & Cakes",
+    "autoDescription": "Decadent cream cheese filling baked over a cardamom cookie crust, crowned with mini gulab jamuns and edible gold vark.",
+    "imagePath": "/gallery/gallery_53.jpg",
+    "visible": true,
+    "createdAt": "2026-08-05T18:56:53.130Z"
+  },
+  {
+    "id": "item-54",
+    "title": "Slow-Cooked Royal Dal Makhani #54",
+    "category": "Savory Specialties",
+    "autoDescription": "Black lentils simmered overnight for 16 hours over charcoal, finished with churned butter, fresh cream, and aromatic garam masala.",
+    "imagePath": "/gallery/gallery_54.jpg",
+    "visible": true,
+    "createdAt": "2026-08-04T18:56:53.132Z"
+  },
+  {
+    "id": "item-55",
+    "title": "Paneer Lababdar & Makhani Gravy #55",
+    "category": "Savory Specialties",
+    "autoDescription": "Cottage cheese cubes tossed in a velvety tomato-cashew reduction, spiced with roasted Kasuri methi and green cardamom.",
+    "imagePath": "/gallery/gallery_55.jpg",
+    "visible": true,
+    "createdAt": "2026-08-03T18:56:53.134Z"
+  },
+  {
+    "id": "item-56",
+    "title": "Crispy Amritsari Kulcha & Chole #56",
+    "category": "Breads & Starters",
+    "autoDescription": "Flaky, tandoor-baked spiced potato kulcha served with tangy Pindi chole, pickled onions, and fresh mint chutney.",
+    "imagePath": "/gallery/gallery_56.jpg",
+    "visible": true,
+    "createdAt": "2026-08-02T18:56:53.136Z"
+  },
+  {
+    "id": "item-57",
+    "title": "Tandoori Garlic Naan & Kulcha Basket #57",
+    "category": "Breads & Starters",
+    "autoDescription": "Freshly slapped flatbreads baked in clay tandoor, brushed with garlic butter, cilantro, and toasted nigella seeds.",
+    "imagePath": "/gallery/gallery_57.jpg",
+    "visible": true,
+    "createdAt": "2026-08-01T18:56:53.140Z"
+  }
+]

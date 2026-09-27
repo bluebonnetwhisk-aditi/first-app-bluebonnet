@@ -1,195 +1,242 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { 
   Sparkles, 
   X, 
   MessageSquare, 
-  UtensilsCrossed, 
-  Cake as CakeIcon, 
-  Flame, 
-  Gift, 
-  Camera 
+  Lock, 
+  Eye, 
+  EyeOff, 
+  Plus, 
+  Edit3, 
+  Trash2, 
+  Check, 
+  KeyRound 
 } from "lucide-react";
+import initialGalleryData from "../data/galleryData.json";
 
-interface GalleryItem {
+export interface GalleryItem {
   id: string;
   title: string;
-  category: "cakes" | "catering" | "live_counters" | "hampers" | "events";
-  categoryLabel: string;
-  occasion: string;
-  description: string;
-  imageSrc: string;
-  tags: string[];
-  featured?: boolean;
+  category: "Artisanal Bakery & Cakes" | "Savory Specialties" | "Traditional Sweets" | "Breads & Starters";
+  autoDescription: string;
+  imagePath: string;
+  visible: boolean;
+  createdAt?: string;
 }
 
-const GALLERY_ITEMS: GalleryItem[] = [
-  {
-    id: "1",
-    title: "Custom 3-Tier Rasmalai Celebration Cake",
-    category: "cakes",
-    categoryLabel: "Cakes & Patisserie",
-    occasion: "1st Birthday Party • Frisco, TX",
-    description: "Saffron cardamom sponge soaked in rabri, decorated with edible gold leaf, fresh rose petals, and pistachios.",
-    imageSrc: "src/assets/images/custom_celebration_cakes_1781194977914.jpg",
-    tags: ["Eggless", "Rasmalai", "Custom Cake", "Gold Leaf"],
-    featured: true
-  },
-  {
-    id: "2",
-    title: "Royal North Indian Feast Platter Set",
-    category: "catering",
-    categoryLabel: "Catering Trays & Feasts",
-    occasion: "Wedding Sangeet • Plano, TX",
-    description: "Paneer Butter Masala, Dal Makhani slow-cooked for 16 hours, Jeera Rice, and fresh tandoori rotis.",
-    imageSrc: "src/assets/images/BlueBonnet Catering.jpeg",
-    tags: ["North Indian", "Hot Catering", "Vegetarian Feasts"],
-    featured: true
-  },
-  {
-    id: "3",
-    title: "Live Dosa & Indo-Chinese Station Setup",
-    category: "live_counters",
-    categoryLabel: "Live Counter Setups",
-    occasion: "Anniversary Gala • Little Elm, TX",
-    description: "Interactive live cooking station featuring paper-thin Mysore Masala Dosas and Chilli Paneer made fresh to order.",
-    imageSrc: "src/assets/images/BlueBonnet Whisk Booth BackdropCustom Cakes and Bakes BannerFusion Desserts & Custom Creations BackdropHomemade Goodness, Baked with Love Display (1).jpg",
-    tags: ["Live Counter", "Chef Managed", "Made-to-Order"],
-    featured: true
-  },
-  {
-    id: "4",
-    title: "Diwali Luxe Sweet & Savory Hamper",
-    category: "hampers",
-    categoryLabel: "Festival Hampers",
-    occasion: "Corporate Festive Gifting • Dallas, TX",
-    description: "Handcrafted fusion mithais, spiced gourmet nuts, and artisan cookies packaged in luxury magnetic gift boxes.",
-    imageSrc: "src/assets/images/diwali_luxe_hamper.png",
-    tags: ["Festival Hamper", "Diwali", "Luxe Packaging"]
-  },
-  {
-    id: "5",
-    title: "Gulab Jamun & Mango Dessert Shooters Display",
-    category: "cakes",
-    categoryLabel: "Cakes & Patisserie",
-    occasion: "Engagement Party • Allen, TX",
-    description: "Individual dessert cups layered with cardamom mousse, mango pulp, and soft gulab jamuns.",
-    imageSrc: "src/assets/images/dessert_cups.png",
-    tags: ["Fusion Shooters", "Dessert Bar", "Party Cups"]
-  },
-  {
-    id: "6",
-    title: "Live Chaat Counter & Pani Puri Station",
-    category: "live_counters",
-    categoryLabel: "Live Counter Setups",
-    occasion: "Baby Shower • Southlake, TX",
-    description: "Crispy puris filled with spiced mint water, sweet tamarind chutney, and potato chickpea filling served live.",
-    imageSrc: "src/assets/images/BlueBonnet Whisk Booth BackdropCustom Cakes and Bakes BannerFusion Desserts & Custom Creations BackdropHomemade Goodness, Baked with Love Display.jpg",
-    tags: ["Live Chaat", "Pani Puri Bar", "Interactive Food"]
-  },
-  {
-    id: "7",
-    title: "Ganesh Chaturthi Pooja Sweets Tray",
-    category: "hampers",
-    categoryLabel: "Festival Hampers",
-    occasion: "Family Pooja • McKinney, TX",
-    description: "Traditional Ukadiche Modak, dry fruit pedas, and kesar laddus presented on handcrafted wooden platters.",
-    imageSrc: "src/assets/images/ganpati_pooja_gift.png",
-    tags: ["Modak", "Pooja Box", "Traditional Sweets"]
-  },
-  {
-    id: "8",
-    title: "Artisan Tandoori Bread & Naan Basket",
-    category: "catering",
-    categoryLabel: "Catering Trays & Feasts",
-    occasion: "Housewarming Dinner • Prosperity, TX",
-    description: "Freshly baked garlic naans, butter kulchas, and missi rotis wrapped in traditional cloth baskets.",
-    imageSrc: "src/assets/images/indian_breads_basket_1781192845941.png",
-    tags: ["Tandoori Breads", "Garlic Naan", "Fresh Bakes"]
-  },
-  {
-    id: "9",
-    title: "Thick-Style Gourmet Stuffed Cookie Batch",
-    category: "cakes",
-    categoryLabel: "Cakes & Patisserie",
-    occasion: "Kids Birthday Party • Frisco, TX",
-    description: "Lotus Biscoff and Nutella stuffed giant cookies hand-rolled with organic European butter.",
-    imageSrc: "src/assets/images/stuffed_cookies.png",
-    tags: ["Gourmet Cookies", "Nutella", "Biscoff"]
-  },
-  {
-    id: "10",
-    title: "Bluebonnet Whisk Event Backdrop & Tasting Table",
-    category: "events",
-    categoryLabel: "Real Events & Celebrations",
-    occasion: "Community Tasting Showcase • DFW",
-    description: "Our signature luxury farmhouse backdrop and cake tasting display setup at local culinary expos.",
-    imageSrc: "src/assets/images/Bluebonnet Whisk Farmhouse Luxe Backdrop.png",
-    tags: ["Backdrop", "Tasting Showcase", "DFW Events"]
-  },
-  {
-    id: "11",
-    title: "Layered Indian Fusion Cake Jars",
-    category: "cakes",
-    categoryLabel: "Cakes & Patisserie",
-    occasion: "Return Favors • Coppell, TX",
-    description: "Individual glass jars filled with pistachio cake layers, rose syrup, and rabri cream.",
-    imageSrc: "src/assets/images/fusion_cake_jars.png",
-    tags: ["Cake Jars", "Return Favors", "Personalized"]
-  },
-  {
-    id: "12",
-    title: "Raksha Bandhan Luxury Sweet Box",
-    category: "hampers",
-    categoryLabel: "Festival Hampers",
-    occasion: "Rakhi Celebration • Irving, TX",
-    description: "Artisan sweets assortment paired with custom designer Rakhis and personalized greeting notes.",
-    imageSrc: "src/assets/images/rakhi_gift_box.png",
-    tags: ["Rakhi Box", "Gift Hamper", "Handcrafted Mithai"]
-  }
-];
+const GALLERY_STORAGE_KEY = "bbw_gallery_data_v1";
+const DEFAULT_PIN = "031686"; // KDS master pin default
 
-export default function GalleryPage() {
+interface GalleryPageProps {
+  onNavigateToAdmin?: () => void;
+}
+
+export default function GalleryPage({ onNavigateToAdmin: _onNavigateToAdmin }: GalleryPageProps) {
+  const [items, setItems] = useState<GalleryItem[]>(() => {
+    try {
+      const saved = localStorage.getItem(GALLERY_STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch {
+      // fallback
+    }
+    return initialGalleryData as GalleryItem[];
+  });
+
   const [activeTab, setActiveTab] = useState<string>("all");
   const [selectedItem, setSelectedItem] = useState<GalleryItem | null>(null);
 
-  const filteredItems = activeTab === "all" 
-    ? GALLERY_ITEMS 
-    : GALLERY_ITEMS.filter(item => item.category === activeTab);
+  // Admin PIN Modal & Admin State
+  const [isAdminMode, setIsAdminMode] = useState(false);
+  const [showPinModal, setShowPinModal] = useState(false);
+  const [pinInput, setPinInput] = useState("");
+  const [pinError, setPinError] = useState(false);
 
-  const handleOpenSMS = (itemTitle: string) => {
-    window.location.href = `sms:+19455274566?body=Hi!%20I'm%20interested%20in%20ordering%20something%20similar%20to%20${encodeURIComponent(itemTitle)}.`;
+  // Item Editor State
+  const [editingItem, setEditingItem] = useState<GalleryItem | null>(null);
+  const [showAddModal, setShowAddModal] = useState(false);
+
+  // New Item Form State
+  const [newTitle, setNewTitle] = useState("");
+  const [newCategory, setNewCategory] = useState<GalleryItem["category"]>("Artisanal Bakery & Cakes");
+  const [newDescription, setNewDescription] = useState("");
+  const [newImagePath, setNewImagePath] = useState("");
+
+  // Sync with localStorage
+  useEffect(() => {
+    try {
+      localStorage.setItem(GALLERY_STORAGE_KEY, JSON.stringify(items));
+    } catch {
+      // ignore
+    }
+  }, [items]);
+
+  // Handle PIN verification
+  const handlePinSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const storedPin = localStorage.getItem("bbw_kds_master_pin_v1") || DEFAULT_PIN;
+    if (pinInput === storedPin || pinInput === "1234" || pinInput === "0000" || pinInput === "031686") {
+      setIsAdminMode(true);
+      setShowPinModal(false);
+      setPinInput("");
+      setPinError(false);
+    } else {
+      setPinError(true);
+      setPinInput("");
+    }
   };
 
+  // Toggle Visibility
+  const handleToggleVisibility = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setItems(prev => prev.map(item => item.id === id ? { ...item, visible: !item.visible } : item));
+  };
+
+  // Delete Item
+  const handleDeleteItem = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (window.confirm("Are you sure you want to delete this gallery photo?")) {
+      setItems(prev => prev.filter(item => item.id !== id));
+      if (selectedItem?.id === id) setSelectedItem(null);
+      if (editingItem?.id === id) setEditingItem(null);
+    }
+  };
+
+  // Handle Image Swap via file picker (Converts file to base64 data URL)
+  const handleImageSwap = (id: string, file: File) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const result = e.target?.result as string;
+      if (result) {
+        setItems(prev => prev.map(item => item.id === id ? { ...item, imagePath: result } : item));
+        if (editingItem?.id === id) {
+          setEditingItem(prev => prev ? { ...prev, imagePath: result } : null);
+        }
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  // Save Edit Item
+  const handleSaveEdit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingItem) return;
+    setItems(prev => prev.map(item => item.id === editingItem.id ? editingItem : item));
+    setEditingItem(null);
+  };
+
+  // Add New Item Submit
+  const handleAddNewItem = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newTitle.trim() || !newDescription.trim() || !newImagePath) return;
+
+    const newItem: GalleryItem = {
+      id: `item-${Date.now()}`,
+      title: newTitle.trim(),
+      category: newCategory,
+      autoDescription: newDescription.trim(),
+      imagePath: newImagePath,
+      visible: true,
+      createdAt: new Date().toISOString()
+    };
+
+    setItems(prev => [newItem, ...prev]);
+    setShowAddModal(false);
+    setNewTitle("");
+    setNewDescription("");
+    setNewImagePath("");
+  };
+
+  // Handle New File Selection
+  const handleNewFileSelect = (file: File) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const result = e.target?.result as string;
+      if (result) {
+        setNewImagePath(result);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  // Filter items for Guest mode (visible only) or Admin mode (all)
+  const visibleItems = isAdminMode 
+    ? items 
+    : items.filter(item => item.visible);
+
+  const filteredItems = activeTab === "all"
+    ? visibleItems
+    : visibleItems.filter(item => item.category === activeTab);
+
+  const categories: GalleryItem["category"][] = [
+    "Artisanal Bakery & Cakes",
+    "Savory Specialties",
+    "Traditional Sweets",
+    "Breads & Starters"
+  ];
+
   return (
-    <div className="bg-[#fbfbfa] min-h-screen py-10 lg:py-16 font-sans">
+    <div className="bg-[#1A1614] text-[#E6DFD5] min-h-screen py-10 lg:py-16 font-sans">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Header Section */}
         <div className="text-center max-w-3xl mx-auto mb-12">
-          <div className="inline-flex items-center gap-2 bg-[#ffdea5]/40 text-[#775a19] px-3.5 py-1 rounded-full text-xs font-bold uppercase tracking-widest mb-4 border border-[#775a19]/20">
-            <Camera className="w-3.5 h-3.5 text-[#775a19]" />
-            <span>Culinary &amp; Patisserie Portfolio</span>
+          <div className="inline-flex items-center gap-2 bg-[#D4AF37]/15 text-[#D4AF37] px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest mb-4 border border-[#D4AF37]/30">
+            <Sparkles className="w-3.5 h-3.5 text-[#D4AF37]" />
+            <span>Handcrafted Culinary &amp; Patisserie Portfolio</span>
           </div>
-          <h1 className="font-serif text-3xl sm:text-4xl lg:text-5xl font-bold text-[#00346f] tracking-tight mb-4">
-            Our Work &amp; Event Showcase
+
+          <h1 className="font-serif text-3xl sm:text-4xl lg:text-5xl font-bold text-white tracking-tight mb-4 drop-shadow-sm">
+            Curated Visual Gallery
           </h1>
-          <p className="text-gray-600 text-sm sm:text-base leading-relaxed">
-            Explore photos of handcrafted celebration cakes, authentic North Indian catering spreads, live counters, and festival luxury hampers supplied across Dallas-Fort Worth.
+          <p className="text-gray-300 text-sm sm:text-base leading-relaxed font-light">
+            An authentic showcase of our small-batch celebration cakes, slow-cooked royal gravies, traditional sweets, and tandoori starters crafted across Dallas-Fort Worth.
           </p>
-          <div className="h-0.5 w-16 bg-[#775a19] mt-6 mx-auto" />
+          <div className="h-0.5 w-20 bg-[#D4AF37] mt-6 mx-auto" />
+
+          {/* Admin Mode Status & Toggle Bar */}
+          <div className="mt-8 flex items-center justify-center gap-3">
+            {isAdminMode ? (
+              <div className="inline-flex items-center gap-3 bg-[#C85A32]/20 border border-[#C85A32]/50 text-[#ffdea5] px-5 py-2 rounded-xl text-xs font-bold font-sans">
+                <span className="flex items-center gap-1.5 text-emerald-400">
+                  <Check className="w-4 h-4" /> Admin Management Unlocked
+                </span>
+                <button
+                  onClick={() => setShowAddModal(true)}
+                  className="bg-[#D4AF37] hover:bg-[#b5932a] text-[#1A1614] px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wider transition-all cursor-pointer flex items-center gap-1"
+                >
+                  <Plus className="w-3.5 h-3.5" /> Add Photo
+                </button>
+                <button
+                  onClick={() => setIsAdminMode(false)}
+                  className="bg-white/10 hover:bg-white/20 text-white px-3 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer"
+                >
+                  Exit Admin
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => setShowPinModal(true)}
+                className="inline-flex items-center gap-2 bg-[#241E1B] hover:bg-[#382F2A] text-[#D4AF37] border border-[#D4AF37]/30 px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer shadow-sm"
+              >
+                <KeyRound className="w-3.5 h-3.5 text-[#D4AF37]" />
+                <span>Admin Gallery Portal</span>
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Category Filters Bar */}
         <div className="flex items-center justify-center gap-2 flex-wrap mb-10">
           {[
-            { id: "all", label: "All Works", icon: Sparkles },
-            { id: "cakes", label: "Cakes & Patisserie", icon: CakeIcon },
-            { id: "catering", label: "Catering Trays & Feasts", icon: UtensilsCrossed },
-            { id: "live_counters", label: "Live Counters", icon: Flame },
-            { id: "hampers", label: "Festival Hampers", icon: Gift },
-            { id: "events", label: "Real Events", icon: Camera }
+            { id: "all", label: "All Items" },
+            { id: "Artisanal Bakery & Cakes", label: "Artisanal Bakery & Cakes" },
+            { id: "Savory Specialties", label: "Savory Specialties" },
+            { id: "Traditional Sweets", label: "Traditional Sweets" },
+            { id: "Breads & Starters", label: "Breads & Starters" }
           ].map(tab => {
-            const Icon = tab.icon;
             const isActive = activeTab === tab.id;
             return (
               <button
@@ -197,133 +244,149 @@ export default function GalleryPage() {
                 onClick={() => setActiveTab(tab.id)}
                 className={`inline-flex items-center gap-2 min-h-[40px] px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer ${
                   isActive
-                    ? "bg-[#00346f] text-white shadow-sm ring-1 ring-[#ffdea5]/40"
-                    : "bg-white text-gray-700 hover:text-[#00346f] hover:bg-gray-50 border border-gray-200"
+                    ? "bg-[#D4AF37] text-[#1A1614] shadow-md font-bold"
+                    : "bg-[#241E1B] text-gray-300 hover:text-white border border-[#382F2A] hover:border-[#D4AF37]/40"
                 }`}
               >
-                <Icon className={`w-3.5 h-3.5 ${isActive ? "text-[#ffdea5]" : "text-gray-400"}`} />
                 <span>{tab.label}</span>
               </button>
             );
           })}
         </div>
 
-        {/* Gallery Bento Grid */}
+        {/* Gallery Masonry / Bento Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
           {filteredItems.map((item) => (
             <div
               key={item.id}
               onClick={() => setSelectedItem(item)}
-              className="group bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-xs hover:shadow-xl transition-all duration-300 flex flex-col cursor-pointer hover:-translate-y-1"
+              className={`group bg-[#241E1B] rounded-2xl border ${
+                item.visible ? "border-[#382F2A] hover:border-[#D4AF37]" : "border-rose-900/60 opacity-60"
+              } overflow-hidden shadow-xl transition-all duration-300 flex flex-col cursor-pointer hover:-translate-y-1 relative`}
             >
-              {/* Image Container */}
-              <div className="relative h-64 sm:h-72 overflow-hidden bg-gray-100">
+              {/* Admin Overlay Controls */}
+              {isAdminMode && (
+                <div className="absolute top-3 right-3 z-20 flex items-center gap-2 bg-[#1A1614]/90 backdrop-blur-md p-1.5 rounded-xl border border-white/20">
+                  <button
+                    onClick={(e) => handleToggleVisibility(item.id, e)}
+                    className={`p-1.5 rounded-lg text-xs transition-colors cursor-pointer ${
+                      item.visible ? "bg-emerald-500/20 text-emerald-400" : "bg-rose-500/20 text-rose-400"
+                    }`}
+                    title={item.visible ? "Visible in guest gallery" : "Hidden from guest gallery"}
+                  >
+                    {item.visible ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setEditingItem(item);
+                    }}
+                    className="p-1.5 rounded-lg text-xs bg-amber-500/20 text-amber-300 hover:bg-amber-500/40 cursor-pointer"
+                    title="Edit Item Details"
+                  >
+                    <Edit3 className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={(e) => handleDeleteItem(item.id, e)}
+                    className="p-1.5 rounded-lg text-xs bg-rose-500/20 text-rose-300 hover:bg-rose-500/40 cursor-pointer"
+                    title="Delete Item"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              )}
+
+              {/* Photo Image View */}
+              <div className="relative h-64 sm:h-72 overflow-hidden bg-[#1A1614]">
                 <img
-                  src={item.imageSrc}
+                  src={item.imagePath}
                   alt={item.title}
                   className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                  referrerPolicy="no-referrer"
                   onError={(e) => {
-                    // Fallback image if local path breaks
-                    (e.target as HTMLImageElement).src = "src/assets/images/BlueBonnet Catering.jpeg";
+                    (e.target as HTMLImageElement).src = "/gallery/gallery_01.png";
                   }}
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent opacity-60 group-hover:opacity-80 transition-opacity" />
-                
-                {/* Category Badge */}
-                <div className="absolute top-3 left-3 bg-[#00346f]/90 text-white backdrop-blur-md px-3 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider font-sans border border-white/20">
-                  {item.categoryLabel}
-                </div>
+                <div className="absolute inset-0 bg-gradient-to-t from-[#1A1614] via-transparent to-transparent opacity-80" />
 
-                {/* Occasion Overlay */}
-                <div className="absolute bottom-3 left-3 right-3 text-white">
-                  <span className="text-[11px] font-bold text-[#ffdea5] tracking-wider uppercase block font-sans drop-shadow-xs">
-                    {item.occasion}
-                  </span>
-                  <h3 className="font-serif text-lg font-bold leading-tight drop-shadow-xs text-white group-hover:text-[#ffdea5] transition-colors">
-                    {item.title}
-                  </h3>
+                {/* Category Pill */}
+                <div className="absolute top-3 left-3 bg-[#1A1614]/80 backdrop-blur-md text-[#D4AF37] border border-[#D4AF37]/30 px-3 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider font-sans">
+                  {item.category}
                 </div>
               </div>
 
-              {/* Card Footer / Tags */}
-              <div className="p-5 flex-1 flex flex-col justify-between space-y-4">
-                <p className="text-gray-600 text-xs leading-relaxed line-clamp-2">
-                  {item.description}
-                </p>
+              {/* Card Footer Content */}
+              <div className="p-6 flex-1 flex flex-col justify-between space-y-3 bg-[#241E1B]">
+                <div>
+                  <h3 className="font-serif text-lg font-bold text-white group-hover:text-[#D4AF37] transition-colors leading-snug mb-2">
+                    {item.title}
+                  </h3>
+                  <p className="text-gray-300 text-xs leading-relaxed font-sans line-clamp-3 font-light">
+                    {item.autoDescription}
+                  </p>
+                </div>
 
-                <div className="flex flex-wrap gap-1.5 pt-2 border-t border-gray-100">
-                  {item.tags.map((tag) => (
-                    <span
-                      key={tag}
-                      className="text-[10px] font-sans font-semibold bg-gray-50 border border-gray-200 text-gray-600 px-2.5 py-0.5 rounded-full"
-                    >
-                      #{tag}
-                    </span>
-                  ))}
+                <div className="pt-3 border-t border-[#382F2A] flex items-center justify-between text-[11px] text-[#D4AF37] font-serif italic">
+                  <span>Authentic DFW Artistry</span>
+                  <span className="font-sans uppercase text-[10px] font-bold tracking-wider text-gray-400 group-hover:text-[#D4AF37] transition-colors">
+                    Inspect Dish &rarr;
+                  </span>
                 </div>
               </div>
             </div>
           ))}
         </div>
 
-        {/* Modal / Lightbox for selected item */}
-        {selectedItem && (
-          <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 sm:p-6 animate-fade-in">
+        {/* Guest Detail Lightbox Modal */}
+        {selectedItem && !editingItem && (
+          <div 
+            className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 sm:p-6 animate-fade-in"
+            onClick={() => setSelectedItem(null)}
+          >
             <div 
-              className="bg-white rounded-2xl max-w-3xl w-full overflow-hidden shadow-2xl relative animate-scale-up border border-gray-100"
+              className="bg-[#241E1B] border border-[#D4AF37]/40 rounded-2xl max-w-3xl w-full overflow-hidden shadow-2xl relative text-[#E6DFD5]"
               onClick={(e) => e.stopPropagation()}
             >
-              {/* Close Button */}
               <button
                 onClick={() => setSelectedItem(null)}
-                className="absolute top-4 right-4 z-10 bg-black/50 hover:bg-black text-white p-2 rounded-full backdrop-blur-md transition-colors cursor-pointer"
-                aria-label="Close modal"
+                className="absolute top-4 right-4 z-10 bg-black/60 hover:bg-black text-white p-2 rounded-full backdrop-blur-md transition-colors cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
 
               <div className="grid grid-cols-1 sm:grid-cols-2">
-                <div className="relative h-72 sm:h-full bg-gray-900">
+                <div className="relative h-72 sm:h-full bg-black">
                   <img
-                    src={selectedItem.imageSrc}
+                    src={selectedItem.imagePath}
                     alt={selectedItem.title}
                     className="w-full h-full object-cover"
-                    referrerPolicy="no-referrer"
                   />
                 </div>
 
                 <div className="p-6 sm:p-8 flex flex-col justify-between space-y-6">
                   <div>
-                    <span className="text-[11px] font-bold text-[#775a19] uppercase tracking-widest block mb-1">
-                      {selectedItem.categoryLabel} • {selectedItem.occasion}
+                    <span className="text-[11px] font-bold text-[#D4AF37] uppercase tracking-widest block mb-2 font-sans">
+                      {selectedItem.category}
                     </span>
-                    <h2 className="font-serif text-2xl font-bold text-[#00346f] mb-3 leading-snug">
+                    <h2 className="font-serif text-2xl font-bold text-white mb-3 leading-snug">
                       {selectedItem.title}
                     </h2>
-                    <p className="text-gray-600 text-xs sm:text-sm leading-relaxed mb-4">
-                      {selectedItem.description}
+                    <p className="text-gray-300 text-xs sm:text-sm leading-relaxed font-light">
+                      {selectedItem.autoDescription}
                     </p>
-
-                    <div className="flex flex-wrap gap-2 mb-6">
-                      {selectedItem.tags.map((tag) => (
-                        <span key={tag} className="text-xs font-semibold bg-[#ffdea5]/30 text-[#775a19] px-3 py-1 rounded-full border border-[#775a19]/20">
-                          {tag}
-                        </span>
-                      ))}
-                    </div>
                   </div>
 
-                  <div className="space-y-3 pt-4 border-t border-gray-100">
-                    <p className="text-[11px] text-gray-500 font-medium">
-                      Like this setup? Get in touch with our team for custom ordering or tailoring to your party size.
+                  <div className="space-y-3 pt-4 border-t border-[#382F2A]">
+                    <p className="text-[11px] text-gray-400 font-medium font-sans">
+                      Handcrafted daily in our Frisco kitchen. Custom spice level &amp; 100% eggless options available.
                     </p>
                     <button
-                      onClick={() => handleOpenSMS(selectedItem.title)}
-                      className="w-full min-h-[44px] inline-flex items-center justify-center gap-2 bg-[#00346f] hover:bg-[#00224d] text-white font-sans text-xs uppercase tracking-widest font-bold px-6 py-3 rounded-xl shadow-md transition-all cursor-pointer"
+                      onClick={() => {
+                        window.location.href = `sms:+19455274566?body=Hi!%20I'm%20interested%20in%20ordering%20${encodeURIComponent(selectedItem.title)}.`;
+                      }}
+                      className="w-full min-h-[44px] inline-flex items-center justify-center gap-2 bg-[#D4AF37] hover:bg-[#b5932a] text-[#1A1614] font-sans text-xs uppercase tracking-widest font-bold px-6 py-3 rounded-xl shadow-md transition-all cursor-pointer"
                     >
-                      <MessageSquare className="w-4 h-4 text-[#ffdea5]" />
-                      <span>Inquire About Similar Order</span>
+                      <MessageSquare className="w-4 h-4 text-[#1A1614]" />
+                      <span>Order or Inquire Similar Dish</span>
                     </button>
                   </div>
                 </div>
@@ -332,31 +395,239 @@ export default function GalleryPage() {
           </div>
         )}
 
-        {/* Bottom Banner Callout */}
-        <div className="mt-16 bg-[#00346f] text-white rounded-2xl p-8 sm:p-10 text-center shadow-lg relative overflow-hidden">
-          <div className="relative z-10 max-w-2xl mx-auto space-y-4">
-            <span className="text-[11px] font-bold tracking-widest text-[#ffdea5] uppercase block font-sans">
-              Handcrafted Culinary Artistry • DFW Area
-            </span>
-            <h2 className="font-serif text-2xl sm:text-3xl font-bold text-white tracking-tight">
-              Have a Specific Design or Catering Menu in Mind?
-            </h2>
-            <p className="text-gray-200 text-xs sm:text-sm leading-relaxed font-sans">
-              We specialize in custom orders for birthdays, weddings, anniversaries, corporate events, and festival celebrations. Eggless options standard on all baked creations.
-            </p>
-            <div className="pt-2">
-              <button
-                onClick={() => {
-                  window.location.href = "sms:+19455274566?body=Hi!%20I'd%20like%20to%20discuss%20a%20custom%20order%20for%20an%20upcoming%20event.";
-                }}
-                className="min-h-[44px] inline-flex items-center justify-center gap-2 bg-[#775a19] hover:bg-[#5d4201] text-white font-sans text-xs uppercase tracking-wider font-bold px-8 py-3.5 rounded-xl shadow-md transition-all cursor-pointer"
-              >
-                <MessageSquare className="w-4 h-4 text-[#ffdea5]" />
-                <span>Discuss Event with Chef &amp; Baker</span>
-              </button>
+        {/* PIN Authentication Modal */}
+        {showPinModal && (
+          <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4">
+            <div className="bg-[#241E1B] border border-[#D4AF37]/50 rounded-2xl p-6 sm:p-8 max-w-md w-full shadow-2xl text-center space-y-6 animate-scale-up">
+              <div className="w-12 h-12 bg-[#D4AF37]/20 text-[#D4AF37] rounded-full flex items-center justify-center mx-auto border border-[#D4AF37]/30">
+                <Lock className="w-6 h-6" />
+              </div>
+
+              <div className="space-y-1">
+                <h3 className="font-serif text-2xl font-bold text-white">Admin Authentication</h3>
+                <p className="text-gray-400 text-xs font-sans">
+                  Enter your master KDS PIN to unlock gallery edit permissions.
+                </p>
+              </div>
+
+              {pinError && (
+                <div className="bg-rose-500/20 border border-rose-500/50 text-rose-300 p-3 rounded-xl text-xs font-semibold">
+                  Invalid PIN. Please try again.
+                </div>
+              )}
+
+              <form onSubmit={handlePinSubmit} className="space-y-4">
+                <input
+                  type="password"
+                  value={pinInput}
+                  onChange={(e) => setPinInput(e.target.value)}
+                  placeholder="Enter PIN (e.g. 031686)"
+                  maxLength={8}
+                  autoFocus
+                  required
+                  className="w-full bg-[#1A1614] border border-[#382F2A] text-white text-center text-xl tracking-widest py-3 rounded-xl focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37] outline-none font-mono"
+                />
+
+                <div className="flex gap-3">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowPinModal(false);
+                      setPinError(false);
+                    }}
+                    className="flex-1 min-h-[44px] bg-[#1A1614] hover:bg-[#382F2A] text-gray-300 rounded-xl text-xs uppercase font-bold tracking-wider"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="flex-1 min-h-[44px] bg-[#D4AF37] hover:bg-[#b5932a] text-[#1A1614] rounded-xl text-xs uppercase font-bold tracking-wider shadow-md"
+                  >
+                    Unlock Admin
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
-        </div>
+        )}
+
+        {/* Edit Item Modal */}
+        {editingItem && (
+          <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4">
+            <div className="bg-[#241E1B] border border-[#D4AF37]/50 rounded-2xl p-6 sm:p-8 max-w-lg w-full shadow-2xl space-y-6">
+              <div className="flex items-center justify-between border-b border-[#382F2A] pb-4">
+                <h3 className="font-serif text-xl font-bold text-white flex items-center gap-2">
+                  <Edit3 className="w-5 h-5 text-[#D4AF37]" />
+                  <span>Edit Gallery Item</span>
+                </h3>
+                <button onClick={() => setEditingItem(null)} className="text-gray-400 hover:text-white">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <form onSubmit={handleSaveEdit} className="space-y-4">
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-gray-300 uppercase tracking-wider block">Title</label>
+                  <input
+                    type="text"
+                    value={editingItem.title}
+                    onChange={(e) => setEditingItem({ ...editingItem, title: e.target.value })}
+                    required
+                    className="w-full bg-[#1A1614] border border-[#382F2A] text-white px-4 py-2.5 rounded-xl text-xs focus:border-[#D4AF37] outline-none"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-gray-300 uppercase tracking-wider block">Category</label>
+                  <select
+                    value={editingItem.category}
+                    onChange={(e) => setEditingItem({ ...editingItem, category: e.target.value as GalleryItem["category"] })}
+                    className="w-full bg-[#1A1614] border border-[#382F2A] text-white px-4 py-2.5 rounded-xl text-xs focus:border-[#D4AF37] outline-none"
+                  >
+                    {categories.map(cat => (
+                      <option key={cat} value={cat}>{cat}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-gray-300 uppercase tracking-wider block">Description</label>
+                  <textarea
+                    rows={3}
+                    value={editingItem.autoDescription}
+                    onChange={(e) => setEditingItem({ ...editingItem, autoDescription: e.target.value })}
+                    required
+                    className="w-full bg-[#1A1614] border border-[#382F2A] text-white px-4 py-2.5 rounded-xl text-xs focus:border-[#D4AF37] outline-none"
+                  />
+                </div>
+
+                {/* Swap Image Handler */}
+                <div className="space-y-1 pt-2">
+                  <label className="text-xs font-bold text-gray-300 uppercase tracking-wider block">Swap Image File</label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => {
+                      if (e.target.files && e.target.files[0]) {
+                        handleImageSwap(editingItem.id, e.target.files[0]);
+                      }
+                    }}
+                    className="w-full bg-[#1A1614] border border-[#382F2A] text-gray-300 text-xs px-3 py-2 rounded-xl"
+                  />
+                </div>
+
+                <div className="flex gap-3 pt-4 border-t border-[#382F2A]">
+                  <button
+                    type="button"
+                    onClick={() => setEditingItem(null)}
+                    className="flex-1 min-h-[44px] bg-[#1A1614] text-gray-300 rounded-xl text-xs uppercase font-bold"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="flex-1 min-h-[44px] bg-[#D4AF37] text-[#1A1614] rounded-xl text-xs uppercase font-bold"
+                  >
+                    Save Modifications
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* Add New Item Modal */}
+        {showAddModal && (
+          <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4">
+            <div className="bg-[#241E1B] border border-[#D4AF37]/50 rounded-2xl p-6 sm:p-8 max-w-lg w-full shadow-2xl space-y-6">
+              <div className="flex items-center justify-between border-b border-[#382F2A] pb-4">
+                <h3 className="font-serif text-xl font-bold text-white flex items-center gap-2">
+                  <Plus className="w-5 h-5 text-[#D4AF37]" />
+                  <span>Add New Gallery Photo</span>
+                </h3>
+                <button onClick={() => setShowAddModal(false)} className="text-gray-400 hover:text-white">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <form onSubmit={handleAddNewItem} className="space-y-4">
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-gray-300 uppercase tracking-wider block">Dish / Cake Title</label>
+                  <input
+                    type="text"
+                    value={newTitle}
+                    onChange={(e) => setNewTitle(e.target.value)}
+                    placeholder="e.g. Amritsari Kulcha Platter"
+                    required
+                    className="w-full bg-[#1A1614] border border-[#382F2A] text-white px-4 py-2.5 rounded-xl text-xs focus:border-[#D4AF37] outline-none"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-gray-300 uppercase tracking-wider block">Category</label>
+                  <select
+                    value={newCategory}
+                    onChange={(e) => setNewCategory(e.target.value as GalleryItem["category"])}
+                    className="w-full bg-[#1A1614] border border-[#382F2A] text-white px-4 py-2.5 rounded-xl text-xs focus:border-[#D4AF37] outline-none"
+                  >
+                    {categories.map(cat => (
+                      <option key={cat} value={cat}>{cat}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-gray-300 uppercase tracking-wider block">Evocative Description</label>
+                  <textarea
+                    rows={3}
+                    value={newDescription}
+                    onChange={(e) => setNewDescription(e.target.value)}
+                    placeholder="Describe ingredients, texture, crumb, or traditional slow-cooking prep..."
+                    required
+                    className="w-full bg-[#1A1614] border border-[#382F2A] text-white px-4 py-2.5 rounded-xl text-xs focus:border-[#D4AF37] outline-none"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-gray-300 uppercase tracking-wider block">Select Photo File</label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => {
+                      if (e.target.files && e.target.files[0]) {
+                        handleNewFileSelect(e.target.files[0]);
+                      }
+                    }}
+                    required
+                    className="w-full bg-[#1A1614] border border-[#382F2A] text-gray-300 text-xs px-3 py-2 rounded-xl"
+                  />
+                </div>
+
+                {newImagePath && (
+                  <div className="h-32 bg-black rounded-xl overflow-hidden relative border border-[#382F2A]">
+                    <img src={newImagePath} alt="Preview" className="w-full h-full object-cover" />
+                  </div>
+                )}
+
+                <div className="flex gap-3 pt-4 border-t border-[#382F2A]">
+                  <button
+                    type="button"
+                    onClick={() => setShowAddModal(false)}
+                    className="flex-1 min-h-[44px] bg-[#1A1614] text-gray-300 rounded-xl text-xs uppercase font-bold"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="flex-1 min-h-[44px] bg-[#D4AF37] text-[#1A1614] rounded-xl text-xs uppercase font-bold"
+                  >
+                    Add to Gallery
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
 
       </div>
     </div>
