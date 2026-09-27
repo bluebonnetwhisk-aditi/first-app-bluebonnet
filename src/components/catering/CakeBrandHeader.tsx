@@ -34,7 +34,7 @@ export default function CakeBrandHeader({ onScrollToConfigurator }: CakeBrandHea
             <img 
               src={brandLogo} 
               alt="Bluebonnet Whisk" 
-              className="h-12 sm:h-16 w-auto mx-auto object-contain drop-shadow-md"
+              className="h-6 sm:h-8 w-auto mx-auto object-contain drop-shadow-md"
             />
           </div>
           <p className="font-serif text-lg sm:text-2xl text-[#ffdea5] italic font-medium">

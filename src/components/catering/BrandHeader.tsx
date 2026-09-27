@@ -41,7 +41,7 @@ export default function BrandHeader({ onScrollToMenu }: BrandHeaderProps) {
             <img 
               src={brandLogo} 
               alt="Bluebonnet Whisk" 
-              className="h-12 sm:h-16 w-auto mx-auto object-contain drop-shadow-md"
+              className="h-6 sm:h-8 w-auto mx-auto object-contain drop-shadow-md"
             />
           </div>
           <h1 className="font-serif text-2xl sm:text-4xl font-bold tracking-tight text-white leading-tight drop-shadow-sm">

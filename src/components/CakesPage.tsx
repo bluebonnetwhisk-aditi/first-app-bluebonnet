@@ -1,4 +1,5 @@
 import { MessageSquare, Sparkles } from "lucide-react";
+import brandLogo from "../assets/images/brand_logo_transparent.png";
 import { flavorCategories } from "../types";
 
 interface CakesPageProps {
@@ -51,6 +52,13 @@ export default function CakesPage({ onOpenBaker, onCreateQuote }: CakesPageProps
         </div>
 
         <div className="relative z-10 max-w-7xl mx-auto px-4 lg:px-6 lg:px-8 text-white lg:text-left">
+          <div className="mb-3">
+            <img 
+              src={brandLogo} 
+              alt="Bluebonnet Whisk" 
+              className="h-6 sm:h-8 w-auto object-contain drop-shadow-md"
+            />
+          </div>
           <span className="font-sans text-xs font-bold tracking-widest text-brand-gold-tint uppercase block mb-3">
             SWEET MOMENTS, BEAUTIFULLY BAKED
           </span>
