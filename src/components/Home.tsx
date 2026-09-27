@@ -321,74 +321,147 @@ export default function Home({ onOpenWizard, onOpenBaker: _onOpenBaker, onNaviga
       />
 
 
-      {/* ── HIGHLIGHTS SHOWCASE ── */}
+      {/* ── CURATED EVENT PLANNING SECTION ── */}
       <section className="py-24 border-t border-white/5 bg-[#0a1128]">
         <div className="max-w-7xl mx-auto px-4 space-y-12">
           
-          <div className="text-center max-w-xl mx-auto">
-            <span className="text-[10px] font-bold text-brand-gold-tint tracking-widest uppercase">SIGNATURE RANGE</span>
-            <h2 className="font-serif text-3xl lg:text-4xl font-bold text-brand-cream mt-1">Highlights &amp; Attractions</h2>
-            <p className="text-xs text-gray-400 font-sans mt-2">Discover what makes our patrons rave and gets everyone&apos;s attention.</p>
+          <div className="text-center max-w-xl mx-auto space-y-2">
+            <span className="text-[10px] font-bold text-brand-gold-tint tracking-widest uppercase">
+              CUSTOM PARTY PACKAGES
+            </span>
+            <h2 className="font-serif text-3xl lg:text-4xl font-bold text-brand-cream mt-1">
+              Curated Event Planning
+            </h2>
+            <p className="text-xs text-gray-400 font-sans mt-2">
+              Celebrate life’s milestones with handcrafted menus and bespoke setups designed for your special occasions.
+            </p>
+            <div className="h-0.5 w-12 bg-brand-gold-tint mx-auto mt-2" />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             
-            {/* Highlight 1: Rasmalai Royalty */}
-            <div className="glass-panel-dark rounded-lg p-6 flex flex-col justify-between group hover:border-[#775a19]/55 transition-all">
+            {/* 1. Kids Birthday Party Package */}
+            <div className="glass-panel-dark rounded-xl overflow-hidden border border-white/10 flex flex-col justify-between group hover:border-brand-gold-tint/50 transition-all duration-300 shadow-xl">
               <div>
-                <span className="text-[9px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded tracking-wider uppercase">Best Seller</span>
-                <h3 className="font-serif text-xl font-bold mt-3 mb-2 text-brand-cream">Rasmalai Royale Cake</h3>
-                <p className="text-gray-300 text-xs leading-relaxed">
-                  Real saffron-soaked cardamom sponge layered with premium pistachios, almond flakes, and fresh whipped cream kheer layers. An absolute masterpiece of Indian-fusion patisserie.
-                </p>
+                <div className="relative h-48 overflow-hidden">
+                  <img 
+                    src="src/assets/images/kids_birthday_package.png" 
+                    alt="Kids Birthday Party Package"
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    referrerPolicy="no-referrer"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#0a1128] via-transparent to-transparent" />
+                  <span className="absolute top-3 left-3 bg-[#775a19] text-white text-[9px] font-bold uppercase tracking-wider px-2.5 py-1 rounded shadow-xs">
+                    KIDS BIRTHDAYS
+                  </span>
+                </div>
+                <div className="p-6 space-y-3">
+                  <h3 className="font-serif text-xl font-bold text-brand-cream">
+                    Kids Birthday Party Package
+                  </h3>
+                  <p className="text-gray-300 text-xs leading-relaxed font-sans">
+                    A fun, kid-friendly menu made for little celebrations. Includes popular appetizers, main dish, special drinks, and custom theme cake.
+                  </p>
+                  <ul className="text-xs text-brand-gold-tint/90 space-y-1 pt-1 font-medium">
+                    <li>✓ 2 Kid-Favorite Appetizers</li>
+                    <li>✓ 1 Crowd-Pleaser Main Course</li>
+                    <li>✓ Special Refreshing Drinks</li>
+                    <li>✓ Custom Theme Birthday Cake</li>
+                  </ul>
+                </div>
               </div>
-              <div className="mt-6 pt-4 border-t border-white/5 flex justify-between items-center text-xs text-brand-gold-tint font-bold font-sans">
-                <span>100% EGGLESS</span>
-                <button 
-                  onClick={() => onOpenWizard("Rasmalai Royale", "Indian Fusion")} 
-                  className="min-h-[44px] inline-flex items-center gap-1 hover:gap-2 transition-all cursor-pointer"
+
+              <div className="p-6 pt-0">
+                <button
+                  onClick={() => onNavigate("Live Counters")}
+                  className="w-full min-h-[44px] inline-flex items-center justify-center gap-2 bg-[#775a19] hover:bg-[#5d4201] text-white text-xs font-bold uppercase tracking-wider rounded transition-all cursor-pointer shadow-md"
                 >
-                  <span>INQUIRE NOW</span> <ArrowRight className="h-3 w-3" />
+                  <span>EXPLORE PACKAGE</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
                 </button>
               </div>
             </div>
 
-            {/* Highlight 2: Pani Puri Live Station */}
-            <div className="glass-panel-dark rounded-lg p-6 flex flex-col justify-between group hover:border-[#775a19]/55 transition-all">
+            {/* 2. Anniversaries & Special Occasions */}
+            <div className="glass-panel-dark rounded-xl overflow-hidden border border-white/10 flex flex-col justify-between group hover:border-brand-gold-tint/50 transition-all duration-300 shadow-xl">
               <div>
-                <span className="text-[9px] font-bold text-brand-gold-tint bg-brand-gold-tint/10 px-2 py-0.5 rounded tracking-wider uppercase">Event Attraction</span>
-                <h3 className="font-serif text-xl font-bold mt-3 mb-2 text-brand-cream">Artisanal Pani Puri Station</h3>
-                <p className="text-gray-300 text-xs leading-relaxed">
-                  Featuring 5 customized, spiced water flavors (Pomegranate-Mint, Tangy Tamarind, Cumin, Raw Mango, Spiced Pineapple). Crispy semolina puris filled live for guests.
-                </p>
+                <div className="relative h-48 overflow-hidden">
+                  <img 
+                    src="src/assets/images/anniversary_package.png" 
+                    alt="Anniversaries & Special Occasions"
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    referrerPolicy="no-referrer"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#0a1128] via-transparent to-transparent" />
+                  <span className="absolute top-3 left-3 bg-[#775a19] text-white text-[9px] font-bold uppercase tracking-wider px-2.5 py-1 rounded shadow-xs">
+                    ANNIVERSARIES
+                  </span>
+                </div>
+                <div className="p-6 space-y-3">
+                  <h3 className="font-serif text-xl font-bold text-brand-cream">
+                    Anniversaries &amp; Special Occasions
+                  </h3>
+                  <p className="text-gray-300 text-xs leading-relaxed font-sans">
+                    Elegant, elevated menus tailored for meaningful milestones. Features curated appetizers, gourmet mains, fusion desserts, and optional custom cakes.
+                  </p>
+                  <ul className="text-xs text-brand-gold-tint/90 space-y-1 pt-1 font-medium">
+                    <li>✓ Premium Handcrafted Appetizers</li>
+                    <li>✓ Curated Main Course Selection</li>
+                    <li>✓ Gourmet Sweets &amp; Fusion Desserts</li>
+                    <li>✓ Optional Designer Milestone Cake</li>
+                  </ul>
+                </div>
               </div>
-              <div className="mt-6 pt-4 border-t border-white/5 flex justify-between items-center text-xs text-brand-gold-tint font-bold font-sans">
-                <span>LIVE COUNTER SETUP</span>
-                <button 
-                  onClick={() => onOpenWizard("", "Live Counters")} 
-                  className="min-h-[44px] inline-flex items-center gap-1 hover:gap-2 transition-all cursor-pointer"
+
+              <div className="p-6 pt-0">
+                <button
+                  onClick={() => onNavigate("Live Counters")}
+                  className="w-full min-h-[44px] inline-flex items-center justify-center gap-2 bg-[#775a19] hover:bg-[#5d4201] text-white text-xs font-bold uppercase tracking-wider rounded transition-all cursor-pointer shadow-md"
                 >
-                  <span>INQUIRE NOW</span> <ArrowRight className="h-3 w-3" />
+                  <span>EXPLORE PACKAGE</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
                 </button>
               </div>
             </div>
 
-            {/* Highlight 3: Custom Gifting Hampers */}
-            <div className="glass-panel-dark rounded-lg p-6 flex flex-col justify-between group hover:border-[#775a19]/55 transition-all">
+            {/* 3. Get-Together / Family Gathering */}
+            <div className="glass-panel-dark rounded-xl overflow-hidden border border-white/10 flex flex-col justify-between group hover:border-brand-gold-tint/50 transition-all duration-300 shadow-xl">
               <div>
-                <span className="text-[9px] font-bold text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded tracking-wider uppercase">Festive Gifting</span>
-                <h3 className="font-serif text-xl font-bold mt-3 mb-2 text-brand-cream">Regal Gifting Chests</h3>
-                <p className="text-gray-300 text-xs leading-relaxed">
-                  Gold-embossed chests filled with 4 signature fusion jars (Rasmalai, Gulab Jamun, Mango Mastani, Pistachio) and gourmet cardamom cookies. Ideal for Diwali, Eid, and weddings.
-                </p>
+                <div className="relative h-48 overflow-hidden">
+                  <img 
+                    src="src/assets/images/family_gathering_package.png" 
+                    alt="Get-Together / Family Gathering & Special Occasions"
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    referrerPolicy="no-referrer"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#0a1128] via-transparent to-transparent" />
+                  <span className="absolute top-3 left-3 bg-[#775a19] text-white text-[9px] font-bold uppercase tracking-wider px-2.5 py-1 rounded shadow-xs">
+                    FAMILY GATHERINGS
+                  </span>
+                </div>
+                <div className="p-6 space-y-3">
+                  <h3 className="font-serif text-xl font-bold text-brand-cream">
+                    Get-Together / Family Gathering
+                  </h3>
+                  <p className="text-gray-300 text-xs leading-relaxed font-sans">
+                    Comforting, authentic homestyle Indian flavors perfect for sharing. Generous portions of your favorite appetizers, main courses, and traditional desserts.
+                  </p>
+                  <ul className="text-xs text-brand-gold-tint/90 space-y-1 pt-1 font-medium">
+                    <li>✓ Homestyle Favorite Appetizers</li>
+                    <li>✓ Generous Tray Main Courses</li>
+                    <li>✓ Traditional Mithai &amp; Desserts</li>
+                    <li>✓ Chilled Beverages &amp; Mocktails</li>
+                  </ul>
+                </div>
               </div>
-              <div className="mt-6 pt-4 border-t border-white/5 flex justify-between items-center text-xs text-brand-gold-tint font-bold font-sans">
-                <span>SHIPPING AVAILABLE</span>
-                <button 
-                  onClick={() => onOpenWizard()} 
-                  className="min-h-[44px] inline-flex items-center gap-1 hover:gap-2 transition-all cursor-pointer"
+
+              <div className="p-6 pt-0">
+                <button
+                  onClick={() => onNavigate("Live Counters")}
+                  className="w-full min-h-[44px] inline-flex items-center justify-center gap-2 bg-[#775a19] hover:bg-[#5d4201] text-white text-xs font-bold uppercase tracking-wider rounded transition-all cursor-pointer shadow-md"
                 >
-                  <span>INQUIRE NOW</span> <ArrowRight className="h-3 w-3" />
+                  <span>EXPLORE PACKAGE</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
                 </button>
               </div>
             </div>
