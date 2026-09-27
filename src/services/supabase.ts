@@ -1099,7 +1099,23 @@ export async function saveTiffinMenuSettings(settings: TiffinMenuSettings): Prom
 export const LOCAL_STORAGE_GALLERY_KEY = 'bbw_gallery_data_v2';
 export const LOCAL_STORAGE_DELETED_GALLERY_KEY = 'bbw_deleted_gallery_ids_v2';
 
+export function cleanLegacyGalleryCaches() {
+  if (typeof localStorage === 'undefined') return;
+  const legacyKeys = [
+    'bbw_gallery_data_v1',
+    'bbw_gallery_data',
+    'bbw_gallery_items',
+    'bbw_deleted_gallery_ids_v1'
+  ];
+  legacyKeys.forEach(k => {
+    try {
+      localStorage.removeItem(k);
+    } catch {}
+  });
+}
+
 export function getDeletedGalleryIds(): string[] {
+  cleanLegacyGalleryCaches();
   try {
     const raw = localStorage.getItem(LOCAL_STORAGE_DELETED_GALLERY_KEY);
     if (raw) {
@@ -1111,6 +1127,7 @@ export function getDeletedGalleryIds(): string[] {
 }
 
 export function recordDeletedGalleryId(id: string) {
+  cleanLegacyGalleryCaches();
   try {
     const current = getDeletedGalleryIds();
     if (!current.includes(id)) {
@@ -1141,6 +1158,7 @@ export function recordDeletedGalleryId(id: string) {
 }
 
 export function clearDeletedGalleryIds() {
+  cleanLegacyGalleryCaches();
   try {
     localStorage.removeItem(LOCAL_STORAGE_DELETED_GALLERY_KEY);
   } catch {}
@@ -1162,6 +1180,7 @@ export function clearDeletedGalleryIds() {
  * Fetch remote gallery items from Supabase app_settings
  */
 export async function fetchGalleryItemsFromSupabase(): Promise<any[] | null> {
+  cleanLegacyGalleryCaches();
   if (supabase) {
     try {
       const { data: delData } = await supabase
@@ -1183,8 +1202,10 @@ export async function fetchGalleryItemsFromSupabase(): Promise<any[] | null> {
         .maybeSingle();
 
       if (!error && data?.value && Array.isArray(data.value) && data.value.length > 0) {
-        localStorage.setItem(LOCAL_STORAGE_GALLERY_KEY, JSON.stringify(data.value));
-        return data.value;
+        const deletedSet = new Set(getDeletedGalleryIds());
+        const cleanItems = data.value.filter((i: any) => i && i.id && !deletedSet.has(i.id));
+        localStorage.setItem(LOCAL_STORAGE_GALLERY_KEY, JSON.stringify(cleanItems));
+        return cleanItems;
       }
     } catch (err) {
       console.warn('Supabase gallery fetch warning:', err);
@@ -1197,10 +1218,17 @@ export async function fetchGalleryItemsFromSupabase(): Promise<any[] | null> {
  * Save remote gallery items to Supabase app_settings & local storage
  */
 export async function saveGalleryItemsToSupabase(items: any[]): Promise<boolean> {
+  cleanLegacyGalleryCaches();
+
+  const deletedSet = new Set(getDeletedGalleryIds());
+  const cleanItems = (items || []).filter((item: any) => item && item.id && !deletedSet.has(item.id));
+
   try {
-    localStorage.setItem(LOCAL_STORAGE_GALLERY_KEY, JSON.stringify(items));
+    localStorage.setItem(LOCAL_STORAGE_GALLERY_KEY, JSON.stringify(cleanItems));
     window.dispatchEvent(new CustomEvent('bbw_gallery_items_updated'));
-  } catch {}
+  } catch (err) {
+    console.warn('localStorage saveGalleryItems warning:', err);
+  }
 
   if (supabase) {
     try {
@@ -1209,7 +1237,7 @@ export async function saveGalleryItemsToSupabase(items: any[]): Promise<boolean>
         .upsert(
           {
             key: 'gallery_items',
-            value: items,
+            value: cleanItems,
             updated_at: new Date().toISOString()
           },
           { onConflict: 'key' }
