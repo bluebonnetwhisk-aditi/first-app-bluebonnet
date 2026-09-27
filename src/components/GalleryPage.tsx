@@ -33,6 +33,7 @@ export interface GalleryItem {
   originalImagePath?: string;
   visible: boolean;
   createdAt?: string;
+  isCustomEdited?: boolean;
 }
 
 export const getItemCategories = (item: GalleryItem): CategoryType[] => {
@@ -57,6 +58,37 @@ interface GalleryPageProps {
   onNavigateToAdmin?: () => void;
 }
 
+const mergeWithInitialData = (sourceItems: any[]): GalleryItem[] => {
+  const initIds = new Set((initialGalleryData as any[]).map(i => i.id));
+  const sourceMap = new Map(sourceItems.map(i => [i.id, i]));
+  
+  const mergedInitial = (initialGalleryData as any[]).map(initItem => {
+    const matched = sourceMap.get(initItem.id);
+    if (!matched) return initItem as GalleryItem;
+
+    if (matched.isCustomEdited) {
+      return {
+        ...initItem,
+        ...matched,
+        category: matched.category || initItem.category
+      };
+    }
+    
+    return {
+      ...initItem,
+      imagePath: matched.imagePath || initItem.imagePath,
+      originalImagePath: matched.originalImagePath || initItem.originalImagePath || (matched.imagePath ? matched.imagePath.replace('/gallery/', '/gallery/orig/') : ''),
+      visible: matched.visible !== undefined ? matched.visible : initItem.visible,
+      title: initItem.title,
+      category: initItem.category,
+      autoDescription: initItem.autoDescription
+    };
+  });
+
+  const customItems = sourceItems.filter(i => !initIds.has(i.id));
+  return [...mergedInitial, ...customItems] as GalleryItem[];
+};
+
 export default function GalleryPage({ onNavigateToAdmin: _onNavigateToAdmin }: GalleryPageProps) {
   const [items, setItems] = useState<GalleryItem[]>(() => {
     try {
@@ -64,30 +96,7 @@ export default function GalleryPage({ onNavigateToAdmin: _onNavigateToAdmin }: G
       if (saved) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          const existingIds = new Set(parsed.map((i: any) => i.id));
-          const missingInitial = (initialGalleryData as any[]).filter(i => !existingIds.has(i.id));
-
-          const mappedParsed = parsed.map((item: any) => {
-            let cat = item.category;
-            if (typeof cat === 'string') {
-              if (cat === "Artisanal Bakery & Cakes") cat = "Artisanal Cakes & Bakes";
-              else if (cat === "Savory Specialties" || cat === "Breads & Starters") cat = "Specialty Culinary Fare";
-              else if (cat === "Traditional Sweets") cat = "Heritage Sweets & Confectionery";
-            }
-
-            const initMatch = (initialGalleryData as any[]).find(i => i.id === item.id);
-
-            return {
-              ...item,
-              title: item.title || initMatch?.title,
-              category: cat || initMatch?.category,
-              autoDescription: item.autoDescription || initMatch?.autoDescription,
-              imagePath: item.imagePath || initMatch?.imagePath,
-              originalImagePath: item.originalImagePath || initMatch?.originalImagePath || (item.imagePath ? item.imagePath.replace('/gallery/', '/gallery/orig/') : '')
-            };
-          });
-
-          return [...mappedParsed, ...missingInitial] as GalleryItem[];
+          return mergeWithInitialData(parsed);
         }
       }
     } catch {
@@ -120,8 +129,14 @@ export default function GalleryPage({ onNavigateToAdmin: _onNavigateToAdmin }: G
   useEffect(() => {
     let isMounted = true;
     fetchGalleryItemsFromSupabase().then((remoteItems) => {
-      if (isMounted && remoteItems && Array.isArray(remoteItems) && remoteItems.length > 0) {
-        setItems(remoteItems as GalleryItem[]);
+      if (isMounted) {
+        if (remoteItems && Array.isArray(remoteItems) && remoteItems.length > 0) {
+          const merged = mergeWithInitialData(remoteItems);
+          setItems(merged);
+          saveGalleryItemsToSupabase(merged);
+        } else {
+          saveGalleryItemsToSupabase(initialGalleryData as GalleryItem[]);
+        }
       }
     });
 
@@ -130,7 +145,7 @@ export default function GalleryPage({ onNavigateToAdmin: _onNavigateToAdmin }: G
         const raw = localStorage.getItem(LOCAL_STORAGE_GALLERY_KEY);
         if (raw) {
           const parsed = JSON.parse(raw);
-          if (Array.isArray(parsed)) setItems(parsed);
+          if (Array.isArray(parsed)) setItems(mergeWithInitialData(parsed));
         }
       } catch {}
     };
@@ -204,8 +219,9 @@ export default function GalleryPage({ onNavigateToAdmin: _onNavigateToAdmin }: G
   const handleSaveEdit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingItem) return;
+    const updatedItem = { ...editingItem, isCustomEdited: true };
     setItems(prev => {
-      const next = prev.map(item => item.id === editingItem.id ? editingItem : item);
+      const next = prev.map(item => item.id === editingItem.id ? updatedItem : item);
       saveGalleryItemsToSupabase(next);
       return next;
     });
