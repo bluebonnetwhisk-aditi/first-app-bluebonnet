@@ -13,6 +13,8 @@ import KitchenKDS from "./components/catering/KitchenKDS";
 import LiveCountersPage from "./components/LiveCountersPage";
 import GiftingPage from "./components/GiftingPage";
 import AboutPage from "./components/AboutPage";
+import GalleryPage from "./components/GalleryPage";
+import ReviewsPage from "./components/ReviewsPage";
 
 // Modals (InquiryWizard retired)
 
@@ -61,6 +63,8 @@ export default function App() {
       }
       if (path.startsWith("/catering") || path.startsWith("/menu")) return "Catering";
       if (path.startsWith("/cakes")) return "Cakes";
+      if (path.startsWith("/gallery")) return "Gallery";
+      if (path.startsWith("/reviews")) return "Reviews";
       if (path.startsWith("/about")) return "About";
     }
     return "Home";
@@ -133,6 +137,10 @@ export default function App() {
       const currentPath = window.location.pathname.toLowerCase();
       if (activeTab === "Catering" && !currentPath.startsWith("/catering")) {
         window.history.pushState(null, "", "/catering/food");
+      } else if (activeTab === "Gallery" && !currentPath.startsWith("/gallery")) {
+        window.history.pushState(null, "", "/gallery");
+      } else if (activeTab === "Reviews" && !currentPath.startsWith("/reviews")) {
+        window.history.pushState(null, "", "/reviews");
       } else if (activeTab === "Home" && currentPath !== "/" && currentPath !== "") {
         window.history.pushState(null, "", "/");
       }
@@ -150,6 +158,8 @@ export default function App() {
       setIsKitchenMode(false);
       if (path.startsWith("/catering") || path.startsWith("/menu")) setActiveTab("Catering");
       else if (path.startsWith("/cakes")) setActiveTab("Cakes");
+      else if (path.startsWith("/gallery")) setActiveTab("Gallery");
+      else if (path.startsWith("/reviews")) setActiveTab("Reviews");
       else if (path.startsWith("/about")) setActiveTab("About");
       else setActiveTab("Home");
     };
@@ -179,6 +189,8 @@ export default function App() {
     { name: "Catering", id: "Catering" },
     { name: "Custom Party Packages", id: "Live Counters" },
     { name: "Lux Gifting", id: "Gifting" },
+    { name: "Gallery", id: "Gallery" },
+    { name: "Reviews", id: "Reviews" },
     { name: "About Us", id: "About" }
   ];
 
@@ -289,6 +301,12 @@ export default function App() {
         )}
         {activeTab === "Gifting" && (
           <GiftingPage />
+        )}
+        {activeTab === "Gallery" && (
+          <GalleryPage />
+        )}
+        {activeTab === "Reviews" && (
+          <ReviewsPage />
         )}
         {activeTab === "About" && (
           <AboutPage />
