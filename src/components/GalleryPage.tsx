@@ -10,7 +10,8 @@ import {
   Edit3, 
   Trash2, 
   Check, 
-  KeyRound 
+  KeyRound,
+  RotateCw
 } from "lucide-react";
 import initialGalleryData from "../data/galleryData.json";
 
@@ -134,17 +135,51 @@ export default function GalleryPage({ onNavigateToAdmin: _onNavigateToAdmin }: G
     setEditingItem(null);
   };
 
+  // Handle Rotate Image 90 degrees
+  const handleRotateImage = (id: string, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    const targetItem = items.find(item => item.id === id);
+    if (!targetItem) return;
+
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.src = targetItem.imagePath;
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      canvas.width = img.height;
+      canvas.height = img.width;
+      const ctx = canvas.getContext("2d");
+      if (ctx) {
+        ctx.translate(canvas.width / 2, canvas.height / 2);
+        ctx.rotate((90 * Math.PI) / 180);
+        ctx.drawImage(img, -img.width / 2, -img.height / 2);
+        const rotatedDataUrl = canvas.toDataURL("image/jpeg", 0.92);
+
+        setItems(prev => prev.map(item => item.id === id ? { 
+          ...item, 
+          imagePath: rotatedDataUrl,
+          originalImagePath: rotatedDataUrl 
+        } : item));
+
+        if (editingItem?.id === id) {
+          setEditingItem(prev => prev ? { ...prev, imagePath: rotatedDataUrl } : null);
+        }
+      }
+    };
+  };
+
   // Add New Item Submit
   const handleAddNewItem = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newTitle.trim() || !newDescription.trim() || !newImagePath) return;
+    if (!newTitle.trim() || !newImagePath) return;
 
     const newItem: GalleryItem = {
       id: `item-${Date.now()}`,
       title: newTitle.trim(),
       category: newCategory,
-      autoDescription: newDescription.trim(),
+      autoDescription: newDescription.trim() || "",
       imagePath: newImagePath,
+      originalImagePath: newImagePath,
       visible: true,
       createdAt: new Date().toISOString()
     };
@@ -284,6 +319,13 @@ export default function GalleryPage({ onNavigateToAdmin: _onNavigateToAdmin }: G
                     {item.visible ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
                   </button>
                   <button
+                    onClick={(e) => handleRotateImage(item.id, e)}
+                    className="p-1.5 rounded-lg text-xs bg-blue-500/20 text-blue-300 hover:bg-blue-500/40 cursor-pointer"
+                    title="Rotate Photo 90° Clockwise"
+                  >
+                    <RotateCw className="w-4 h-4" />
+                  </button>
+                  <button
                     onClick={(e) => {
                       e.stopPropagation();
                       setEditingItem(item);
@@ -410,7 +452,7 @@ export default function GalleryPage({ onNavigateToAdmin: _onNavigateToAdmin }: G
               <div className="space-y-1">
                 <h3 className="font-serif text-2xl font-bold text-white">Admin Authentication</h3>
                 <p className="text-gray-400 text-xs font-sans">
-                  Enter your master KDS PIN to unlock gallery edit permissions.
+                  Enter PIN to unlock admin gallery controls.
                 </p>
               </div>
 
@@ -425,7 +467,7 @@ export default function GalleryPage({ onNavigateToAdmin: _onNavigateToAdmin }: G
                   type="password"
                   value={pinInput}
                   onChange={(e) => setPinInput(e.target.value)}
-                  placeholder="Enter PIN (e.g. 031686)"
+                  placeholder="Enter PIN"
                   maxLength={8}
                   autoFocus
                   required
@@ -494,19 +536,20 @@ export default function GalleryPage({ onNavigateToAdmin: _onNavigateToAdmin }: G
                   </select>
                 </div>
 
-                <div className="space-y-1">
-                  <label className="text-xs font-bold text-gray-300 uppercase tracking-wider block">Description</label>
-                  <textarea
-                    rows={3}
-                    value={editingItem.autoDescription}
-                    onChange={(e) => setEditingItem({ ...editingItem, autoDescription: e.target.value })}
-                    required
-                    className="w-full bg-[#1A1614] border border-[#382F2A] text-white px-4 py-2.5 rounded-xl text-xs focus:border-[#D4AF37] outline-none"
-                  />
+                {/* Rotate Image Option */}
+                <div className="pt-2">
+                  <button
+                    type="button"
+                    onClick={() => handleRotateImage(editingItem.id)}
+                    className="w-full bg-[#1A1614] border border-[#D4AF37]/40 text-[#D4AF37] hover:bg-[#D4AF37]/10 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer transition-all"
+                  >
+                    <RotateCw className="w-4 h-4 text-[#D4AF37]" />
+                    <span>Rotate Photo 90° Clockwise</span>
+                  </button>
                 </div>
 
                 {/* Swap Image Handler */}
-                <div className="space-y-1 pt-2">
+                <div className="space-y-1 pt-1">
                   <label className="text-xs font-bold text-gray-300 uppercase tracking-wider block">Swap Image File</label>
                   <input
                     type="file"
@@ -580,17 +623,6 @@ export default function GalleryPage({ onNavigateToAdmin: _onNavigateToAdmin }: G
                   </select>
                 </div>
 
-                <div className="space-y-1">
-                  <label className="text-xs font-bold text-gray-300 uppercase tracking-wider block">Evocative Description</label>
-                  <textarea
-                    rows={3}
-                    value={newDescription}
-                    onChange={(e) => setNewDescription(e.target.value)}
-                    placeholder="Describe ingredients, texture, crumb, or traditional slow-cooking prep..."
-                    required
-                    className="w-full bg-[#1A1614] border border-[#382F2A] text-white px-4 py-2.5 rounded-xl text-xs focus:border-[#D4AF37] outline-none"
-                  />
-                </div>
 
                 <div className="space-y-1">
                   <label className="text-xs font-bold text-gray-300 uppercase tracking-wider block">Select Photo File</label>
