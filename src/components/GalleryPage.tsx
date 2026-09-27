@@ -2,10 +2,12 @@ import { useState, useEffect } from "react";
 import { 
   Sparkles, 
   X, 
+  MessageSquare, 
   Lock, 
   Eye, 
   EyeOff, 
   Plus, 
+  Edit3, 
   Trash2, 
   Check, 
   KeyRound,
@@ -20,16 +22,35 @@ import {
   LOCAL_STORAGE_GALLERY_KEY 
 } from "../services/supabase";
 
+export type CategoryType = "Artisanal Cakes & Bakes" | "Specialty Culinary Fare" | "Heritage Sweets & Confectionery";
+
 export interface GalleryItem {
   id: string;
+  title: string;
+  category: CategoryType | CategoryType[];
+  autoDescription?: string;
   imagePath: string;
   originalImagePath?: string;
   visible: boolean;
   createdAt?: string;
-  title?: string;
-  autoDescription?: string;
-  category?: any;
+  isCustomEdited?: boolean;
 }
+
+export const getItemCategories = (item: GalleryItem): CategoryType[] => {
+  if (Array.isArray(item.category)) {
+    return item.category as CategoryType[];
+  }
+  if (typeof item.category === 'string') {
+    return [item.category as CategoryType];
+  }
+  return [];
+};
+
+export const hasCategory = (item: GalleryItem, cat: string): boolean => {
+  if (cat === "all") return true;
+  const cats = getItemCategories(item);
+  return cats.includes(cat as CategoryType);
+};
 
 const DEFAULT_PIN = "031686"; // KDS master pin default
 
@@ -45,23 +66,26 @@ const mergeWithInitialData = (sourceItems: any[]): GalleryItem[] => {
     const matched = sourceMap.get(initItem.id);
     if (!matched) return initItem as GalleryItem;
 
+    if (matched.isCustomEdited) {
+      return {
+        ...initItem,
+        ...matched,
+        category: matched.category || initItem.category
+      };
+    }
+
     return {
-      id: initItem.id,
+      ...initItem,
       imagePath: matched.imagePath || initItem.imagePath,
       originalImagePath: matched.originalImagePath || initItem.originalImagePath || (matched.imagePath ? matched.imagePath.replace('/gallery/', '/gallery/orig/') : ''),
       visible: matched.visible !== undefined ? matched.visible : initItem.visible,
-      createdAt: matched.createdAt || initItem.createdAt
+      title: initItem.title,
+      category: initItem.category,
+      autoDescription: initItem.autoDescription
     };
   });
 
-  const customItems = sourceItems.filter(i => !initIds.has(i.id)).map(i => ({
-    id: i.id,
-    imagePath: i.imagePath,
-    originalImagePath: i.originalImagePath || i.imagePath,
-    visible: i.visible !== undefined ? i.visible : true,
-    createdAt: i.createdAt
-  }));
-
+  const customItems = sourceItems.filter(i => !initIds.has(i.id));
   return [...mergedInitial, ...customItems] as GalleryItem[];
 };
 
@@ -82,6 +106,7 @@ export default function GalleryPage({ onNavigateToAdmin: _onNavigateToAdmin }: G
   });
 
   const [syncStatus, setSyncStatus] = useState<string>("");
+  const [activeTab, setActiveTab] = useState<string>("all");
   const [selectedItem, setSelectedItem] = useState<GalleryItem | null>(null);
 
   // Admin PIN Modal & Admin State
@@ -90,8 +115,14 @@ export default function GalleryPage({ onNavigateToAdmin: _onNavigateToAdmin }: G
   const [pinInput, setPinInput] = useState("");
   const [pinError, setPinError] = useState(false);
 
-  // New Item Form State
+  // Item Editor State
+  const [editingItem, setEditingItem] = useState<GalleryItem | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
+
+  // New Item Form State
+  const [newTitle, setNewTitle] = useState("");
+  const [newCategories, setNewCategories] = useState<CategoryType[]>(["Artisanal Cakes & Bakes"]);
+  const [newDescription, setNewDescription] = useState("");
   const [newImagePath, setNewImagePath] = useState("");
 
   // Fetch remote items from Supabase on mount & listen for live updates
@@ -161,7 +192,40 @@ export default function GalleryPage({ onNavigateToAdmin: _onNavigateToAdmin }: G
         return next;
       });
       if (selectedItem?.id === id) setSelectedItem(null);
+      if (editingItem?.id === id) setEditingItem(null);
     }
+  };
+
+  // Handle Image Swap via file picker (Converts file to base64 data URL)
+  const handleImageSwap = (id: string, file: File) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const result = e.target?.result as string;
+      if (result) {
+        setItems(prev => {
+          const next = prev.map(item => item.id === id ? { ...item, imagePath: result, originalImagePath: result } : item);
+          saveGalleryItemsToSupabase(next);
+          return next;
+        });
+        if (editingItem?.id === id) {
+          setEditingItem(prev => prev ? { ...prev, imagePath: result, originalImagePath: result } : null);
+        }
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  // Save Edit Item
+  const handleSaveEdit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingItem) return;
+    const updatedItem = { ...editingItem, isCustomEdited: true };
+    setItems(prev => {
+      const next = prev.map(item => item.id === editingItem.id ? updatedItem : item);
+      saveGalleryItemsToSupabase(next);
+      return next;
+    });
+    setEditingItem(null);
   };
 
   // Handle Rotate Image 90 degrees
@@ -194,8 +258,8 @@ export default function GalleryPage({ onNavigateToAdmin: _onNavigateToAdmin }: G
           return next;
         });
 
-        if (selectedItem?.id === id) {
-          setSelectedItem(prev => prev ? { ...prev, imagePath: rotatedDataUrl, originalImagePath: rotatedDataUrl } : null);
+        if (editingItem?.id === id) {
+          setEditingItem(prev => prev ? { ...prev, imagePath: rotatedDataUrl, originalImagePath: rotatedDataUrl } : null);
         }
       }
     };
@@ -204,10 +268,13 @@ export default function GalleryPage({ onNavigateToAdmin: _onNavigateToAdmin }: G
   // Add New Item Submit
   const handleAddNewItem = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newImagePath) return;
+    if (!newTitle.trim() || !newImagePath) return;
 
     const newItem: GalleryItem = {
       id: `item-${Date.now()}`,
+      title: newTitle.trim(),
+      category: newCategories.length > 0 ? newCategories : ["Artisanal Cakes & Bakes"],
+      autoDescription: newDescription.trim() || "",
       imagePath: newImagePath,
       originalImagePath: newImagePath,
       visible: true,
@@ -220,6 +287,8 @@ export default function GalleryPage({ onNavigateToAdmin: _onNavigateToAdmin }: G
       return next;
     });
     setShowAddModal(false);
+    setNewTitle("");
+    setNewDescription("");
     setNewImagePath("");
   };
 
@@ -240,6 +309,16 @@ export default function GalleryPage({ onNavigateToAdmin: _onNavigateToAdmin }: G
     ? items 
     : items.filter(item => item.visible);
 
+  const filteredItems = activeTab === "all"
+    ? visibleItems
+    : visibleItems.filter(item => hasCategory(item, activeTab));
+
+  const allCategories: CategoryType[] = [
+    "Artisanal Cakes & Bakes",
+    "Specialty Culinary Fare",
+    "Heritage Sweets & Confectionery"
+  ];
+
   return (
     <div className="bg-[#1A1614] text-[#E6DFD5] min-h-screen py-10 lg:py-16 font-sans">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -255,7 +334,7 @@ export default function GalleryPage({ onNavigateToAdmin: _onNavigateToAdmin }: G
             Curated Visual Gallery
           </h1>
           <p className="text-gray-300 text-sm sm:text-base leading-relaxed font-light">
-            An authentic visual showcase of our small-batch celebration cakes, slow-cooked royal gravies, and heritage confections crafted across Dallas-Fort Worth.
+            An authentic showcase of our small-batch celebration cakes, slow-cooked royal gravies, and heritage confections crafted across Dallas-Fort Worth.
           </p>
           <div className="h-0.5 w-20 bg-[#D4AF37] mt-6 mx-auto" />
 
@@ -340,16 +419,42 @@ export default function GalleryPage({ onNavigateToAdmin: _onNavigateToAdmin }: G
           </div>
         </div>
 
-        {/* Gallery Masonry / Grid */}
+        {/* Category Filters Bar */}
+        <div className="flex items-center justify-center gap-2 flex-wrap mb-10">
+          {[
+            { id: "all", label: "All Portfolio" },
+            { id: "Artisanal Cakes & Bakes", label: "Artisanal Cakes & Bakes" },
+            { id: "Specialty Culinary Fare", label: "Specialty Culinary Fare" },
+            { id: "Heritage Sweets & Confectionery", label: "Heritage Sweets & Confectionery" }
+          ].map(tab => {
+            const isActive = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`inline-flex items-center gap-2 min-h-[40px] px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer ${
+                  isActive
+                    ? "bg-[#D4AF37] text-[#1A1614] shadow-md font-bold"
+                    : "bg-[#241E1B] text-gray-300 hover:text-white border border-[#382F2A] hover:border-[#D4AF37]/40"
+                }`}
+              >
+                <span>{tab.label}</span>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Gallery Masonry / Bento Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
-          {visibleItems.map((item) => {
+          {filteredItems.map((item) => {
+            const categoriesList = getItemCategories(item);
             return (
               <div
                 key={item.id}
                 onClick={() => setSelectedItem(item)}
                 className={`group bg-[#241E1B] rounded-2xl border ${
                   item.visible ? "border-[#382F2A] hover:border-[#D4AF37]" : "border-rose-900/60 opacity-60"
-                } overflow-hidden shadow-xl transition-all duration-300 cursor-pointer hover:-translate-y-1 relative aspect-[4/3] flex items-center justify-center p-2`}
+                } overflow-hidden shadow-xl transition-all duration-300 flex flex-col cursor-pointer hover:-translate-y-1 relative`}
               >
                 {/* Admin Overlay Controls */}
                 {isAdminMode && (
@@ -371,6 +476,16 @@ export default function GalleryPage({ onNavigateToAdmin: _onNavigateToAdmin }: G
                       <RotateCw className="w-4 h-4" />
                     </button>
                     <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setEditingItem(item);
+                      }}
+                      className="p-1.5 rounded-lg text-xs bg-amber-500/20 text-amber-300 hover:bg-amber-500/40 cursor-pointer"
+                      title="Edit Item Details"
+                    >
+                      <Edit3 className="w-4 h-4" />
+                    </button>
+                    <button
                       onClick={(e) => handleDeleteItem(item.id, e)}
                       className="p-1.5 rounded-lg text-xs bg-rose-500/20 text-rose-300 hover:bg-rose-500/40 cursor-pointer"
                       title="Delete Item"
@@ -381,18 +496,44 @@ export default function GalleryPage({ onNavigateToAdmin: _onNavigateToAdmin }: G
                 )}
 
                 {/* Photo Image View */}
-                <div className="w-full h-full relative overflow-hidden rounded-xl bg-[#1A1614] flex items-center justify-center">
+                <div className="relative aspect-[6/5] overflow-hidden bg-[#1A1614] p-2 flex items-center justify-center">
                   <img
                     src={item.imagePath}
-                    alt="Gallery Showcase"
+                    alt={item.title}
                     className="w-full h-full object-contain drop-shadow-xl transition-transform duration-500 group-hover:scale-105"
                     onError={(e) => {
                       (e.target as HTMLImageElement).src = "/gallery/gallery_01.png";
                     }}
                   />
-                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-                    <span className="bg-[#D4AF37] text-[#1A1614] px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider shadow-lg flex items-center gap-2">
-                      <Eye className="w-4 h-4" /> View Photo
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#1A1614]/60 via-transparent to-transparent pointer-events-none" />
+
+                  {/* Multi-Category Pills */}
+                  <div className="absolute top-3 left-3 flex flex-wrap gap-2 gap-y-1.5 max-w-[85%] z-10">
+                    {categoriesList.map((cat) => (
+                      <span key={cat} className="bg-[#1A1614]/90 backdrop-blur-md text-[#D4AF37] border border-[#D4AF37]/30 px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider font-sans shadow-sm">
+                        {cat}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Card Footer Content */}
+                <div className="p-5 flex-1 flex flex-col justify-between space-y-3 bg-[#241E1B]">
+                  <div>
+                    <h3 className="font-serif text-base sm:text-lg font-bold text-white group-hover:text-[#D4AF37] transition-colors leading-snug">
+                      {item.title}
+                    </h3>
+                    {item.autoDescription && (
+                      <p className="text-xs text-gray-300 mt-1.5 line-clamp-2 leading-relaxed font-light">
+                        {item.autoDescription}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="pt-3 border-t border-[#382F2A] flex items-center justify-between text-[11px] text-[#D4AF37] font-serif italic">
+                    <span>Authentic DFW Artistry</span>
+                    <span className="font-sans uppercase text-[10px] font-bold tracking-wider text-gray-400 group-hover:text-[#D4AF37] transition-colors">
+                      Inspect Photo &rarr;
                     </span>
                   </div>
                 </div>
@@ -402,13 +543,13 @@ export default function GalleryPage({ onNavigateToAdmin: _onNavigateToAdmin }: G
         </div>
 
         {/* Guest Detail Lightbox Modal */}
-        {selectedItem && (
+        {selectedItem && !editingItem && (
           <div 
-            className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4 sm:p-6 animate-fade-in"
+            className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 sm:p-6 animate-fade-in"
             onClick={() => setSelectedItem(null)}
           >
             <div 
-              className="bg-[#241E1B] border border-[#D4AF37]/40 rounded-2xl max-w-4xl w-full overflow-hidden shadow-2xl relative text-[#E6DFD5] flex flex-col items-center p-4 sm:p-6"
+              className="bg-[#241E1B] border border-[#D4AF37]/40 rounded-2xl max-w-3xl w-full overflow-hidden shadow-2xl relative text-[#E6DFD5]"
               onClick={(e) => e.stopPropagation()}
             >
               <button
@@ -418,33 +559,49 @@ export default function GalleryPage({ onNavigateToAdmin: _onNavigateToAdmin }: G
                 <X className="w-5 h-5" />
               </button>
 
-              <div className="w-full max-h-[75vh] flex items-center justify-center p-2">
-                <img
-                  src={selectedItem.originalImagePath || selectedItem.imagePath}
-                  alt="Gallery Showcase"
-                  className="max-h-[70vh] w-auto object-contain rounded-xl drop-shadow-2xl"
-                />
-              </div>
-
-              <div className="w-full pt-4 mt-2 border-t border-[#382F2A] flex flex-col sm:flex-row items-center justify-between gap-4">
-                <div className="flex items-center gap-2 text-xs text-[#D4AF37] font-medium">
-                  <Sparkles className="w-4 h-4 text-[#D4AF37]" />
-                  <span>Artisanal DFW Culinary &amp; Cake Portfolio</span>
+              <div className="grid grid-cols-1 sm:grid-cols-2">
+                <div className="relative h-72 sm:h-auto min-h-[320px] bg-black flex items-center justify-center p-2">
+                  <img
+                    src={selectedItem.originalImagePath || selectedItem.imagePath}
+                    alt={selectedItem.title}
+                    className="w-full h-full object-contain rounded-lg"
+                  />
+                  <div className="absolute top-3 left-3 flex flex-wrap gap-2 gap-y-1.5 max-w-[85%] z-10">
+                    {getItemCategories(selectedItem).map((cat) => (
+                      <span key={cat} className="bg-black/70 backdrop-blur-md px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider text-[#D4AF37] border border-[#D4AF37]/30 shadow-sm">
+                        {cat}
+                      </span>
+                    ))}
+                  </div>
                 </div>
 
-                <div className="flex items-center gap-3">
-                  <a
-                    href="/catering/food"
-                    className="px-5 py-2.5 bg-[#D4AF37] hover:bg-[#b5932a] text-[#1A1614] rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-md"
-                  >
-                    Order Catering
-                  </a>
-                  <a
-                    href="/cakes"
-                    className="px-5 py-2.5 bg-[#1A1614] hover:bg-[#382F2A] text-white border border-[#D4AF37]/40 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-md"
-                  >
-                    Custom Cakes
-                  </a>
+                <div className="p-6 sm:p-8 flex flex-col justify-between space-y-6">
+                  <div className="space-y-3">
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-[#D4AF37] block">
+                      ARTISAN PORTFOLIO ITEM
+                    </span>
+                    <h3 className="font-serif text-2xl font-bold text-white leading-tight">
+                      {selectedItem.title}
+                    </h3>
+                    <p className="text-xs text-gray-300 leading-relaxed font-light">
+                      {selectedItem.autoDescription || "Scratch-cooked with authentic spices and artisanal craftsmanship for special celebrations across Dallas-Fort Worth."}
+                    </p>
+                  </div>
+
+                  <div className="space-y-4 pt-4 border-t border-[#382F2A]">
+                    <div className="flex items-center gap-2 text-xs text-[#D4AF37]">
+                      <Sparkles className="w-4 h-4 text-[#D4AF37]" />
+                      <span>Freshly Prepared in Little Elm / Frisco, TX</span>
+                    </div>
+
+                    <a
+                      href="/catering/food"
+                      className="w-full min-h-[44px] inline-flex items-center justify-center gap-2 bg-[#D4AF37] hover:bg-[#b5932a] text-[#1A1614] rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-md"
+                    >
+                      <MessageSquare className="w-4 h-4" />
+                      <span>Inquire &amp; Order Catering Feast</span>
+                    </a>
+                  </div>
                 </div>
               </div>
             </div>
@@ -504,6 +661,119 @@ export default function GalleryPage({ onNavigateToAdmin: _onNavigateToAdmin }: G
           </div>
         )}
 
+        {/* Edit Item Modal */}
+        {editingItem && (
+          <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4">
+            <div className="bg-[#241E1B] border border-[#D4AF37]/50 rounded-2xl p-6 sm:p-8 max-w-lg w-full shadow-2xl space-y-6">
+              <div className="flex items-center justify-between border-b border-[#382F2A] pb-4">
+                <h3 className="font-serif text-xl font-bold text-white flex items-center gap-2">
+                  <Edit3 className="w-5 h-5 text-[#D4AF37]" />
+                  <span>Edit Gallery Item</span>
+                </h3>
+                <button onClick={() => setEditingItem(null)} className="text-gray-400 hover:text-white">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <form onSubmit={handleSaveEdit} className="space-y-4">
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-gray-300 uppercase tracking-wider block">Title</label>
+                  <input
+                    type="text"
+                    value={editingItem.title}
+                    onChange={(e) => setEditingItem({ ...editingItem, title: e.target.value })}
+                    required
+                    className="w-full bg-[#1A1614] border border-[#382F2A] text-white px-4 py-2.5 rounded-xl text-xs focus:border-[#D4AF37] outline-none"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-gray-300 uppercase tracking-wider block">Description</label>
+                  <textarea
+                    rows={3}
+                    value={editingItem.autoDescription || ""}
+                    onChange={(e) => setEditingItem({ ...editingItem, autoDescription: e.target.value })}
+                    className="w-full bg-[#1A1614] border border-[#382F2A] text-white px-4 py-2.5 rounded-xl text-xs focus:border-[#D4AF37] outline-none"
+                  />
+                </div>
+
+                {/* Multi-Category Checkboxes */}
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-gray-300 uppercase tracking-wider block">
+                    Category Mapping Tags (Multi-Select)
+                  </label>
+                  <div className="space-y-2 bg-[#1A1614] border border-[#382F2A] p-3 rounded-xl">
+                    {allCategories.map(cat => {
+                      const currentCats = getItemCategories(editingItem);
+                      const isChecked = currentCats.includes(cat);
+                      return (
+                        <label key={cat} className="flex items-center gap-2 text-xs text-gray-200 cursor-pointer select-none">
+                          <input
+                            type="checkbox"
+                            checked={isChecked}
+                            onChange={() => {
+                              let updated = isChecked
+                                ? currentCats.filter(c => c !== cat)
+                                : [...currentCats, cat];
+                              if (updated.length === 0) updated = [cat];
+                              setEditingItem({ ...editingItem, category: updated as any });
+                            }}
+                            className="rounded text-[#D4AF37] focus:ring-0 cursor-pointer"
+                          />
+                          <span>{cat}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Rotate Image Option */}
+                <div className="pt-2">
+                  <button
+                    type="button"
+                    onClick={() => handleRotateImage(editingItem.id)}
+                    className="w-full bg-[#1A1614] border border-[#D4AF37]/40 text-[#D4AF37] hover:bg-[#D4AF37]/10 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer transition-all"
+                  >
+                    <RotateCw className="w-4 h-4 text-[#D4AF37]" />
+                    <span>Rotate Photo 90° Clockwise</span>
+                  </button>
+                </div>
+
+                {/* Swap Image Handler */}
+                <div className="space-y-1 pt-1">
+                  <label className="text-xs font-bold text-gray-300 uppercase tracking-wider block">Swap Image File</label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => {
+                      if (e.target.files && e.target.files[0]) {
+                        handleImageSwap(editingItem.id, e.target.files[0]);
+                      }
+                    }}
+                    className="w-full bg-[#1A1614] border border-[#382F2A] text-gray-300 text-xs px-3 py-2 rounded-xl"
+                  />
+                </div>
+
+                <div className="flex gap-3 pt-4 border-t border-[#382F2A]">
+                  <button
+                    type="button"
+                    onClick={() => setEditingItem(null)}
+                    className="flex-1 min-h-[44px] bg-[#1A1614] text-gray-300 rounded-xl text-xs uppercase font-bold"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="flex-1 min-h-[44px] bg-[#D4AF37] text-[#1A1614] rounded-xl text-xs uppercase font-bold"
+                  >
+                    Save Modifications
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
         {/* Add New Item Modal */}
         {showAddModal && (
           <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4">
@@ -520,6 +790,55 @@ export default function GalleryPage({ onNavigateToAdmin: _onNavigateToAdmin }: G
 
               <form onSubmit={handleAddNewItem} className="space-y-4">
                 <div className="space-y-1">
+                  <label className="text-xs font-bold text-gray-300 uppercase tracking-wider block">Dish / Cake Title</label>
+                  <input
+                    type="text"
+                    value={newTitle}
+                    onChange={(e) => setNewTitle(e.target.value)}
+                    placeholder="e.g. Amritsari Kulcha Platter"
+                    required
+                    className="w-full bg-[#1A1614] border border-[#382F2A] text-white px-4 py-2.5 rounded-xl text-xs focus:border-[#D4AF37] outline-none"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-gray-300 uppercase tracking-wider block">Description</label>
+                  <textarea
+                    rows={2}
+                    value={newDescription}
+                    onChange={(e) => setNewDescription(e.target.value)}
+                    placeholder="Brief description of dish..."
+                    className="w-full bg-[#1A1614] border border-[#382F2A] text-white px-4 py-2.5 rounded-xl text-xs focus:border-[#D4AF37] outline-none"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-gray-300 uppercase tracking-wider block">Categories (Multi-Select Tags)</label>
+                  <div className="space-y-2 bg-[#1A1614] border border-[#382F2A] p-3 rounded-xl">
+                    {allCategories.map(cat => {
+                      const isChecked = newCategories.includes(cat);
+                      return (
+                        <label key={cat} className="flex items-center gap-2 text-xs text-gray-200 cursor-pointer select-none">
+                          <input
+                            type="checkbox"
+                            checked={isChecked}
+                            onChange={() => {
+                              let updated = isChecked
+                                ? newCategories.filter(c => c !== cat)
+                                : [...newCategories, cat];
+                              if (updated.length === 0) updated = [cat];
+                              setNewCategories(updated as any);
+                            }}
+                            className="rounded text-[#D4AF37] focus:ring-0 cursor-pointer"
+                          />
+                          <span>{cat}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="space-y-1">
                   <label className="text-xs font-bold text-gray-300 uppercase tracking-wider block">Select Photo File</label>
                   <input
                     type="file"
@@ -535,8 +854,8 @@ export default function GalleryPage({ onNavigateToAdmin: _onNavigateToAdmin }: G
                 </div>
 
                 {newImagePath && (
-                  <div className="h-48 bg-black rounded-xl overflow-hidden relative border border-[#382F2A] flex items-center justify-center p-2">
-                    <img src={newImagePath} alt="Preview" className="w-full h-full object-contain" />
+                  <div className="h-32 bg-black rounded-xl overflow-hidden relative border border-[#382F2A]">
+                    <img src={newImagePath} alt="Preview" className="w-full h-full object-cover" />
                   </div>
                 )}
 
@@ -552,7 +871,7 @@ export default function GalleryPage({ onNavigateToAdmin: _onNavigateToAdmin }: G
                     type="submit"
                     className="flex-1 min-h-[44px] bg-[#D4AF37] text-[#1A1614] rounded-xl text-xs uppercase font-bold"
                   >
-                    Add Photo
+                    Add to Gallery
                   </button>
                 </div>
               </form>
