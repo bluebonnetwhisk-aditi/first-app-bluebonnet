@@ -1227,7 +1227,12 @@ export async function saveGalleryItemsToSupabase(items: any[]): Promise<boolean>
     localStorage.setItem(LOCAL_STORAGE_GALLERY_KEY, JSON.stringify(cleanItems));
     window.dispatchEvent(new CustomEvent('bbw_gallery_items_updated'));
   } catch (err) {
-    console.warn('localStorage saveGalleryItems warning:', err);
+    console.warn('localStorage saveGalleryItems quota warning:', err);
+    // If local storage is full, try clearing legacy items and retry
+    cleanLegacyGalleryCaches();
+    try {
+      localStorage.setItem(LOCAL_STORAGE_GALLERY_KEY, JSON.stringify(cleanItems));
+    } catch {}
   }
 
   if (supabase) {
@@ -1244,7 +1249,7 @@ export async function saveGalleryItemsToSupabase(items: any[]): Promise<boolean>
         );
 
       if (!error) return true;
-      console.warn('Supabase saveGalleryItems warning:', error);
+      console.warn('Supabase saveGalleryItems warning:', error?.message || error);
       return false;
     } catch (err) {
       console.warn('Supabase saveGalleryItems failed:', err);

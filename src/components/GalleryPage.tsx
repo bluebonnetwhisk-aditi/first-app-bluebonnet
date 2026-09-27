@@ -40,8 +40,8 @@ export interface GalleryItem {
   isCustomEdited?: boolean;
 }
 
-// Helper to compress uploaded image files into crisp, lightweight JPEGs (~150KB)
-const compressImageFile = (file: File, maxWidth = 1200, maxHeight = 1200, quality = 0.82): Promise<string> => {
+// Helper to compress uploaded image files into crisp, lightweight JPEGs (~40-60KB)
+const compressImageFile = (file: File, maxWidth = 900, maxHeight = 900, quality = 0.75): Promise<string> => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = (e) => {
@@ -321,7 +321,7 @@ export default function GalleryPage({ onNavigateToAdmin: _onNavigateToAdmin }: G
     setEditingItem(null);
   };
 
-  // Handle Rotate Image 90 degrees
+  // Handle Rotate Image 90 degrees with automatic canvas downscaling & high compression (~40-60KB)
   const handleRotateImage = (id: string, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
     const targetItem = items.find(item => item.id === id);
@@ -331,15 +331,31 @@ export default function GalleryPage({ onNavigateToAdmin: _onNavigateToAdmin }: G
     img.crossOrigin = "anonymous";
     img.src = targetItem.imagePath;
     img.onload = () => {
+      let rawW = img.height;
+      let rawH = img.width;
+      const maxDim = 900;
+      let targetW = rawW;
+      let targetH = rawH;
+
+      if (targetW > maxDim || targetH > maxDim) {
+        if (targetW > targetH) {
+          targetH = Math.round((targetH * maxDim) / targetW);
+          targetW = maxDim;
+        } else {
+          targetW = Math.round((targetW * maxDim) / targetH);
+          targetH = maxDim;
+        }
+      }
+
       const canvas = document.createElement("canvas");
-      canvas.width = img.height;
-      canvas.height = img.width;
+      canvas.width = targetW;
+      canvas.height = targetH;
       const ctx = canvas.getContext("2d");
       if (ctx) {
         ctx.translate(canvas.width / 2, canvas.height / 2);
         ctx.rotate((90 * Math.PI) / 180);
-        ctx.drawImage(img, -img.width / 2, -img.height / 2);
-        const rotatedDataUrl = canvas.toDataURL("image/jpeg", 0.85);
+        ctx.drawImage(img, -targetH / 2, -targetW / 2, targetH, targetW);
+        const rotatedDataUrl = canvas.toDataURL("image/jpeg", 0.75);
 
         setItems(prev => {
           const next = prev.map(item => item.id === id ? { 
