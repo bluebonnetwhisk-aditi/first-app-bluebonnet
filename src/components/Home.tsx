@@ -1,5 +1,6 @@
-import { useState, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, useScroll, useTransform, useMotionValueEvent } from "motion/react";
+import heroVideo from "../assets/videos/hero.mp4";
 import { 
   ArrowRight, 
   ChevronDown, 
@@ -26,6 +27,20 @@ export default function Home({ onOpenBaker: _onOpenBaker, onNavigate }: HomeProp
 
   const [activeFaq, setActiveFaq] = useState<number | null>(null);
   const [activeStage, setActiveStage] = useState<number>(0);
+
+  // Programmatically trigger video autoplay for mobile & tablet Safari / Chrome
+  useEffect(() => {
+    if (videoRef.current) {
+      videoRef.current.muted = true;
+      videoRef.current.defaultMuted = true;
+      const playPromise = videoRef.current.play();
+      if (playPromise !== undefined) {
+        playPromise.catch((err) => {
+          console.warn("Mobile video autoplay prevented:", err);
+        });
+      }
+    }
+  }, []);
 
   // Framer Motion scroll hooks for Hero zoom & text fade transitions
   const { scrollYProgress } = useScroll({
@@ -90,14 +105,16 @@ export default function Home({ onOpenBaker: _onOpenBaker, onNavigate }: HomeProp
           <motion.video 
             ref={videoRef}
             muted 
-            playsInline 
             autoPlay
             loop
+            playsInline
             preload="auto"
             style={{ scale: videoScale, opacity: videoOpacity }}
             className="absolute inset-0 w-full h-full object-cover select-none pointer-events-none filter brightness-90 saturate-105"
-            src="/src/assets/videos/hero.mp4"
-          />
+          >
+            <source src={heroVideo} type="video/mp4" />
+            <source src="/videos/hero.mp4" type="video/mp4" />
+          </motion.video>
           
           {/* Dark Glassmorphic Gradients */}
           <div className="absolute inset-0 bg-gradient-to-b from-[#050a1a]/85 via-transparent to-[#050a1a]" />
