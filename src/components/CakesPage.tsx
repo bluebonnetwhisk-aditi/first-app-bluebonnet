@@ -4,9 +4,10 @@ import { flavorCategories } from "../types";
 interface CakesPageProps {
   onOpenBaker: () => void;
   onOpenPriceList?: () => void;
+  onCreateQuote?: () => void;
 }
 
-export default function CakesPage({ onOpenBaker }: CakesPageProps) {
+export default function CakesPage({ onOpenBaker, onCreateQuote }: CakesPageProps) {
   return (
     <div className="animate-fade-in bg-brand-cream-light min-h-screen">
       
@@ -18,12 +19,12 @@ export default function CakesPage({ onOpenBaker }: CakesPageProps) {
             <span>Custom Cakes &amp; Patisserie</span>
           </div>
           <div className="flex items-center gap-3 w-full sm:w-auto justify-center sm:justify-end">
-            <a
-              href="sms:+19455274566?body=Hi!%20I'd%20like%20to%20create%20a%20quote%20for%20a%20custom%20cake."
-              className="flex-1 sm:flex-none min-h-[40px] inline-flex items-center justify-center bg-[#775a19] hover:bg-[#5d4201] text-white font-sans text-xs uppercase tracking-wider font-bold px-5 py-2 rounded-lg shadow-sm transition-all text-center"
+            <button
+              onClick={onCreateQuote}
+              className="flex-1 sm:flex-none min-h-[40px] inline-flex items-center justify-center bg-[#775a19] hover:bg-[#5d4201] text-white font-sans text-xs uppercase tracking-wider font-bold px-5 py-2 rounded-lg shadow-sm transition-all text-center cursor-pointer"
             >
               Create A Quote
-            </a>
+            </button>
             <button
               onClick={onOpenBaker}
               className="flex-1 sm:flex-none min-h-[40px] inline-flex items-center justify-center gap-1.5 border border-brand-gold-tint hover:bg-white/10 text-brand-cream font-sans text-xs uppercase tracking-wider font-bold px-5 py-2 rounded-lg transition-all cursor-pointer text-center"
@@ -61,12 +62,12 @@ export default function CakesPage({ onOpenBaker }: CakesPageProps) {
           </p>
 
           <div className="flex flex-col sm:flex-row items-center gap-4">
-            <a
-              href="sms:+19455274566?body=Hi!%20I'd%20like%20to%20create%20a%20quote%20for%20a%20custom%20cake."
+            <button
+              onClick={onCreateQuote}
               className="w-full sm:w-auto min-h-[44px] inline-flex items-center justify-center bg-[#00346f] hover:bg-[#00224d] text-white font-sans text-xs uppercase tracking-widest font-bold px-8 py-3.5 rounded-xl shadow-lg transition-all duration-300 cursor-pointer"
             >
               Create A Quote
-            </a>
+            </button>
             <button
               onClick={onOpenBaker}
               className="w-full sm:w-auto min-h-[44px] inline-flex items-center justify-center gap-2 border border-brand-gold-tint hover:bg-white/10 text-brand-cream font-sans text-xs uppercase tracking-widest font-bold px-8 py-3.5 rounded-xl transition-all cursor-pointer"

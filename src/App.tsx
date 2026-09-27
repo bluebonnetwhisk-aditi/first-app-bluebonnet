@@ -103,6 +103,14 @@ export default function App() {
     window.location.href = "sms:+19455274566?body=Hi%20Baker!%20I'd%20like%20to%20discuss%20a%20custom%20order.";
   };
 
+  const handleNavigateToCakeCatering = () => {
+    if (typeof window !== "undefined") {
+      window.history.pushState(null, "", "/catering/cake");
+    }
+    setActiveTab("Catering");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
   const handleNewsletterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (newsletterEmail.trim()) {
@@ -270,6 +278,7 @@ export default function App() {
           <CakesPage 
             onOpenBaker={handleOpenBaker}
             onOpenPriceList={() => setShowPriceList(true)}
+            onCreateQuote={handleNavigateToCakeCatering}
           />
         )}
         {activeTab === "Catering" && (

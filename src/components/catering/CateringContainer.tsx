@@ -83,20 +83,21 @@ export default function CateringContainer() {
     }
   };
 
-  // Listen to popstate (browser back/forward button)
+  // Sync route changes with browser history and on mount
   useEffect(() => {
-    const handlePopState = () => {
+    const syncRoute = () => {
       const path = window.location.pathname.toLowerCase();
       if (path.includes('/cake')) {
         setSubTab('cake');
       } else if (path.includes('/tiffin')) {
         setSubTab('tiffin');
-      } else {
+      } else if (path.includes('/food') || path.includes('/order')) {
         setSubTab('order');
       }
     };
-    window.addEventListener('popstate', handlePopState);
-    return () => window.removeEventListener('popstate', handlePopState);
+    syncRoute();
+    window.addEventListener('popstate', syncRoute);
+    return () => window.removeEventListener('popstate', syncRoute);
   }, []);
 
   // Update item in cart handler
