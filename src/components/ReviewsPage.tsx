@@ -25,47 +25,87 @@ export interface ReviewItem {
 const INITIAL_REVIEWS: ReviewItem[] = [
   {
     id: "rev-1",
-    name: "Priya & Vivek M.",
-    occasion: "Son's 1st Birthday Party",
-    itemsOrdered: "3-Tier Rasmalai Cake & Indo-Chinese Live Counter",
+    name: "Meenakshi & Alok V.",
+    occasion: "Daughter's 5th Birthday Party",
+    itemsOrdered: "Custom Mango & Rasmalai Cake + Live Pani Puri Station & Railway Cutlets",
     rating: 5,
-    reviewText: "Bluebonnet Whisk made our son's first birthday absolutely magical! The eggless Rasmalai cake was so light, moist, and filled with authentic rabri flavor. Everyone at the party asked where we ordered it from. The live noodle & Manchurian counter was also a massive hit!",
-    date: "September 18, 2026",
+    reviewText: "Bluebonnet Whisk exceeded every expectation for our daughter's birthday! The custom eggless Mango Rasmalai cake was the absolute highlight of the dessert table—so fresh and beautifully decorated. The live Pani Puri station and crispy Railway Cutlets had guests lining up for seconds. Authentic North Indian flavors customized exactly to our mild spice preference!",
+    date: "September 22, 2026",
     verified: true
   },
   {
     id: "rev-2",
-    name: "Rajesh K.",
-    occasion: "25th Anniversary Celebration",
-    itemsOrdered: "Royal North Indian Dinner Catering (Paneer Tikka, Dal Makhani, Tandoori Naan)",
+    name: "Siddharth & Neha P.",
+    occasion: "25th Wedding Anniversary Dinner Catering",
+    itemsOrdered: "Grand Catering: Paneer Lababdar, Dal Makhni, Bhindi Masala & Chawal Kheer",
     rating: 5,
-    reviewText: "The food quality was top tier. You can taste the slow-cooked richness in the Dal Makhani and the rotis arrived warm and soft. Great communication throughout the process and zero hassle on delivery.",
-    date: "September 10, 2026",
+    reviewText: "We hired Bluebonnet Whisk for our 25th anniversary dinner in Frisco. The Paneer Lababdar was velvety and rich, and the slow-cooked Dal Makhni tasted straight out of a royal Dhaba in Delhi! Topped off with their slow-simmered cardamom Kheer. Everything was customized to taste and served piping hot.",
+    date: "September 05, 2026",
     verified: true
   },
   {
     id: "rev-3",
-    name: "Anita & Sameer S.",
-    occasion: "Ganesh Chaturthi Family Pooja",
-    itemsOrdered: "Ukadiche Modak & Festive Sweets Hamper Box",
+    name: "Rajiv M.",
+    occasion: "Weekly Executive Tiffin Service",
+    itemsOrdered: "Daily Tiffin: Aalu Paratha, Sattu Paratha, Kadhi & Bharwa Baigan",
     rating: 5,
-    reviewText: "Finding fresh, authentic modaks in DFW used to be tough until we found Bluebonnet Whisk! Beautiful packaging, perfectly sweetened, and pristine quality. Will definitely be ordering our Diwali hampers from here too.",
-    date: "August 28, 2026",
+    reviewText: "I've been subscribing to their weekly tiffin service in Plano. The homestyle Kadhi and Bharwa Baigan taste just like home. The stuffed Parathas—especially the Sattu Paratha and Aalu Paratha—stay soft and delicious till lunch. Spotless hygiene, homestyle health, and authentic North Indian taste.",
+    date: "August 18, 2026",
     verified: true
   },
   {
     id: "rev-4",
-    name: "Dr. Kavita Patel",
-    occasion: "Corporate Office Luncheon",
-    itemsOrdered: "Tiffin Thalis & Gulab Jamun Cake Jars",
+    name: "Ananya & Harish K.",
+    occasion: "1st Birthday Celebration & Family Brunch",
+    itemsOrdered: "Custom Theme Birthday Cake + Bedmi Poori & Halwai Waale Aalu",
     rating: 5,
-    reviewText: "Ordered 35 individual tiffin boxes for our hospital department lunch. Prompt delivery, spotless hygiene, and the dessert jars were the highlight of the week! Highly recommend.",
-    date: "August 15, 2026",
+    reviewText: "The custom 2-tier theme cake was a showstopper! Not only was the cake design gorgeous, but the flavor was divine. For brunch, their Bedmi Poori with Halwai Waale Aalu was nostalgic perfection—crispy, spiced just right, and authentic. Highly recommended for any birthday or family gathering!",
+    date: "July 29, 2026",
+    verified: true
+  },
+  {
+    id: "rev-5",
+    name: "Pooja & Vikram S.",
+    occasion: "Housewarming Party Catering",
+    itemsOrdered: "Catering: Railway Cutlet, Paneer Lababdar, Gobhi Paratha & Paneer Paratha",
+    rating: 5,
+    reviewText: "Hosted 45 guests for our housewarming in Little Elm. Bluebonnet Whisk handled the catering seamlessly. The Railway Cutlets were a huge crowd pleaser, and the fresh Gobhi and Paneer Parathas were stuffed generously. Incredible North Indian flavor profile customized to our family's exact taste!",
+    date: "June 24, 2026",
+    verified: true
+  },
+  {
+    id: "rev-6",
+    name: "Sunita R.",
+    occasion: "Family Weekend Tiffin Special",
+    itemsOrdered: "Tiffin Meal Pack: Kadhi, Bhindi Masala & Stuffed Paneer Paratha",
+    rating: 5,
+    reviewText: "Ordered the weekend tiffin package for our family reunion. The homestyle Kadhi was perfectly tangy, and the Bhindi Masala was crisp without being oily. It's so rare to find authentic North Indian food in DFW that feels healthy yet indulgently tasty!",
+    date: "May 30, 2026",
+    verified: true
+  },
+  {
+    id: "rev-7",
+    name: "Deepak & Archana T.",
+    occasion: "Son's 10th Birthday Party",
+    itemsOrdered: "Custom Chocolate Pistachio Cake & Live Pani Puri Bar",
+    rating: 5,
+    reviewText: "Cakes are definitely Bluebonnet Whisk's superpower! Our son wanted a custom chocolate cake with eggless requirements, and they delivered a masterpiece. The live Pani Puri bar kept all the kids and parents super engaged and happy throughout the party.",
+    date: "May 14, 2026",
+    verified: true
+  },
+  {
+    id: "rev-8",
+    name: "Amitabh & Shalini G.",
+    occasion: "Baisakhi Festive Catering & Family Get-Together",
+    itemsOrdered: "Festive Catering: Bedmi Poori, Halwai Waale Aalu, Dal Makhni & Kheer",
+    rating: 5,
+    reviewText: "We started our catering journey with Bluebonnet Whisk back in April 2026 for Baisakhi, and we've been loyal customers ever since! The Bedmi Poori with Halwai Waale Aalu and slow-cooked Dal Makhni brought back sweet memories of Old Delhi. Exceptional quality and customized service!",
+    date: "April 18, 2026",
     verified: true
   }
 ];
 
-const REVIEWS_STORAGE_KEY = "bbw_customer_reviews_v1";
+const REVIEWS_STORAGE_KEY = "bbw_customer_reviews_v2";
 
 export default function ReviewsPage() {
   const [reviews, setReviews] = useState<ReviewItem[]>(() => {
