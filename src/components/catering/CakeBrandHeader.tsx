@@ -1,3 +1,4 @@
+import brandLogo from '../../assets/images/brand_logo_transparent.png';
 import { 
   Sparkles, 
   Leaf, 
@@ -31,7 +32,7 @@ export default function CakeBrandHeader({ onScrollToConfigurator }: CakeBrandHea
 
           <div className="py-2">
             <img 
-              src="src/assets/images/brand_logo_transparent.png" 
+              src={brandLogo} 
               alt="Bluebonnet Whisk" 
               className="h-20 sm:h-28 w-auto mx-auto object-contain drop-shadow-lg"
             />

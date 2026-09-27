@@ -5,6 +5,9 @@ import {
 } from "lucide-react";
 import { submitToGoogleSheets } from "./services/googleSheets";
 
+// Assets
+import brandLogo from "./assets/images/brand_logo_transparent.png";
+
 // Components
 import Home from "./components/Home";
 import CakesPage from "./components/CakesPage";
@@ -214,7 +217,7 @@ export default function App() {
               className="shrink-0 flex items-center cursor-pointer group py-0.5"
             >
               <img 
-                src="src/assets/images/brand_logo_transparent.png" 
+                src={brandLogo} 
                 alt="Bluebonnet Whisk" 
                 className="h-10 sm:h-12 w-auto object-contain transition-transform duration-300 group-hover:scale-105"
               />
@@ -306,7 +309,7 @@ export default function App() {
               className="cursor-pointer inline-block group"
             >
               <img 
-                src="src/assets/images/brand_logo_transparent.png" 
+                src={brandLogo} 
                 alt="Bluebonnet Whisk" 
                 className="h-12 sm:h-14 w-auto object-contain transition-transform duration-300 group-hover:scale-105"
               />

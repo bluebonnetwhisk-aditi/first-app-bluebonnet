@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import brandLogo from '../../assets/images/brand_logo_transparent.png';
 import { 
   ShieldCheck, 
   Droplet, 
@@ -38,7 +39,7 @@ export default function BrandHeader({ onScrollToMenu }: BrandHeaderProps) {
 
           <div className="py-2">
             <img 
-              src="src/assets/images/brand_logo_transparent.png" 
+              src={brandLogo} 
               alt="Bluebonnet Whisk" 
               className="h-20 sm:h-28 w-auto mx-auto object-contain drop-shadow-lg"
             />
