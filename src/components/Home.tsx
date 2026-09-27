@@ -371,14 +371,28 @@ export default function Home({ onOpenWizard, onOpenBaker: _onOpenBaker, onNaviga
                 </div>
               </div>
 
-              <div className="p-6 pt-0">
-                <button
-                  onClick={() => onNavigate("Live Counters")}
-                  className="w-full min-h-[44px] inline-flex items-center justify-center gap-2 bg-[#775a19] hover:bg-[#5d4201] text-white text-xs font-bold uppercase tracking-wider rounded transition-all cursor-pointer shadow-md"
-                >
-                  <span>EXPLORE PACKAGE</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </button>
+              <div className="p-6 pt-0 border-t border-white/10 mt-4 space-y-2.5">
+                <p className="text-[11px] font-bold text-brand-gold-tint tracking-widest uppercase text-center pt-3">
+                  Talk to the expert
+                </p>
+                <div className="grid grid-cols-2 gap-2">
+                  <a
+                    href="tel:+19452162199"
+                    className="min-h-[40px] inline-flex items-center justify-center gap-2 bg-[#775a19] hover:bg-[#5d4201] text-white text-xs font-bold uppercase tracking-wider rounded transition-all cursor-pointer shadow-md px-3 py-2 text-center"
+                  >
+                    <Phone className="w-3.5 h-3.5" />
+                    <span>Call</span>
+                  </a>
+                  <a
+                    href="https://wa.me/19452162199"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="min-h-[40px] inline-flex items-center justify-center gap-2 bg-[#25D366] hover:bg-[#1ebd56] text-white text-xs font-bold uppercase tracking-wider rounded transition-all cursor-pointer shadow-md px-3 py-2 text-center"
+                  >
+                    <MessageCircle className="w-3.5 h-3.5" />
+                    <span>WhatsApp</span>
+                  </a>
+                </div>
               </div>
             </div>
 
@@ -413,14 +427,28 @@ export default function Home({ onOpenWizard, onOpenBaker: _onOpenBaker, onNaviga
                 </div>
               </div>
 
-              <div className="p-6 pt-0">
-                <button
-                  onClick={() => onNavigate("Live Counters")}
-                  className="w-full min-h-[44px] inline-flex items-center justify-center gap-2 bg-[#775a19] hover:bg-[#5d4201] text-white text-xs font-bold uppercase tracking-wider rounded transition-all cursor-pointer shadow-md"
-                >
-                  <span>EXPLORE PACKAGE</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </button>
+              <div className="p-6 pt-0 border-t border-white/10 mt-4 space-y-2.5">
+                <p className="text-[11px] font-bold text-brand-gold-tint tracking-widest uppercase text-center pt-3">
+                  Talk to the expert
+                </p>
+                <div className="grid grid-cols-2 gap-2">
+                  <a
+                    href="tel:+19452162199"
+                    className="min-h-[40px] inline-flex items-center justify-center gap-2 bg-[#775a19] hover:bg-[#5d4201] text-white text-xs font-bold uppercase tracking-wider rounded transition-all cursor-pointer shadow-md px-3 py-2 text-center"
+                  >
+                    <Phone className="w-3.5 h-3.5" />
+                    <span>Call</span>
+                  </a>
+                  <a
+                    href="https://wa.me/19452162199"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="min-h-[40px] inline-flex items-center justify-center gap-2 bg-[#25D366] hover:bg-[#1ebd56] text-white text-xs font-bold uppercase tracking-wider rounded transition-all cursor-pointer shadow-md px-3 py-2 text-center"
+                  >
+                    <MessageCircle className="w-3.5 h-3.5" />
+                    <span>WhatsApp</span>
+                  </a>
+                </div>
               </div>
             </div>
 
@@ -455,14 +483,28 @@ export default function Home({ onOpenWizard, onOpenBaker: _onOpenBaker, onNaviga
                 </div>
               </div>
 
-              <div className="p-6 pt-0">
-                <button
-                  onClick={() => onNavigate("Live Counters")}
-                  className="w-full min-h-[44px] inline-flex items-center justify-center gap-2 bg-[#775a19] hover:bg-[#5d4201] text-white text-xs font-bold uppercase tracking-wider rounded transition-all cursor-pointer shadow-md"
-                >
-                  <span>EXPLORE PACKAGE</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </button>
+              <div className="p-6 pt-0 border-t border-white/10 mt-4 space-y-2.5">
+                <p className="text-[11px] font-bold text-brand-gold-tint tracking-widest uppercase text-center pt-3">
+                  Talk to the expert
+                </p>
+                <div className="grid grid-cols-2 gap-2">
+                  <a
+                    href="tel:+19452162199"
+                    className="min-h-[40px] inline-flex items-center justify-center gap-2 bg-[#775a19] hover:bg-[#5d4201] text-white text-xs font-bold uppercase tracking-wider rounded transition-all cursor-pointer shadow-md px-3 py-2 text-center"
+                  >
+                    <Phone className="w-3.5 h-3.5" />
+                    <span>Call</span>
+                  </a>
+                  <a
+                    href="https://wa.me/19452162199"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="min-h-[40px] inline-flex items-center justify-center gap-2 bg-[#25D366] hover:bg-[#1ebd56] text-white text-xs font-bold uppercase tracking-wider rounded transition-all cursor-pointer shadow-md px-3 py-2 text-center"
+                  >
+                    <MessageCircle className="w-3.5 h-3.5" />
+                    <span>WhatsApp</span>
+                  </a>
+                </div>
               </div>
             </div>
 
