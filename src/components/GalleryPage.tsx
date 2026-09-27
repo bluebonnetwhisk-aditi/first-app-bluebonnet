@@ -102,8 +102,37 @@ interface GalleryPageProps {
   onNavigateToAdmin?: () => void;
 }
 
+const getCustomImagesMap = (sourceItems: any[]): Map<string, { imagePath: string; originalImagePath?: string }> => {
+  const map = new Map<string, { imagePath: string; originalImagePath?: string }>();
+  
+  try {
+    const raw = localStorage.getItem(LOCAL_STORAGE_GALLERY_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        parsed.forEach((item: any) => {
+          if (item?.id && (item.isCustomEdited || item.imagePath?.startsWith('data:') || item.imagePath?.startsWith('blob:'))) {
+            map.set(item.id, { imagePath: item.imagePath, originalImagePath: item.originalImagePath || item.imagePath });
+          }
+        });
+      }
+    }
+  } catch {}
+
+  if (Array.isArray(sourceItems)) {
+    sourceItems.forEach((item: any) => {
+      if (item?.id && (item.isCustomEdited || item.imagePath?.startsWith('data:') || item.imagePath?.startsWith('blob:'))) {
+        map.set(item.id, { imagePath: item.imagePath, originalImagePath: item.originalImagePath || item.imagePath });
+      }
+    });
+  }
+
+  return map;
+};
+
 const mergeWithInitialData = (sourceItems: any[]): GalleryItem[] => {
   const deletedSet = new Set(getDeletedGalleryIds());
+  const customImagesMap = getCustomImagesMap(sourceItems);
 
   let baseList: any[] = sourceItems;
   if (!Array.isArray(sourceItems) || sourceItems.length === 0) {
@@ -116,15 +145,19 @@ const mergeWithInitialData = (sourceItems: any[]): GalleryItem[] => {
     .filter((item: any) => !deletedSet.has(item.id))
     .map((item: any) => {
       const initMatch = initMap.get(item.id);
-      if (!initMatch) return item as GalleryItem;
+      const customImg = customImagesMap.get(item.id);
 
-      if (item.isCustomEdited) {
+      const effectiveImagePath = customImg?.imagePath || item.imagePath || initMatch?.imagePath;
+      const effectiveOrigPath = customImg?.originalImagePath || item.originalImagePath || effectiveImagePath;
+      const isEdited = Boolean(customImg || item.isCustomEdited);
+
+      if (!initMatch) {
         return {
-          ...initMatch,
           ...item,
-          imagePath: item.imagePath || initMatch.imagePath,
-          originalImagePath: item.originalImagePath || item.imagePath || initMatch.originalImagePath
-        };
+          imagePath: effectiveImagePath,
+          originalImagePath: effectiveOrigPath,
+          isCustomEdited: isEdited
+        } as GalleryItem;
       }
 
       return {
@@ -132,9 +165,10 @@ const mergeWithInitialData = (sourceItems: any[]): GalleryItem[] => {
         title: initMatch.title || item.title,
         category: initMatch.category || item.category,
         autoDescription: initMatch.autoDescription || item.autoDescription,
-        imagePath: item.imagePath || initMatch.imagePath,
-        originalImagePath: item.originalImagePath || initMatch.originalImagePath || (item.imagePath ? item.imagePath.replace('/gallery/', '/gallery/orig/') : ''),
-        visible: item.visible !== undefined ? item.visible : true
+        imagePath: effectiveImagePath,
+        originalImagePath: effectiveOrigPath,
+        visible: item.visible !== undefined ? item.visible : true,
+        isCustomEdited: isEdited
       };
     });
 };
