@@ -37,6 +37,25 @@ export default function App() {
     return false;
   });
 
+  // Dynamically manage Web App Manifest so PWA install prompt ONLY appears for Kitchen KDS (/catering/kitchen)
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    let manifestLink = document.querySelector<HTMLLinkElement>('link[rel="manifest"]');
+
+    if (isKitchenMode) {
+      if (!manifestLink) {
+        manifestLink = document.createElement("link");
+        manifestLink.rel = "manifest";
+        manifestLink.href = "/manifest.json";
+        document.head.appendChild(manifestLink);
+      }
+    } else {
+      if (manifestLink) {
+        manifestLink.remove();
+      }
+    }
+  }, [isKitchenMode]);
+
   const [activeTab, setActiveTab] = useState(() => {
     if (typeof window !== "undefined") {
       const path = window.location.pathname.toLowerCase();
