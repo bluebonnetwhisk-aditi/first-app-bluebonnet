@@ -13,7 +13,8 @@ import {
   KeyRound,
   RotateCw,
   RefreshCw,
-  Download
+  Download,
+  Camera
 } from "lucide-react";
 import initialGalleryData from "../data/galleryData.json";
 import { 
@@ -38,6 +39,46 @@ export interface GalleryItem {
   createdAt?: string;
   isCustomEdited?: boolean;
 }
+
+// Helper to compress uploaded image files into crisp, lightweight JPEGs (~150KB)
+const compressImageFile = (file: File, maxWidth = 1200, maxHeight = 1200, quality = 0.82): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        let width = img.width;
+        let height = img.height;
+
+        if (width > maxWidth || height > maxHeight) {
+          if (width / height > maxWidth / maxHeight) {
+            height = Math.round((height * maxWidth) / width);
+            width = maxWidth;
+          } else {
+            width = Math.round((width * maxHeight) / height);
+            height = maxHeight;
+          }
+        }
+
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, width, height);
+          const compressedDataUrl = canvas.toDataURL("image/jpeg", quality);
+          resolve(compressedDataUrl);
+        } else {
+          resolve(e.target?.result as string);
+        }
+      };
+      img.onerror = (err) => reject(err);
+      img.src = e.target?.result as string;
+    };
+    reader.onerror = (err) => reject(err);
+    reader.readAsDataURL(file);
+  });
+};
 
 export const getItemCategories = (item: GalleryItem): CategoryType[] => {
   if (Array.isArray(item.category)) {
@@ -80,7 +121,9 @@ const mergeWithInitialData = (sourceItems: any[]): GalleryItem[] => {
       if (item.isCustomEdited) {
         return {
           ...initMatch,
-          ...item
+          ...item,
+          imagePath: item.imagePath || initMatch.imagePath,
+          originalImagePath: item.originalImagePath || item.imagePath || initMatch.originalImagePath
         };
       }
 
@@ -204,23 +247,31 @@ export default function GalleryPage({ onNavigateToAdmin: _onNavigateToAdmin }: G
     }
   };
 
-  // Handle Image Swap via file picker (Converts file to base64 data URL)
-  const handleImageSwap = (id: string, file: File) => {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const result = e.target?.result as string;
-      if (result) {
-        setItems(prev => {
-          const next = prev.map(item => item.id === id ? { ...item, imagePath: result, originalImagePath: result } : item);
-          saveGalleryItemsToSupabase(next);
-          return next;
-        });
-        if (editingItem?.id === id) {
-          setEditingItem(prev => prev ? { ...prev, imagePath: result, originalImagePath: result } : null);
-        }
+  // Handle Image Swap via file picker (Compresses and converts file to optimized base64 data URL)
+  const handleImageSwap = async (id: string, file: File) => {
+    try {
+      const compressedDataUrl = await compressImageFile(file);
+      setItems(prev => {
+        const next = prev.map(item => item.id === id ? { 
+          ...item, 
+          imagePath: compressedDataUrl, 
+          originalImagePath: compressedDataUrl,
+          isCustomEdited: true 
+        } : item);
+        saveGalleryItemsToSupabase(next);
+        return next;
+      });
+      if (editingItem?.id === id) {
+        setEditingItem(prev => prev ? { 
+          ...prev, 
+          imagePath: compressedDataUrl, 
+          originalImagePath: compressedDataUrl,
+          isCustomEdited: true 
+        } : null);
       }
-    };
-    reader.readAsDataURL(file);
+    } catch (err) {
+      console.error("Failed to compress and swap image:", err);
+    }
   };
 
   // Save Edit Item
@@ -254,20 +305,26 @@ export default function GalleryPage({ onNavigateToAdmin: _onNavigateToAdmin }: G
         ctx.translate(canvas.width / 2, canvas.height / 2);
         ctx.rotate((90 * Math.PI) / 180);
         ctx.drawImage(img, -img.width / 2, -img.height / 2);
-        const rotatedDataUrl = canvas.toDataURL("image/jpeg", 0.92);
+        const rotatedDataUrl = canvas.toDataURL("image/jpeg", 0.85);
 
         setItems(prev => {
           const next = prev.map(item => item.id === id ? { 
             ...item, 
             imagePath: rotatedDataUrl,
-            originalImagePath: rotatedDataUrl 
+            originalImagePath: rotatedDataUrl,
+            isCustomEdited: true 
           } : item);
           saveGalleryItemsToSupabase(next);
           return next;
         });
 
         if (editingItem?.id === id) {
-          setEditingItem(prev => prev ? { ...prev, imagePath: rotatedDataUrl, originalImagePath: rotatedDataUrl } : null);
+          setEditingItem(prev => prev ? { 
+            ...prev, 
+            imagePath: rotatedDataUrl, 
+            originalImagePath: rotatedDataUrl,
+            isCustomEdited: true 
+          } : null);
         }
       }
     };
@@ -286,7 +343,8 @@ export default function GalleryPage({ onNavigateToAdmin: _onNavigateToAdmin }: G
       imagePath: newImagePath,
       originalImagePath: newImagePath,
       visible: true,
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
+      isCustomEdited: true
     };
 
     setItems(prev => {
@@ -301,15 +359,13 @@ export default function GalleryPage({ onNavigateToAdmin: _onNavigateToAdmin }: G
   };
 
   // Handle New File Selection
-  const handleNewFileSelect = (file: File) => {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const result = e.target?.result as string;
-      if (result) {
-        setNewImagePath(result);
-      }
-    };
-    reader.readAsDataURL(file);
+  const handleNewFileSelect = async (file: File) => {
+    try {
+      const compressedDataUrl = await compressImageFile(file);
+      setNewImagePath(compressedDataUrl);
+    } catch (err) {
+      console.error("Failed to compress file for new item:", err);
+    }
   };
 
   // Filter items for Guest mode (visible only) or Admin mode (all)
@@ -484,6 +540,23 @@ export default function GalleryPage({ onNavigateToAdmin: _onNavigateToAdmin }: G
                     >
                       <RotateCw className="w-4 h-4" />
                     </button>
+                    <label
+                      onClick={(e) => e.stopPropagation()}
+                      className="p-1.5 rounded-lg text-xs bg-purple-500/20 text-purple-300 hover:bg-purple-500/40 cursor-pointer flex items-center justify-center"
+                      title="Replace / Swap Photo File"
+                    >
+                      <Camera className="w-4 h-4" />
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => {
+                          if (e.target.files && e.target.files[0]) {
+                            handleImageSwap(item.id, e.target.files[0]);
+                          }
+                        }}
+                      />
+                    </label>
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
