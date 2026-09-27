@@ -12,7 +12,15 @@ import {
   Trash2,
   Package,
   DollarSign,
-  Award
+  Award,
+  Sparkles,
+  Key,
+  Wand2,
+  Eye,
+  EyeOff,
+  ExternalLink,
+  RefreshCw,
+  CheckCircle2
 } from 'lucide-react';
 import type { 
   TiffinMenuSettings, 
@@ -30,6 +38,13 @@ import {
   DEFAULT_CONTAINER_ADDONS,
   DEFAULT_DABBA_PRICING
 } from '../../services/supabase';
+import { 
+  scanTiffinFlyerWithGemini, 
+  getGeminiApiKey, 
+  saveGeminiApiKey, 
+  getBundledFlyerParsedData,
+  type ScannedTiffinData 
+} from '../../services/geminiScanner';
 import { getCentralTimeNow } from '../../utils/centralTime';
 
 interface KDSTiffinMenuModalProps {
@@ -78,8 +93,22 @@ export default function KDSTiffinMenuModal({
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  // Load existing settings and blackouts
+  // Google Gemini AI Scanner State
+  const [geminiApiKey, setGeminiApiKey] = useState('');
+  const [showApiKeyModal, setShowApiKeyModal] = useState(false);
+  const [tempApiKey, setTempApiKey] = useState('');
+  const [showApiKeySecret, setShowApiKeySecret] = useState(false);
+  const [isScanning, setIsScanning] = useState(false);
+  const [scanSuccess, setScanSuccess] = useState<string | null>(null);
+  const [scanError, setScanError] = useState<string | null>(null);
+  const [aiUpdatedTabs, setAiUpdatedTabs] = useState<string[]>([]);
+
+  // Load existing settings, blackouts and stored Gemini key
   useEffect(() => {
+    getGeminiApiKey().then(k => {
+      if (k) setGeminiApiKey(k);
+    });
+
     Promise.all([fetchTiffinMenuSettings(), fetchCalendarBlackouts()]).then(([data, bDates]) => {
       setFlyerUrl(data.flyerImageUrl || DEFAULT_TIFFIN_SETTINGS.flyerImageUrl);
       setWeekTitle(data.weekTitle || DEFAULT_TIFFIN_SETTINGS.weekTitle);
@@ -230,6 +259,110 @@ export default function KDSTiffinMenuModal({
       }
     };
     reader.readAsDataURL(file);
+  };
+
+  // Apply scanned data across all quick tab controls
+  const applyScannedData = (data: ScannedTiffinData, sourceName: string) => {
+    // 1. Week Title
+    if (data.weekTitle) {
+      setWeekTitle(data.weekTitle);
+      const cleanTitle = data.weekTitle.toLowerCase();
+      const match = weekOptions.find(o => 
+        o.label.toLowerCase().includes(cleanTitle) ||
+        cleanTitle.includes(o.label.toLowerCase())
+      );
+      if (match) {
+        setSelectedWeekKey(match.key);
+      }
+    }
+
+    // 2. Daily Menu (Monday - Saturday)
+    if (data.weekdayMenus && Object.keys(data.weekdayMenus).length > 0) {
+      setWeekdayMenus(prev => ({
+        ...prev,
+        ...data.weekdayMenus
+      }));
+    }
+
+    // 3. 16 oz Containers
+    if (data.containerAddons && data.containerAddons.length > 0) {
+      setContainerAddons(data.containerAddons);
+    }
+
+    // 4. Dabba Pricing
+    if (data.dabbaPricing) {
+      setDabbaPricing(prev => ({
+        ...prev,
+        ...data.dabbaPricing
+      }));
+    }
+
+    // 5. Chef's Specials
+    if (data.specialDishes && data.specialDishes.length > 0) {
+      setSpecialDishes(data.specialDishes);
+    }
+
+    setAiUpdatedTabs(['daily', 'addons', 'pricing', 'specials']);
+    setScanSuccess(`✓ ${sourceName} successfully! Daily Menu (Mon–Sat), 16 oz Containers, Dabba Pricing, and Chef's Specials have been auto-populated. Review each tab below and save when ready.`);
+    setScanError(null);
+  };
+
+  // Trigger Google Gemini OCR Scan
+  const handleScanWithGemini = async () => {
+    const key = geminiApiKey.trim();
+    if (!key) {
+      setTempApiKey('');
+      setShowApiKeyModal(true);
+      return;
+    }
+
+    setIsScanning(true);
+    setScanError(null);
+    setScanSuccess(null);
+
+    try {
+      const data = await scanTiffinFlyerWithGemini(flyerUrl || '/tiffin-flyer.jpg', key);
+      applyScannedData(data, 'Google Gemini AI scanned your flyer');
+    } catch (err: any) {
+      const msg = err?.message || 'Error scanning flyer with Gemini AI';
+      if (msg.includes('API Key is missing') || msg.includes('Invalid Gemini API Key')) {
+        setScanError(msg);
+        setShowApiKeyModal(true);
+      } else {
+        setScanError(msg);
+      }
+    } finally {
+      setIsScanning(false);
+    }
+  };
+
+  // Quick-fill from bundled flyer demo data
+  const handleLoadDemoData = () => {
+    const data = getBundledFlyerParsedData();
+    applyScannedData(data, 'Bundled September flyer loaded');
+  };
+
+  // Save API Key and optionally scan
+  const handleSaveApiKey = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const clean = tempApiKey.trim();
+    if (!clean) return;
+
+    await saveGeminiApiKey(clean);
+    setGeminiApiKey(clean);
+    setShowApiKeyModal(false);
+    setScanError(null);
+
+    // Auto-scan immediately after saving key
+    setIsScanning(true);
+    try {
+      const data = await scanTiffinFlyerWithGemini(flyerUrl || '/tiffin-flyer.jpg', clean);
+      applyScannedData(data, 'Google Gemini AI scanned your flyer');
+    } catch (err: any) {
+      setScanError(err?.message || 'Error scanning flyer with Gemini AI');
+    } finally {
+      setIsScanning(false);
+    }
   };
 
   // Daily Menu update
@@ -393,12 +526,13 @@ export default function KDSTiffinMenuModal({
           ].map(tab => {
             const Icon = tab.icon;
             const isCurrent = activeSection === tab.id;
+            const isAiUpdated = aiUpdatedTabs.includes(tab.id);
             return (
               <button
                 key={tab.id}
                 type="button"
                 onClick={() => setActiveSection(tab.id as ModalSection)}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 cursor-pointer ${
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 cursor-pointer relative ${
                   isCurrent
                     ? 'bg-[#00346f] text-white shadow-xs'
                     : 'bg-white text-gray-700 hover:bg-gray-200 border border-gray-200'
@@ -406,6 +540,12 @@ export default function KDSTiffinMenuModal({
               >
                 <Icon className={`w-3.5 h-3.5 ${isCurrent ? 'text-[#ffdea5]' : 'text-gray-500'}`} />
                 <span>{tab.label}</span>
+                {isAiUpdated && (
+                  <span className="flex h-2 w-2 relative ml-0.5">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                  </span>
+                )}
               </button>
             );
           })}
@@ -528,6 +668,148 @@ export default function KDSTiffinMenuModal({
                   </div>
                 </div>
               </div>
+
+              {/* ── GOOGLE GEMINI MULTIMODAL AI OCR & AUTO-POPULATOR ── */}
+              <div className="p-4 bg-gradient-to-r from-indigo-50/90 via-purple-50/90 to-blue-50/90 border-2 border-indigo-200/90 rounded-2xl space-y-3 shadow-xs">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 via-purple-600 to-[#00346f] flex items-center justify-center text-white shadow-sm shrink-0">
+                      <Sparkles className="w-4 h-4 text-[#ffdea5]" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h4 className="text-xs font-black text-indigo-950 uppercase tracking-wider">
+                          Google Gemini Multimodal AI OCR
+                        </h4>
+                        <span className="px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-widest bg-indigo-600 text-white rounded-full">
+                          Auto-Populate 4 Tabs
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-indigo-900 font-medium">
+                        Automatically extract Monday–Saturday dishes, 16 oz sides, and Dabba prices directly from your flyer image.
+                      </p>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setTempApiKey(geminiApiKey);
+                      setShowApiKeyModal(true);
+                    }}
+                    className="inline-flex items-center gap-1.5 text-[11px] font-bold text-indigo-700 hover:text-indigo-900 bg-white hover:bg-indigo-50 px-2.5 py-1.5 rounded-xl border border-indigo-200 cursor-pointer self-start sm:self-center transition-colors shadow-2xs"
+                  >
+                    <Key className="w-3.5 h-3.5 text-indigo-500" />
+                    <span>{geminiApiKey ? 'API Key: Set ✓' : 'Enter Gemini Key'}</span>
+                  </button>
+                </div>
+
+                {/* Scan Status & Trigger Button */}
+                <div className="pt-1 flex flex-wrap items-center gap-2.5">
+                  <button
+                    type="button"
+                    disabled={isScanning}
+                    onClick={handleScanWithGemini}
+                    className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-indigo-600 via-purple-600 to-[#00346f] text-white rounded-xl font-bold text-xs hover:opacity-95 transition-all shadow-md cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-[1.01]"
+                  >
+                    {isScanning ? (
+                      <>
+                        <RefreshCw className="w-4 h-4 animate-spin text-[#ffdea5]" />
+                        <span>Gemini Vision is scanning flyer...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="w-4 h-4 text-[#ffdea5]" />
+                        <span>✨ Scan Flyer &amp; Auto-Populate All Tabs</span>
+                      </>
+                    )}
+                  </button>
+
+                  <button
+                    type="button"
+                    disabled={isScanning}
+                    onClick={handleLoadDemoData}
+                    className="inline-flex items-center gap-1.5 px-3 py-2 bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 rounded-xl font-semibold text-xs transition-colors cursor-pointer disabled:opacity-50"
+                    title="Load pre-extracted data from the bundled September flyer"
+                  >
+                    <Wand2 className="w-3.5 h-3.5 text-purple-600" />
+                    <span>Quick Fill from Bundled Flyer</span>
+                  </button>
+
+                  {isScanning && (
+                    <span className="text-[11px] text-indigo-800 font-semibold animate-pulse flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-indigo-600 animate-ping" />
+                      Analyzing dishes, 16 oz sides &amp; pricing...
+                    </span>
+                  )}
+                </div>
+
+                {/* Scan Success Banner */}
+                {scanSuccess && (
+                  <div className="p-3 bg-emerald-50 border border-emerald-300 rounded-xl space-y-2 animate-fade-in">
+                    <div className="flex items-center gap-2 text-xs font-bold text-emerald-950">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                      <span>{scanSuccess}</span>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2 pt-1">
+                      <span className="text-[10px] font-bold text-emerald-800 uppercase tracking-wider">
+                        Review Scanned Tabs:
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setActiveSection('daily')}
+                        className="px-2.5 py-1 bg-white text-emerald-900 border border-emerald-300 rounded-lg text-[11px] font-bold hover:bg-emerald-100 transition-colors cursor-pointer"
+                      >
+                        1. Daily Menu (Mon–Sat) →
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setActiveSection('addons')}
+                        className="px-2.5 py-1 bg-white text-emerald-900 border border-emerald-300 rounded-lg text-[11px] font-bold hover:bg-emerald-100 transition-colors cursor-pointer"
+                      >
+                        2. 16 oz Containers →
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setActiveSection('pricing')}
+                        className="px-2.5 py-1 bg-white text-emerald-900 border border-emerald-300 rounded-lg text-[11px] font-bold hover:bg-emerald-100 transition-colors cursor-pointer"
+                      >
+                        3. Dabba Pricing →
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setActiveSection('specials')}
+                        className="px-2.5 py-1 bg-white text-emerald-900 border border-emerald-300 rounded-lg text-[11px] font-bold hover:bg-emerald-100 transition-colors cursor-pointer"
+                      >
+                        4. Chef's Specials →
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Scan Error Banner */}
+                {scanError && (
+                  <div className="p-3 bg-rose-50 border border-rose-300 rounded-xl flex items-center justify-between gap-3 text-xs text-rose-900 animate-fade-in">
+                    <div className="flex items-center gap-2">
+                      <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+                      <span>{scanError}</span>
+                    </div>
+                    {(!geminiApiKey || scanError.includes('API')) && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setTempApiKey(geminiApiKey);
+                          setShowApiKeyModal(true);
+                        }}
+                        className="px-2.5 py-1 bg-rose-600 text-white rounded-lg font-bold text-[11px] hover:bg-rose-700 cursor-pointer shrink-0"
+                      >
+                        Enter API Key
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+
             </div>
           )}
 
@@ -544,9 +826,16 @@ export default function KDSTiffinMenuModal({
                     Update the daily dal / curry course and dry sabzi course from the weekly flyer.
                   </p>
                 </div>
-                <span className="text-[11px] font-bold px-2.5 py-1 bg-white text-emerald-900 border border-emerald-300 rounded-xl">
-                  Sunday Closed
-                </span>
+                <div className="flex items-center gap-2">
+                  {aiUpdatedTabs.includes('daily') && (
+                    <span className="text-[10px] font-bold px-2.5 py-0.5 bg-emerald-600 text-white rounded-full flex items-center gap-1 shadow-2xs">
+                      <Sparkles className="w-3 h-3 text-[#ffdea5]" /> Scanned by Gemini
+                    </span>
+                  )}
+                  <span className="text-[11px] font-bold px-2.5 py-1 bg-white text-emerald-900 border border-emerald-300 rounded-xl">
+                    Sunday Closed
+                  </span>
+                </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -632,14 +921,21 @@ export default function KDSTiffinMenuModal({
                     Customers can order standalone 16 oz tubs of curries, sabzis, paneer, rice and raita.
                   </p>
                 </div>
-                <button
-                  type="button"
-                  onClick={handleAddContainer}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-700 hover:bg-amber-800 text-white text-xs font-bold shadow-2xs transition-colors cursor-pointer"
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                  <span>Add Container</span>
-                </button>
+                <div className="flex items-center gap-2">
+                  {aiUpdatedTabs.includes('addons') && (
+                    <span className="text-[10px] font-bold px-2.5 py-0.5 bg-amber-600 text-white rounded-full flex items-center gap-1 shadow-2xs">
+                      <Sparkles className="w-3 h-3 text-[#ffdea5]" /> Scanned by Gemini
+                    </span>
+                  )}
+                  <button
+                    type="button"
+                    onClick={handleAddContainer}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-700 hover:bg-amber-800 text-white text-xs font-bold shadow-2xs transition-colors cursor-pointer"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>Add Container</span>
+                  </button>
+                </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -704,14 +1000,21 @@ export default function KDSTiffinMenuModal({
           {/* ── SECTION 4: DABBA PRICING ── */}
           {activeSection === 'pricing' && (
             <div className="space-y-4 animate-fade-in">
-              <div className="p-4 bg-blue-50/70 border border-blue-200 rounded-2xl">
-                <h4 className="text-xs font-bold uppercase tracking-wider text-[#00346f] flex items-center gap-1.5">
-                  <DollarSign className="w-4 h-4 text-[#775a19]" />
-                  <span>Dabba Package Prices (Single, Family &amp; Weekly Plans)</span>
-                </h4>
-                <p className="text-[11px] text-gray-600 mt-0.5">
-                  Set the tier prices reflected in the Dabba Options and Daily Homestyle Tiffin sections.
-                </p>
+              <div className="p-4 bg-blue-50/70 border border-blue-200 rounded-2xl flex items-center justify-between">
+                <div>
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-[#00346f] flex items-center gap-1.5">
+                    <DollarSign className="w-4 h-4 text-[#775a19]" />
+                    <span>Dabba Package Prices (Single, Family &amp; Weekly Plans)</span>
+                  </h4>
+                  <p className="text-[11px] text-gray-600 mt-0.5">
+                    Set the tier prices reflected in the Dabba Options and Daily Homestyle Tiffin sections.
+                  </p>
+                </div>
+                {aiUpdatedTabs.includes('pricing') && (
+                  <span className="text-[10px] font-bold px-2.5 py-0.5 bg-indigo-600 text-white rounded-full flex items-center gap-1 shadow-2xs">
+                    <Sparkles className="w-3 h-3 text-[#ffdea5]" /> Scanned by Gemini
+                  </span>
+                )}
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -801,16 +1104,23 @@ export default function KDSTiffinMenuModal({
                   </p>
                 </div>
 
-                {specialDishes.length < 3 && (
-                  <button
-                    type="button"
-                    onClick={handleAddSpecial}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-purple-700 hover:bg-purple-800 text-white text-xs font-bold shadow-2xs transition-colors cursor-pointer"
-                  >
-                    <Plus className="w-3.5 h-3.5" />
-                    <span>Add Special Dish ({specialDishes.length}/3)</span>
-                  </button>
-                )}
+                <div className="flex items-center gap-2">
+                  {aiUpdatedTabs.includes('specials') && (
+                    <span className="text-[10px] font-bold px-2.5 py-0.5 bg-purple-600 text-white rounded-full flex items-center gap-1 shadow-2xs">
+                      <Sparkles className="w-3 h-3 text-[#ffdea5]" /> Scanned by Gemini
+                    </span>
+                  )}
+                  {specialDishes.length < 3 && (
+                    <button
+                      type="button"
+                      onClick={handleAddSpecial}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-purple-700 hover:bg-purple-800 text-white text-xs font-bold shadow-2xs transition-colors cursor-pointer"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>Add Special Dish ({specialDishes.length}/3)</span>
+                    </button>
+                  )}
+                </div>
               </div>
 
               {specialDishes.length === 0 ? (
@@ -916,6 +1226,104 @@ export default function KDSTiffinMenuModal({
             <span>{isSaving ? 'Saving to Supabase...' : 'Save Flyer & Specials'}</span>
           </button>
         </div>
+
+        {/* Gemini API Key Configuration Dialog */}
+        {showApiKeyModal && (
+          <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-fade-in">
+            <div className="bg-white rounded-2xl shadow-2xl border border-gray-200 max-w-md w-full p-5 space-y-4">
+              <div className="flex items-center justify-between pb-2 border-b border-gray-100">
+                <div className="flex items-center gap-2 text-[#00346f]">
+                  <Key className="w-5 h-5 text-indigo-600" />
+                  <h4 className="font-serif font-bold text-base">Google Gemini API Key</h4>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowApiKeyModal(false)}
+                  className="p-1 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <p className="text-xs text-gray-600 leading-relaxed">
+                Enter your Google Gemini API key to enable AI OCR scanning of weekly tiffin flyer images. The key will be safely saved in your kitchen configuration.
+              </p>
+
+              <div className="p-3 bg-indigo-50 border border-indigo-200 rounded-xl flex items-start gap-2.5 text-[11px] text-indigo-900">
+                <Sparkles className="w-4 h-4 text-indigo-600 shrink-0 mt-0.5" />
+                <div>
+                  <span className="font-bold">Need a free API Key?</span>
+                  <p className="mt-0.5 text-indigo-800">
+                    Get an instant free Gemini API key in 10 seconds from Google AI Studio.
+                  </p>
+                  <a
+                    href="https://aistudio.google.com/app/apikey"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1 font-bold text-indigo-700 hover:text-indigo-900 underline mt-1"
+                  >
+                    <span>Open Google AI Studio</span>
+                    <ExternalLink className="w-3 h-3" />
+                  </a>
+                </div>
+              </div>
+
+              <form onSubmit={handleSaveApiKey} className="space-y-3">
+                <div>
+                  <label className="block text-[11px] font-bold text-gray-700 mb-1">
+                    API Key:
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={showApiKeySecret ? 'text' : 'password'}
+                      placeholder="AIzaSy..."
+                      value={tempApiKey}
+                      onChange={(e) => setTempApiKey(e.target.value)}
+                      required
+                      className="w-full px-3 py-2 pr-10 text-xs bg-white border border-gray-300 rounded-xl focus:outline-none focus:border-indigo-600 font-mono"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowApiKeySecret(!showApiKeySecret)}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer"
+                    >
+                      {showApiKeySecret ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between gap-2 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowApiKeyModal(false);
+                      handleLoadDemoData();
+                    }}
+                    className="text-[11px] text-purple-700 hover:underline font-semibold"
+                  >
+                    Or use bundled demo data
+                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setShowApiKeyModal(false)}
+                      className="px-3 py-1.5 text-xs text-gray-600 hover:bg-gray-100 rounded-xl font-medium cursor-pointer"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={!tempApiKey.trim()}
+                      className="px-4 py-2 bg-indigo-600 text-white rounded-xl text-xs font-bold hover:bg-indigo-700 transition-colors shadow-sm cursor-pointer disabled:opacity-50"
+                    >
+                      Save &amp; Scan Now
+                    </button>
+                  </div>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
 
       </div>
     </div>
