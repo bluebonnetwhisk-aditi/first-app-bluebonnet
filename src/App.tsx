@@ -211,11 +211,13 @@ export default function App() {
             {/* Logo Brand */}
             <div 
               onClick={() => setActiveTab("Home")} 
-              className="shrink-0 flex items-center cursor-pointer group"
+              className="shrink-0 flex items-center cursor-pointer group py-0.5"
             >
-              <span className="font-serif text-xl sm:text-2xl font-bold text-[#00346f] tracking-tight transition-colors group-hover:text-[#775a19] whitespace-nowrap">
-                Bluebonnet Whisk
-              </span>
+              <img 
+                src="src/assets/images/brand_logo_transparent.png" 
+                alt="Bluebonnet Whisk" 
+                className="h-10 sm:h-12 w-auto object-contain transition-transform duration-300 group-hover:scale-105"
+              />
             </div>
 
             {/* Desktop Navigation Links */}
@@ -299,9 +301,16 @@ export default function App() {
           
           {/* Logo and brief summary */}
           <div className="space-y-4">
-            <span className="font-serif text-lg font-bold text-[#00346f] tracking-tight">
-              Bluebonnet Whisk
-            </span>
+            <div 
+              onClick={() => setActiveTab("Home")} 
+              className="cursor-pointer inline-block group"
+            >
+              <img 
+                src="src/assets/images/brand_logo_transparent.png" 
+                alt="Bluebonnet Whisk" 
+                className="h-12 sm:h-14 w-auto object-contain transition-transform duration-300 group-hover:scale-105"
+              />
+            </div>
             <p className="text-gray-500 text-xs leading-relaxed max-w-xs font-sans">
               Crafting modern heritage through the lens of luxury patisserie and Indian fusion artistry. Handcrafted daily with 100% natural, premium spices.
             </p>

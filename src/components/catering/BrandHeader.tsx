@@ -36,12 +36,16 @@ export default function BrandHeader({ onScrollToMenu }: BrandHeaderProps) {
             <span>Vegetarian Catering</span>
           </div>
 
-          <h1 className="font-serif text-3xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-white leading-tight drop-shadow-sm">
-            DESI DABBA
+          <div className="py-2">
+            <img 
+              src="src/assets/images/brand_logo_transparent.png" 
+              alt="Bluebonnet Whisk" 
+              className="h-20 sm:h-28 w-auto mx-auto object-contain drop-shadow-lg"
+            />
+          </div>
+          <h1 className="font-serif text-2xl sm:text-4xl font-bold tracking-tight text-white leading-tight drop-shadow-sm">
+            DESI DABBA • VEGETARIAN CATERING
           </h1>
-          <p className="font-serif text-lg sm:text-2xl text-[#ffdea5] italic font-medium">
-            by BlueBonnet Whisk — Vegetarian Catering
-          </p>
           <p className="text-sm sm:text-base text-gray-200 max-w-2xl mx-auto font-medium">
             Same Homestyle Love. Bigger Celebrations.
           </p>

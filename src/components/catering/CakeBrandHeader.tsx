@@ -29,9 +29,13 @@ export default function CakeBrandHeader({ onScrollToConfigurator }: CakeBrandHea
             <span>Little Elm &amp; Frisco, TX</span>
           </div>
 
-          <h1 className="font-serif text-3xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-white leading-tight drop-shadow-sm">
-            BLUEBONNET WHISK
-          </h1>
+          <div className="py-2">
+            <img 
+              src="src/assets/images/brand_logo_transparent.png" 
+              alt="Bluebonnet Whisk" 
+              className="h-20 sm:h-28 w-auto mx-auto object-contain drop-shadow-lg"
+            />
+          </div>
           <p className="font-serif text-lg sm:text-2xl text-[#ffdea5] italic font-medium">
             Handcrafted Celebration Cakes &amp; Specialty Bakes
           </p>
