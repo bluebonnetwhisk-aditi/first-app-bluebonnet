@@ -226,26 +226,26 @@ export default function CateringContainer() {
       
       {/* ── 1. SUB-NAVIGATION BAR (Catering Order, Cake Order, Tiffin Order) ── */}
       <div 
-        className="sticky z-30 bg-white border-b border-gray-200 shadow-2xs"
-        style={{ top: 'var(--header-nav-bottom, 84px)' }}
+        className="sticky z-35 bg-[#fbfbfa]/95 backdrop-blur-md border-b border-gray-200/90 shadow-2xs transition-all"
+        style={{ top: 'var(--header-nav-bottom, 64px)' }}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between min-h-[56px] py-1.5">
+          <div className="flex items-center justify-between min-h-[52px] py-1.5">
             
             <div className="flex items-center gap-2 overflow-x-auto py-1 scrollbar-none w-full sm:w-auto">
               <span className="font-serif font-bold text-xs uppercase tracking-widest text-[#00346f] hidden sm:inline mr-1">
                 PORTAL:
               </span>
               
-              <div className="flex items-center gap-1.5 bg-gray-100 p-1 rounded-xl">
+              <div className="flex items-center gap-1.5 bg-gray-200/70 p-1 rounded-2xl border border-gray-250">
                 {/* 1. Food Order */}
                 <button
                   type="button"
                   onClick={() => switchSubTab('order')}
-                  className={`inline-flex items-center gap-1.5 min-h-[44px] px-3.5 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all cursor-pointer whitespace-nowrap ${
+                  className={`inline-flex items-center gap-1.5 min-h-[40px] px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer whitespace-nowrap ${
                     subTab === 'order'
-                      ? 'bg-[#00346f] text-white shadow-xs'
-                      : 'text-gray-600 hover:text-gray-900'
+                      ? 'bg-[#00346f] text-white shadow-xs ring-1 ring-[#ffdea5]/40'
+                      : 'text-gray-700 hover:text-[#00346f] hover:bg-white/80'
                   }`}
                 >
                   <UtensilsCrossed className="w-3.5 h-3.5" />
@@ -261,10 +261,10 @@ export default function CateringContainer() {
                 <button
                   type="button"
                   onClick={() => switchSubTab('cake')}
-                  className={`inline-flex items-center gap-1.5 min-h-[44px] px-3.5 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all cursor-pointer whitespace-nowrap ${
+                  className={`inline-flex items-center gap-1.5 min-h-[40px] px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer whitespace-nowrap ${
                     subTab === 'cake'
-                      ? 'bg-[#00346f] text-white shadow-xs'
-                      : 'text-gray-600 hover:text-gray-900'
+                      ? 'bg-[#00346f] text-white shadow-xs ring-1 ring-[#ffdea5]/40'
+                      : 'text-gray-700 hover:text-[#00346f] hover:bg-white/80'
                   }`}
                 >
                   <CakeIcon className="w-3.5 h-3.5" />
@@ -280,10 +280,10 @@ export default function CateringContainer() {
                 <button
                   type="button"
                   onClick={() => switchSubTab('tiffin')}
-                  className={`inline-flex items-center gap-1.5 min-h-[44px] px-3.5 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all cursor-pointer whitespace-nowrap ${
+                  className={`inline-flex items-center gap-1.5 min-h-[40px] px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer whitespace-nowrap ${
                     subTab === 'tiffin'
-                      ? 'bg-[#00346f] text-white shadow-xs'
-                      : 'text-gray-600 hover:text-gray-900'
+                      ? 'bg-[#00346f] text-white shadow-xs ring-1 ring-[#ffdea5]/40'
+                      : 'text-gray-700 hover:text-[#00346f] hover:bg-white/80'
                   }`}
                 >
                   <Package className="w-3.5 h-3.5" />
