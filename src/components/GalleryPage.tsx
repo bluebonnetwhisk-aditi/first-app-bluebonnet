@@ -18,7 +18,7 @@ import initialGalleryData from "../data/galleryData.json";
 export interface GalleryItem {
   id: string;
   title: string;
-  category: "Artisanal Bakery & Cakes" | "Savory Specialties" | "Traditional Sweets" | "Breads & Starters";
+  category: "Artisanal Cakes & Bakes" | "Specialty Culinary Fare" | "Heritage Sweets & Confectionery";
   autoDescription?: string;
   imagePath: string;
   originalImagePath?: string;
@@ -40,10 +40,18 @@ export default function GalleryPage({ onNavigateToAdmin: _onNavigateToAdmin }: G
       if (saved) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          return parsed.map((item: any) => ({
-            ...item,
-            originalImagePath: item.originalImagePath || item.imagePath.replace('/gallery/', '/gallery/orig/')
-          }));
+          return parsed.map((item: any) => {
+            let cat = item.category;
+            if (cat === "Artisanal Bakery & Cakes") cat = "Artisanal Cakes & Bakes";
+            else if (cat === "Savory Specialties" || cat === "Breads & Starters") cat = "Specialty Culinary Fare";
+            else if (cat === "Traditional Sweets") cat = "Heritage Sweets & Confectionery";
+
+            return {
+              ...item,
+              category: cat,
+              originalImagePath: item.originalImagePath || item.imagePath.replace('/gallery/', '/gallery/orig/')
+            };
+          });
         }
       }
     } catch {
@@ -68,7 +76,7 @@ export default function GalleryPage({ onNavigateToAdmin: _onNavigateToAdmin }: G
 
   // New Item Form State
   const [newTitle, setNewTitle] = useState("");
-  const [newCategory, setNewCategory] = useState<GalleryItem["category"]>("Artisanal Bakery & Cakes");
+  const [newCategory, setNewCategory] = useState<GalleryItem["category"]>("Artisanal Cakes & Bakes");
   const [newDescription, setNewDescription] = useState("");
   const [newImagePath, setNewImagePath] = useState("");
 
@@ -213,10 +221,9 @@ export default function GalleryPage({ onNavigateToAdmin: _onNavigateToAdmin }: G
     : visibleItems.filter(item => item.category === activeTab);
 
   const categories: GalleryItem["category"][] = [
-    "Artisanal Bakery & Cakes",
-    "Savory Specialties",
-    "Traditional Sweets",
-    "Breads & Starters"
+    "Artisanal Cakes & Bakes",
+    "Specialty Culinary Fare",
+    "Heritage Sweets & Confectionery"
   ];
 
   return (
@@ -234,7 +241,7 @@ export default function GalleryPage({ onNavigateToAdmin: _onNavigateToAdmin }: G
             Curated Visual Gallery
           </h1>
           <p className="text-gray-300 text-sm sm:text-base leading-relaxed font-light">
-            An authentic showcase of our small-batch celebration cakes, slow-cooked royal gravies, traditional sweets, and tandoori starters crafted across Dallas-Fort Worth.
+            An authentic showcase of our small-batch celebration cakes, slow-cooked royal gravies, and heritage confections crafted across Dallas-Fort Worth.
           </p>
           <div className="h-0.5 w-20 bg-[#D4AF37] mt-6 mx-auto" />
 
@@ -273,11 +280,10 @@ export default function GalleryPage({ onNavigateToAdmin: _onNavigateToAdmin }: G
         {/* Category Filters Bar */}
         <div className="flex items-center justify-center gap-2 flex-wrap mb-10">
           {[
-            { id: "all", label: "All Items" },
-            { id: "Artisanal Bakery & Cakes", label: "Artisanal Bakery & Cakes" },
-            { id: "Savory Specialties", label: "Savory Specialties" },
-            { id: "Traditional Sweets", label: "Traditional Sweets" },
-            { id: "Breads & Starters", label: "Breads & Starters" }
+            { id: "all", label: "All Portfolio" },
+            { id: "Artisanal Cakes & Bakes", label: "Artisanal Cakes & Bakes" },
+            { id: "Specialty Culinary Fare", label: "Specialty Culinary Fare" },
+            { id: "Heritage Sweets & Confectionery", label: "Heritage Sweets & Confectionery" }
           ].map(tab => {
             const isActive = activeTab === tab.id;
             return (
