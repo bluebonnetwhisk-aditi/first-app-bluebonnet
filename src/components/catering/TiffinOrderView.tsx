@@ -21,6 +21,7 @@ import type { CartItem, MenuItem, TiffinSpecialDish, TiffinMenuSettings, Contain
 import { getCentralTimeNow } from '../../utils/centralTime';
 import { 
   fetchTiffinMenuSettings, 
+  fetchCalendarBlackouts,
   getCurrentMondayStr,
   getCurrentMondayTitle,
   DEFAULT_TIFFIN_SETTINGS, 
@@ -63,6 +64,7 @@ export default function TiffinOrderView({
   onProceedToCheckout
 }: TiffinOrderViewProps) {
   const [settings, setSettings] = useState<TiffinMenuSettings>(DEFAULT_TIFFIN_SETTINGS);
+  const [blackoutDates, setBlackoutDates] = useState<string[]>([]);
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
   const [selectedDayTab, setSelectedDayTab] = useState<string>('');
   const [weeklyQty, setWeeklyQty] = useState<number>(1);
@@ -140,6 +142,8 @@ export default function TiffinOrderView({
         }
       } catch {}
     }
+
+    fetchCalendarBlackouts().then(dates => setBlackoutDates(dates));
 
     fetchTiffinMenuSettings().then(data => {
       const curMon = getCurrentMondayStr();
@@ -297,14 +301,17 @@ export default function TiffinOrderView({
 
       const isSunday = dayName === 'Sunday';
       const isSaturday = dayName === 'Saturday';
+      const isBlackout = blackoutDates.includes(dateStr);
 
-      // Must be strictly after today (next day or later) and not Sunday
+      // Must be strictly after today (next day or later), not Sunday, and not blackout date
       const isNextDayOrLater = dateStr > todayStr;
-      const isSelectable = isNextDayOrLater && !isSunday;
+      const isSelectable = isNextDayOrLater && !isSunday && !isBlackout;
 
       let statusLabel = 'Available to Order';
       if (isSunday) {
         statusLabel = 'Kitchen Closed';
+      } else if (isBlackout) {
+        statusLabel = 'Kitchen Closed (Blackout Date / High Order Volume)';
       } else if (dateStr < todayStr) {
         statusLabel = 'Past Date';
       } else if (dateStr === todayStr) {
@@ -328,7 +335,7 @@ export default function TiffinOrderView({
       });
     }
     return result;
-  }, [activeWeeklyPlan, todayStr, settings.weekdayMenus, settings.saturdaySpecialTitle, settings.saturdaySpecialDescription]);
+  }, [activeWeeklyPlan, todayStr, settings.weekdayMenus, settings.saturdaySpecialTitle, settings.saturdaySpecialDescription, blackoutDates]);
 
   // Auto-select first selectable day tab when schedule changes (e.g. week selected)
   useEffect(() => {

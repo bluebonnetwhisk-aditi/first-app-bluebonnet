@@ -476,9 +476,11 @@ function saveStoredOrders(orders: CateringOrder[], newOrder?: CateringOrder): vo
 
 function getInitialMockBlackouts(): CalendarBlackout[] {
   return [
-    { id: 1, closed_date: '2026-11-26', rule_type: 'single', reason: 'Thanksgiving Holiday Kitchen Close' },
-    { id: 2, closed_date: '2026-12-25', rule_type: 'single', reason: 'Christmas Day Kitchen Maintenance' },
-    { id: 3, closed_date: '2027-01-01', rule_type: 'single', reason: 'New Year Day Reset' }
+    { id: 1, closed_date: '2026-10-03', rule_type: 'single', reason: 'Kitchen closed due to high order volume' },
+    { id: 2, closed_date: '2026-09-03', rule_type: 'single', reason: 'Kitchen closed due to high order volume' },
+    { id: 3, closed_date: '2026-11-26', rule_type: 'single', reason: 'Thanksgiving Holiday Kitchen Close' },
+    { id: 4, closed_date: '2026-12-25', rule_type: 'single', reason: 'Christmas Day Kitchen Maintenance' },
+    { id: 5, closed_date: '2027-01-01', rule_type: 'single', reason: 'New Year Day Reset' }
   ];
 }
 
