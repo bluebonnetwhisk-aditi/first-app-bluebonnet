@@ -14,12 +14,11 @@ import {
 import PortionEstimator from "./PortionEstimator";
 
 interface HomeProps {
-  onOpenWizard: (flavor?: string, category?: string) => void;
-  onOpenBaker: () => void;
+  onOpenBaker?: () => void;
   onNavigate: (tab: string) => void;
 }
 
-export default function Home({ onOpenWizard, onOpenBaker: _onOpenBaker, onNavigate }: HomeProps) {
+export default function Home({ onOpenBaker: _onOpenBaker, onNavigate }: HomeProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const walkthroughRef = useRef<HTMLDivElement>(null);
@@ -317,7 +316,6 @@ export default function Home({ onOpenWizard, onOpenBaker: _onOpenBaker, onNaviga
       {/* ── PORTION ESTIMATOR WIDGET ── */}
       <PortionEstimator 
         onNavigateToFoodOrder={() => onNavigate("Catering")} 
-        onOpenInquiry={() => onOpenWizard("", "Catering")} 
       />
 
 
@@ -427,14 +425,14 @@ export default function Home({ onOpenWizard, onOpenBaker: _onOpenBaker, onNaviga
                 className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 text-white min-h-[44px] px-5 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider transition-all border border-white/20 cursor-pointer"
               >
                 <Phone className="w-4 h-4 text-emerald-400" />
-                <span>Call 945-527-4566</span>
+                <span>Call</span>
               </a>
               <a
                 href="sms:+19455274566?body=Hi%20Bluebonnet%20Whisk!%20I'm%20inquiring%20about%20an%20event."
                 className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 text-white min-h-[44px] px-5 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider transition-all border border-white/20 cursor-pointer"
               >
                 <MessageSquare className="w-4 h-4 text-sky-400" />
-                <span>SMS 945-527-4566</span>
+                <span>SMS</span>
               </a>
               <a
                 href="https://wa.me/19455274566?text=Hi%20Bluebonnet%20Whisk!%20I'd%20like%20to%20inquire%20about%20an%20order."
@@ -443,7 +441,7 @@ export default function Home({ onOpenWizard, onOpenBaker: _onOpenBaker, onNaviga
                 className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-[#25D366] hover:bg-[#1ebd5a] text-white min-h-[44px] px-5 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider transition-all shadow-md cursor-pointer"
               >
                 <MessageCircle className="w-4 h-4 fill-white" />
-                <span>WhatsApp 945-527-4566</span>
+                <span>WhatsApp</span>
               </a>
             </div>
           </div>

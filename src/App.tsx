@@ -4,8 +4,6 @@ import {
   X
 } from "lucide-react";
 import { submitToGoogleSheets } from "./services/googleSheets";
-import type { SelectedItem } from "./types";
-import { SERVICE_ADDONS } from "./menuData";
 
 // Components
 import Home from "./components/Home";
@@ -16,8 +14,7 @@ import LiveCountersPage from "./components/LiveCountersPage";
 import GiftingPage from "./components/GiftingPage";
 import AboutPage from "./components/AboutPage";
 
-// Modals
-import InquiryWizard from "./components/InquiryWizard";
+// Modals (InquiryWizard retired)
 
 const isKitchenPath = (path: string): boolean => {
   const clean = path.toLowerCase().replace(/\/+$/, "");
@@ -68,7 +65,6 @@ export default function App() {
     }
     return "Home";
   });
-  const [isWizardOpen, setIsWizardOpen] = useState(false);
   const navRef = useRef<HTMLElement>(null);
   
   // Interactive UI states
@@ -103,20 +99,8 @@ export default function App() {
     };
   }, [isKitchenMode, activeTab]);
 
-  const [selectedFlavor, setSelectedFlavor] = useState<string>("");
-  const [selectedCategory, setSelectedCategory] = useState<string>("");
-
-  const [selectedCateringItems, setSelectedCateringItems] = useState<SelectedItem[]>([]);
-  const [appliedCateringAddons, setAppliedCateringAddons] = useState<string[]>([]);
-
-  const handleOpenWizard = (flavor?: string, category?: string) => {
-    setSelectedFlavor(flavor || "");
-    setSelectedCategory(category || "");
-    setIsWizardOpen(true);
-  };
-
   const handleOpenBaker = () => {
-    window.open("https://wa.me/19455274566", "_blank");
+    window.location.href = "sms:+19455274566?body=Hi%20Baker!%20I'd%20like%20to%20discuss%20a%20custom%20order.";
   };
 
   const handleNewsletterSubmit = async (e: React.FormEvent) => {
@@ -278,14 +262,12 @@ export default function App() {
       <main className="flex-1">
         {activeTab === "Home" && (
           <Home 
-            onOpenWizard={handleOpenWizard} 
             onOpenBaker={handleOpenBaker}
             onNavigate={setActiveTab}
           />
         )}
         {activeTab === "Cakes" && (
           <CakesPage 
-            onOpenWizard={handleOpenWizard} 
             onOpenBaker={handleOpenBaker}
             onOpenPriceList={() => setShowPriceList(true)}
           />
@@ -294,10 +276,10 @@ export default function App() {
           <CateringContainer />
         )}
         {activeTab === "Live Counters" && (
-          <LiveCountersPage onOpenWizard={handleOpenWizard} />
+          <LiveCountersPage />
         )}
         {activeTab === "Gifting" && (
-          <GiftingPage onOpenWizard={handleOpenWizard} />
+          <GiftingPage />
         )}
         {activeTab === "About" && (
           <AboutPage />
@@ -403,20 +385,6 @@ export default function App() {
       </footer>
 
       {/* ── MODALS & OVERLAYS ── */}
-
-      {/* Complete Inquiry wizard modal */}
-      <InquiryWizard 
-        isOpen={isWizardOpen} 
-        onClose={() => setIsWizardOpen(false)}
-        preselectedFlavor={selectedFlavor}
-        preselectedCategory={selectedCategory}
-        selectedCateringItems={selectedCateringItems}
-        cateringAddons={SERVICE_ADDONS.filter(a => appliedCateringAddons.includes(a.id)).map(a => ({ name: a.name, price: a.basePrice }))}
-        onClearCateringItems={() => {
-          setSelectedCateringItems([]);
-          setAppliedCateringAddons([]);
-        }}
-      />
 
       {/* Price list guidelines modal */}
       {showPriceList && (

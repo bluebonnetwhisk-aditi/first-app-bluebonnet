@@ -2,12 +2,11 @@ import { ArrowRight, MessageSquare, ChevronRight, Sparkles } from "lucide-react"
 import { flavorCategories } from "../types";
 
 interface CakesPageProps {
-  onOpenWizard: (flavor?: string, category?: string) => void;
   onOpenBaker: () => void;
   onOpenPriceList: () => void;
 }
 
-export default function CakesPage({ onOpenWizard, onOpenBaker, onOpenPriceList }: CakesPageProps) {
+export default function CakesPage({ onOpenBaker, onOpenPriceList }: CakesPageProps) {
   return (
     <div className="animate-fade-in bg-brand-cream-light min-h-screen">
       {/* Elegant Hero Section */}
@@ -36,12 +35,12 @@ export default function CakesPage({ onOpenWizard, onOpenBaker, onOpenPriceList }
           </p>
 
           <div className="flex flex-col sm:flex-row items-center gap-4">
-            <button
-              onClick={() => onOpenWizard()}
+            <a
+              href="sms:+19455274566?body=Hi!%20I'd%20like%20to%20request%20a%20quote%20for%20a%20custom%20cake."
               className="w-full sm:w-auto min-h-[44px] inline-flex items-center justify-center bg-[#00346f] hover:bg-[#00224d] text-white font-sans text-xs uppercase tracking-widest font-bold px-8 py-3.5 rounded-xl shadow-lg transition-all duration-300 cursor-pointer"
             >
               REQUEST QUOTE
-            </button>
+            </a>
             <p className="flex items-center gap-2.5 text-sm lg:text-base text-brand-gold-tint font-sans font-semibold">
               <span className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500 text-white font-black text-xs">✓</span>
               Custom flavors & Eggless options available
@@ -83,12 +82,12 @@ export default function CakesPage({ onOpenWizard, onOpenBaker, onOpenPriceList }
                   </span>
                 ))}
               </div>
-              <button
-                onClick={() => onOpenWizard("", "Classic Flavors")}
-                className="border border-secondary-brand/60 hover:bg-secondary-brand/5 px-6 py-3 text-[11px] font-bold tracking-widest text-[#775a19] uppercase rounded transition-all cursor-pointer font-semibold"
+              <a
+                href="sms:+19455274566?body=Hi!%20I'd%20like%20to%20inquire%20about%20Custom%20Celebration%20Cakes."
+                className="inline-block border border-secondary-brand/60 hover:bg-secondary-brand/5 px-6 py-3 text-[11px] font-bold tracking-widest text-[#775a19] uppercase rounded transition-all cursor-pointer font-semibold text-center"
               >
-                VIEW GALLERY
-              </button>
+                INQUIRE VIA SMS
+              </a>
             </div>
           </div>
 
@@ -151,12 +150,12 @@ export default function CakesPage({ onOpenWizard, onOpenBaker, onOpenPriceList }
             </div>
             <div className="p-6 pt-0 flex justify-between items-end border-t border-gray-100 mt-2">
               <span className="text-[10px] text-gray-500 font-bold block font-sans uppercase">Starting from $20</span>
-              <button 
-                onClick={() => onOpenWizard("", "Indian Fusion")}
+              <a 
+                href="sms:+19455274566?body=Hi!%20I'd%20like%20to%20inquire%20about%20Festival%20Specials."
                 className="text-[#775a19] text-xs font-bold tracking-widest uppercase flex items-center gap-1.5 hover:gap-2.5 transition-all cursor-pointer font-semibold"
               >
-                VIEW BOXES <ArrowRight className="h-3.5 w-3.5" />
-              </button>
+                INQUIRE VIA SMS <ArrowRight className="h-3.5 w-3.5" />
+              </a>
             </div>
           </div>
 
@@ -175,12 +174,12 @@ export default function CakesPage({ onOpenWizard, onOpenBaker, onOpenPriceList }
               <p className="text-gray-600 text-xs font-sans leading-relaxed mb-5">
                 Bite-sized treats, big smiles! Our custom cupcakes and cake pops are loved by kids and adults alike, making every celebration sweet.
               </p>
-              <button
-                onClick={() => onOpenWizard("", "Kids & Fun")}
+              <a
+                href="sms:+19455274566?body=Hi!%20I'd%20like%20to%20inquire%20about%20Cupcakes%20%26%20Cake%20Pops."
                 className="text-[#775a19] text-xs font-bold tracking-widest uppercase flex items-center gap-1.5 hover:gap-2.5 transition-all cursor-pointer font-semibold"
               >
-                EXPLORE <ArrowRight className="h-3.5 w-3.5" />
-              </button>
+                INQUIRE VIA SMS <ArrowRight className="h-3.5 w-3.5" />
+              </a>
             </div>
           </div>
 
@@ -225,12 +224,12 @@ export default function CakesPage({ onOpenWizard, onOpenBaker, onOpenPriceList }
                 </div>
               </div>
               
-              <button 
-                onClick={() => onOpenWizard("", "Premium & Gourmet")}
+              <a 
+                href="sms:+19455274566?body=Hi!%20I'd%20like%20to%20inquire%20about%20Cake%20Jars%20%26%20Mini%20Loaves."
                 className="text-[#775a19] text-xs font-bold tracking-widest uppercase flex items-center gap-1.5 hover:gap-2.5 transition-all cursor-pointer w-fit font-semibold"
               >
-                DETAILS <ArrowRight className="h-3.5 w-3.5" />
-              </button>
+                INQUIRE VIA SMS <ArrowRight className="h-3.5 w-3.5" />
+              </a>
             </div>
           </div>
 
@@ -275,12 +274,12 @@ export default function CakesPage({ onOpenWizard, onOpenBaker, onOpenPriceList }
                     Cardamom-infused sponge soaked in rich saffron rabri milk, frosted with pistachio cream and rose petals.
                   </p>
                 </div>
-                <button 
-                  onClick={() => onOpenWizard("Rasmalai Royalty", "Indian Fusion")}
-                  className="w-full bg-[#faf7f2] hover:bg-[#775a19] hover:text-white border border-brand-gold-tint/40 text-[#775a19] text-[10px] font-bold tracking-widest uppercase py-2.5 rounded-sm transition-all duration-300 font-semibold"
+                <a 
+                  href="sms:+19455274566?body=Hi!%20I'd%20like%20to%20inquire%20about%20the%20Rasmalai%20Cake."
+                  className="w-full bg-[#faf7f2] hover:bg-[#775a19] hover:text-white border border-brand-gold-tint/40 text-[#775a19] text-[10px] font-bold tracking-widest uppercase py-2.5 rounded-sm transition-all duration-300 font-semibold text-center inline-block"
                 >
                   Inquire
-                </button>
+                </a>
               </div>
             </div>
 
@@ -304,12 +303,12 @@ export default function CakesPage({ onOpenWizard, onOpenBaker, onOpenPriceList }
                     Saffron cardamom cake layers drenched in rose syrup and combined with pieces of slow-cooked gulab jamuns.
                   </p>
                 </div>
-                <button 
-                  onClick={() => onOpenWizard("Gulab Jamun Indulgence", "Indian Fusion")}
-                  className="w-full bg-[#faf7f2] hover:bg-[#775a19] hover:text-white border border-brand-gold-tint/40 text-[#775a19] text-[10px] font-bold tracking-widest uppercase py-2.5 rounded-sm transition-all duration-300 font-semibold"
+                <a 
+                  href="sms:+19455274566?body=Hi!%20I'd%20like%20to%20inquire%20about%20the%20Gulab%20Jamun%20Cake."
+                  className="w-full bg-[#faf7f2] hover:bg-[#775a19] hover:text-white border border-brand-gold-tint/40 text-[#775a19] text-[10px] font-bold tracking-widest uppercase py-2.5 rounded-sm transition-all duration-300 font-semibold text-center inline-block"
                 >
                   Inquire
-                </button>
+                </a>
               </div>
             </div>
 
@@ -333,12 +332,12 @@ export default function CakesPage({ onOpenWizard, onOpenBaker, onOpenPriceList }
                     Pure Alphonso mango pulp cream layered with white chocolate chips and fluffy cardamon-infused sponge.
                   </p>
                 </div>
-                <button 
-                  onClick={() => onOpenWizard("Mango Mastani", "Indian Fusion")}
-                  className="w-full bg-[#faf7f2] hover:bg-[#775a19] hover:text-white border border-brand-gold-tint/40 text-[#775a19] text-[10px] font-bold tracking-widest uppercase py-2.5 rounded-sm transition-all duration-300 font-semibold"
+                <a 
+                  href="sms:+19455274566?body=Hi!%20I'd%20like%20to%20inquire%20about%20the%20Mango%20Cake."
+                  className="w-full bg-[#faf7f2] hover:bg-[#775a19] hover:text-white border border-brand-gold-tint/40 text-[#775a19] text-[10px] font-bold tracking-widest uppercase py-2.5 rounded-sm transition-all duration-300 font-semibold text-center inline-block"
                 >
                   Inquire
-                </button>
+                </a>
               </div>
             </div>
 
@@ -362,12 +361,12 @@ export default function CakesPage({ onOpenWizard, onOpenBaker, onOpenPriceList }
                     Layered glass jars of cardamom sponge, rich cream, and traditional sweets. Ideal for individual servings and gifting.
                   </p>
                 </div>
-                <button 
-                  onClick={() => onOpenWizard("Fusion Cake Jars", "Indian Fusion")}
-                  className="w-full bg-[#faf7f2] hover:bg-[#775a19] hover:text-white border border-brand-gold-tint/40 text-[#775a19] text-[10px] font-bold tracking-widest uppercase py-2.5 rounded-sm transition-all duration-300 font-semibold"
+                <a 
+                  href="sms:+19455274566?body=Hi!%20I'd%20like%20to%20inquire%20about%20Indian%20Fusion%20Jars."
+                  className="w-full bg-[#faf7f2] hover:bg-[#775a19] hover:text-white border border-brand-gold-tint/40 text-[#775a19] text-[10px] font-bold tracking-widest uppercase py-2.5 rounded-sm transition-all duration-300 font-semibold text-center inline-block"
                 >
                   Inquire
-                </button>
+                </a>
               </div>
             </div>
 
@@ -391,12 +390,12 @@ export default function CakesPage({ onOpenWizard, onOpenBaker, onOpenPriceList }
                     Sleek shooters and mini cups displaying layered mango mousse, vanilla panna cotta, and kheer crumbs.
                   </p>
                 </div>
-                <button 
-                  onClick={() => onOpenWizard("Dessert Shooters", "Indian Fusion")}
-                  className="w-full bg-[#faf7f2] hover:bg-[#775a19] hover:text-white border border-brand-gold-tint/40 text-[#775a19] text-[10px] font-bold tracking-widest uppercase py-2.5 rounded-sm transition-all duration-300 font-semibold"
+                <a 
+                  href="sms:+19455274566?body=Hi!%20I'd%20like%20to%20inquire%20about%20Fusion%20Dessert%20Cups."
+                  className="w-full bg-[#faf7f2] hover:bg-[#775a19] hover:text-white border border-brand-gold-tint/40 text-[#775a19] text-[10px] font-bold tracking-widest uppercase py-2.5 rounded-sm transition-all duration-300 font-semibold text-center inline-block"
                 >
                   Inquire
-                </button>
+                </a>
               </div>
             </div>
 
@@ -445,12 +444,12 @@ export default function CakesPage({ onOpenWizard, onOpenBaker, onOpenPriceList }
               <p className="text-gray-700 text-xs font-semibold font-sans italic text-center lg:text-left">
                 Custom themes, personalized designs, and eggless options available.
               </p>
-              <button 
-                onClick={() => onOpenWizard("", "Indian Fusion")}
-                className="bg-primary-brand hover:bg-[#775a19] text-white text-xs font-bold tracking-widest uppercase px-6 py-3 rounded-sm shadow-xs transition-all cursor-pointer font-semibold"
+              <a 
+                href="sms:+19455274566?body=Hi!%20I'd%20like%20to%20place%20a%20custom%20fusion%20order."
+                className="bg-primary-brand hover:bg-[#775a19] text-white text-xs font-bold tracking-widest uppercase px-6 py-3 rounded-sm shadow-xs transition-all cursor-pointer font-semibold inline-block text-center"
               >
                 REQUEST CUSTOM FUSION ORDER
-              </button>
+              </a>
             </div>
           </div>
 
@@ -570,12 +569,12 @@ export default function CakesPage({ onOpenWizard, onOpenBaker, onOpenPriceList }
             <p className="text-gray-700 text-xs lg:text-sm font-sans leading-relaxed text-center lg:text-left max-w-2xl font-medium">
               ★ Our premium thick-style cookies are hand-rolled daily in our Frisco kitchen, using slow-churned butter and organic flour. Perfect for family sweet cravings or custom event cookie boxes.
             </p>
-            <button
-              onClick={() => onOpenWizard("", "Classic Flavors")}
+            <a
+              href="sms:+19455274566?body=Hi!%20I'd%20like%20to%20order%20gourmet%20cookies."
               className="w-full sm:w-auto min-h-[44px] inline-flex items-center justify-center bg-[#00346f] hover:bg-[#00224d] text-white font-sans text-xs uppercase tracking-widest font-bold px-8 py-3.5 rounded-xl transition-all cursor-pointer whitespace-nowrap shadow-sm"
             >
               ORDER COOKIES
-            </button>
+            </a>
           </div>
         </div>
       </section>
@@ -613,12 +612,12 @@ export default function CakesPage({ onOpenWizard, onOpenBaker, onOpenPriceList }
                 </div>
 
                 <div className="mt-6 pt-4 border-t border-gray-250/20">
-                  <button
-                    onClick={() => onOpenWizard(cat.flavors[0], cat.title)}
-                    className="text-[10px] font-bold tracking-widest uppercase flex items-center gap-1 hover:gap-1.5 transition-all text-secondary-brand opacity-90 cursor-pointer"
+                  <a
+                    href={`sms:+19455274566?body=Hi!%20I'd%20like%20to%20request%20flavor%20details%20for%20${encodeURIComponent(cat.title)}.`}
+                    className="text-[10px] font-bold tracking-widest uppercase flex items-center gap-1 hover:gap-1.5 transition-all text-secondary-brand opacity-90 cursor-pointer font-sans"
                   >
                     Request Flavor <ChevronRight className="h-3 my-auto" />
-                  </button>
+                  </a>
                 </div>
               </div>
             ))}
@@ -655,12 +654,12 @@ export default function CakesPage({ onOpenWizard, onOpenBaker, onOpenPriceList }
           </p>
 
           <div className="flex flex-col lg:flex-row justify-center items-center gap-4">
-            <button
-              onClick={() => onOpenWizard()}
-              className="w-full lg:w-auto bg-[#00346f] hover:bg-primary-brand/90 text-white font-sans text-xs uppercase tracking-widest font-bold px-8 py-4 rounded shadow-md transition-all cursor-pointer"
+            <a
+              href="sms:+19455274566?body=Hi!%20I'd%20like%20to%20request%20a%20quote%20for%20a%20custom%20cake."
+              className="w-full lg:w-auto bg-[#00346f] hover:bg-primary-brand/90 text-white font-sans text-xs uppercase tracking-widest font-bold px-8 py-4 rounded shadow-md transition-all cursor-pointer text-center inline-block"
             >
               REQUEST QUOTE
-            </button>
+            </a>
             <button
               onClick={onOpenPriceList}
               className="w-full lg:w-auto border border-gray-400 hover:bg-gray-50 text-gray-700 font-sans text-xs uppercase tracking-widest font-bold px-8 py-4 rounded transition-all cursor-pointer"

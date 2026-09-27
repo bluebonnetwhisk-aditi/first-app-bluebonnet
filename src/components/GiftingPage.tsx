@@ -1,10 +1,8 @@
 import { ArrowRight, MessageSquare, Package, Check } from "lucide-react";
 
-interface GiftingPageProps {
-  onOpenWizard: (flavor?: string, category?: string) => void;
-}
+interface GiftingPageProps {}
 
-export default function GiftingPage({ onOpenWizard }: GiftingPageProps) {
+export default function GiftingPage({}: GiftingPageProps = {}) {
   const signatureCollections = [
     {
       title: "Ganpati Pooja Gifts",
@@ -66,16 +64,14 @@ export default function GiftingPage({ onOpenWizard }: GiftingPageProps) {
           </p>
 
           <div className="flex flex-col lg:flex-row justify-center items-center gap-4 pt-4">
-            <button
-              onClick={() => onOpenWizard("", "Gifting")}
-              className="w-full lg:w-auto bg-[#775a19] hover:bg-[#5d4201] text-white font-sans text-xs font-bold uppercase tracking-widest px-8 py-4 rounded shadow-lg transition-all cursor-pointer"
+            <a
+              href="sms:+19455274566?body=Hi!%20I'd%20like%20to%20request%20a%20gifting%20quote."
+              className="w-full lg:w-auto bg-[#775a19] hover:bg-[#5d4201] text-white font-sans text-xs font-bold uppercase tracking-widest px-8 py-4 rounded shadow-lg transition-all inline-block text-center"
             >
               REQUEST A GIFTING QUOTE
-            </button>
+            </a>
             <a 
-              href="https://wa.me/19455274566"
-              target="_blank"
-              rel="noopener noreferrer"
+              href="sms:+19455274566?body=Hi%20Chef!%20I'd%20like%20to%20discuss%20Lux%20Gifting%20hampers."
               className="w-full lg:w-auto border border-brand-gold-tint hover:bg-white/10 text-brand-gold-tint font-sans text-xs font-bold uppercase tracking-widest px-8 py-4 rounded transition-all flex items-center justify-center gap-2 cursor-pointer"
             >
               CHAT WITH THE CHEF
@@ -115,12 +111,12 @@ export default function GiftingPage({ onOpenWizard }: GiftingPageProps) {
                   <p className="text-gray-600 text-xs lg:text-sm font-sans leading-relaxed">{col.desc}</p>
                 </div>
                 <div className="pt-4 border-t border-gray-100">
-                  <button 
-                    onClick={() => onOpenWizard(col.title, "Gifting")}
-                    className="w-full border border-secondary-brand/60 hover:bg-secondary-brand/5 text-[#775a19] py-2 text-[10px] font-bold tracking-widest uppercase rounded-sm transition-all cursor-pointer font-sans"
+                  <a 
+                    href={`sms:+19455274566?body=Hi!%20I'd%20like%20to%20select%20the%20${encodeURIComponent(col.title)}.`}
+                    className="w-full border border-secondary-brand/60 hover:bg-secondary-brand/5 text-[#775a19] py-2 text-[10px] font-bold tracking-widest uppercase rounded-sm transition-all cursor-pointer font-sans inline-block text-center"
                   >
                     Select Hamper
-                  </button>
+                  </a>
                 </div>
               </div>
             </div>
@@ -193,12 +189,12 @@ export default function GiftingPage({ onOpenWizard }: GiftingPageProps) {
               Ready to curate a set of custom hampers for your next milestone or festival? Get in touch with us today.
             </p>
             <div className="flex flex-col lg:flex-row justify-center gap-4 pt-4">
-              <button 
-                onClick={() => onOpenWizard("", "Gifting")}
+              <a 
+                href="sms:+19455274566?body=Hi!%20I'd%20like%20to%20discuss%20a%20custom%20gifting%20hamper."
                 className="w-full lg:w-auto bg-[#775a19] hover:bg-[#5d4201] text-white font-sans text-xs uppercase tracking-widest font-bold px-8 py-4 rounded shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
               >
                 DISCUSS A CUSTOM HAMPER <ArrowRight className="h-4 w-4" />
-              </button>
+              </a>
               <a 
                 href="https://wa.me/19455274566"
                 target="_blank" 

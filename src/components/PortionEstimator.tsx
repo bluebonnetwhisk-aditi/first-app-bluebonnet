@@ -18,12 +18,10 @@ import {
 
 interface PortionEstimatorProps {
   onNavigateToFoodOrder?: () => void;
-  onOpenInquiry?: () => void;
 }
 
 export default function PortionEstimator({ 
-  onNavigateToFoodOrder,
-  onOpenInquiry 
+  onNavigateToFoodOrder
 }: PortionEstimatorProps) {
   // Headcount controls (10 to 100 guests, default 20)
   const [guests, setGuests] = useState<number>(20);
@@ -778,7 +776,7 @@ export default function PortionEstimator({
               className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 text-white min-h-[44px] px-5 py-3 rounded-xl font-bold text-xs uppercase tracking-wider transition-all border border-white/20 cursor-pointer"
             >
               <Phone className="w-4 h-4 text-emerald-400" />
-              <span>Call 945-527-4566</span>
+              <span>Call</span>
             </a>
 
             {/* SMS */}
@@ -787,7 +785,7 @@ export default function PortionEstimator({
               className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 text-white min-h-[44px] px-5 py-3 rounded-xl font-bold text-xs uppercase tracking-wider transition-all border border-white/20 cursor-pointer"
             >
               <MessageSquare className="w-4 h-4 text-sky-400" />
-              <span>SMS 945-527-4566</span>
+              <span>SMS</span>
             </a>
 
             {/* WhatsApp */}
@@ -798,20 +796,8 @@ export default function PortionEstimator({
               className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-[#25D366] hover:bg-[#1ebd5a] text-white min-h-[44px] px-5 py-3 rounded-xl font-bold text-xs uppercase tracking-wider transition-all shadow-md cursor-pointer"
             >
               <MessageCircle className="w-4 h-4 fill-white" />
-              <span>WhatsApp 945-527-4566</span>
+              <span>WhatsApp</span>
             </a>
-
-            {/* Custom Inquiry Wizard */}
-            {onOpenInquiry && (
-              <button
-                type="button"
-                onClick={onOpenInquiry}
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-brand-gold-tint/15 hover:bg-brand-gold-tint/25 text-brand-gold-tint min-h-[44px] px-5 py-3 rounded-xl font-bold text-xs uppercase tracking-wider transition-all border border-brand-gold-tint/30 cursor-pointer"
-              >
-                <Sparkles className="w-4 h-4 text-brand-gold-tint" />
-                <span>Custom Inquiry Wizard</span>
-              </button>
-            )}
           </div>
         </div>
 

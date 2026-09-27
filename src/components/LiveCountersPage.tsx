@@ -1,10 +1,8 @@
 import { Cake, Users, Heart, Gift, ArrowRight, MessageSquare } from "lucide-react";
 
-interface LiveCountersPageProps {
-  onOpenWizard: (flavor?: string, category?: string) => void;
-}
+interface LiveCountersPageProps {}
 
-export default function LiveCountersPage({ onOpenWizard }: LiveCountersPageProps) {
+export default function LiveCountersPage({}: LiveCountersPageProps = {}) {
   const packages = [
     {
       title: "Kids Birthday Party Package",
@@ -93,16 +91,14 @@ export default function LiveCountersPage({ onOpenWizard }: LiveCountersPageProps
           </p>
 
           <div className="flex flex-col lg:flex-row justify-center items-center gap-4 pt-4">
-            <button
-              onClick={() => onOpenWizard("", "Catering")}
-              className="w-full lg:w-auto bg-[#775a19] hover:bg-[#5d4201] text-white font-sans text-xs font-bold uppercase tracking-widest px-8 py-4 rounded shadow-lg transition-all"
+            <a
+              href="sms:+19455274566?body=Hi!%20I'd%20like%20to%20plan%20a%20custom%20party%20package."
+              className="w-full lg:w-auto bg-[#775a19] hover:bg-[#5d4201] text-white font-sans text-xs font-bold uppercase tracking-widest px-8 py-4 rounded shadow-lg transition-all inline-block text-center"
             >
               PLAN YOUR PARTY
-            </button>
+            </a>
             <a 
-              href="https://wa.me/9455274566"
-              target="_blank"
-              rel="noopener noreferrer"
+              href="sms:+19455274566?body=Hi%20Chef!%20I'd%20like%20to%20discuss%20a%20custom%20party%20package."
               className="w-full lg:w-auto border border-brand-gold-tint hover:bg-white/10 text-brand-gold-tint font-sans text-xs font-bold uppercase tracking-widest px-8 py-4 rounded transition-all flex items-center justify-center gap-2"
             >
               CHAT WITH THE CHEF
@@ -184,12 +180,12 @@ export default function LiveCountersPage({ onOpenWizard }: LiveCountersPageProps
                 </div>
 
                 <div className="px-6 pb-6 lg:px-8 lg:pb-8">
-                  <button
-                    onClick={() => onOpenWizard("", pkg.title)}
-                    className="w-full bg-[#00346f] hover:bg-[#00346f]/95 text-white font-sans text-xs uppercase tracking-widest font-bold py-3.5 rounded shadow-sm transition-all cursor-pointer"
+                  <a
+                    href={`sms:+19455274566?body=Hi!%20I'd%20like%20to%20select%20the%20${encodeURIComponent(pkg.title)}.`}
+                    className="w-full bg-[#00346f] hover:bg-[#00346f]/95 text-white font-sans text-xs uppercase tracking-widest font-bold py-3.5 rounded shadow-sm transition-all cursor-pointer inline-block text-center"
                   >
                     SELECT THIS PACKAGE
-                  </button>
+                  </a>
                 </div>
               </div>
             );
@@ -209,16 +205,14 @@ export default function LiveCountersPage({ onOpenWizard }: LiveCountersPageProps
               Our chefs will work with you to customize any of these packages to suit your exact tastes and dietary preferences.
             </p>
             <div className="flex flex-col lg:flex-row justify-center gap-4 pt-4">
-              <button 
-                onClick={() => onOpenWizard("", "Catering")}
+              <a 
+                href="sms:+19455274566?body=Hi!%20I'd%20like%20to%20request%20a%20custom%20party%20proposal."
                 className="w-full lg:w-auto bg-[#775a19] hover:bg-[#5d4201] text-white font-sans text-xs uppercase tracking-widest font-bold px-8 py-4 rounded shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
               >
                 REQUEST CUSTOM PROPOSAL <ArrowRight className="h-4 w-4" />
-              </button>
+              </a>
               <a 
-                href="https://wa.me/9455274566"
-                target="_blank" 
-                rel="noreferrer"
+                href="sms:+19455274566?body=Hi%20Chef!%20I'd%20like%20to%20discuss%20a%20custom%20party%20package."
                 className="w-full lg:w-auto border border-brand-gold-tint hover:bg-white/10 text-brand-gold-tint font-sans text-xs uppercase tracking-widest font-bold px-8 py-4 rounded flex items-center justify-center gap-2 cursor-pointer"
               >
                 <MessageSquare className="h-4 w-4" /> CHAT WITH THE CHEF
