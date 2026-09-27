@@ -175,21 +175,58 @@ export default function KDSTiffinMenuModal({
     }
   };
 
-  // Handle local image file upload for flyer
+  // Handle local image file upload for flyer with automatic canvas compression
   const handleFlyerFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 5 * 1024 * 1024) {
-      setErrorMsg('Image file size exceeds 5MB limit. Please choose a smaller image.');
+    if (file.size > 15 * 1024 * 1024) {
+      setErrorMsg('Image file size exceeds 15MB limit. Please choose a smaller image.');
       return;
     }
 
     const reader = new FileReader();
     reader.onload = () => {
       if (typeof reader.result === 'string') {
-        setFlyerUrl(reader.result);
-        setErrorMsg(null);
+        const rawResult = reader.result;
+        const img = new Image();
+        img.onload = () => {
+          try {
+            const canvas = document.createElement('canvas');
+            let width = img.width;
+            let height = img.height;
+            const maxDim = 1600;
+            if (width > maxDim || height > maxDim) {
+              if (width > height) {
+                height = Math.round((height * maxDim) / width);
+                width = maxDim;
+              } else {
+                width = Math.round((width * maxDim) / height);
+                height = maxDim;
+              }
+            }
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            if (ctx) {
+              ctx.drawImage(img, 0, 0, width, height);
+              const compressed = canvas.toDataURL('image/jpeg', 0.85);
+              setFlyerUrl(compressed);
+              setErrorMsg(null);
+            } else {
+              setFlyerUrl(rawResult);
+              setErrorMsg(null);
+            }
+          } catch {
+            setFlyerUrl(rawResult);
+            setErrorMsg(null);
+          }
+        };
+        img.onerror = () => {
+          setFlyerUrl(rawResult);
+          setErrorMsg(null);
+        };
+        img.src = rawResult;
       }
     };
     reader.readAsDataURL(file);
