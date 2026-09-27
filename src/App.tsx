@@ -219,7 +219,7 @@ export default function App() {
               <img 
                 src={brandLogo} 
                 alt="Bluebonnet Whisk" 
-                className="h-10 sm:h-12 w-auto object-contain transition-transform duration-300 group-hover:scale-105"
+                className="h-7 sm:h-8 max-h-8 w-auto object-contain transition-transform duration-300 group-hover:scale-105"
               />
             </div>
 
@@ -311,7 +311,7 @@ export default function App() {
               <img 
                 src={brandLogo} 
                 alt="Bluebonnet Whisk" 
-                className="h-12 sm:h-14 w-auto object-contain transition-transform duration-300 group-hover:scale-105"
+                className="h-9 sm:h-10 w-auto object-contain transition-transform duration-300 group-hover:scale-105"
               />
             </div>
             <p className="text-gray-500 text-xs leading-relaxed max-w-xs font-sans">
