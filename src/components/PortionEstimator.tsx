@@ -497,7 +497,7 @@ export default function PortionEstimator({
               className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 text-white min-h-[42px] px-5 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider transition-all border border-white/20 cursor-pointer"
             >
               <Phone className="w-4 h-4 text-emerald-400" />
-              <span>Call (945) 527-4566</span>
+              <span>Call</span>
             </a>
 
             <a
