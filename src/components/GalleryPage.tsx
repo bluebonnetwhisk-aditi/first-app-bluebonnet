@@ -59,34 +59,33 @@ interface GalleryPageProps {
 }
 
 const mergeWithInitialData = (sourceItems: any[]): GalleryItem[] => {
-  const initIds = new Set((initialGalleryData as any[]).map(i => i.id));
-  const sourceMap = new Map(sourceItems.map(i => [i.id, i]));
-  
-  const mergedInitial = (initialGalleryData as any[]).map(initItem => {
-    const matched = sourceMap.get(initItem.id);
-    if (!matched) return initItem as GalleryItem;
+  if (!Array.isArray(sourceItems) || sourceItems.length === 0) {
+    return initialGalleryData as GalleryItem[];
+  }
 
-    if (matched.isCustomEdited) {
+  const initMap = new Map((initialGalleryData as any[]).map(i => [i.id, i]));
+  
+  return sourceItems.map((item: any) => {
+    const initMatch = initMap.get(item.id);
+    if (!initMatch) return item as GalleryItem;
+
+    if (item.isCustomEdited) {
       return {
-        ...initItem,
-        ...matched,
-        category: matched.category || initItem.category
+        ...initMatch,
+        ...item
       };
     }
 
     return {
-      ...initItem,
-      imagePath: matched.imagePath || initItem.imagePath,
-      originalImagePath: matched.originalImagePath || initItem.originalImagePath || (matched.imagePath ? matched.imagePath.replace('/gallery/', '/gallery/orig/') : ''),
-      visible: matched.visible !== undefined ? matched.visible : initItem.visible,
-      title: initItem.title,
-      category: initItem.category,
-      autoDescription: initItem.autoDescription
+      ...item,
+      title: initMatch.title || item.title,
+      category: initMatch.category || item.category,
+      autoDescription: initMatch.autoDescription || item.autoDescription,
+      imagePath: item.imagePath || initMatch.imagePath,
+      originalImagePath: item.originalImagePath || initMatch.originalImagePath || (item.imagePath ? item.imagePath.replace('/gallery/', '/gallery/orig/') : ''),
+      visible: item.visible !== undefined ? item.visible : true
     };
   });
-
-  const customItems = sourceItems.filter(i => !initIds.has(i.id));
-  return [...mergedInitial, ...customItems] as GalleryItem[];
 };
 
 export default function GalleryPage({ onNavigateToAdmin: _onNavigateToAdmin }: GalleryPageProps) {
