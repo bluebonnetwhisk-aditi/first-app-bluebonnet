@@ -5,15 +5,15 @@ import {
   Layers, 
   Sparkles, 
   Flame, 
-  Info, 
   Coffee, 
-  Heart, 
   ArrowRight,
   Phone,
   MessageSquare,
   MessageCircle,
   CheckCircle2,
-  Leaf
+  Leaf,
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react';
 
 interface PortionEstimatorProps {
@@ -29,6 +29,9 @@ export default function PortionEstimator({
   // Party Format toggle: Standard Buffet vs Cocktail / Heavy Starter
   const [partyFormat, setPartyFormat] = useState<'standard' | 'cocktail'>('standard');
 
+  // Toggle for full itemized table detail
+  const [showFullDetails, setShowFullDetails] = useState<boolean>(false);
+
   // Clamp and synchronize headcount input
   const handleHeadcountChange = (val: number) => {
     if (isNaN(val)) return;
@@ -36,398 +39,177 @@ export default function PortionEstimator({
     setGuests(clamped);
   };
 
-  // Determine Headcount Tier (Tiers 1 to 4)
-  let tierNumber = 1;
-  let tierTitle = "Tier 1: Intimate Gathering";
+  // Determine Headcount Tier
+  let tierTitle = "Intimate Gathering";
   let tierBadge = "10–14 Guests";
-  let tierDesc = "Compact family or small dinner party portioning";
-
   if (guests >= 76) {
-    tierNumber = 4;
-    tierTitle = "Tier 4: Banquet / Hall Event";
+    tierTitle = "Banquet / Hall Event";
     tierBadge = "76–100 Guests";
-    tierDesc = "High-volume banquet configuration with multi-station buffer";
   } else if (guests >= 36) {
-    tierNumber = 3;
-    tierTitle = "Tier 3: Large Gathering";
+    tierTitle = "Large Party Gathering";
     tierBadge = "36–75 Guests";
-    tierDesc = "Spacious party or corporate event with enhanced variety";
   } else if (guests >= 15) {
-    tierNumber = 2;
-    tierTitle = "Tier 2: Small-to-Medium Party";
+    tierTitle = "Small-to-Medium Party";
     tierBadge = "15–35 Guests";
-    tierDesc = "Optimal balance for birthdays, pujas, and milestone gatherings";
   }
 
-  // Calculate Naan / Roti pieces (1.5 pieces per guest, rounded to nearest 5)
+  // Quantities
   const breadPieces = Math.max(15, Math.round((guests * 1.5) / 5) * 5);
-
-  // Sweets: strictly 1 piece per person
   const sweetPieces = guests;
-  const sweetWarm = Math.ceil(guests / 2);
-  const sweetCold = Math.floor(guests / 2);
-
-  // Specialty Drinks: ~1.15 to 1.25 servings per person (~8-10 oz)
   const drinkServings = Math.round(guests * (partyFormat === 'cocktail' ? 1.25 : 1.15));
-
-  // Starter items computation
   const isCocktail = partyFormat === 'cocktail';
 
-  // Modular items generator (Strictly 100% Pure Vegetarian)
-  const getStarterAllocations = () => {
-    if (tierNumber === 1) {
-      return [
-        {
-          name: "Crispy Starter: Vegetable Samosas / Spring Rolls",
-          category: "Vegetarian Crispy",
-          allocation: isCocktail ? "1/2 Tray (Half Pan)" : "1/3 Tray (Third Pan)",
-          servingsGuide: isCocktail ? "~40–45 pieces (4 bites/guest)" : "~20–25 pieces (2–3 bites/guest)"
-        },
-        {
-          name: "Tandoori Skewer: Flame-Grilled Paneer Tikka / Hariyali Paneer",
-          category: "Tandoori Vegetarian",
-          allocation: isCocktail ? "1/2 Tray (Half Pan)" : "1/3 Tray (Third Pan)",
-          servingsGuide: isCocktail ? "~35–40 bites (4 bites/guest)" : "~20–25 bites (2–3 bites/guest)"
-        }
-      ];
-    } else if (tierNumber === 2) {
-      const primaryPan = guests > 24 || isCocktail ? "1/2 Tray (Half Pan)" : "1/3 Tray (Third Pan)";
-      return [
-        {
-          name: "Hot Appetizer: Cocktail Samosas / Veg Spring Rolls",
-          category: "Vegetarian Crispy",
-          allocation: primaryPan,
-          servingsGuide: "~60–80 pieces"
-        },
-        {
-          name: "Tandoori Griddle: Spiced Paneer Tikka",
-          category: "Vegetarian Tandoori",
-          allocation: isCocktail ? "1/2 Tray (Half Pan)" : "1/3 Tray (Third Pan)",
-          servingsGuide: "~35–50 pieces"
-        },
-        {
-          name: "Indo-Chinese: Crispy Gobi Manchurian",
-          category: "Wok Vegetarian",
-          allocation: isCocktail ? "1/2 Tray (Half Pan)" : "1/3 Tray (Third Pan)",
-          servingsGuide: "~40–55 pieces"
-        }
-      ];
-    } else if (tierNumber === 3) {
-      return [
-        {
-          name: "Street Chaat: Samosa Chaat or Cocktail Samosas",
-          category: "Chaat & Crispy",
-          allocation: "1/2 Tray (Half Pan)",
-          servingsGuide: "~80–100 pieces"
-        },
-        {
-          name: "Tandoori Starter: Claypot Paneer Tikka",
-          category: "Tandoori Vegetarian",
-          allocation: "1/2 Tray (Half Pan)",
-          servingsGuide: "~75–90 pieces"
-        },
-        {
-          name: "Indo-Chinese: Gobi Manchurian / Chilli Paneer",
-          category: "Wok Vegetarian",
-          allocation: "1/2 Tray (Half Pan)",
-          servingsGuide: "~70–85 pieces"
-        },
-        {
-          name: "Crispy Bites: Hara Bhara Kebab / Corn Cheese Tikki",
-          category: "Vegetarian Finger Food",
-          allocation: isCocktail ? "Full Tray (Full Pan)" : "1/2 Tray (Half Pan)",
-          servingsGuide: isCocktail ? "~160–180 pieces" : "~80–100 pieces"
-        }
-      ];
+  // Simplified summary calculations
+  const getStarterSummary = () => {
+    if (guests <= 14) {
+      return {
+        trays: isCocktail ? "2x Half Trays" : "2x 1/3 Trays",
+        pieces: isCocktail ? "~40–45 pieces (4 bites/guest)" : "~20–25 pieces (2–3 bites/guest)",
+        dishes: "Cocktail Samosas, Paneer Tikka Skewers"
+      };
+    } else if (guests <= 35) {
+      return {
+        trays: isCocktail ? "3x Half Trays" : "2x 1/2 Trays + 1x 1/3 Tray",
+        pieces: "~60–80 pieces total",
+        dishes: "Cocktail Samosas, Paneer Tikka, Veg Manchurian"
+      };
+    } else if (guests <= 75) {
+      return {
+        trays: "4x Half Trays (or 2x Full Trays)",
+        pieces: isCocktail ? "~160–180 pieces" : "~100–120 pieces",
+        dishes: "Samosa Chaat, Paneer Tikka, Gobi Manchurian, Hara Bhara Kebab"
+      };
     } else {
-      // Tier 4 (76-100 guests)
-      return [
-        {
-          name: "Primary Crowd-Pleaser: Cocktail Samosas / Spring Rolls",
-          category: "Crispy Starter",
-          allocation: "Full Tray (Full Pan)",
-          servingsGuide: "~160–180 pieces"
-        },
-        {
-          name: "Tandoori Platter: Flame-Kissed Paneer Tikka",
-          category: "Tandoori Vegetarian",
-          allocation: "Full Tray (Full Pan)",
-          servingsGuide: "~150–170 pieces"
-        },
-        {
-          name: "Wok Appetizer: Veg Manchurian / Crispy Corn",
-          category: "Wok Special",
-          allocation: "1/2 Tray (Half Pan)",
-          servingsGuide: "~80–100 pieces"
-        },
-        {
-          name: "Gourmet Bites: Hara Bhara Kebab / Dahi Kebab",
-          category: "Vegetarian Specialty",
-          allocation: "Full Tray (Full Pan)",
-          servingsGuide: "~160–190 pieces"
-        }
-      ];
+      return {
+        trays: "3x Full Trays + 1x Half Tray",
+        pieces: "~180–220 pieces total",
+        dishes: "Cocktail Samosas, Paneer Tikka, Crispy Corn, Dahi Kebab"
+      };
     }
   };
 
-  const getMainCurryAllocations = () => {
-    if (tierNumber === 1) {
-      return [
-        {
-          name: "Heavy Gravy / Protein: Paneer Butter Masala or Matar Paneer",
-          category: "Rich Gravy Main",
-          allocation: "1/3 Tray (Third Pan)",
-          servingsGuide: "10–12 ladle portions"
-        },
-        {
-          name: "Dry Homestyle Sabzi: Aloo Gobi / Bhindi Do Pyaza",
-          category: "Dry Vegetable",
-          allocation: "1/3 Tray (Third Pan)",
-          servingsGuide: "10–12 side portions"
-        },
-        {
-          name: "Lentil Specialty: Daal Tadka or Slow-Simmered Dal Makhani",
-          category: "Lentils",
-          allocation: "1/3 Tray (Third Pan)",
-          servingsGuide: "10–12 bowl ladles"
-        }
-      ];
-    } else if (tierNumber === 2) {
-      return [
-        {
-          name: "Anchor Curry: Paneer Butter Masala / Shahi Paneer",
-          category: "Paneer Specialty",
-          allocation: "1/2 Tray (Half Pan)",
-          servingsGuide: "25–30 balanced portions"
-        },
-        {
-          name: "Dry Vegetable: Aloo Methi / Green Bean Poriyal / Gobi Masala",
-          category: "Dry Sabzi",
-          allocation: isCocktail ? "1/3 Tray (Third Pan)" : "1/2 Tray (Half Pan)",
-          servingsGuide: "20–25 side portions"
-        },
-        {
-          name: "Slow-Cooked Daal: Dal Makhani or Yellow Daal Tadka",
-          category: "Comfort Lentils",
-          allocation: "1/2 Tray (Half Pan)",
-          servingsGuide: "25–30 servings"
-        }
-      ];
-    } else if (tierNumber === 3) {
-      const isUpperTier3 = guests >= 55;
-      return [
-        {
-          name: "Anchor Paneer: Paneer Lababdar / Butter Masala",
-          category: "Paneer Showcase",
-          allocation: isUpperTier3 ? "Full Tray (Full Pan)" : "1/2 Tray + 1/3 Tray (Combination)",
-          servingsGuide: isUpperTier3 ? "50–60 entree ladles" : "38–45 entree ladles"
-        },
-        {
-          name: "Seasonal Dry Vegetable: Baingan Bharta / Aloo Gobi Matar",
-          category: "Dry Sabzi",
-          allocation: "1/2 Tray (Half Pan)",
-          servingsGuide: "25–30 side servings"
-        },
-        {
-          name: "Lentil Main: Slow-Simmered Black Dal Makhani",
-          category: "Signature Daal",
-          allocation: "1/2 Tray (Half Pan)",
-          servingsGuide: "28–35 servings"
-        },
-        {
-          name: "Specialty Vegetarian Main: Malai Kofta / Methi Matar Malai",
-          category: "Rich Kofta Gravy",
-          allocation: "1/2 Tray (Half Pan)",
-          servingsGuide: "25–30 servings"
-        }
-      ];
+  const getMainCurrySummary = () => {
+    if (guests <= 14) {
+      return {
+        trays: "3x 1/3 Trays (Small Pans)",
+        volume: "~8–10 oz combined curry / guest",
+        dishes: "Paneer Butter Masala, Aloo Gobi, Slow Dal Makhani"
+      };
+    } else if (guests <= 35) {
+      return {
+        trays: "3x Half Trays (Medium Pans)",
+        volume: "~8–10 oz combined curry / guest",
+        dishes: "Shahi Paneer, Dry Sabzi (Mix Veg/Gobi), Dal Makhani"
+      };
+    } else if (guests <= 75) {
+      return {
+        trays: "1x Full Tray + 3x Half Trays",
+        volume: "~10 oz combined curry / guest",
+        dishes: "Paneer Lababdar, Malai Kofta, Mix Veg Handi, Black Dal Makhani"
+      };
     } else {
-      // Tier 4 (76-100 guests)
-      return [
-        {
-          name: "Anchor Paneer: Shahi Paneer / Paneer Butter Masala",
-          category: "Paneer Showcase",
-          allocation: "Full Tray (Full Pan)",
-          servingsGuide: "55–65 entree servings"
-        },
-        {
-          name: "Dry Vegetable: Mix Veg Handi / Aloo Gobi / Bhindi",
-          category: "Dry Sabzi",
-          allocation: "Full Tray (or 2x Half Trays)",
-          servingsGuide: "50–60 side portions"
-        },
-        {
-          name: "Comfort Lentil: Daal Tadka or Dal Makhani",
-          category: "Signature Daal",
-          allocation: "Full Tray (or 2x Half Trays)",
-          servingsGuide: "55–65 soup/curry servings"
-        },
-        {
-          name: "Rich Gravy Main: Malai Kofta Curry / Paneer Tikka Masala",
-          category: "Kofta & Gravy Main",
-          allocation: "Full Tray (Full Pan)",
-          servingsGuide: "55–65 entree servings"
-        }
-      ];
+      return {
+        trays: "4x Full Trays (Large Pans)",
+        volume: "~10–12 oz combined curry / guest",
+        dishes: "Paneer Butter Masala, Malai Kofta, Aloo Gobi Matar, Dal Tadka"
+      };
     }
   };
 
-  const getCarbAllocations = () => {
-    if (tierNumber === 1) {
-      return [
-        {
-          name: "Fragrant Rice: Dum Biryani or Cumin Jeera Rice",
-          category: "Basmati Carb",
-          allocation: "1/3 Tray (Third Pan)",
-          servingsGuide: "10–12 rice portions (~6–8 oz each)"
-        },
-        {
-          name: "Artisan Tandoori Breads: Fresh Butter Naan / Tawa Roti",
-          category: "Fresh Breads",
-          allocation: `${breadPieces} Pieces (${guests} guests × 1.5)`,
-          servingsGuide: "Portioned 1.5 pieces per person"
-        }
-      ];
-    } else if (tierNumber === 2) {
-      return [
-        {
-          name: "Signature Rice: Hyderabadi Veg Dum Biryani",
-          category: "Basmati Carb",
-          allocation: "1/2 Tray (Half Pan)",
-          servingsGuide: "25–30 entree servings"
-        },
-        {
-          name: "Fresh Tandoori Breads: Garlic Naan & Butter Naan Assortment",
-          category: "Fresh Breads",
-          allocation: `${breadPieces} Pieces (${guests} guests × 1.5)`,
-          servingsGuide: "Portioned 1.5 pieces per person"
-        }
-      ];
-    } else if (tierNumber === 3) {
-      return [
-        {
-          name: "Celebration Biryani: Fragrant Layered Veg Dum Biryani",
-          category: "Specialty Rice",
-          allocation: "Full Tray (Full Pan)",
-          servingsGuide: "50–60 servings"
-        },
-        {
-          name: "Complementary Rice: Fragrant Cumin Jeera Rice",
-          category: "Mild Carb",
-          allocation: "1/2 Tray (Half Pan)",
-          servingsGuide: "25–30 servings"
-        },
-        {
-          name: "Tandoori Breads: Naan / Roti / Kulcha Basket",
-          category: "Fresh Breads",
-          allocation: `${breadPieces} Pieces (${guests} guests × 1.5)`,
-          servingsGuide: "Portioned 1.5 pieces per person"
-        }
-      ];
+  const getCarbSummary = () => {
+    if (guests <= 14) {
+      return {
+        trays: "1x 1/3 Tray Rice + Bread Basket",
+        servings: `${breadPieces} Naans + ~12 Rice portions`,
+        dishes: "Veg Biryani / Cumin Jeera Rice, Butter Naan"
+      };
+    } else if (guests <= 35) {
+      return {
+        trays: "1x Half Tray Biryani + Bread Basket",
+        servings: `${breadPieces} Naans + ~25 Rice portions`,
+        dishes: "Hyderabadi Veg Dum Biryani, Garlic & Butter Naans"
+      };
+    } else if (guests <= 75) {
+      return {
+        trays: "1x Full Tray Biryani + 1x Half Tray Rice",
+        servings: `${breadPieces} Naans + ~60 Rice portions`,
+        dishes: "Layered Veg Biryani, Jeera Basmati Rice, Naan/Roti Basket"
+      };
     } else {
-      // Tier 4 (76-100 guests)
-      return [
-        {
-          name: "Signature Dum Biryani: Hyderabadi Layered Veg Biryani",
-          category: "Grand Rice",
-          allocation: "Full Tray + 1/2 Tray (or 2x Full Trays)",
-          servingsGuide: "80–90 servings"
-        },
-        {
-          name: "Aromatic Steamed Rice: Cumin Jeera Basmati Rice",
-          category: "Mild Carb",
-          allocation: "Full Tray (Full Pan)",
-          servingsGuide: "55–60 servings"
-        },
-        {
-          name: "Fresh Tandoori Breads: Butter Naan / Garlic Naan / Tawa Roti",
-          category: "Fresh Breads",
-          allocation: `${breadPieces} Pieces (${guests} guests × 1.5)`,
-          servingsGuide: "Portioned 1.5 pieces per person"
-        }
-      ];
+      return {
+        trays: "2x Full Trays Biryani + 1x Full Tray Rice",
+        servings: `${breadPieces} Naans + ~90 Rice portions`,
+        dishes: "Hyderabadi Dum Biryani, Jeera Rice, Naan & Kulcha Basket"
+      };
     }
   };
 
-  const getDessertAndDrinkAllocations = () => {
-    return [
-      {
-        name: guests >= 15 
-          ? `Warm & Cold Dual Sweets: Gulab Jamun (${sweetWarm} pcs) + Rasmalai (${sweetCold} cups)`
-          : `Gourmet Sweets: Gulab Jamun or Rasmalai (${sweetPieces} servings)`,
-        category: "Traditional Sweets",
-        allocation: `${sweetPieces} Portions Total (Strictly 1 pc / guest)`,
-        servingsGuide: "Exact 1:1 guest ratio (no food wastage)"
-      },
-      {
-        name: "Specialty Indian Drink: Chilled Mango Lassi or Masala Chai",
-        category: "Beverage",
-        allocation: `${drinkServings} Servings (~8–10 oz cups)`,
-        servingsGuide: "1.15 to 1.25 servings per attendee"
-      }
-    ];
+  const getDessertSummary = () => {
+    return {
+      trays: `${sweetPieces} Sweets + ${drinkServings} Drink Cups`,
+      servings: "1 Sweet/guest + ~1.2 Drinks/guest",
+      dishes: guests >= 15 
+        ? `Gulab Jamun (${Math.ceil(guests/2)} pcs) + Rasmalai (${Math.floor(guests/2)} cups), Mango Lassi` 
+        : `Gulab Jamun or Rasmalai (${guests} pcs), Chilled Mango Lassi`
+    };
   };
 
-  const starterItems = getStarterAllocations();
-  const curryItems = getMainCurryAllocations();
-  const carbItems = getCarbAllocations();
-  const dessertDrinkItems = getDessertAndDrinkAllocations();
+  const starterSummary = getStarterSummary();
+  const mainSummary = getMainCurrySummary();
+  const carbSummary = getCarbSummary();
+  const dessertSummary = getDessertSummary();
 
   return (
-    <section id="portion-estimator" className="py-20 bg-[#050a1a] text-white font-sans border-t border-white/5">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
+    <section id="portion-estimator" className="py-16 bg-[#050a1a] text-white font-sans border-t border-white/5">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
         
-        {/* Header Title & Subtitle */}
-        <div className="text-center max-w-2xl mx-auto space-y-2">
+        {/* Title */}
+        <div className="text-center max-w-xl mx-auto space-y-2">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-brand-gold-tint/15 border border-brand-gold-tint/30 text-brand-gold-tint text-[11px] font-bold uppercase tracking-widest">
             <Utensils className="w-3.5 h-3.5" />
-            <span>Pure Vegetarian Catering Science &amp; Food Volume Guide</span>
+            <span>Pure Vegetarian Catering Guide</span>
           </div>
           <h2 className="font-serif text-3xl sm:text-4xl font-bold text-brand-cream">
-            Portion Estimator
+            Catering Portion Estimator
           </h2>
           <p className="text-xs sm:text-sm text-gray-300 font-light leading-relaxed">
-            Eliminate guesswork when planning 100% vegetarian Indian catering. Calculate exact steam table pans, tray sizes, appetizer bites, breads, and desserts for any guest size.
+            Select your guest count and party style to calculate exact tray sizes, appetizer bites, naans, and sweets needed.
           </p>
-          <div className="h-0.5 w-16 bg-brand-gold-tint mx-auto mt-2" />
+          <div className="h-0.5 w-14 bg-brand-gold-tint mx-auto mt-2" />
         </div>
 
-        {/* ── 1. INTERACTIVE INPUT CONTROLS PANEL ── */}
-        <div className="glass-panel-dark rounded-2xl p-6 sm:p-8 border border-white/10 shadow-2xl space-y-8">
+        {/* Interactive Controls Panel */}
+        <div className="glass-panel-dark rounded-2xl p-6 sm:p-8 border border-white/10 shadow-2xl space-y-6">
           
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
             
-            {/* Component A: Guest Headcount Controls (7 Cols) */}
+            {/* Headcount Controls */}
             <div className="lg:col-span-7 space-y-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Users className="w-4 h-4 text-brand-gold-tint" />
                   <label htmlFor="guest-headcount-input" className="text-xs font-bold uppercase tracking-wider text-gray-300">
-                    Guest Headcount ($N$)
+                    Guest Headcount
                   </label>
                 </div>
                 
-                {/* Bidirectional Input Field */}
                 <div className="flex items-center gap-2">
-                  <span className="text-xs text-gray-400 font-medium hidden sm:inline">Direct Input:</span>
-                  <div className="relative">
-                    <input 
-                      id="guest-headcount-input"
-                      type="number"
-                      min={10}
-                      max={100}
-                      step={1}
-                      value={guests}
-                      onChange={(e) => handleHeadcountChange(parseInt(e.target.value))}
-                      className="w-20 min-h-[44px] px-2.5 py-1.5 bg-[#0b1b40] border-2 border-brand-gold-tint/60 rounded-lg text-center font-serif text-base sm:text-lg font-bold text-brand-cream focus:border-brand-gold-tint focus:outline-none"
-                    />
-                  </div>
+                  <input 
+                    id="guest-headcount-input"
+                    type="number"
+                    min={10}
+                    max={100}
+                    step={1}
+                    value={guests}
+                    onChange={(e) => handleHeadcountChange(parseInt(e.target.value))}
+                    className="w-20 min-h-[40px] px-2 py-1 bg-[#0b1b40] border-2 border-brand-gold-tint/60 rounded-lg text-center font-serif text-base font-bold text-brand-cream focus:border-brand-gold-tint focus:outline-none"
+                  />
                   <span className="text-xs font-bold uppercase text-brand-gold-tint">Guests</span>
                 </div>
               </div>
 
-              {/* Range Slider (min 10, max 100, step 1) */}
-              <div className="space-y-1.5 pt-1">
+              {/* Slider */}
+              <div className="space-y-1">
                 <input 
                   type="range"
                   min={10}
@@ -435,47 +217,47 @@ export default function PortionEstimator({
                   step={1}
                   value={guests}
                   onChange={(e) => setGuests(parseInt(e.target.value))}
-                  className="w-full h-3 bg-[#0b1226] rounded-lg appearance-none cursor-pointer accent-[#ffdea5]"
+                  className="w-full h-2.5 bg-[#0b1226] rounded-lg appearance-none cursor-pointer accent-[#ffdea5]"
                   aria-label="Guest Headcount Slider"
                 />
                 <div className="flex justify-between text-[10px] text-gray-400 font-mono">
-                  <span>10 Guests (Min)</span>
+                  <span>10 Min</span>
                   <span>25</span>
                   <span>50</span>
                   <span>75</span>
-                  <span>100 Guests (Max)</span>
+                  <span>100 Max</span>
                 </div>
               </div>
 
-              {/* Quick Preset Buttons */}
+              {/* Presets */}
               <div className="flex flex-wrap items-center gap-2 pt-1">
-                <span className="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Presets:</span>
-                {[12, 20, 35, 50, 75, 100].map((num) => (
+                <span className="text-[10px] uppercase font-bold text-gray-400">Quick Presets:</span>
+                {[15, 25, 35, 50, 75, 100].map((num) => (
                   <button
                     key={num}
                     type="button"
                     onClick={() => setGuests(num)}
-                    className={`min-h-[40px] min-w-[44px] px-3 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer inline-flex items-center justify-center ${
+                    className={`min-h-[36px] px-3 py-1 text-xs font-bold rounded-lg transition-all cursor-pointer ${
                       guests === num 
                         ? 'bg-brand-gold-tint text-[#00346f] shadow-sm'
                         : 'bg-white/10 hover:bg-white/15 text-gray-200 border border-white/10'
                     }`}
                   >
-                    {num}p
+                    {num} Guests
                   </button>
                 ))}
               </div>
             </div>
 
-            {/* Component B: Party Service Format (5 Cols) */}
-            <div className="lg:col-span-5 bg-white/5 rounded-xl p-4 sm:p-5 border border-white/10 space-y-3">
+            {/* Service Format Toggle */}
+            <div className="lg:col-span-5 bg-white/5 rounded-xl p-4 border border-white/10 space-y-3">
               <div className="flex items-center justify-between">
-                <span className="text-xs uppercase font-bold tracking-wider text-gray-300 block">
-                  Party Service Format
+                <span className="text-xs uppercase font-bold tracking-wider text-gray-300">
+                  Format Style
                 </span>
-                <span className="inline-flex items-center gap-1 text-[11px] text-emerald-300 font-bold bg-emerald-500/20 px-2.5 py-0.5 rounded-full border border-emerald-400/30">
+                <span className="inline-flex items-center gap-1 text-[10px] text-emerald-300 font-bold bg-emerald-500/20 px-2 py-0.5 rounded-full border border-emerald-400/30">
                   <Leaf className="w-3 h-3 text-emerald-300" />
-                  100% Pure Vegetarian
+                  100% Pure Veg
                 </span>
               </div>
 
@@ -483,286 +265,226 @@ export default function PortionEstimator({
                 <button
                   type="button"
                   onClick={() => setPartyFormat('standard')}
-                  className={`min-h-[44px] py-2 px-2.5 rounded-lg text-xs font-bold uppercase tracking-wider transition cursor-pointer text-center flex items-center justify-center ${
+                  className={`min-h-[40px] py-2 px-2.5 rounded-lg text-xs font-bold uppercase tracking-wider transition cursor-pointer text-center ${
                     partyFormat === 'standard'
                       ? 'bg-[#00346f] text-white border border-[#ffdea5]/40 shadow-md'
                       : 'bg-black/30 hover:bg-black/50 text-gray-300 border border-white/10'
                   }`}
                 >
-                  <span>Dinner Buffet (Std)</span>
+                  Dinner Buffet
                 </button>
 
                 <button
                   type="button"
                   onClick={() => setPartyFormat('cocktail')}
-                  className={`min-h-[44px] py-2 px-2.5 rounded-lg text-xs font-bold uppercase tracking-wider transition cursor-pointer text-center flex items-center justify-center ${
+                  className={`min-h-[40px] py-2 px-2.5 rounded-lg text-xs font-bold uppercase tracking-wider transition cursor-pointer text-center ${
                     partyFormat === 'cocktail'
                       ? 'bg-[#775a19] text-white border border-[#ffdea5]/40 shadow-md'
                       : 'bg-black/30 hover:bg-black/50 text-gray-300 border border-white/10'
                   }`}
                 >
-                  <span>Cocktail / Starters</span>
+                  Cocktail / Starters
                 </button>
               </div>
               <p className="text-[11px] text-gray-300 leading-relaxed font-light">
                 {partyFormat === 'cocktail' 
-                  ? "Starters increased to 5–6 pieces/guest; curries trimmed by ~20%." 
-                  : "Standard balance: 3–4 starter bites, hearty main curries, and rich carbs."}
+                  ? "Appetizers boosted to 5–6 bites/guest; main curries slightly trimmed." 
+                  : "Balanced dinner menu: 3–4 starter bites, hearty curries & fresh breads."}
               </p>
             </div>
 
           </div>
 
-          {/* ── LIVE REACTIVE TIER SUMMARY CARD ── */}
-          <div className="rounded-xl bg-gradient-to-r from-[#00224d] via-[#0b1b40] to-[#1a120b] p-4 sm:p-5 border border-brand-gold-tint/40 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-            <div className="space-y-1">
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="bg-brand-gold-tint text-[#00346f] text-xs font-black uppercase px-2.5 py-0.5 rounded-full tracking-wider">
-                  {tierTitle} ({tierBadge})
-                </span>
-                <span className="text-xs text-brand-gold-tint font-bold">
-                  • Headcount: {guests} Attendees
-                </span>
-                <span className="text-xs text-emerald-300 font-semibold flex items-center gap-1">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-                  100% Pure Vegetarian Menu
-                </span>
-              </div>
-              <p className="text-xs text-gray-300 font-light">
-                {tierDesc}. Steam table pan allocations calculated for complete self-serve sufficiency.
-              </p>
+          {/* Tier Overview Pill */}
+          <div className="rounded-xl bg-gradient-to-r from-[#00224d] via-[#0b1b40] to-[#1a120b] p-4 border border-brand-gold-tint/30 flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <span className="bg-brand-gold-tint text-[#00346f] text-xs font-black uppercase px-2.5 py-0.5 rounded-full tracking-wider">
+                {tierTitle}
+              </span>
+              <span className="text-xs text-brand-gold-tint font-bold">
+                {guests} Guests ({tierBadge})
+              </span>
             </div>
-
-            <div className="flex items-center gap-3 shrink-0">
-              <div className="text-right">
-                <span className="text-[10px] text-gray-400 uppercase tracking-widest block">Bread Target</span>
-                <span className="font-serif text-lg font-bold text-white">{breadPieces} Naan / Roti</span>
-              </div>
-              <div className="h-8 w-px bg-white/20" />
-              <div className="text-right">
-                <span className="text-[10px] text-gray-400 uppercase tracking-widest block">Sweets Budget</span>
-                <span className="font-serif text-lg font-bold text-brand-gold-tint">{sweetPieces} Pieces (1/guest)</span>
-              </div>
+            <div className="flex items-center gap-4 text-xs">
+              <span className="text-gray-300">
+                Bread Target: <strong className="text-white">{breadPieces} Naans</strong>
+              </span>
+              <span className="text-gray-300">
+                Sweets Budget: <strong className="text-brand-gold-tint">{sweetPieces} Pcs</strong>
+              </span>
             </div>
           </div>
 
         </div>
 
-        {/* ── 2. MODULAR TRAY BREAKDOWN TABLE ── */}
-        <div className="space-y-6">
-          <div className="flex items-center justify-between">
-            <h3 className="font-serif text-xl sm:text-2xl font-bold text-brand-cream flex items-center gap-2">
-              <Layers className="w-5 h-5 text-brand-gold-tint" />
-              <span>Recommended Pan &amp; Tray Allocations (100% Pure Vegetarian)</span>
-            </h3>
-            <span className="text-xs text-gray-400 italic hidden sm:inline">
-              Steam Table Standards: 1/3 Tray (Small) • Half Tray (Medium) • Full Tray (Large)
-            </span>
-          </div>
-
-          <div className="grid grid-cols-1 gap-6">
-
-            {/* Course A: Starters */}
-            <div className="glass-panel-dark rounded-xl overflow-hidden border border-white/10">
-              <div className="bg-[#00224d]/90 px-4 sm:px-6 py-3 border-b border-white/10 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Sparkles className="w-4 h-4 text-brand-gold-tint" />
-                  <span className="font-serif font-bold text-sm sm:text-base text-brand-cream uppercase tracking-wide">
-                    1. Vegetarian Starters &amp; Appetizers ({starterItems.length} Selections)
-                  </span>
-                </div>
-                <span className="text-[11px] text-brand-gold-tint font-bold">
-                  {isCocktail ? '5–6 bites per guest' : '3–5 bites per guest'}
-                </span>
-              </div>
-              <div className="overflow-x-auto">
-                <table className="w-full min-w-[540px] text-left text-xs">
-                  <thead className="bg-black/30 text-gray-400 text-[10px] uppercase font-bold tracking-wider border-b border-white/5">
-                    <tr>
-                      <th className="py-2.5 px-4 sm:px-6">Course &amp; Dish Blueprint</th>
-                      <th className="py-2.5 px-4">Sub-Category</th>
-                      <th className="py-2.5 px-4 text-brand-gold-tint font-black">Container Specification</th>
-                      <th className="py-2.5 px-4">Consumption Target</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-white/5">
-                    {starterItems.map((item, idx) => (
-                      <tr key={idx} className="hover:bg-white/5 transition-colors">
-                        <td className="py-3 px-4 sm:px-6 font-semibold text-white">{item.name}</td>
-                        <td className="py-3 px-4 text-gray-300">{item.category}</td>
-                        <td className="py-3 px-4 font-bold text-brand-gold-tint">{item.allocation}</td>
-                        <td className="py-3 px-4 text-gray-400">{item.servingsGuide}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            {/* Course B: Main Course (Curries & Daal) */}
-            <div className="glass-panel-dark rounded-xl overflow-hidden border border-white/10">
-              <div className="bg-[#00224d]/90 px-4 sm:px-6 py-3 border-b border-white/10 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Flame className="w-4 h-4 text-amber-400" />
-                  <span className="font-serif font-bold text-sm sm:text-base text-brand-cream uppercase tracking-wide">
-                    2. Vegetarian Main Course Curries &amp; Daal ({curryItems.length} Dishes)
-                  </span>
-                </div>
-                <span className="text-[11px] text-amber-300 font-bold">
-                  ~8–10 oz combined curry volume per guest
-                </span>
-              </div>
-              <div className="overflow-x-auto">
-                <table className="w-full min-w-[540px] text-left text-xs">
-                  <thead className="bg-black/30 text-gray-400 text-[10px] uppercase font-bold tracking-wider border-b border-white/5">
-                    <tr>
-                      <th className="py-2.5 px-4 sm:px-6">Course &amp; Dish Blueprint</th>
-                      <th className="py-2.5 px-4">Sub-Category</th>
-                      <th className="py-2.5 px-4 text-brand-gold-tint font-black">Container Specification</th>
-                      <th className="py-2.5 px-4">Consumption Target</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-white/5">
-                    {curryItems.map((item, idx) => (
-                      <tr key={idx} className="hover:bg-white/5 transition-colors">
-                        <td className="py-3 px-4 sm:px-6 font-semibold text-white">{item.name}</td>
-                        <td className="py-3 px-4 text-gray-300">{item.category}</td>
-                        <td className="py-3 px-4 font-bold text-brand-gold-tint">{item.allocation}</td>
-                        <td className="py-3 px-4 text-gray-400">{item.servingsGuide}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            {/* Course C: Carbs (Rice & Breads) */}
-            <div className="glass-panel-dark rounded-xl overflow-hidden border border-white/10">
-              <div className="bg-[#00224d]/90 px-4 sm:px-6 py-3 border-b border-white/10 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Utensils className="w-4 h-4 text-emerald-400" />
-                  <span className="font-serif font-bold text-sm sm:text-base text-brand-cream uppercase tracking-wide">
-                    3. Carbs &amp; Accompaniments (Breads &amp; Rice)
-                  </span>
-                </div>
-                <span className="text-[11px] text-emerald-300 font-bold">
-                  1.5 breads + 1 carb serving per guest
-                </span>
-              </div>
-              <div className="overflow-x-auto">
-                <table className="w-full min-w-[540px] text-left text-xs">
-                  <thead className="bg-black/30 text-gray-400 text-[10px] uppercase font-bold tracking-wider border-b border-white/5">
-                    <tr>
-                      <th className="py-2.5 px-4 sm:px-6">Course &amp; Dish Blueprint</th>
-                      <th className="py-2.5 px-4">Sub-Category</th>
-                      <th className="py-2.5 px-4 text-brand-gold-tint font-black">Container Specification</th>
-                      <th className="py-2.5 px-4">Consumption Target</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-white/5">
-                    {carbItems.map((item, idx) => (
-                      <tr key={idx} className="hover:bg-white/5 transition-colors">
-                        <td className="py-3 px-4 sm:px-6 font-semibold text-white">{item.name}</td>
-                        <td className="py-3 px-4 text-gray-300">{item.category}</td>
-                        <td className="py-3 px-4 font-bold text-brand-gold-tint">{item.allocation}</td>
-                        <td className="py-3 px-4 text-gray-400">{item.servingsGuide}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            {/* Course D: Desserts & Drinks */}
-            <div className="glass-panel-dark rounded-xl overflow-hidden border border-white/10">
-              <div className="bg-[#00224d]/90 px-4 sm:px-6 py-3 border-b border-white/10 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Coffee className="w-4 h-4 text-rose-400" />
-                  <span className="font-serif font-bold text-sm sm:text-base text-brand-cream uppercase tracking-wide">
-                    4. Sweets &amp; Specialty Drinks
-                  </span>
-                </div>
-                <span className="text-[11px] text-rose-300 font-bold">
-                  Strictly 1 piece dessert per guest
-                </span>
-              </div>
-              <div className="overflow-x-auto">
-                <table className="w-full min-w-[540px] text-left text-xs">
-                  <thead className="bg-black/30 text-gray-400 text-[10px] uppercase font-bold tracking-wider border-b border-white/5">
-                    <tr>
-                      <th className="py-2.5 px-4 sm:px-6">Course &amp; Dish Blueprint</th>
-                      <th className="py-2.5 px-4">Sub-Category</th>
-                      <th className="py-2.5 px-4 text-brand-gold-tint font-black">Container Specification</th>
-                      <th className="py-2.5 px-4">Consumption Target</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-white/5">
-                    {dessertDrinkItems.map((item, idx) => (
-                      <tr key={idx} className="hover:bg-white/5 transition-colors">
-                        <td className="py-3 px-4 sm:px-6 font-semibold text-white">{item.name}</td>
-                        <td className="py-3 px-4 text-gray-300">{item.category}</td>
-                        <td className="py-3 px-4 font-bold text-brand-gold-tint">{item.allocation}</td>
-                        <td className="py-3 px-4 text-gray-400">{item.servingsGuide}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-          </div>
-        </div>
-
-        {/* ── 3. CATERING STRATEGY NOTES & PAN CAPACITY STANDARDS ── */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+        {/* Streamlined Portion Breakdown Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           
-          {/* Multi-curry spreading insight */}
-          <div className="p-5 rounded-2xl bg-white/5 border border-brand-gold-tint/25 space-y-2">
-            <div className="flex items-center gap-2 text-brand-gold-tint font-bold text-xs uppercase tracking-wider">
-              <Info className="w-4 h-4 shrink-0" />
-              <span>Multi-Curry Spreading Rule</span>
+          {/* Card 1: Starters */}
+          <div className="glass-panel-dark rounded-xl p-5 border border-white/10 flex flex-col justify-between space-y-4 hover:border-brand-gold-tint/40 transition-all">
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-brand-gold-tint font-bold text-xs uppercase tracking-wider">
+                  <Sparkles className="w-4 h-4" />
+                  <span>1. Starters</span>
+                </div>
+                <span className="text-[10px] text-gray-400 font-medium">{starterSummary.pieces}</span>
+              </div>
+              <div className="text-base font-serif font-bold text-white leading-snug">
+                {starterSummary.trays}
+              </div>
+              <p className="text-xs text-gray-300 leading-relaxed font-light">
+                {starterSummary.dishes}
+              </p>
             </div>
-            <p className="text-xs text-gray-300 leading-relaxed font-light">
-              Because guests sample a small portion of each dish when 3–4 curries are served, individual tray requirements are distributed across the variety rather than multiplied. A Half Tray of 3 different curries easily feeds 30 guests with generous variety.
-            </p>
+            <div className="text-[10px] text-brand-gold-tint font-semibold pt-2 border-t border-white/5">
+              {isCocktail ? '5–6 bites per guest' : '3–4 bites per guest'}
+            </div>
           </div>
 
-          {/* Sweets allocation rule */}
-          <div className="p-5 rounded-2xl bg-white/5 border border-rose-400/25 space-y-2">
-            <div className="flex items-center gap-2 text-rose-300 font-bold text-xs uppercase tracking-wider">
-              <Heart className="w-4 h-4 shrink-0" />
-              <span>Dessert Budgeting Standard</span>
+          {/* Card 2: Main Curries */}
+          <div className="glass-panel-dark rounded-xl p-5 border border-white/10 flex flex-col justify-between space-y-4 hover:border-amber-400/40 transition-all">
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-amber-400 font-bold text-xs uppercase tracking-wider">
+                  <Flame className="w-4 h-4" />
+                  <span>2. Main Curries</span>
+                </div>
+                <span className="text-[10px] text-gray-400 font-medium">{mainSummary.volume}</span>
+              </div>
+              <div className="text-base font-serif font-bold text-white leading-snug">
+                {mainSummary.trays}
+              </div>
+              <p className="text-xs text-gray-300 leading-relaxed font-light">
+                {mainSummary.dishes}
+              </p>
             </div>
-            <p className="text-xs text-gray-300 leading-relaxed font-light">
-              Sweets are budgeted at 1 per person; if offering both warm and cold sweets, order half the guest count in each (e.g., for 50 guests, order 25 Gulab Jamun and 25 Rasmalai) to prevent heavy leftovers while delighting every guest.
-            </p>
+            <div className="text-[10px] text-amber-300 font-semibold pt-2 border-t border-white/5">
+              Paneer + Dry Sabzi + Dal Makhani
+            </div>
+          </div>
+
+          {/* Card 3: Carbs & Breads */}
+          <div className="glass-panel-dark rounded-xl p-5 border border-white/10 flex flex-col justify-between space-y-4 hover:border-emerald-400/40 transition-all">
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-emerald-400 font-bold text-xs uppercase tracking-wider">
+                  <Utensils className="w-4 h-4" />
+                  <span>3. Rice &amp; Breads</span>
+                </div>
+                <span className="text-[10px] text-gray-400 font-medium">1.5 naans/guest</span>
+              </div>
+              <div className="text-base font-serif font-bold text-white leading-snug">
+                {carbSummary.trays}
+              </div>
+              <p className="text-xs text-gray-300 leading-relaxed font-light">
+                {carbSummary.dishes}
+              </p>
+            </div>
+            <div className="text-[10px] text-emerald-300 font-semibold pt-2 border-t border-white/5">
+              {carbSummary.servings}
+            </div>
+          </div>
+
+          {/* Card 4: Sweets & Drinks */}
+          <div className="glass-panel-dark rounded-xl p-5 border border-white/10 flex flex-col justify-between space-y-4 hover:border-rose-400/40 transition-all">
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-rose-400 font-bold text-xs uppercase tracking-wider">
+                  <Coffee className="w-4 h-4" />
+                  <span>4. Sweets &amp; Drinks</span>
+                </div>
+                <span className="text-[10px] text-gray-400 font-medium">1 pc/guest</span>
+              </div>
+              <div className="text-base font-serif font-bold text-white leading-snug">
+                {dessertSummary.trays}
+              </div>
+              <p className="text-xs text-gray-300 leading-relaxed font-light">
+                {dessertSummary.dishes}
+              </p>
+            </div>
+            <div className="text-[10px] text-rose-300 font-semibold pt-2 border-t border-white/5">
+              {dessertSummary.servings}
+            </div>
           </div>
 
         </div>
 
+        {/* Expandable Full Itemized Table Toggle */}
+        <div className="text-center pt-2">
+          <button
+            type="button"
+            onClick={() => setShowFullDetails(!showFullDetails)}
+            className="inline-flex items-center gap-2 bg-white/10 hover:bg-white/15 text-brand-gold-tint font-bold text-xs uppercase tracking-wider px-5 py-2.5 rounded-xl border border-brand-gold-tint/30 transition-all cursor-pointer"
+          >
+            <Layers className="w-4 h-4" />
+            <span>{showFullDetails ? "Hide Itemized Specifications" : "View Detailed Dish-by-Dish Breakdown"}</span>
+            {showFullDetails ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+          </button>
+        </div>
 
+        {/* Detailed Itemized View (Rendered conditionally) */}
+        {showFullDetails && (
+          <div className="glass-panel-dark rounded-2xl p-6 border border-white/10 space-y-4 animate-fade-in text-xs">
+            <div className="flex items-center justify-between pb-3 border-b border-white/10">
+              <span className="font-serif font-bold text-base text-brand-cream">Detailed Container &amp; Serving Guide for {guests} Guests</span>
+              <span className="text-[11px] text-emerald-300 font-semibold flex items-center gap-1">
+                <CheckCircle2 className="w-3.5 h-3.5" /> 100% Pure Vegetarian
+              </span>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="p-4 bg-white/5 rounded-xl space-y-2 border border-white/5">
+                <span className="font-bold text-brand-gold-tint uppercase tracking-wider block text-[11px]">Starters Blueprint</span>
+                <p className="text-gray-200"><strong>Container:</strong> {starterSummary.trays}</p>
+                <p className="text-gray-300"><strong>Target Bites:</strong> {starterSummary.pieces}</p>
+                <p className="text-gray-400 text-[11px]">Recommended items: {starterSummary.dishes}</p>
+              </div>
 
-        {/* ── 4. IMMEDIATE ACTION & MULTI-CHANNEL INQUIRY BAR ── */}
-        <div className="rounded-3xl bg-gradient-to-br from-[#00346f] via-[#00224d] to-[#121620] p-6 sm:p-8 border border-brand-gold-tint/40 text-center space-y-6 shadow-2xl">
-          <div className="max-w-xl mx-auto space-y-2">
+              <div className="p-4 bg-white/5 rounded-xl space-y-2 border border-white/5">
+                <span className="font-bold text-amber-400 uppercase tracking-wider block text-[11px]">Mains &amp; Daal Blueprint</span>
+                <p className="text-gray-200"><strong>Container:</strong> {mainSummary.trays}</p>
+                <p className="text-gray-300"><strong>Volume Target:</strong> {mainSummary.volume}</p>
+                <p className="text-gray-400 text-[11px]">Recommended items: {mainSummary.dishes}</p>
+              </div>
+
+              <div className="p-4 bg-white/5 rounded-xl space-y-2 border border-white/5">
+                <span className="font-bold text-emerald-400 uppercase tracking-wider block text-[11px]">Carbs &amp; Breads Blueprint</span>
+                <p className="text-gray-200"><strong>Container &amp; Count:</strong> {carbSummary.trays}</p>
+                <p className="text-gray-300"><strong>Target Servings:</strong> {carbSummary.servings}</p>
+                <p className="text-gray-400 text-[11px]">Recommended items: {carbSummary.dishes}</p>
+              </div>
+
+              <div className="p-4 bg-white/5 rounded-xl space-y-2 border border-white/5">
+                <span className="font-bold text-rose-400 uppercase tracking-wider block text-[11px]">Desserts &amp; Drinks Blueprint</span>
+                <p className="text-gray-200"><strong>Container &amp; Count:</strong> {dessertSummary.trays}</p>
+                <p className="text-gray-300"><strong>Target Ratio:</strong> {dessertSummary.servings}</p>
+                <p className="text-gray-400 text-[11px]">Recommended items: {dessertSummary.dishes}</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Action & Inquiry Bar */}
+        <div className="rounded-2xl bg-gradient-to-br from-[#00346f] via-[#00224d] to-[#121620] p-6 sm:p-8 border border-brand-gold-tint/40 text-center space-y-5 shadow-2xl">
+          <div className="max-w-lg mx-auto space-y-1.5">
             <span className="text-[10px] font-bold uppercase tracking-widest text-[#ffdea5]">
-              READY TO ORDER OR HAVE QUESTIONS?
+              READY TO ORDER?
             </span>
-            <h3 className="font-serif text-2xl sm:text-3xl font-bold text-white">
+            <h3 className="font-serif text-2xl font-bold text-white">
               Turn Your Estimate into a Pure Vegetarian Feast
             </h3>
-            <p className="text-xs sm:text-sm text-gray-200 font-light">
-              Select these exact trays on our Catering Order Portal or reach out directly to head chef Aditi via Call, SMS, or WhatsApp.
+            <p className="text-xs text-gray-300 font-light">
+              Select these exact trays on our Catering Order Portal or reach out directly to head chef Aditi.
             </p>
           </div>
 
           <div className="flex flex-col sm:flex-row flex-wrap items-center justify-center gap-3">
-            {/* Direct portal order */}
             {onNavigateToFoodOrder && (
               <button
                 type="button"
                 onClick={onNavigateToFoodOrder}
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-[#ffdea5] hover:bg-[#ffe7be] text-[#00346f] min-h-[44px] px-6 py-3 rounded-xl font-bold text-xs uppercase tracking-wider transition-all shadow-md cursor-pointer hover:scale-102"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-[#ffdea5] hover:bg-[#ffe7be] text-[#00346f] min-h-[42px] px-6 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider transition-all shadow-md cursor-pointer hover:scale-102"
               >
                 <Utensils className="w-4 h-4 text-[#00346f]" />
                 <span>Open Catering Order Portal</span>
@@ -770,30 +492,27 @@ export default function PortionEstimator({
               </button>
             )}
 
-            {/* Call */}
             <a
               href="tel:+19455274566"
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 text-white min-h-[44px] px-5 py-3 rounded-xl font-bold text-xs uppercase tracking-wider transition-all border border-white/20 cursor-pointer"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 text-white min-h-[42px] px-5 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider transition-all border border-white/20 cursor-pointer"
             >
               <Phone className="w-4 h-4 text-emerald-400" />
-              <span>Call</span>
+              <span>Call (945) 527-4566</span>
             </a>
 
-            {/* SMS */}
             <a
               href={`sms:+19455274566?body=Hi%20Bluebonnet%20Whisk!%20I'm%20inquiring%20about%20pure%20vegetarian%20catering%20for%20${guests}%20guests.`}
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 text-white min-h-[44px] px-5 py-3 rounded-xl font-bold text-xs uppercase tracking-wider transition-all border border-white/20 cursor-pointer"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 text-white min-h-[42px] px-5 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider transition-all border border-white/20 cursor-pointer"
             >
               <MessageSquare className="w-4 h-4 text-sky-400" />
               <span>SMS</span>
             </a>
 
-            {/* WhatsApp */}
             <a
               href={`https://wa.me/19455274566?text=Hi%20Bluebonnet%20Whisk!%20I'm%20inquiring%20about%20pure%20vegetarian%20catering%20for%20${guests}%20guests%20(${partyFormat === 'cocktail' ? 'Cocktail%20Focus' : 'Standard%20Dinner%20Buffet'}).`}
               target="_blank"
               rel="noopener noreferrer"
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-[#25D366] hover:bg-[#1ebd5a] text-white min-h-[44px] px-5 py-3 rounded-xl font-bold text-xs uppercase tracking-wider transition-all shadow-md cursor-pointer"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-[#25D366] hover:bg-[#1ebd5a] text-white min-h-[42px] px-5 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider transition-all shadow-md cursor-pointer"
             >
               <MessageCircle className="w-4 h-4 fill-white" />
               <span>WhatsApp</span>
