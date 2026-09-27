@@ -61,8 +61,8 @@ export default function GalleryPage({ onNavigateToAdmin: _onNavigateToAdmin }: G
               ...item,
               title: item.title || initMatch?.title,
               category: cat,
-              imagePath: initMatch ? initMatch.imagePath : item.imagePath,
-              originalImagePath: item.originalImagePath || initMatch?.originalImagePath || item.imagePath.replace('/gallery/', '/gallery/orig/')
+              imagePath: item.imagePath || initMatch?.imagePath,
+              originalImagePath: item.originalImagePath || initMatch?.originalImagePath || (item.imagePath ? item.imagePath.replace('/gallery/', '/gallery/orig/') : '')
             };
           });
 
@@ -94,11 +94,6 @@ export default function GalleryPage({ onNavigateToAdmin: _onNavigateToAdmin }: G
   const [newCategory, setNewCategory] = useState<GalleryItem["category"]>("Artisanal Cakes & Bakes");
   const [newDescription, setNewDescription] = useState("");
   const [newImagePath, setNewImagePath] = useState("");
-
-  // Sync to Supabase & localStorage whenever items state changes
-  useEffect(() => {
-    saveGalleryItemsToSupabase(items);
-  }, [items]);
 
   // Fetch remote items from Supabase on mount & listen for live updates
   useEffect(() => {
@@ -144,14 +139,22 @@ export default function GalleryPage({ onNavigateToAdmin: _onNavigateToAdmin }: G
   // Toggle Visibility
   const handleToggleVisibility = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    setItems(prev => prev.map(item => item.id === id ? { ...item, visible: !item.visible } : item));
+    setItems(prev => {
+      const next = prev.map(item => item.id === id ? { ...item, visible: !item.visible } : item);
+      saveGalleryItemsToSupabase(next);
+      return next;
+    });
   };
 
   // Delete Item
   const handleDeleteItem = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     if (window.confirm("Are you sure you want to delete this gallery photo?")) {
-      setItems(prev => prev.filter(item => item.id !== id));
+      setItems(prev => {
+        const next = prev.filter(item => item.id !== id);
+        saveGalleryItemsToSupabase(next);
+        return next;
+      });
       if (selectedItem?.id === id) setSelectedItem(null);
       if (editingItem?.id === id) setEditingItem(null);
     }
@@ -163,9 +166,13 @@ export default function GalleryPage({ onNavigateToAdmin: _onNavigateToAdmin }: G
     reader.onload = (e) => {
       const result = e.target?.result as string;
       if (result) {
-        setItems(prev => prev.map(item => item.id === id ? { ...item, imagePath: result } : item));
+        setItems(prev => {
+          const next = prev.map(item => item.id === id ? { ...item, imagePath: result, originalImagePath: result } : item);
+          saveGalleryItemsToSupabase(next);
+          return next;
+        });
         if (editingItem?.id === id) {
-          setEditingItem(prev => prev ? { ...prev, imagePath: result } : null);
+          setEditingItem(prev => prev ? { ...prev, imagePath: result, originalImagePath: result } : null);
         }
       }
     };
@@ -176,7 +183,11 @@ export default function GalleryPage({ onNavigateToAdmin: _onNavigateToAdmin }: G
   const handleSaveEdit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingItem) return;
-    setItems(prev => prev.map(item => item.id === editingItem.id ? editingItem : item));
+    setItems(prev => {
+      const next = prev.map(item => item.id === editingItem.id ? editingItem : item);
+      saveGalleryItemsToSupabase(next);
+      return next;
+    });
     setEditingItem(null);
   };
 
@@ -200,14 +211,18 @@ export default function GalleryPage({ onNavigateToAdmin: _onNavigateToAdmin }: G
         ctx.drawImage(img, -img.width / 2, -img.height / 2);
         const rotatedDataUrl = canvas.toDataURL("image/jpeg", 0.92);
 
-        setItems(prev => prev.map(item => item.id === id ? { 
-          ...item, 
-          imagePath: rotatedDataUrl,
-          originalImagePath: rotatedDataUrl 
-        } : item));
+        setItems(prev => {
+          const next = prev.map(item => item.id === id ? { 
+            ...item, 
+            imagePath: rotatedDataUrl,
+            originalImagePath: rotatedDataUrl 
+          } : item);
+          saveGalleryItemsToSupabase(next);
+          return next;
+        });
 
         if (editingItem?.id === id) {
-          setEditingItem(prev => prev ? { ...prev, imagePath: rotatedDataUrl } : null);
+          setEditingItem(prev => prev ? { ...prev, imagePath: rotatedDataUrl, originalImagePath: rotatedDataUrl } : null);
         }
       }
     };
@@ -229,7 +244,11 @@ export default function GalleryPage({ onNavigateToAdmin: _onNavigateToAdmin }: G
       createdAt: new Date().toISOString()
     };
 
-    setItems(prev => [newItem, ...prev]);
+    setItems(prev => {
+      const next = [newItem, ...prev];
+      saveGalleryItemsToSupabase(next);
+      return next;
+    });
     setShowAddModal(false);
     setNewTitle("");
     setNewDescription("");
