@@ -22,16 +22,34 @@ import {
   LOCAL_STORAGE_GALLERY_KEY 
 } from "../services/supabase";
 
+export type CategoryType = "Artisanal Cakes & Bakes" | "Specialty Culinary Fare" | "Heritage Sweets & Confectionery";
+
 export interface GalleryItem {
   id: string;
   title: string;
-  category: "Artisanal Cakes & Bakes" | "Specialty Culinary Fare" | "Heritage Sweets & Confectionery";
+  category: CategoryType | CategoryType[];
   autoDescription?: string;
   imagePath: string;
   originalImagePath?: string;
   visible: boolean;
   createdAt?: string;
 }
+
+export const getItemCategories = (item: GalleryItem): CategoryType[] => {
+  if (Array.isArray(item.category)) {
+    return item.category as CategoryType[];
+  }
+  if (typeof item.category === 'string') {
+    return [item.category as CategoryType];
+  }
+  return [];
+};
+
+export const hasCategory = (item: GalleryItem, cat: string): boolean => {
+  if (cat === "all") return true;
+  const cats = getItemCategories(item);
+  return cats.includes(cat as CategoryType);
+};
 
 const DEFAULT_PIN = "031686"; // KDS master pin default
 
@@ -51,16 +69,19 @@ export default function GalleryPage({ onNavigateToAdmin: _onNavigateToAdmin }: G
 
           const mappedParsed = parsed.map((item: any) => {
             let cat = item.category;
-            if (cat === "Artisanal Bakery & Cakes") cat = "Artisanal Cakes & Bakes";
-            else if (cat === "Savory Specialties" || cat === "Breads & Starters") cat = "Specialty Culinary Fare";
-            else if (cat === "Traditional Sweets") cat = "Heritage Sweets & Confectionery";
+            if (typeof cat === 'string') {
+              if (cat === "Artisanal Bakery & Cakes") cat = "Artisanal Cakes & Bakes";
+              else if (cat === "Savory Specialties" || cat === "Breads & Starters") cat = "Specialty Culinary Fare";
+              else if (cat === "Traditional Sweets") cat = "Heritage Sweets & Confectionery";
+            }
 
             const initMatch = (initialGalleryData as any[]).find(i => i.id === item.id);
 
             return {
               ...item,
               title: item.title || initMatch?.title,
-              category: cat,
+              category: cat || initMatch?.category,
+              autoDescription: item.autoDescription || initMatch?.autoDescription,
               imagePath: item.imagePath || initMatch?.imagePath,
               originalImagePath: item.originalImagePath || initMatch?.originalImagePath || (item.imagePath ? item.imagePath.replace('/gallery/', '/gallery/orig/') : '')
             };
@@ -91,7 +112,7 @@ export default function GalleryPage({ onNavigateToAdmin: _onNavigateToAdmin }: G
 
   // New Item Form State
   const [newTitle, setNewTitle] = useState("");
-  const [newCategory, setNewCategory] = useState<GalleryItem["category"]>("Artisanal Cakes & Bakes");
+  const [newCategories, setNewCategories] = useState<CategoryType[]>(["Artisanal Cakes & Bakes"]);
   const [newDescription, setNewDescription] = useState("");
   const [newImagePath, setNewImagePath] = useState("");
 
@@ -236,7 +257,7 @@ export default function GalleryPage({ onNavigateToAdmin: _onNavigateToAdmin }: G
     const newItem: GalleryItem = {
       id: `item-${Date.now()}`,
       title: newTitle.trim(),
-      category: newCategory,
+      category: newCategories.length > 0 ? newCategories : ["Artisanal Cakes & Bakes"],
       autoDescription: newDescription.trim() || "",
       imagePath: newImagePath,
       originalImagePath: newImagePath,
@@ -274,9 +295,9 @@ export default function GalleryPage({ onNavigateToAdmin: _onNavigateToAdmin }: G
 
   const filteredItems = activeTab === "all"
     ? visibleItems
-    : visibleItems.filter(item => item.category === activeTab);
+    : visibleItems.filter(item => hasCategory(item, activeTab));
 
-  const categories: GalleryItem["category"][] = [
+  const allCategories: CategoryType[] = [
     "Artisanal Cakes & Bakes",
     "Specialty Culinary Fare",
     "Heritage Sweets & Confectionery"
@@ -409,88 +430,100 @@ export default function GalleryPage({ onNavigateToAdmin: _onNavigateToAdmin }: G
 
         {/* Gallery Masonry / Bento Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
-          {filteredItems.map((item) => (
-            <div
-              key={item.id}
-              onClick={() => setSelectedItem(item)}
-              className={`group bg-[#241E1B] rounded-2xl border ${
-                item.visible ? "border-[#382F2A] hover:border-[#D4AF37]" : "border-rose-900/60 opacity-60"
-              } overflow-hidden shadow-xl transition-all duration-300 flex flex-col cursor-pointer hover:-translate-y-1 relative`}
-            >
-              {/* Admin Overlay Controls */}
-              {isAdminMode && (
-                <div className="absolute top-3 right-3 z-20 flex items-center gap-2 bg-[#1A1614]/90 backdrop-blur-md p-1.5 rounded-xl border border-white/20">
-                  <button
-                    onClick={(e) => handleToggleVisibility(item.id, e)}
-                    className={`p-1.5 rounded-lg text-xs transition-colors cursor-pointer ${
-                      item.visible ? "bg-emerald-500/20 text-emerald-400" : "bg-rose-500/20 text-rose-400"
-                    }`}
-                    title={item.visible ? "Visible in guest gallery" : "Hidden from guest gallery"}
-                  >
-                    {item.visible ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
-                  </button>
-                  <button
-                    onClick={(e) => handleRotateImage(item.id, e)}
-                    className="p-1.5 rounded-lg text-xs bg-blue-500/20 text-blue-300 hover:bg-blue-500/40 cursor-pointer"
-                    title="Rotate Photo 90° Clockwise"
-                  >
-                    <RotateCw className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setEditingItem(item);
+          {filteredItems.map((item) => {
+            const categoriesList = getItemCategories(item);
+            return (
+              <div
+                key={item.id}
+                onClick={() => setSelectedItem(item)}
+                className={`group bg-[#241E1B] rounded-2xl border ${
+                  item.visible ? "border-[#382F2A] hover:border-[#D4AF37]" : "border-rose-900/60 opacity-60"
+                } overflow-hidden shadow-xl transition-all duration-300 flex flex-col cursor-pointer hover:-translate-y-1 relative`}
+              >
+                {/* Admin Overlay Controls */}
+                {isAdminMode && (
+                  <div className="absolute top-3 right-3 z-20 flex items-center gap-2 bg-[#1A1614]/90 backdrop-blur-md p-1.5 rounded-xl border border-white/20">
+                    <button
+                      onClick={(e) => handleToggleVisibility(item.id, e)}
+                      className={`p-1.5 rounded-lg text-xs transition-colors cursor-pointer ${
+                        item.visible ? "bg-emerald-500/20 text-emerald-400" : "bg-rose-500/20 text-rose-400"
+                      }`}
+                      title={item.visible ? "Visible in guest gallery" : "Hidden from guest gallery"}
+                    >
+                      {item.visible ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+                    </button>
+                    <button
+                      onClick={(e) => handleRotateImage(item.id, e)}
+                      className="p-1.5 rounded-lg text-xs bg-blue-500/20 text-blue-300 hover:bg-blue-500/40 cursor-pointer"
+                      title="Rotate Photo 90° Clockwise"
+                    >
+                      <RotateCw className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setEditingItem(item);
+                      }}
+                      className="p-1.5 rounded-lg text-xs bg-amber-500/20 text-amber-300 hover:bg-amber-500/40 cursor-pointer"
+                      title="Edit Item Details"
+                    >
+                      <Edit3 className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={(e) => handleDeleteItem(item.id, e)}
+                      className="p-1.5 rounded-lg text-xs bg-rose-500/20 text-rose-300 hover:bg-rose-500/40 cursor-pointer"
+                      title="Delete Item"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                )}
+
+                {/* Photo Image View */}
+                <div className="relative aspect-[6/5] overflow-hidden bg-[#1A1614] p-2 flex items-center justify-center">
+                  <img
+                    src={item.imagePath}
+                    alt={item.title}
+                    className="w-full h-full object-contain drop-shadow-xl transition-transform duration-500 group-hover:scale-105"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = "/gallery/gallery_01.png";
                     }}
-                    className="p-1.5 rounded-lg text-xs bg-amber-500/20 text-amber-300 hover:bg-amber-500/40 cursor-pointer"
-                    title="Edit Item Details"
-                  >
-                    <Edit3 className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={(e) => handleDeleteItem(item.id, e)}
-                    className="p-1.5 rounded-lg text-xs bg-rose-500/20 text-rose-300 hover:bg-rose-500/40 cursor-pointer"
-                    title="Delete Item"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
-              )}
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#1A1614]/60 via-transparent to-transparent pointer-events-none" />
 
-              {/* Photo Image View */}
-              <div className="relative aspect-[6/5] overflow-hidden bg-[#1A1614] p-2 flex items-center justify-center">
-                <img
-                  src={item.imagePath}
-                  alt={item.title}
-                  className="w-full h-full object-contain drop-shadow-xl transition-transform duration-500 group-hover:scale-105"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).src = "/gallery/gallery_01.png";
-                  }}
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#1A1614]/60 via-transparent to-transparent pointer-events-none" />
-
-                {/* Category Pill */}
-                <div className="absolute top-3 left-3 bg-[#1A1614]/85 backdrop-blur-md text-[#D4AF37] border border-[#D4AF37]/30 px-3 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider font-sans">
-                  {item.category}
-                </div>
-              </div>
-
-              {/* Card Footer Content */}
-              <div className="p-5 flex-1 flex flex-col justify-between space-y-3 bg-[#241E1B]">
-                <div>
-                  <h3 className="font-serif text-base sm:text-lg font-bold text-white group-hover:text-[#D4AF37] transition-colors leading-snug">
-                    {item.title}
-                  </h3>
+                  {/* Multi-Category Pills */}
+                  <div className="absolute top-3 left-3 flex flex-wrap gap-1 max-w-[80%] z-10">
+                    {categoriesList.map((cat) => (
+                      <span key={cat} className="bg-[#1A1614]/90 backdrop-blur-md text-[#D4AF37] border border-[#D4AF37]/30 px-2.5 py-0.5 rounded-lg text-[10px] font-bold uppercase tracking-wider font-sans shadow-xs">
+                        {cat}
+                      </span>
+                    ))}
+                  </div>
                 </div>
 
-                <div className="pt-3 border-t border-[#382F2A] flex items-center justify-between text-[11px] text-[#D4AF37] font-serif italic">
-                  <span>Authentic DFW Artistry</span>
-                  <span className="font-sans uppercase text-[10px] font-bold tracking-wider text-gray-400 group-hover:text-[#D4AF37] transition-colors">
-                    Inspect Photo &rarr;
-                  </span>
+                {/* Card Footer Content */}
+                <div className="p-5 flex-1 flex flex-col justify-between space-y-3 bg-[#241E1B]">
+                  <div>
+                    <h3 className="font-serif text-base sm:text-lg font-bold text-white group-hover:text-[#D4AF37] transition-colors leading-snug">
+                      {item.title}
+                    </h3>
+                    {item.autoDescription && (
+                      <p className="text-xs text-gray-300 mt-1.5 line-clamp-2 leading-relaxed font-light">
+                        {item.autoDescription}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="pt-3 border-t border-[#382F2A] flex items-center justify-between text-[11px] text-[#D4AF37] font-serif italic">
+                    <span>Authentic DFW Artistry</span>
+                    <span className="font-sans uppercase text-[10px] font-bold tracking-wider text-gray-400 group-hover:text-[#D4AF37] transition-colors">
+                      Inspect Photo &rarr;
+                    </span>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         {/* Guest Detail Lightbox Modal */}
@@ -517,34 +550,41 @@ export default function GalleryPage({ onNavigateToAdmin: _onNavigateToAdmin }: G
                     alt={selectedItem.title}
                     className="w-full h-full object-contain rounded-lg"
                   />
-                  <div className="absolute top-3 left-3 bg-black/70 backdrop-blur-md px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider text-[#D4AF37] border border-[#D4AF37]/30">
-                    Original Authentic Photo
+                  <div className="absolute top-3 left-3 flex flex-wrap gap-1 max-w-[85%] z-10">
+                    {getItemCategories(selectedItem).map((cat) => (
+                      <span key={cat} className="bg-black/70 backdrop-blur-md px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider text-[#D4AF37] border border-[#D4AF37]/30">
+                        {cat}
+                      </span>
+                    ))}
                   </div>
                 </div>
 
                 <div className="p-6 sm:p-8 flex flex-col justify-between space-y-6">
-                  <div>
-                    <span className="text-[11px] font-bold text-[#D4AF37] uppercase tracking-widest block mb-2 font-sans">
-                      {selectedItem.category}
+                  <div className="space-y-3">
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-[#D4AF37] block">
+                      ARTISAN PORTFOLIO ITEM
                     </span>
-                    <h2 className="font-serif text-2xl font-bold text-white mb-4 leading-snug">
+                    <h3 className="font-serif text-2xl font-bold text-white leading-tight">
                       {selectedItem.title}
-                    </h2>
+                    </h3>
+                    <p className="text-xs text-gray-300 leading-relaxed font-light">
+                      {selectedItem.autoDescription || "Scratch-cooked with authentic spices and artisanal craftsmanship for special celebrations across Dallas-Fort Worth."}
+                    </p>
                   </div>
 
-                  <div className="space-y-3 pt-4 border-t border-[#382F2A]">
-                    <p className="text-[11px] text-gray-400 font-medium font-sans">
-                      Handcrafted daily in our Frisco kitchen. Custom spice level &amp; 100% eggless options available.
-                    </p>
-                    <button
-                      onClick={() => {
-                        window.location.href = `sms:+19455274566?body=Hi!%20I'm%20interested%20in%20ordering%20${encodeURIComponent(selectedItem.title)}.`;
-                      }}
-                      className="w-full min-h-[44px] inline-flex items-center justify-center gap-2 bg-[#D4AF37] hover:bg-[#b5932a] text-[#1A1614] font-sans text-xs uppercase tracking-widest font-bold px-6 py-3 rounded-xl shadow-md transition-all cursor-pointer"
+                  <div className="space-y-4 pt-4 border-t border-[#382F2A]">
+                    <div className="flex items-center gap-2 text-xs text-[#D4AF37]">
+                      <Sparkles className="w-4 h-4 text-[#D4AF37]" />
+                      <span>Freshly Prepared in Little Elm / Frisco, TX</span>
+                    </div>
+
+                    <a
+                      href="/catering/food"
+                      className="w-full min-h-[44px] inline-flex items-center justify-center gap-2 bg-[#D4AF37] hover:bg-[#b5932a] text-[#1A1614] rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-md"
                     >
-                      <MessageSquare className="w-4 h-4 text-[#1A1614]" />
-                      <span>Order or Inquire Similar Dish</span>
-                    </button>
+                      <MessageSquare className="w-4 h-4" />
+                      <span>Inquire &amp; Order Catering Feast</span>
+                    </a>
                   </div>
                 </div>
               </div>
@@ -552,38 +592,35 @@ export default function GalleryPage({ onNavigateToAdmin: _onNavigateToAdmin }: G
           </div>
         )}
 
-        {/* PIN Authentication Modal */}
+        {/* PIN Verification Modal */}
         {showPinModal && (
-          <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4">
-            <div className="bg-[#241E1B] border border-[#D4AF37]/50 rounded-2xl p-6 sm:p-8 max-w-md w-full shadow-2xl text-center space-y-6 animate-scale-up">
-              <div className="w-12 h-12 bg-[#D4AF37]/20 text-[#D4AF37] rounded-full flex items-center justify-center mx-auto border border-[#D4AF37]/30">
+          <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
+            <div className="bg-[#241E1B] border border-[#D4AF37]/40 rounded-2xl p-6 sm:p-8 max-w-sm w-full shadow-2xl space-y-6 text-center">
+              <div className="w-12 h-12 rounded-full bg-[#D4AF37]/15 text-[#D4AF37] flex items-center justify-center mx-auto border border-[#D4AF37]/30">
                 <Lock className="w-6 h-6" />
               </div>
-
-              <div className="space-y-1">
-                <h3 className="font-serif text-2xl font-bold text-white">Admin Authentication</h3>
-                <p className="text-gray-400 text-xs font-sans">
+              <div>
+                <h3 className="font-serif text-xl font-bold text-white">Admin Authentication</h3>
+                <p className="text-xs text-gray-400 mt-1">
                   Enter PIN to unlock admin gallery controls.
                 </p>
               </div>
-
-              {pinError && (
-                <div className="bg-rose-500/20 border border-rose-500/50 text-rose-300 p-3 rounded-xl text-xs font-semibold">
-                  Invalid PIN. Please try again.
-                </div>
-              )}
 
               <form onSubmit={handlePinSubmit} className="space-y-4">
                 <input
                   type="password"
                   value={pinInput}
                   onChange={(e) => setPinInput(e.target.value)}
-                  placeholder="Enter PIN"
-                  maxLength={8}
+                  placeholder="Enter 4-digit PIN"
+                  className="w-full bg-[#1A1614] border border-[#382F2A] text-white text-center text-lg tracking-widest py-2.5 rounded-xl focus:border-[#D4AF37] outline-none"
                   autoFocus
-                  required
-                  className="w-full bg-[#1A1614] border border-[#382F2A] text-white text-center text-xl tracking-widest py-3 rounded-xl focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37] outline-none font-mono"
                 />
+
+                {pinError && (
+                  <p className="text-xs text-rose-400 font-bold animate-shake">
+                    Incorrect PIN. Please try again.
+                  </p>
+                )}
 
                 <div className="flex gap-3">
                   <button
@@ -635,16 +672,43 @@ export default function GalleryPage({ onNavigateToAdmin: _onNavigateToAdmin }: G
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-xs font-bold text-gray-300 uppercase tracking-wider block">Category</label>
-                  <select
-                    value={editingItem.category}
-                    onChange={(e) => setEditingItem({ ...editingItem, category: e.target.value as GalleryItem["category"] })}
+                  <label className="text-xs font-bold text-gray-300 uppercase tracking-wider block">Description</label>
+                  <textarea
+                    rows={3}
+                    value={editingItem.autoDescription || ""}
+                    onChange={(e) => setEditingItem({ ...editingItem, autoDescription: e.target.value })}
                     className="w-full bg-[#1A1614] border border-[#382F2A] text-white px-4 py-2.5 rounded-xl text-xs focus:border-[#D4AF37] outline-none"
-                  >
-                    {categories.map(cat => (
-                      <option key={cat} value={cat}>{cat}</option>
-                    ))}
-                  </select>
+                  />
+                </div>
+
+                {/* Multi-Category Checkboxes */}
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-gray-300 uppercase tracking-wider block">
+                    Category Mapping Tags (Multi-Select)
+                  </label>
+                  <div className="space-y-2 bg-[#1A1614] border border-[#382F2A] p-3 rounded-xl">
+                    {allCategories.map(cat => {
+                      const currentCats = getItemCategories(editingItem);
+                      const isChecked = currentCats.includes(cat);
+                      return (
+                        <label key={cat} className="flex items-center gap-2 text-xs text-gray-200 cursor-pointer select-none">
+                          <input
+                            type="checkbox"
+                            checked={isChecked}
+                            onChange={() => {
+                              let updated = isChecked
+                                ? currentCats.filter(c => c !== cat)
+                                : [...currentCats, cat];
+                              if (updated.length === 0) updated = [cat];
+                              setEditingItem({ ...editingItem, category: updated as any });
+                            }}
+                            className="rounded text-[#D4AF37] focus:ring-0 cursor-pointer"
+                          />
+                          <span>{cat}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
                 </div>
 
                 {/* Rotate Image Option */}
@@ -722,18 +786,41 @@ export default function GalleryPage({ onNavigateToAdmin: _onNavigateToAdmin }: G
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-xs font-bold text-gray-300 uppercase tracking-wider block">Category</label>
-                  <select
-                    value={newCategory}
-                    onChange={(e) => setNewCategory(e.target.value as GalleryItem["category"])}
+                  <label className="text-xs font-bold text-gray-300 uppercase tracking-wider block">Description</label>
+                  <textarea
+                    rows={2}
+                    value={newDescription}
+                    onChange={(e) => setNewDescription(e.target.value)}
+                    placeholder="Brief description of dish..."
                     className="w-full bg-[#1A1614] border border-[#382F2A] text-white px-4 py-2.5 rounded-xl text-xs focus:border-[#D4AF37] outline-none"
-                  >
-                    {categories.map(cat => (
-                      <option key={cat} value={cat}>{cat}</option>
-                    ))}
-                  </select>
+                  />
                 </div>
 
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-gray-300 uppercase tracking-wider block">Categories (Multi-Select Tags)</label>
+                  <div className="space-y-2 bg-[#1A1614] border border-[#382F2A] p-3 rounded-xl">
+                    {allCategories.map(cat => {
+                      const isChecked = newCategories.includes(cat);
+                      return (
+                        <label key={cat} className="flex items-center gap-2 text-xs text-gray-200 cursor-pointer select-none">
+                          <input
+                            type="checkbox"
+                            checked={isChecked}
+                            onChange={() => {
+                              let updated = isChecked
+                                ? newCategories.filter(c => c !== cat)
+                                : [...newCategories, cat];
+                              if (updated.length === 0) updated = [cat];
+                              setNewCategories(updated as any);
+                            }}
+                            className="rounded text-[#D4AF37] focus:ring-0 cursor-pointer"
+                          />
+                          <span>{cat}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </div>
 
                 <div className="space-y-1">
                   <label className="text-xs font-bold text-gray-300 uppercase tracking-wider block">Select Photo File</label>

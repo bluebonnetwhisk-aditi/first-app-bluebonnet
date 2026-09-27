@@ -2,7 +2,9 @@
   {
     "id": "item-1",
     "title": "Halwai-Style Aalu & Fluffy Puris",
-    "category": "Specialty Culinary Fare",
+    "category": [
+      "Specialty Culinary Fare"
+    ],
     "autoDescription": "Authentic Halwai-style spiced potato curry slow-cooked with hing and amchur, served with piping hot, golden fluffy puris.",
     "imagePath": "/gallery/gallery_01.png",
     "visible": true,
@@ -12,7 +14,9 @@
   {
     "id": "item-2",
     "title": "Slow-Cooked Royal Dal Makhani",
-    "category": "Specialty Culinary Fare",
+    "category": [
+      "Specialty Culinary Fare"
+    ],
     "autoDescription": "Whole black lentils simmered overnight for 16 hours over low heat, finished with fresh butter, organic cream, and aromatic spices.",
     "imagePath": "/gallery/gallery_02.png",
     "visible": true,
@@ -22,7 +26,10 @@
   {
     "id": "item-3",
     "title": "Indo-Chinese & Punjabi Feast Platter",
-    "category": "Specialty Culinary Fare",
+    "category": [
+      "Specialty Culinary Fare",
+      "Heritage Sweets & Confectionery"
+    ],
     "autoDescription": "A lavish celebratory spread featuring wok-tossed Veg Manchurian, Hakka Noodles, fragrant Basmati rice, tangy Punjabi Kadhi Pakora, and golden Boondi Laddus.",
     "imagePath": "/gallery/gallery_03.png",
     "visible": true,
@@ -32,7 +39,10 @@
   {
     "id": "item-4",
     "title": "Grand Fusion Party Catering Buffet",
-    "category": "Specialty Culinary Fare",
+    "category": [
+      "Specialty Culinary Fare",
+      "Heritage Sweets & Confectionery"
+    ],
     "autoDescription": "Curated party buffet combining wok-fired Veg Manchurian and Hakka Noodles with homestyle Punjabi Kadhi Pakora, steamed Basmati rice, and handcrafted Boondi Laddus.",
     "imagePath": "/gallery/gallery_04.png",
     "visible": true,
@@ -42,7 +52,9 @@
   {
     "id": "item-5",
     "title": "Crispy Onion Pakoras & Dual Chutney Dip",
-    "category": "Specialty Culinary Fare",
+    "category": [
+      "Specialty Culinary Fare"
+    ],
     "autoDescription": "Golden, thinly-sliced onion fritters fried to crisp perfection, served alongside zesty mint-coriander and sweet date-tamarind chutney.",
     "imagePath": "/gallery/gallery_05.png",
     "visible": true,
@@ -52,7 +64,9 @@
   {
     "id": "item-6",
     "title": "Artisanal Mango Mousse Cake Cups",
-    "category": "Artisanal Cakes & Bakes",
+    "category": [
+      "Artisanal Cakes & Bakes"
+    ],
     "autoDescription": "Luscious Alphonso mango pulp layered with delicate vanilla chiffon sponge, fresh whipped cream, and mango reduction served in individual dessert cups.",
     "imagePath": "/gallery/gallery_06.jpg",
     "visible": true,
@@ -62,7 +76,9 @@
   {
     "id": "item-7",
     "title": "Tandoori Paneer & Fresh Fruit Tikka",
-    "category": "Specialty Culinary Fare",
+    "category": [
+      "Specialty Culinary Fare"
+    ],
     "autoDescription": "Charcoal-grilled cottage cheese cubes, bell peppers, and spiced tropical fruits marinated in hung curd, mustard oil, and kashmiri chili.",
     "imagePath": "/gallery/gallery_07.jpg",
     "visible": true,
@@ -72,7 +88,9 @@
   {
     "id": "item-8",
     "title": "Traditional North Indian Thali Spread",
-    "category": "Specialty Culinary Fare",
+    "category": [
+      "Specialty Culinary Fare"
+    ],
     "autoDescription": "Homestyle North Indian feast combining fluffy puris, velvet Dal Makhani, slow-simmered Punjabi Rajma, and steamed Basmati rice.",
     "imagePath": "/gallery/gallery_08.jpg",
     "visible": true,
@@ -82,7 +100,9 @@
   {
     "id": "item-9",
     "title": "Delhi-Style Chole Bhature",
-    "category": "Specialty Culinary Fare",
+    "category": [
+      "Specialty Culinary Fare"
+    ],
     "autoDescription": "Piping hot, pillowy bhatures served with rich, dark Pindi chole simmered in tea-leaves and whole spices, accompanied by pickled onions.",
     "imagePath": "/gallery/gallery_09.jpg",
     "visible": true,
@@ -92,7 +112,9 @@
   {
     "id": "item-10",
     "title": "Royal Delhi Dahi Bhalla Chaat",
-    "category": "Specialty Culinary Fare",
+    "category": [
+      "Specialty Culinary Fare"
+    ],
     "autoDescription": "Soft lentil dumplings soaked in chilled sweetened yogurt, drizzled with roasted cumin, kashmiri red chili, mint chutney, and date-tamarind glaze.",
     "imagePath": "/gallery/gallery_10.jpg",
     "visible": true,
@@ -101,9 +123,11 @@
   },
   {
     "id": "item-11",
-    "title": "Indo-Chinese Manchurian & Noodle Station #11",
-    "category": "Specialty Culinary Fare",
-    "autoDescription": "Wok-tossed vegetable balls in garlic-soy glaze served alongside Hakka noodles with charred scallions.",
+    "title": "Chilled Street-Style Dahi Bhalla Platter",
+    "category": [
+      "Specialty Culinary Fare"
+    ],
+    "autoDescription": "Melt-in-mouth urad dal bhallas topped with thick sweetened yogurt, piquant green chutney, and tangy tamarind drizzle.",
     "imagePath": "/gallery/gallery_11.jpg",
     "visible": true,
     "createdAt": "2026-09-16T18:56:52.961Z",
@@ -111,9 +135,12 @@
   },
   {
     "id": "item-12",
-    "title": "Live Street Chaat & Pani Puri Bar #12",
-    "category": "Specialty Culinary Fare",
-    "autoDescription": "Crispy semolina puris filled with spiced potato chickpeas, chilled mint-coriander water, and date tamarind chutney.",
+    "title": "Gulab Jamun Fusion Celebration Cake",
+    "category": [
+      "Artisanal Cakes & Bakes",
+      "Heritage Sweets & Confectionery"
+    ],
+    "autoDescription": "Cardamom sponge infused with saffron syrup, layered with Rabri mousse, and crowned with soft, warm mini Gulab Jamuns.",
     "imagePath": "/gallery/gallery_12.jpg",
     "visible": true,
     "createdAt": "2026-09-15T18:56:52.965Z",
@@ -121,9 +148,11 @@
   },
   {
     "id": "item-13",
-    "title": "Lotus Biscoff Stuffed Gourmet Cookie #13",
-    "category": "Artisanal Cakes & Bakes",
-    "autoDescription": "Giant thick-style cookie rolled with organic European butter, bursting with molten Biscoff cookie butter center.",
+    "title": "Vintage Railway Spiced Vegetable Cutlets",
+    "category": [
+      "Specialty Culinary Fare"
+    ],
+    "autoDescription": "Classic Indian railway-style potato and beetroot croquettes coated in crispy breadcrumbs, served with spicy mint chutney.",
     "imagePath": "/gallery/gallery_13.jpg",
     "visible": true,
     "createdAt": "2026-09-14T18:56:52.969Z",
@@ -131,9 +160,12 @@
   },
   {
     "id": "item-14",
-    "title": "Stuffed Sattu & Paneer Paratha Platter #14",
-    "category": "Specialty Culinary Fare",
-    "autoDescription": "Hand-rolled whole wheat parathas stuffed with spiced roasted gram flour (sattu) and fresh paneer, served with white butter.",
+    "title": "Theme-Designed Rasmalai Celebration Cake",
+    "category": [
+      "Artisanal Cakes & Bakes",
+      "Heritage Sweets & Confectionery"
+    ],
+    "autoDescription": "Custom handcrafted theme cake soaked in saffron milk, layered with soft chenna rabri, silver vark, and slivered pistachios.",
     "imagePath": "/gallery/gallery_14.jpg",
     "visible": true,
     "createdAt": "2026-09-13T18:56:52.973Z",
@@ -141,9 +173,11 @@
   },
   {
     "id": "item-15",
-    "title": "Tangy Punjabi Kadhi Pakora #15",
-    "category": "Specialty Culinary Fare",
-    "autoDescription": "Crispy onion fritters simmered in a creamy sour yogurt and besan gravy, tempered with dried red chillies and curry leaves.",
+    "title": "Rich Shahi Paneer Lababdar",
+    "category": [
+      "Specialty Culinary Fare"
+    ],
+    "autoDescription": "Succulent cottage cheese cubes simmered in a rich tomato-cashew gravy scented with Kasuri methi and green cardamom.",
     "imagePath": "/gallery/gallery_15.jpg",
     "visible": true,
     "createdAt": "2026-09-12T18:56:52.978Z",
@@ -151,9 +185,11 @@
   },
   {
     "id": "item-16",
-    "title": "Homestyle Bhindi Masala & Bharwa Baigan #16",
-    "category": "Specialty Culinary Fare",
-    "autoDescription": "Pan-roasted okra and stuffed baby eggplants tossed in roasted coriander, fennel, and dry mango powder.",
+    "title": "Desi Punjabi Kadhi Pakora",
+    "category": [
+      "Specialty Culinary Fare"
+    ],
+    "autoDescription": "Slow-simmered tangy yogurt and besan gravy spiced with methi seeds, stuffed with crispy onion-spinach pakoras.",
     "imagePath": "/gallery/gallery_16.jpg",
     "visible": true,
     "createdAt": "2026-09-11T18:56:52.985Z",
@@ -161,9 +197,11 @@
   },
   {
     "id": "item-17",
-    "title": "Kesar Pista Chawal Kheer #17",
-    "category": "Heritage Sweets & Confectionery",
-    "autoDescription": "Traditional rice pudding slow-cooked in full-cream milk, infused with Kashmiri saffron strands, green cardamom, and almonds.",
+    "title": "Piping Hot Golden Tawa Puris",
+    "category": [
+      "Specialty Culinary Fare"
+    ],
+    "autoDescription": "Freshly fried whole wheat puris puffed to perfection, serving as the ideal pairing for authentic gravies and chole.",
     "imagePath": "/gallery/gallery_17.jpg",
     "visible": true,
     "createdAt": "2026-09-10T18:56:52.992Z",
@@ -171,9 +209,11 @@
   },
   {
     "id": "item-18",
-    "title": "Rasmalai Tres Leches Cake #18",
-    "category": "Artisanal Cakes & Bakes",
-    "autoDescription": "Infused with saffron-cardamom milk, layered with soft rabri cream, pistachios, and delicate rose petals over a light sponge.",
+    "title": "Royal Punjabi Banquet Meal",
+    "category": [
+      "Specialty Culinary Fare"
+    ],
+    "autoDescription": "A lavish combination of creamy Paneer Lababdar, homestyle Punjabi Kadhi Pakora, and golden puffed puris.",
     "imagePath": "/gallery/gallery_18.jpg",
     "visible": true,
     "createdAt": "2026-09-09T18:56:52.998Z",
@@ -181,9 +221,11 @@
   },
   {
     "id": "item-19",
-    "title": "Gulab Jamun Fusion Cheesecake #19",
-    "category": "Artisanal Cakes & Bakes",
-    "autoDescription": "Decadent cream cheese filling baked over a cardamom cookie crust, crowned with mini gulab jamuns and edible gold vark.",
+    "title": "Guilt-Free Air-Fried Onion Pakoras",
+    "category": [
+      "Specialty Culinary Fare"
+    ],
+    "autoDescription": "Crispy, light onion fritters seasoned with roasted carom seeds and spices, air-fried with minimal oil for wholesome crunch.",
     "imagePath": "/gallery/gallery_19.jpg",
     "visible": true,
     "createdAt": "2026-09-08T18:56:53.003Z",
@@ -191,9 +233,11 @@
   },
   {
     "id": "item-20",
-    "title": "Slow-Cooked Royal Dal Makhani #20",
-    "category": "Specialty Culinary Fare",
-    "autoDescription": "Black lentils simmered overnight for 16 hours over charcoal, finished with churned butter, fresh cream, and aromatic garam masala.",
+    "title": "Disney Themed Two-Tier Strawberry & Black Forest Cake",
+    "category": [
+      "Artisanal Cakes & Bakes"
+    ],
+    "autoDescription": "Double-tiered bespoke birthday cake featuring fresh strawberry compote on one layer and classic Belgian chocolate dark cherry Black Forest on the second.",
     "imagePath": "/gallery/gallery_20.jpg",
     "visible": true,
     "createdAt": "2026-09-07T18:56:53.009Z",
@@ -201,9 +245,11 @@
   },
   {
     "id": "item-21",
-    "title": "Paneer Lababdar & Makhani Gravy #21",
-    "category": "Specialty Culinary Fare",
-    "autoDescription": "Cottage cheese cubes tossed in a velvety tomato-cashew reduction, spiced with roasted Kasuri methi and green cardamom.",
+    "title": "Gourmet Hand-Piped Cake Pops",
+    "category": [
+      "Artisanal Cakes & Bakes"
+    ],
+    "autoDescription": "Moist bite-sized cake spheres rolled in Belgian chocolate shell, decorated with colorful sugar pearls and sprinkles.",
     "imagePath": "/gallery/gallery_21.jpg",
     "visible": true,
     "createdAt": "2026-09-06T18:56:53.012Z",
@@ -211,9 +257,11 @@
   },
   {
     "id": "item-22",
-    "title": "Crispy Amritsari Kulcha & Chole #22",
-    "category": "Specialty Culinary Fare",
-    "autoDescription": "Flaky, tandoor-baked spiced potato kulcha served with tangy Pindi chole, pickled onions, and fresh mint chutney.",
+    "title": "Deconstructed Gulab Jamun Rabri Cups",
+    "category": [
+      "Heritage Sweets & Confectionery"
+    ],
+    "autoDescription": "Individual dessert cups featuring soft Gulab Jamun morsels nestled under thick saffron-infused Rabri cream.",
     "imagePath": "/gallery/gallery_22.jpg",
     "visible": true,
     "createdAt": "2026-09-05T18:56:53.015Z",
@@ -221,9 +269,11 @@
   },
   {
     "id": "item-23",
-    "title": "Tandoori Garlic Naan & Kulcha Basket #23",
-    "category": "Specialty Culinary Fare",
-    "autoDescription": "Freshly slapped flatbreads baked in clay tandoor, brushed with garlic butter, cilantro, and toasted nigella seeds.",
+    "title": "Artisanal Gulab Jamun Dessert Shooters",
+    "category": [
+      "Heritage Sweets & Confectionery"
+    ],
+    "autoDescription": "Cardamom-flavored dessert jars filled with warm Gulab Jamuns, malai rabri, roasted pistachios, and edible rose petals.",
     "imagePath": "/gallery/gallery_23.jpg",
     "visible": true,
     "createdAt": "2026-09-04T18:56:53.018Z",
@@ -231,9 +281,11 @@
   },
   {
     "id": "item-24",
-    "title": "Bedmi Poori & Halwai Waale Aalu #24",
-    "category": "Heritage Sweets & Confectionery",
-    "autoDescription": "Crispy urad dal-stuffed puri paired with tangy, slow-simmered street-style potato curry spiced with hing and amchur.",
+    "title": "Paw Patrol Themed 2-Tier Pineapple Crush Cake",
+    "category": [
+      "Artisanal Cakes & Bakes"
+    ],
+    "autoDescription": "Custom 2-tiered children's birthday cake layered with real tropical pineapple reduction and light whipped cream.",
     "imagePath": "/gallery/gallery_24.jpg",
     "visible": true,
     "createdAt": "2026-09-03T18:56:53.024Z",
@@ -241,9 +293,11 @@
   },
   {
     "id": "item-25",
-    "title": "Vintage Railway Potato Cutlets #25",
-    "category": "Specialty Culinary Fare",
-    "autoDescription": "Gold-crusted potato and green pea croquettes infused with roasted cumin, ginger, and served with coriander chutney.",
+    "title": "Spidey Superhero 3-Tier Multi-Flavor Cake",
+    "category": [
+      "Artisanal Cakes & Bakes"
+    ],
+    "autoDescription": "Spectacular 3-tiered birthday cake boasting three custom flavors: Dutch Chocolate Ganache, Vanilla Bean, and Fresh Mango.",
     "imagePath": "/gallery/gallery_25.jpg",
     "visible": true,
     "createdAt": "2026-09-02T18:56:53.029Z",
@@ -251,9 +305,12 @@
   },
   {
     "id": "item-26",
-    "title": "Authentic Ukadiche Modak #26",
-    "category": "Heritage Sweets & Confectionery",
-    "autoDescription": "Steamed rice flour dumplings filled with freshly grated coconut, jaggery, and fragrant nutmeg cardamom paste.",
+    "title": "Heritage Fusion Dessert Cups Trio",
+    "category": [
+      "Artisanal Cakes & Bakes",
+      "Heritage Sweets & Confectionery"
+    ],
+    "autoDescription": "Decadent tri-flavor dessert cups incorporating soft Rasmalai Rabri, Gulab Jamun, and Pistachio cardamom cake mousse.",
     "imagePath": "/gallery/gallery_26.jpg",
     "visible": true,
     "createdAt": "2026-09-01T18:56:53.036Z",
@@ -261,9 +318,11 @@
   },
   {
     "id": "item-27",
-    "title": "Pistachio Cardamom Mousse Cake #27",
-    "category": "Artisanal Cakes & Bakes",
-    "autoDescription": "Silky pistachio bavarian cream paired with cardamom chiffon layers, crowned with crushed Iranian pistachios.",
+    "title": "Trio Flavor Cake Boats (Pistachio, Choco & Red Velvet)",
+    "category": [
+      "Artisanal Cakes & Bakes"
+    ],
+    "autoDescription": "Individual cake boat slices featuring three signature bakes: Persian Pistachio, Dark Chocolate Ganache, and Cream Cheese Red Velvet.",
     "imagePath": "/gallery/gallery_27.jpg",
     "visible": true,
     "createdAt": "2026-08-31T18:56:53.041Z",
@@ -271,9 +330,11 @@
   },
   {
     "id": "item-28",
-    "title": "Indo-Chinese Manchurian & Noodle Station #28",
-    "category": "Specialty Culinary Fare",
-    "autoDescription": "Wok-tossed vegetable balls in garlic-soy glaze served alongside Hakka noodles with charred scallions.",
+    "title": "Hershey's Molten Choco Lava Cake Boats",
+    "category": [
+      "Artisanal Cakes & Bakes"
+    ],
+    "autoDescription": "Warm chocolate cake boats with a flowing molten Hershey's dark chocolate center, topped with chocolate drizzle.",
     "imagePath": "/gallery/gallery_28.jpg",
     "visible": true,
     "createdAt": "2026-08-30T18:56:53.047Z",
@@ -281,9 +342,11 @@
   },
   {
     "id": "item-29",
-    "title": "Live Street Chaat & Pani Puri Bar #29",
-    "category": "Specialty Culinary Fare",
-    "autoDescription": "Crispy semolina puris filled with spiced potato chickpeas, chilled mint-coriander water, and date tamarind chutney.",
+    "title": "Belgian Chocolate Ganache Cake Pops",
+    "category": [
+      "Artisanal Cakes & Bakes"
+    ],
+    "autoDescription": "Rich fudge cake truffles dipped in dark Belgian chocolate shell and finished with gold dust and chocolate sprinkles.",
     "imagePath": "/gallery/gallery_29.jpg",
     "visible": true,
     "createdAt": "2026-08-29T18:56:53.053Z",
@@ -291,9 +354,12 @@
   },
   {
     "id": "item-30",
-    "title": "Lotus Biscoff Stuffed Gourmet Cookie #30",
-    "category": "Artisanal Cakes & Bakes",
-    "autoDescription": "Giant thick-style cookie rolled with organic European butter, bursting with molten Biscoff cookie butter center.",
+    "title": "Royal Fusion Cake Cream Jars Trio",
+    "category": [
+      "Artisanal Cakes & Bakes",
+      "Heritage Sweets & Confectionery"
+    ],
+    "autoDescription": "Gourmet dessert jars featuring layers of Saffron Rasmalai, Warm Gulab Jamun, and Alphonso Mango Mousse cake.",
     "imagePath": "/gallery/gallery_30.jpg",
     "visible": true,
     "createdAt": "2026-08-28T18:56:53.056Z",
@@ -301,9 +367,11 @@
   },
   {
     "id": "item-31",
-    "title": "Stuffed Sattu & Paneer Paratha Platter #31",
-    "category": "Specialty Culinary Fare",
-    "autoDescription": "Hand-rolled whole wheat parathas stuffed with spiced roasted gram flour (sattu) and fresh paneer, served with white butter.",
+    "title": "Scratch-Baked European Butter Cookies",
+    "category": [
+      "Artisanal Cakes & Bakes"
+    ],
+    "autoDescription": "Handcrafted butter cookies infused with cardamom and pistachios, baked fresh in small batches.",
     "imagePath": "/gallery/gallery_31.jpg",
     "visible": true,
     "createdAt": "2026-08-27T18:56:53.061Z",
@@ -311,9 +379,11 @@
   },
   {
     "id": "item-32",
-    "title": "Tangy Punjabi Kadhi Pakora #32",
-    "category": "Specialty Culinary Fare",
-    "autoDescription": "Crispy onion fritters simmered in a creamy sour yogurt and besan gravy, tempered with dried red chillies and curry leaves.",
+    "title": "Dual Flavor Vanilla & Chocolate Cake Cones",
+    "category": [
+      "Artisanal Cakes & Bakes"
+    ],
+    "autoDescription": "Waffle cones stuffed with moist vanilla bean and chocolate cake, topped with buttercream swirls and sprinkles.",
     "imagePath": "/gallery/gallery_32.jpg",
     "visible": true,
     "createdAt": "2026-08-26T18:56:53.065Z",
@@ -321,9 +391,11 @@
   },
   {
     "id": "item-33",
-    "title": "Homestyle Bhindi Masala & Bharwa Baigan #33",
-    "category": "Specialty Culinary Fare",
-    "autoDescription": "Pan-roasted okra and stuffed baby eggplants tossed in roasted coriander, fennel, and dry mango powder.",
+    "title": "Charcoal-Smoked Dhungar Baingan Bharta",
+    "category": [
+      "Specialty Culinary Fare"
+    ],
+    "autoDescription": "Eggplant roasted over open coals, mashed and tempered with garlic, green chilies, tomatoes, and mustard oil.",
     "imagePath": "/gallery/gallery_33.jpg",
     "visible": true,
     "createdAt": "2026-08-25T18:56:53.069Z",
@@ -331,9 +403,11 @@
   },
   {
     "id": "item-34",
-    "title": "Kesar Pista Chawal Kheer #34",
-    "category": "Heritage Sweets & Confectionery",
-    "autoDescription": "Traditional rice pudding slow-cooked in full-cream milk, infused with Kashmiri saffron strands, green cardamom, and almonds.",
+    "title": "Party Dessert Sampler: Cake Cups & Pops",
+    "category": [
+      "Artisanal Cakes & Bakes"
+    ],
+    "autoDescription": "Colorfully arranged dessert tray of mini mousse cake cups and custom hand-decorated cake pops for events.",
     "imagePath": "/gallery/gallery_34.jpg",
     "visible": true,
     "createdAt": "2026-08-24T18:56:53.072Z",
@@ -341,9 +415,11 @@
   },
   {
     "id": "item-35",
-    "title": "Rasmalai Tres Leches Cake #35",
-    "category": "Artisanal Cakes & Bakes",
-    "autoDescription": "Infused with saffron-cardamom milk, layered with soft rabri cream, pistachios, and delicate rose petals over a light sponge.",
+    "title": "Stuffed Hyderabadi Bharwa Baingan",
+    "category": [
+      "Specialty Culinary Fare"
+    ],
+    "autoDescription": "Tender baby eggplants stuffed with freshly ground peanuts, sesame, coconut, and roasted dry spices.",
     "imagePath": "/gallery/gallery_35.jpg",
     "visible": true,
     "createdAt": "2026-08-23T18:56:53.075Z",
@@ -351,9 +427,11 @@
   },
   {
     "id": "item-36",
-    "title": "Gulab Jamun Fusion Cheesecake #36",
-    "category": "Artisanal Cakes & Bakes",
-    "autoDescription": "Decadent cream cheese filling baked over a cardamom cookie crust, crowned with mini gulab jamuns and edible gold vark.",
+    "title": "Designer Alphonso Mango Bloom Cake",
+    "category": [
+      "Artisanal Cakes & Bakes"
+    ],
+    "autoDescription": "Artisan birthday cake layered with real Alphonso mango pulp, whipped cream, and hand-piped rosette floral detailing.",
     "imagePath": "/gallery/gallery_36.jpg",
     "visible": true,
     "createdAt": "2026-08-22T18:56:53.079Z",
@@ -361,9 +439,11 @@
   },
   {
     "id": "item-37",
-    "title": "Slow-Cooked Royal Dal Makhani #37",
-    "category": "Specialty Culinary Fare",
-    "autoDescription": "Black lentils simmered overnight for 16 hours over charcoal, finished with churned butter, fresh cream, and aromatic garam masala.",
+    "title": "Daily Dabba: Veg Jalfrezi & Yellow Dal Tadka",
+    "category": [
+      "Specialty Culinary Fare"
+    ],
+    "autoDescription": "Homestyle meal featuring stir-fried crunchy vegetables in tangy spices alongside garlic-tempered yellow arhar dal.",
     "imagePath": "/gallery/gallery_37.jpg",
     "visible": true,
     "createdAt": "2026-08-21T18:56:53.084Z",
@@ -371,9 +451,11 @@
   },
   {
     "id": "item-38",
-    "title": "Paneer Lababdar & Makhani Gravy #38",
-    "category": "Specialty Culinary Fare",
-    "autoDescription": "Cottage cheese cubes tossed in a velvety tomato-cashew reduction, spiced with roasted Kasuri methi and green cardamom.",
+    "title": "Daily Dabba: Punjabi Rajma & Aalu Gobhi",
+    "category": [
+      "Specialty Culinary Fare"
+    ],
+    "autoDescription": "Comforting homestyle dabba with slow-simmered Punjabi Rajma curry and ginger-roasted potato cauliflower sabzi.",
     "imagePath": "/gallery/gallery_38.jpg",
     "visible": true,
     "createdAt": "2026-08-20T18:56:53.089Z",
@@ -381,9 +463,12 @@
   },
   {
     "id": "item-39",
-    "title": "Crispy Amritsari Kulcha & Chole #39",
-    "category": "Specialty Culinary Fare",
-    "autoDescription": "Flaky, tandoor-baked spiced potato kulcha served with tangy Pindi chole, pickled onions, and fresh mint chutney.",
+    "title": "Grand Maharaja Royal Festive Thali",
+    "category": [
+      "Specialty Culinary Fare",
+      "Heritage Sweets & Confectionery"
+    ],
+    "autoDescription": "Comprehensive celebration feast featuring Pindi Chole, Matar Paneer, Dahi Bhalla, Rice Kheer, Puris, and house-pickled carrots.",
     "imagePath": "/gallery/gallery_39.jpg",
     "visible": true,
     "createdAt": "2026-08-19T18:56:53.092Z",
@@ -391,9 +476,11 @@
   },
   {
     "id": "item-40",
-    "title": "Tandoori Garlic Naan & Kulcha Basket #40",
-    "category": "Specialty Culinary Fare",
-    "autoDescription": "Freshly slapped flatbreads baked in clay tandoor, brushed with garlic butter, cilantro, and toasted nigella seeds.",
+    "title": "Slow-Cooked Shahi Rabri Kheer",
+    "category": [
+      "Heritage Sweets & Confectionery"
+    ],
+    "autoDescription": "Traditional rice pudding thickened with slow-reduced full cream rabri, flavored with saffron, cardamom, and chopped almonds.",
     "imagePath": "/gallery/gallery_40.jpg",
     "visible": true,
     "createdAt": "2026-08-18T18:56:53.094Z",
@@ -401,9 +488,11 @@
   },
   {
     "id": "item-41",
-    "title": "Bedmi Poori & Halwai Waale Aalu #41",
-    "category": "Heritage Sweets & Confectionery",
-    "autoDescription": "Crispy urad dal-stuffed puri paired with tangy, slow-simmered street-style potato curry spiced with hing and amchur.",
+    "title": "Street-Style Pani Puri Chaat Bar",
+    "category": [
+      "Specialty Culinary Fare"
+    ],
+    "autoDescription": "Crispy semolina puris served with spiced potato-chickpea filling, spicy mint-coriander water, and sweet tamarind chutney.",
     "imagePath": "/gallery/gallery_41.jpg",
     "visible": true,
     "createdAt": "2026-08-17T18:56:53.097Z",
@@ -411,9 +500,11 @@
   },
   {
     "id": "item-42",
-    "title": "Vintage Railway Potato Cutlets #42",
-    "category": "Specialty Culinary Fare",
-    "autoDescription": "Gold-crusted potato and green pea croquettes infused with roasted cumin, ginger, and served with coriander chutney.",
+    "title": "Paneer Butter Masala & Pakora Banquet",
+    "category": [
+      "Specialty Culinary Fare"
+    ],
+    "autoDescription": "Feast menu combining rich Paneer Butter Masala, assorted vegetable pakoras, Punjabi Kadhi, and fluffy puris.",
     "imagePath": "/gallery/gallery_42.jpg",
     "visible": true,
     "createdAt": "2026-08-16T18:56:53.100Z",
@@ -421,9 +512,11 @@
   },
   {
     "id": "item-43",
-    "title": "Authentic Ukadiche Modak #43",
-    "category": "Heritage Sweets & Confectionery",
-    "autoDescription": "Steamed rice flour dumplings filled with freshly grated coconut, jaggery, and fragrant nutmeg cardamom paste.",
+    "title": "Homestyle Punjabi Kadhi & Paneer Masala Combo",
+    "category": [
+      "Specialty Culinary Fare"
+    ],
+    "autoDescription": "Classic dual curry combo featuring tangy yogurt Kadhi Pakora alongside spiced Dhaba-style Paneer Masala.",
     "imagePath": "/gallery/gallery_43.jpg",
     "visible": true,
     "createdAt": "2026-08-15T18:56:53.102Z",
@@ -431,9 +524,11 @@
   },
   {
     "id": "item-44",
-    "title": "Pistachio Cardamom Mousse Cake #44",
-    "category": "Artisanal Cakes & Bakes",
-    "autoDescription": "Silky pistachio bavarian cream paired with cardamom chiffon layers, crowned with crushed Iranian pistachios.",
+    "title": "Pokémon Pikachu Themed Red Velvet Cake",
+    "category": [
+      "Artisanal Cakes & Bakes"
+    ],
+    "autoDescription": "Custom hand-decorated Pokéball birthday cake crafted with cocoa red velvet sponge and cream cheese frosting.",
     "imagePath": "/gallery/gallery_44.jpg",
     "visible": true,
     "createdAt": "2026-08-14T18:56:53.105Z",
@@ -441,9 +536,12 @@
   },
   {
     "id": "item-45",
-    "title": "Indo-Chinese Manchurian & Noodle Station #45",
-    "category": "Specialty Culinary Fare",
-    "autoDescription": "Wok-tossed vegetable balls in garlic-soy glaze served alongside Hakka noodles with charred scallions.",
+    "title": "Cardamom Gulab Jamun Fusion Layer Cake",
+    "category": [
+      "Artisanal Cakes & Bakes",
+      "Heritage Sweets & Confectionery"
+    ],
+    "autoDescription": "Saffron-infused chiffon cake layered with Rabri buttercream and garnished with syrup-soaked Gulab Jamuns.",
     "imagePath": "/gallery/gallery_45.jpg",
     "visible": true,
     "createdAt": "2026-08-13T18:56:53.107Z",
@@ -451,9 +549,11 @@
   },
   {
     "id": "item-46",
-    "title": "Live Street Chaat & Pani Puri Bar #46",
-    "category": "Specialty Culinary Fare",
-    "autoDescription": "Crispy semolina puris filled with spiced potato chickpeas, chilled mint-coriander water, and date tamarind chutney.",
+    "title": "Samosa Chaat & Indo-Chinese Combo Platter",
+    "category": [
+      "Specialty Culinary Fare"
+    ],
+    "autoDescription": "Crushed vegetable samosas drizzled with chole and chutneys alongside wok-tossed vegetable fried rice and Hakka noodles.",
     "imagePath": "/gallery/gallery_46.jpg",
     "visible": true,
     "createdAt": "2026-08-12T18:56:53.110Z",
@@ -461,9 +561,11 @@
   },
   {
     "id": "item-47",
-    "title": "Lotus Biscoff Stuffed Gourmet Cookie #47",
-    "category": "Artisanal Cakes & Bakes",
-    "autoDescription": "Giant thick-style cookie rolled with organic European butter, bursting with molten Biscoff cookie butter center.",
+    "title": "Daily Dabba: Lauki Kofta Curry & Aalu Capsicum",
+    "category": [
+      "Specialty Culinary Fare"
+    ],
+    "autoDescription": "Wholesome daily dabba with soft bottle-gourd kofta dumplings in tomato gravy paired with spiced potato bell pepper stir-fry.",
     "imagePath": "/gallery/gallery_47.jpg",
     "visible": true,
     "createdAt": "2026-08-11T18:56:53.112Z",
@@ -471,9 +573,11 @@
   },
   {
     "id": "item-48",
-    "title": "Stuffed Sattu & Paneer Paratha Platter #48",
-    "category": "Specialty Culinary Fare",
-    "autoDescription": "Hand-rolled whole wheat parathas stuffed with spiced roasted gram flour (sattu) and fresh paneer, served with white butter.",
+    "title": "Artisanal Samosa Cones & Veg Cutlet Party Tray",
+    "category": [
+      "Specialty Culinary Fare"
+    ],
+    "autoDescription": "Hand-folded cone samosas filled with spiced potato and peas alongside crispy vegetable cutlets and cilantro dip.",
     "imagePath": "/gallery/gallery_48.jpg",
     "visible": true,
     "createdAt": "2026-08-10T18:56:53.114Z",
@@ -481,9 +585,11 @@
   },
   {
     "id": "item-49",
-    "title": "Tangy Punjabi Kadhi Pakora #49",
-    "category": "Specialty Culinary Fare",
-    "autoDescription": "Crispy onion fritters simmered in a creamy sour yogurt and besan gravy, tempered with dried red chillies and curry leaves.",
+    "title": "Wok-Fired Veg Manchurian & Hakka Fried Rice",
+    "category": [
+      "Specialty Culinary Fare"
+    ],
+    "autoDescription": "Crispy vegetable Manchurian dumplings tossed in spicy garlic soy sauce, served with wok-fried vegetable rice.",
     "imagePath": "/gallery/gallery_49.jpg",
     "visible": true,
     "createdAt": "2026-08-09T18:56:53.117Z",
@@ -491,9 +597,11 @@
   },
   {
     "id": "item-50",
-    "title": "Homestyle Bhindi Masala & Bharwa Baigan #50",
-    "category": "Specialty Culinary Fare",
-    "autoDescription": "Pan-roasted okra and stuffed baby eggplants tossed in roasted coriander, fennel, and dry mango powder.",
+    "title": "Assorted Stuffed Paratha Basket (Aalu, Sattu & Paneer)",
+    "category": [
+      "Specialty Culinary Fare"
+    ],
+    "autoDescription": "Tawa-grilled whole wheat flatbreads stuffed with spiced potatoes, Bihari roasted sattu, and seasoned paneer, served with butter.",
     "imagePath": "/gallery/gallery_50.jpg",
     "visible": true,
     "createdAt": "2026-08-08T18:56:53.120Z",
@@ -501,9 +609,11 @@
   },
   {
     "id": "item-51",
-    "title": "Kesar Pista Chawal Kheer #51",
-    "category": "Heritage Sweets & Confectionery",
-    "autoDescription": "Traditional rice pudding slow-cooked in full-cream milk, infused with Kashmiri saffron strands, green cardamom, and almonds.",
+    "title": "Indo-Chinese Triple Fusion Combo",
+    "category": [
+      "Specialty Culinary Fare"
+    ],
+    "autoDescription": "A street-food favorite combo of Veg Manchurian in gravy, wok-tossed Hakka noodles, and vegetable fried rice.",
     "imagePath": "/gallery/gallery_51.jpg",
     "visible": true,
     "createdAt": "2026-08-07T18:56:53.123Z",
@@ -511,9 +621,11 @@
   },
   {
     "id": "item-52",
-    "title": "Rasmalai Tres Leches Cake #52",
-    "category": "Artisanal Cakes & Bakes",
-    "autoDescription": "Infused with saffron-cardamom milk, layered with soft rabri cream, pistachios, and delicate rose petals over a light sponge.",
+    "title": "Ferrero Rocher Hazelnut Dark Ganache Cake",
+    "category": [
+      "Artisanal Cakes & Bakes"
+    ],
+    "autoDescription": "Decadent chocolate sponge layered with Nutella hazelnut cream, crushed Ferrero Rocher chocolates, and dark ganache.",
     "imagePath": "/gallery/gallery_52.jpg",
     "visible": true,
     "createdAt": "2026-08-06T18:56:53.126Z",
@@ -521,9 +633,11 @@
   },
   {
     "id": "item-53",
-    "title": "Gulab Jamun Fusion Cheesecake #53",
-    "category": "Artisanal Cakes & Bakes",
-    "autoDescription": "Decadent cream cheese filling baked over a cardamom cookie crust, crowned with mini gulab jamuns and edible gold vark.",
+    "title": "Bespoke Two-Tier Pineapple Crush Celebration Cake",
+    "category": [
+      "Artisanal Cakes & Bakes"
+    ],
+    "autoDescription": "Two-tiered custom theme cake infused with sweet tropical pineapple reduction and light whipped cream.",
     "imagePath": "/gallery/gallery_53.jpg",
     "visible": true,
     "createdAt": "2026-08-05T18:56:53.130Z",
@@ -531,9 +645,11 @@
   },
   {
     "id": "item-54",
-    "title": "Slow-Cooked Royal Dal Makhani #54",
-    "category": "Specialty Culinary Fare",
-    "autoDescription": "Black lentils simmered overnight for 16 hours over charcoal, finished with churned butter, fresh cream, and aromatic garam masala.",
+    "title": "Disney Princess Two-Tier Peach & Black Forest Cake",
+    "category": [
+      "Artisanal Cakes & Bakes"
+    ],
+    "autoDescription": "Enchanting two-tier princess birthday cake featuring fresh peach cream on the top tier and classic Black Forest on the bottom.",
     "imagePath": "/gallery/gallery_54.jpg",
     "visible": true,
     "createdAt": "2026-08-04T18:56:53.132Z",
@@ -541,9 +657,11 @@
   },
   {
     "id": "item-55",
-    "title": "Paneer Lababdar & Makhani Gravy #55",
-    "category": "Specialty Culinary Fare",
-    "autoDescription": "Cottage cheese cubes tossed in a velvety tomato-cashew reduction, spiced with roasted Kasuri methi and green cardamom.",
+    "title": "Two-Tier Cookies & Cream + Chocolate Birthday Cake",
+    "category": [
+      "Artisanal Cakes & Bakes"
+    ],
+    "autoDescription": "Custom two-tiered cake pairing Oreo cookies & cream filling on one tier with rich Belgian chocolate ganache on the second.",
     "imagePath": "/gallery/gallery_55.jpg",
     "visible": true,
     "createdAt": "2026-08-03T18:56:53.134Z",
@@ -551,9 +669,11 @@
   },
   {
     "id": "item-56",
-    "title": "Crispy Amritsari Kulcha & Chole #56",
-    "category": "Specialty Culinary Fare",
-    "autoDescription": "Flaky, tandoor-baked spiced potato kulcha served with tangy Pindi chole, pickled onions, and fresh mint chutney.",
+    "title": "Gourmet Cupcakes & Cake Pops Dessert Platter",
+    "category": [
+      "Artisanal Cakes & Bakes"
+    ],
+    "autoDescription": "Hand-piped buttercream cupcakes accompanied by matching hand-decorated chocolate cake pops.",
     "imagePath": "/gallery/gallery_56.jpg",
     "visible": true,
     "createdAt": "2026-08-02T18:56:53.136Z",
@@ -561,8 +681,10 @@
   },
   {
     "id": "item-57",
-    "title": "Tandoori Garlic Naan & Kulcha Basket #57",
-    "category": "Specialty Culinary Fare",
+    "title": "Tandoori Garlic Naan & Kulcha Basket",
+    "category": [
+      "Specialty Culinary Fare"
+    ],
     "autoDescription": "Freshly slapped flatbreads baked in clay tandoor, brushed with garlic butter, cilantro, and toasted nigella seeds.",
     "imagePath": "/gallery/gallery_57.jpg",
     "visible": true,
