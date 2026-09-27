@@ -752,7 +752,7 @@ export default function PortionEstimator({
               Turn Your Estimate into a Pure Vegetarian Feast
             </h3>
             <p className="text-xs sm:text-sm text-gray-200 font-light">
-              Select these exact trays on our Food Order Portal or reach out directly to head chef Aditi via Call, SMS, or WhatsApp.
+              Select these exact trays on our Catering Order Portal or reach out directly to head chef Aditi via Call, SMS, or WhatsApp.
             </p>
           </div>
 
@@ -765,7 +765,7 @@ export default function PortionEstimator({
                 className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-[#ffdea5] hover:bg-[#ffe7be] text-[#00346f] min-h-[44px] px-6 py-3 rounded-xl font-bold text-xs uppercase tracking-wider transition-all shadow-md cursor-pointer hover:scale-102"
               >
                 <Utensils className="w-4 h-4 text-[#00346f]" />
-                <span>Open Food Order Portal</span>
+                <span>Open Catering Order Portal</span>
                 <ArrowRight className="w-4 h-4 text-[#00346f]" />
               </button>
             )}

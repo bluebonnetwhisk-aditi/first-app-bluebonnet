@@ -4,7 +4,7 @@ import {
   Cake as CakeIcon, 
   Package
 } from 'lucide-react';
-import BrandHeader from './BrandHeader';
+import { TrayPricingHeader, CateringDifferentiators } from './BrandHeader';
 import CakeBrandHeader from './CakeBrandHeader';
 import MenuOrderGrid from './MenuOrderGrid';
 import CakeConfigurator from './CakeConfigurator';
@@ -236,7 +236,7 @@ export default function CateringContainer() {
               </span>
               
               <div className="flex items-center gap-1.5 bg-gray-200/70 p-1 rounded-2xl border border-gray-250">
-                {/* 1. Food Order */}
+                {/* 1. Catering */}
                 <button
                   type="button"
                   onClick={() => switchSubTab('order')}
@@ -247,7 +247,7 @@ export default function CateringContainer() {
                   }`}
                 >
                   <UtensilsCrossed className="w-3.5 h-3.5" />
-                  <span>Food Order</span>
+                  <span>Catering</span>
                   {cateringDishCount > 0 && (
                     <span className="w-4 h-4 rounded-full bg-[#ffdea5] text-[#00346f] text-[10px] flex items-center justify-center font-bold">
                       {cateringDishCount}
@@ -309,26 +309,22 @@ export default function CateringContainer() {
       {/* ── 2. SUB-TAB VIEWPORT ── */}
       <div className="space-y-8 pb-36 sm:pb-40">
           
-          {/* SubTab-Specific Brand Headers */}
-          {subTab === 'order' && (
-            <BrandHeader onScrollToMenu={() => {
-              const el = document.getElementById('catering-content-area');
-              if (el) el.scrollIntoView({ behavior: 'smooth' });
-            }} />
-          )}
-
           {/* Main Full-Width Content Viewport */}
           <div id="catering-content-area" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 scroll-mt-48 sm:scroll-mt-52">
             <div className="w-full">
               
-              {/* SubTab 1: Food Order */}
+              {/* SubTab 1: Catering (Starts with Tray Pricing Tiers, Menu Grid, 4 Differentiators at end) */}
               {subTab === 'order' && (
-                <MenuOrderGrid
-                  cart={cart}
-                  onUpdateCartItem={handleUpdateCartItem}
-                  onRemoveCartItem={handleRemoveCartItem}
-                  onProceedToCheckout={() => setIsCheckoutOpen(true)}
-                />
+                <div className="space-y-6">
+                  <TrayPricingHeader />
+                  <MenuOrderGrid
+                    cart={cart}
+                    onUpdateCartItem={handleUpdateCartItem}
+                    onRemoveCartItem={handleRemoveCartItem}
+                    onProceedToCheckout={() => setIsCheckoutOpen(true)}
+                  />
+                  <CateringDifferentiators />
+                </div>
               )}
 
               {/* SubTab 2: Cake Order (Starts directly from CakeConfigurator, 4 Differentiators at end) */}

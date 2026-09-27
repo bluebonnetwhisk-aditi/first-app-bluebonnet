@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import brandLogo from '../../assets/images/brand_logo_transparent.png';
 import { 
   ShieldCheck, 
   Droplet, 
@@ -9,205 +8,90 @@ import {
   Phone, 
   Mail, 
   Globe, 
-  Clock, 
   Info,
   X
 } from 'lucide-react';
 import { ALLERGEN_LABELS } from '../../data/desiDabbaMenu';
 
-interface BrandHeaderProps {
-  onScrollToMenu?: () => void;
-}
-
-export default function BrandHeader({ onScrollToMenu }: BrandHeaderProps) {
+export function TrayPricingHeader() {
   const [showAllergenModal, setShowAllergenModal] = useState(false);
 
   return (
-    <div className="w-full bg-[#fbfbfa] border-b border-[#775a19]/20 font-sans">
-      
-      {/* ── TOP HERO BANNER ── */}
-      <div className="relative overflow-hidden bg-gradient-to-b from-[#00224d] via-[#00346f] to-[#00224d] text-white py-12 px-4 sm:px-6 lg:px-8 text-center shadow-inner">
-        {/* Subtle decorative background pattern */}
-        <div className="absolute inset-0 bg-grid-pattern opacity-10 pointer-events-none" />
-        
-        <div className="relative z-10 max-w-4xl mx-auto space-y-4">
-          <div className="inline-flex items-center gap-2 bg-[#ffdea5]/15 border border-[#ffdea5]/30 text-[#ffdea5] px-4 py-1 rounded-full text-[11px] font-bold tracking-widest uppercase shadow-xs">
-            <span>✨ Authentic Desi Home Kitchen</span>
-            <span>•</span>
-            <span>Vegetarian Catering</span>
-          </div>
-
-          <div className="py-1">
-            <img 
-              src={brandLogo} 
-              alt="Bluebonnet Whisk" 
-              className="h-6 sm:h-8 w-auto mx-auto object-contain drop-shadow-md"
-            />
-          </div>
-          <h1 className="font-serif text-2xl sm:text-4xl font-bold tracking-tight text-white leading-tight drop-shadow-sm">
-            DESI DABBA • VEGETARIAN CATERING
-          </h1>
-          <p className="text-sm sm:text-base text-gray-200 max-w-2xl mx-auto font-medium">
-            Same Homestyle Love. Bigger Celebrations.
-          </p>
-
-          <p className="text-xs sm:text-sm text-gray-300 max-w-xl mx-auto leading-relaxed pt-1">
-            Freshly prepared vegetarian food for parties, poojas, family gatherings & special occasions.
-          </p>
-
-          {/* Dietary Standards Pill */}
-          <div className="pt-2">
-            <div className="inline-block bg-white/10 backdrop-blur-xs border border-white/20 px-4 py-2 rounded-lg text-xs text-[#ffdea5] font-semibold tracking-wide">
-              100% Vegetarian Kitchen &nbsp;•&nbsp; Satvik & Eggless Available &nbsp;•&nbsp; No Onion–No Garlic on Selected Dishes &nbsp;•&nbsp; Jain-Friendly on Request
-            </div>
-          </div>
-
-          {/* Quick Lead Time Notice */}
-          <div className="flex flex-wrap items-center justify-center gap-2 pt-2 text-[11px] text-gray-300">
-            <span className="inline-flex items-center gap-1.5 bg-[#775a19]/40 border border-[#ffdea5]/30 px-3 py-1 rounded-full text-[#ffdea5]">
-              <Clock className="w-3.5 h-3.5" />
-              <span>Strict 24h Cutoff for Catering Dishes & Breads</span>
-            </span>
-            <span className="inline-flex items-center gap-1.5 bg-white/10 border border-white/20 px-3 py-1 rounded-full text-white">
-              <Clock className="w-3.5 h-3.5" />
-              <span>48h Cutoff for Celebration Cakes</span>
-            </span>
-          </div>
-
-          {/* Action buttons */}
-          <div className="pt-4 flex flex-wrap justify-center gap-3">
-            <button
-              onClick={onScrollToMenu}
-              className="bg-[#ffdea5] hover:bg-[#ffe7be] text-[#00346f] px-6 py-2.5 rounded font-bold text-xs uppercase tracking-wider transition-all shadow-md cursor-pointer hover:scale-102"
-            >
-              Start Order & Estimator
-            </button>
-            <button
-              onClick={() => setShowAllergenModal(true)}
-              className="inline-flex items-center gap-1.5 bg-white/15 hover:bg-white/25 text-white border border-white/30 px-5 py-2.5 rounded font-bold text-xs uppercase tracking-wider transition-all cursor-pointer"
-            >
-              <Info className="w-4 h-4 text-[#ffdea5]" />
-              Allergen Guide & Notice
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* ── THE 4 DIFFERENTIATOR CARDS ── */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-6 relative z-20">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          
-          <div className="bg-white rounded-xl p-5 shadow-md border border-[#775a19]/15 flex items-start gap-3.5 transition-transform hover:-translate-y-0.5">
-            <div className="p-2.5 bg-[#00346f]/10 text-[#00346f] rounded-lg shrink-0">
-              <ShieldCheck className="w-5 h-5" />
-            </div>
-            <div>
-              <h3 className="font-serif font-bold text-sm text-[#00346f]">No Preservatives</h3>
-              <p className="text-xs text-gray-600 mt-1 leading-relaxed">
-                Cooked fresh for your event — never premade, never stored.
-              </p>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-xl p-5 shadow-md border border-[#775a19]/15 flex items-start gap-3.5 transition-transform hover:-translate-y-0.5">
-            <div className="p-2.5 bg-[#775a19]/10 text-[#775a19] rounded-lg shrink-0">
-              <Droplet className="w-5 h-5" />
-            </div>
-            <div>
-              <h3 className="font-serif font-bold text-sm text-[#775a19]">Healthy Oils</h3>
-              <p className="text-xs text-gray-600 mt-1 leading-relaxed">
-                Light quality cooking oils — nothing reused, nothing heavy.
-              </p>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-xl p-5 shadow-md border border-[#775a19]/15 flex items-start gap-3.5 transition-transform hover:-translate-y-0.5">
-            <div className="p-2.5 bg-emerald-100/70 text-emerald-800 rounded-lg shrink-0">
-              <Leaf className="w-5 h-5" />
-            </div>
-            <div>
-              <h3 className="font-serif font-bold text-sm text-emerald-900">Organic Ingredients</h3>
-              <p className="text-xs text-gray-600 mt-1 leading-relaxed">
-                Fresh produce & whole spices, sourced with utmost care.
-              </p>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-xl p-5 shadow-md border border-[#775a19]/15 flex items-start gap-3.5 transition-transform hover:-translate-y-0.5">
-            <div className="p-2.5 bg-rose-100/70 text-rose-800 rounded-lg shrink-0">
-              <Heart className="w-5 h-5" />
-            </div>
-            <div>
-              <h3 className="font-serif font-bold text-sm text-rose-900">Made with Love & Taste</h3>
-              <p className="text-xs text-gray-600 mt-1 leading-relaxed">
-                Small batches, family recipes — homestyle, not restaurant-style.
-              </p>
-            </div>
-          </div>
-
-        </div>
-      </div>
-
+    <div className="w-full font-sans mb-6">
       {/* ── TRAY PRICING TIERS OVERVIEW BANNER ── */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8 mb-4">
-        <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6 shadow-xs">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 pb-3 border-b border-gray-100">
-            <div>
-              <h2 className="font-serif font-bold text-base text-[#00346f] tracking-wide">
-                TRAY SIZES & SIMPLE PRICING TIERS
-              </h2>
-              <p className="text-xs text-gray-500">
-                Same generous portions & straightforward pricing across all our 4 culinary tiers.
-              </p>
+      <div className="bg-white rounded-2xl border border-[#775a19]/20 p-5 sm:p-6 shadow-sm">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 pb-4 border-b border-gray-100">
+          <div>
+            <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full bg-[#00346f]/10 text-[#00346f] text-[10px] font-bold uppercase tracking-wider mb-1">
+              ✨ Homestyle Vegetarian Catering
             </div>
-            <div className="flex items-center gap-2 text-xs font-semibold text-gray-600">
-              <span className="text-gray-400">Allergen codes:</span>
+            <h2 className="font-serif font-bold text-lg sm:text-xl text-[#00346f] tracking-wide">
+              TRAY SIZES & SIMPLE PRICING TIERS
+            </h2>
+            <p className="text-xs text-gray-500 mt-0.5">
+              Same generous portions & straightforward pricing across all 4 of our culinary tiers.
+            </p>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="flex items-center gap-1.5 text-xs font-semibold text-gray-600 bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-200">
+              <span className="text-gray-400 text-[10px] uppercase font-bold">Allergens:</span>
               <span className="px-1.5 py-0.5 bg-blue-50 text-blue-800 rounded font-mono text-[10px] font-bold">D: Dairy</span>
               <span className="px-1.5 py-0.5 bg-amber-50 text-amber-800 rounded font-mono text-[10px] font-bold">G: Gluten</span>
               <span className="px-1.5 py-0.5 bg-rose-50 text-rose-800 rounded font-mono text-[10px] font-bold">N: Nuts</span>
               <span className="px-1.5 py-0.5 bg-purple-50 text-purple-800 rounded font-mono text-[10px] font-bold">S: Soy</span>
             </div>
+
+            <button
+              onClick={() => setShowAllergenModal(true)}
+              className="inline-flex items-center gap-1.5 bg-[#00346f]/10 hover:bg-[#00346f]/20 text-[#00346f] px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer border border-[#00346f]/20"
+            >
+              <Info className="w-3.5 h-3.5 text-[#00346f]" />
+              <span>Allergen Notice</span>
+            </button>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mt-4 text-center">
+          
+          <div className="p-3.5 rounded-xl bg-gray-50 border border-gray-200 hover:border-gray-300 transition-colors">
+            <span className="text-[10px] uppercase font-bold tracking-widest text-gray-500 block">TIER 1</span>
+            <span className="font-serif text-lg font-bold text-[#00346f]">KHAAS</span>
+            <div className="text-xs font-bold text-[#775a19] mt-1">$70 <span className="text-[10px] font-medium text-gray-500">FULL</span></div>
+            <div className="text-[11px] text-gray-600 font-medium">$50 Half · $35 1/3</div>
           </div>
 
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mt-4 text-center">
-            
-            <div className="p-3 rounded-lg bg-gray-50 border border-gray-200">
-              <span className="text-[10px] uppercase font-bold tracking-widest text-gray-500 block">TIER 1</span>
-              <span className="font-serif text-lg font-bold text-[#00346f]">KHAAS</span>
-              <div className="text-xs font-bold text-[#775a19] mt-1">$70 <span className="text-[10px] font-medium text-gray-500">FULL</span></div>
-              <div className="text-[11px] text-gray-600">$50 Half · $35 1/3</div>
-            </div>
-
-            <div className="p-3 rounded-lg bg-[#00346f]/5 border border-[#00346f]/15">
-              <span className="text-[10px] uppercase font-bold tracking-widest text-gray-500 block">TIER 2</span>
-              <span className="font-serif text-lg font-bold text-[#00346f]">SHAHI</span>
-              <div className="text-xs font-bold text-[#775a19] mt-1">$90 <span className="text-[10px] font-medium text-gray-500">FULL</span></div>
-              <div className="text-[11px] text-gray-600">$60 Half · $45 1/3</div>
-            </div>
-
-            <div className="p-3 rounded-lg bg-[#775a19]/5 border border-[#775a19]/20">
-              <span className="text-[10px] uppercase font-bold tracking-widest text-[#775a19] block">TIER 3</span>
-              <span className="font-serif text-lg font-bold text-[#775a19]">DARBARI</span>
-              <div className="text-xs font-bold text-[#775a19] mt-1">$110 <span className="text-[10px] font-medium text-gray-500">FULL</span></div>
-              <div className="text-[11px] text-gray-600">$70 Half · $55 1/3</div>
-            </div>
-
-            <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-300">
-              <span className="text-[10px] uppercase font-bold tracking-widest text-amber-900 block">TIER 4 (ROYAL)</span>
-              <span className="font-serif text-lg font-bold text-amber-950">MAHARAJA</span>
-              <div className="text-xs font-bold text-amber-900 mt-1">$130 <span className="text-[10px] font-medium text-gray-500">FULL</span></div>
-              <div className="text-[11px] text-gray-700">$80 Half · $65 1/3</div>
-            </div>
-
+          <div className="p-3.5 rounded-xl bg-[#00346f]/5 border border-[#00346f]/15 hover:border-[#00346f]/30 transition-colors">
+            <span className="text-[10px] uppercase font-bold tracking-widest text-[#00346f]/70 block">TIER 2</span>
+            <span className="font-serif text-lg font-bold text-[#00346f]">SHAHI</span>
+            <div className="text-xs font-bold text-[#775a19] mt-1">$90 <span className="text-[10px] font-medium text-gray-500">FULL</span></div>
+            <div className="text-[11px] text-gray-600 font-medium">$60 Half · $45 1/3</div>
           </div>
 
-          <div className="mt-3 pt-3 border-t border-gray-100 flex flex-wrap items-center justify-between text-[11px] text-gray-500 gap-2">
-            <span>Freshly crafted in Frisco, TX & DFW metroplex. Delivery $50 flat fee or pickup.</span>
-            <div className="flex items-center gap-4 text-gray-700 font-medium">
-              <span className="inline-flex items-center gap-1"><Phone className="w-3 h-3 text-[#00346f]" /> 945-527-4566</span>
-              <span className="inline-flex items-center gap-1"><Mail className="w-3 h-3 text-[#00346f]" /> bluebonnetwhisk@gmail.com</span>
-              <span className="inline-flex items-center gap-1"><Globe className="w-3 h-3 text-[#00346f]" /> www.bluebonnetwhisk.com</span>
-            </div>
+          <div className="p-3.5 rounded-xl bg-[#775a19]/5 border border-[#775a19]/20 hover:border-[#775a19]/40 transition-colors">
+            <span className="text-[10px] uppercase font-bold tracking-widest text-[#775a19] block">TIER 3</span>
+            <span className="font-serif text-lg font-bold text-[#775a19]">DARBARI</span>
+            <div className="text-xs font-bold text-[#775a19] mt-1">$110 <span className="text-[10px] font-medium text-gray-500">FULL</span></div>
+            <div className="text-[11px] text-gray-600 font-medium">$70 Half · $55 1/3</div>
+          </div>
+
+          <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-300 hover:border-amber-400 transition-colors">
+            <span className="text-[10px] uppercase font-bold tracking-widest text-amber-900 block">TIER 4 (ROYAL)</span>
+            <span className="font-serif text-lg font-bold text-amber-950">MAHARAJA</span>
+            <div className="text-xs font-bold text-amber-900 mt-1">$130 <span className="text-[10px] font-medium text-gray-500">FULL</span></div>
+            <div className="text-[11px] text-gray-700 font-medium">$80 Half · $65 1/3</div>
+          </div>
+
+        </div>
+
+        <div className="mt-4 pt-3 border-t border-gray-100 flex flex-wrap items-center justify-between text-[11px] text-gray-500 gap-2">
+          <span className="font-medium text-gray-600">
+            Freshly crafted in Frisco, TX & DFW metroplex. Flat $50 delivery fee or free pickup. Strict 24h advance notice.
+          </span>
+          <div className="flex items-center gap-4 text-gray-700 font-medium">
+            <span className="inline-flex items-center gap-1"><Phone className="w-3 h-3 text-[#00346f]" /> 945-527-4566</span>
+            <span className="inline-flex items-center gap-1"><Mail className="w-3 h-3 text-[#00346f]" /> bluebonnetwhisk@gmail.com</span>
+            <span className="inline-flex items-center gap-1"><Globe className="w-3 h-3 text-[#00346f]" /> www.bluebonnetwhisk.com</span>
           </div>
         </div>
       </div>
@@ -268,7 +152,81 @@ export default function BrandHeader({ onScrollToMenu }: BrandHeaderProps) {
           </div>
         </div>
       )}
-
     </div>
   );
+}
+
+export function CateringDifferentiators() {
+  return (
+    <div className="w-full pt-10 pb-6 font-sans border-t border-[#775a19]/15 mt-10 animate-fade-in">
+      <div className="max-w-7xl mx-auto">
+        <div className="text-center max-w-xl mx-auto mb-8">
+          <span className="text-[11px] font-bold text-[#775a19] uppercase tracking-widest block mb-1">
+            WHY BLUEBONNET WHISK
+          </span>
+          <h2 className="font-serif text-2xl font-bold text-gray-900">
+            Our 4 Culinary Pillars
+          </h2>
+          <div className="h-0.5 w-12 bg-[#775a19] mx-auto mt-2" />
+        </div>
+
+        {/* ── THE 4 DIFFERENTIATOR CARDS ── */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          
+          <div className="bg-white rounded-2xl p-5 shadow-sm border border-[#775a19]/15 flex items-start gap-3.5 transition-transform hover:-translate-y-0.5">
+            <div className="p-2.5 bg-[#00346f]/10 text-[#00346f] rounded-xl shrink-0">
+              <ShieldCheck className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="font-serif font-bold text-sm sm:text-base text-[#00346f]">No Preservatives</h3>
+              <p className="text-xs text-gray-600 mt-1 leading-relaxed">
+                Cooked fresh for your event — never premade, never stored.
+              </p>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-2xl p-5 shadow-sm border border-[#775a19]/15 flex items-start gap-3.5 transition-transform hover:-translate-y-0.5">
+            <div className="p-2.5 bg-[#775a19]/10 text-[#775a19] rounded-xl shrink-0">
+              <Droplet className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="font-serif font-bold text-sm sm:text-base text-[#775a19]">Healthy Oils</h3>
+              <p className="text-xs text-gray-600 mt-1 leading-relaxed">
+                Light quality cooking oils — nothing reused, nothing heavy.
+              </p>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-2xl p-5 shadow-sm border border-[#775a19]/15 flex items-start gap-3.5 transition-transform hover:-translate-y-0.5">
+            <div className="p-2.5 bg-emerald-100/70 text-emerald-800 rounded-xl shrink-0">
+              <Leaf className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="font-serif font-bold text-sm sm:text-base text-emerald-900">Organic Ingredients</h3>
+              <p className="text-xs text-gray-600 mt-1 leading-relaxed">
+                Fresh produce & whole spices, sourced with utmost care.
+              </p>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-2xl p-5 shadow-sm border border-[#775a19]/15 flex items-start gap-3.5 transition-transform hover:-translate-y-0.5">
+            <div className="p-2.5 bg-rose-100/70 text-rose-800 rounded-xl shrink-0">
+              <Heart className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="font-serif font-bold text-sm sm:text-base text-rose-900">Made with Love & Taste</h3>
+              <p className="text-xs text-gray-600 mt-1 leading-relaxed">
+                Small batches, family recipes — homestyle, not restaurant-style.
+              </p>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function BrandHeader() {
+  return <CateringDifferentiators />;
 }
