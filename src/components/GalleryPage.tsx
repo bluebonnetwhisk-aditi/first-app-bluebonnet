@@ -11,9 +11,16 @@ import {
   Trash2, 
   Check, 
   KeyRound,
-  RotateCw
+  RotateCw,
+  RefreshCw,
+  Download
 } from "lucide-react";
 import initialGalleryData from "../data/galleryData.json";
+import { 
+  fetchGalleryItemsFromSupabase, 
+  saveGalleryItemsToSupabase, 
+  LOCAL_STORAGE_GALLERY_KEY 
+} from "../services/supabase";
 
 export interface GalleryItem {
   id: string;
@@ -26,7 +33,6 @@ export interface GalleryItem {
   createdAt?: string;
 }
 
-const GALLERY_STORAGE_KEY = "bbw_gallery_data_v1";
 const DEFAULT_PIN = "031686"; // KDS master pin default
 
 interface GalleryPageProps {
@@ -36,22 +42,31 @@ interface GalleryPageProps {
 export default function GalleryPage({ onNavigateToAdmin: _onNavigateToAdmin }: GalleryPageProps) {
   const [items, setItems] = useState<GalleryItem[]>(() => {
     try {
-      const saved = localStorage.getItem(GALLERY_STORAGE_KEY);
+      const saved = localStorage.getItem(LOCAL_STORAGE_GALLERY_KEY);
       if (saved) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          return parsed.map((item: any) => {
+          const existingIds = new Set(parsed.map((i: any) => i.id));
+          const missingInitial = (initialGalleryData as any[]).filter(i => !existingIds.has(i.id));
+
+          const mappedParsed = parsed.map((item: any) => {
             let cat = item.category;
             if (cat === "Artisanal Bakery & Cakes") cat = "Artisanal Cakes & Bakes";
             else if (cat === "Savory Specialties" || cat === "Breads & Starters") cat = "Specialty Culinary Fare";
             else if (cat === "Traditional Sweets") cat = "Heritage Sweets & Confectionery";
 
+            const initMatch = (initialGalleryData as any[]).find(i => i.id === item.id);
+
             return {
               ...item,
+              title: item.title || initMatch?.title,
               category: cat,
-              originalImagePath: item.originalImagePath || item.imagePath.replace('/gallery/', '/gallery/orig/')
+              imagePath: initMatch ? initMatch.imagePath : item.imagePath,
+              originalImagePath: item.originalImagePath || initMatch?.originalImagePath || item.imagePath.replace('/gallery/', '/gallery/orig/')
             };
           });
+
+          return [...mappedParsed, ...missingInitial] as GalleryItem[];
         }
       }
     } catch {
@@ -60,7 +75,7 @@ export default function GalleryPage({ onNavigateToAdmin: _onNavigateToAdmin }: G
     return initialGalleryData as GalleryItem[];
   });
 
-
+  const [syncStatus, setSyncStatus] = useState<string>("");
   const [activeTab, setActiveTab] = useState<string>("all");
   const [selectedItem, setSelectedItem] = useState<GalleryItem | null>(null);
 
@@ -80,14 +95,36 @@ export default function GalleryPage({ onNavigateToAdmin: _onNavigateToAdmin }: G
   const [newDescription, setNewDescription] = useState("");
   const [newImagePath, setNewImagePath] = useState("");
 
-  // Sync with localStorage
+  // Sync to Supabase & localStorage whenever items state changes
   useEffect(() => {
-    try {
-      localStorage.setItem(GALLERY_STORAGE_KEY, JSON.stringify(items));
-    } catch {
-      // ignore
-    }
+    saveGalleryItemsToSupabase(items);
   }, [items]);
+
+  // Fetch remote items from Supabase on mount & listen for live updates
+  useEffect(() => {
+    let isMounted = true;
+    fetchGalleryItemsFromSupabase().then((remoteItems) => {
+      if (isMounted && remoteItems && Array.isArray(remoteItems) && remoteItems.length > 0) {
+        setItems(remoteItems as GalleryItem[]);
+      }
+    });
+
+    const handleUpdate = () => {
+      try {
+        const raw = localStorage.getItem(LOCAL_STORAGE_GALLERY_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed)) setItems(parsed);
+        }
+      } catch {}
+    };
+
+    window.addEventListener('bbw_gallery_items_updated', handleUpdate);
+    return () => {
+      isMounted = false;
+      window.removeEventListener('bbw_gallery_items_updated', handleUpdate);
+    };
+  }, []);
 
   // Handle PIN verification
   const handlePinSubmit = (e: React.FormEvent) => {
@@ -248,22 +285,71 @@ export default function GalleryPage({ onNavigateToAdmin: _onNavigateToAdmin }: G
           {/* Admin Mode Status & Toggle Bar */}
           <div className="mt-8 flex items-center justify-center gap-3">
             {isAdminMode ? (
-              <div className="inline-flex items-center gap-3 bg-[#C85A32]/20 border border-[#C85A32]/50 text-[#ffdea5] px-5 py-2 rounded-xl text-xs font-bold font-sans">
-                <span className="flex items-center gap-1.5 text-emerald-400">
-                  <Check className="w-4 h-4" /> Admin Management Unlocked
+              <div className="flex flex-wrap items-center justify-center gap-3 bg-[#C85A32]/20 border border-[#C85A32]/50 text-[#ffdea5] p-3 rounded-2xl text-xs font-bold font-sans shadow-lg">
+                <span className="flex items-center gap-1.5 text-emerald-400 font-bold">
+                  <Check className="w-4 h-4" /> Admin Controls Unlocked
                 </span>
+
                 <button
                   onClick={() => setShowAddModal(true)}
-                  className="bg-[#D4AF37] hover:bg-[#b5932a] text-[#1A1614] px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wider transition-all cursor-pointer flex items-center gap-1"
+                  className="bg-[#D4AF37] hover:bg-[#b5932a] text-[#1A1614] px-3.5 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all cursor-pointer flex items-center gap-1.5 shadow"
                 >
                   <Plus className="w-3.5 h-3.5" /> Add Photo
                 </button>
+
+                <button
+                  onClick={async () => {
+                    await saveGalleryItemsToSupabase(items);
+                    setSyncStatus("Synced live with Supabase & site!");
+                    setTimeout(() => setSyncStatus(""), 3000);
+                  }}
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all cursor-pointer flex items-center gap-1.5 shadow"
+                  title="Push current gallery items live to Supabase & all visitors"
+                >
+                  <RefreshCw className="w-3.5 h-3.5" /> Push &amp; Sync to Site
+                </button>
+
+                <button
+                  onClick={() => {
+                    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(items, null, 2));
+                    const downloadAnchor = document.createElement('a');
+                    downloadAnchor.setAttribute("href", dataStr);
+                    downloadAnchor.setAttribute("download", "galleryData.json");
+                    document.body.appendChild(downloadAnchor);
+                    downloadAnchor.click();
+                    downloadAnchor.remove();
+                  }}
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-3.5 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all cursor-pointer flex items-center gap-1.5 shadow"
+                  title="Export updated gallery items JSON file"
+                >
+                  <Download className="w-3.5 h-3.5" /> Export JSON
+                </button>
+
+                <button
+                  onClick={() => {
+                    if (window.confirm("Reset gallery cache to initial site defaults?")) {
+                      setItems(initialGalleryData as GalleryItem[]);
+                      saveGalleryItemsToSupabase(initialGalleryData as GalleryItem[]);
+                    }
+                  }}
+                  className="bg-amber-600/30 hover:bg-amber-600/50 text-amber-200 border border-amber-500/40 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer"
+                  title="Reset cache to initial site bundled items"
+                >
+                  Reset Defaults
+                </button>
+
                 <button
                   onClick={() => setIsAdminMode(false)}
-                  className="bg-white/10 hover:bg-white/20 text-white px-3 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer"
+                  className="bg-white/10 hover:bg-white/20 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer"
                 >
                   Exit Admin
                 </button>
+
+                {syncStatus && (
+                  <span className="w-full text-center text-xs text-emerald-300 font-bold animate-pulse pt-1">
+                    {syncStatus}
+                  </span>
+                )}
               </div>
             ) : (
               <button

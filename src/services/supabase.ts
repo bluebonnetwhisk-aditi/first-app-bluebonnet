@@ -1093,3 +1093,57 @@ export async function saveTiffinMenuSettings(settings: TiffinMenuSettings): Prom
   return true;
 }
 
+export const LOCAL_STORAGE_GALLERY_KEY = 'bbw_gallery_data_v2';
+
+/**
+ * Fetch remote gallery items from Supabase app_settings
+ */
+export async function fetchGalleryItemsFromSupabase(): Promise<any[] | null> {
+  if (supabase) {
+    try {
+      const { data, error } = await supabase
+        .from('app_settings')
+        .select('value')
+        .eq('key', 'gallery_items')
+        .single();
+
+      if (!error && data?.value && Array.isArray(data.value) && data.value.length > 0) {
+        localStorage.setItem(LOCAL_STORAGE_GALLERY_KEY, JSON.stringify(data.value));
+        return data.value;
+      }
+    } catch (err) {
+      console.warn('Supabase gallery fetch warning:', err);
+    }
+  }
+  return null;
+}
+
+/**
+ * Save remote gallery items to Supabase app_settings & local storage
+ */
+export async function saveGalleryItemsToSupabase(items: any[]): Promise<boolean> {
+  try {
+    localStorage.setItem(LOCAL_STORAGE_GALLERY_KEY, JSON.stringify(items));
+    window.dispatchEvent(new CustomEvent('bbw_gallery_items_updated'));
+  } catch {}
+
+  if (supabase) {
+    try {
+      const { error } = await supabase
+        .from('app_settings')
+        .upsert({
+          key: 'gallery_items',
+          value: items,
+          updated_at: new Date().toISOString()
+        });
+
+      if (!error) return true;
+      console.warn('Supabase saveGalleryItems warning:', error);
+    } catch (err) {
+      console.warn('Supabase saveGalleryItems failed:', err);
+    }
+  }
+  return true;
+}
+
+
