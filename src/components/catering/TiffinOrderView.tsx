@@ -1079,7 +1079,7 @@ export default function TiffinOrderView({
               const curryName = activeDay?.dalOrCurry || 'Special Curry';
               const sabziName = activeDay?.sabzi || 'Seasonal Sabzi';
 
-              const isDalRajmaChole = /dal|rajma|chole/i.test(curryName);
+              const isDalRajmaChole = /dal|rajma|chole|kadhi|chana/i.test(curryName);
               const curry8ozPrice = isDalRajmaChole ? 6.99 : 8.99;
               const curry16ozPrice = isDalRajmaChole ? 11.49 : 14.99;
 
@@ -1087,7 +1087,7 @@ export default function TiffinOrderView({
                 {
                   id: `curry-${activeDay.dateStr}`,
                   name: curryName,
-                  tag: isDalRajmaChole ? 'Dal / Legume Gravy' : 'Special Curry',
+                  tag: isDalRajmaChole ? 'Dal / Kadhi / Legume Gravy' : 'Special Curry',
                   p8oz: curry8ozPrice,
                   p16oz: curry16ozPrice
                 },

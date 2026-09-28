@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { 
   X, 
   Calendar as CalendarIcon, 
@@ -71,6 +71,36 @@ export default function CheckoutModal({
   const [blackouts, setBlackouts] = useState<string[]>([]);
   const [fulfillmentDate, setFulfillmentDate] = useState('');
   const [fulfillmentTime, setFulfillmentTime] = useState('12:30 PM');
+
+  // Multi-day order fulfillment time state
+  const [sameTimeForAllDays, setSameTimeForAllDays] = useState(true);
+  const [perDayTimes, setPerDayTimes] = useState<Record<string, string>>({});
+
+  // Compute distinct date groups present in the cart
+  const distinctCartDateGroups = useMemo(() => {
+    const map = new Map<string, { dateStr: string; displayLabel: string; items: CartItem[] }>();
+    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+    for (const item of cart) {
+      const match = item.id.match(/\d{4}-\d{2}-\d{2}/);
+      if (match) {
+        const dStr = match[0];
+        const parts = dStr.split('-').map(Number);
+        let label = dStr;
+        if (parts.length === 3) {
+          const dObj = new Date(parts[0], parts[1] - 1, parts[2]);
+          label = `${dayNames[dObj.getDay()]}, ${monthNames[dObj.getMonth()]} ${dObj.getDate()}`;
+        }
+        if (!map.has(dStr)) {
+          map.set(dStr, { dateStr: dStr, displayLabel: label, items: [] });
+        }
+        map.get(dStr)!.items.push(item);
+      }
+    }
+
+    return Array.from(map.values()).sort((a, b) => a.dateStr.localeCompare(b.dateStr));
+  }, [cart]);
   
   // Validation & Submission
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
@@ -87,31 +117,50 @@ export default function CheckoutModal({
       fetchCalendarBlackouts().then(dates => {
         setBlackouts(dates);
 
-        // Check if cart contains tiffin items with a specific target YYYY-MM-DD date in ID
-        const tiffinItemWithDate = cart.find(i => i.category === 'tiffin' && /\d{4}-\d{2}-\d{2}/.test(i.id));
-        let preferredDate: string | undefined;
-        if (tiffinItemWithDate) {
-          const match = tiffinItemWithDate.id.match(/\d{4}-\d{2}-\d{2}/);
-          if (match) preferredDate = match[0];
-        }
-
-        if (preferredDate && !dates.includes(preferredDate)) {
-          setFulfillmentDate(preferredDate);
-          for (const slot of TIME_SLOTS) {
-            if (isTimeSlotValidForDate(preferredDate, slot, cart)) {
-              setFulfillmentTime(slot);
-              break;
+        if (distinctCartDateGroups.length > 0) {
+          const initialMap: Record<string, string> = {};
+          distinctCartDateGroups.forEach(g => {
+            let validSlot = '12:30 PM';
+            if (!isTimeSlotValidForDate(g.dateStr, validSlot, cart)) {
+              for (const slot of TIME_SLOTS) {
+                if (isTimeSlotValidForDate(g.dateStr, slot, cart)) {
+                  validSlot = slot;
+                  break;
+                }
+              }
             }
-          }
+            initialMap[g.dateStr] = validSlot;
+          });
+          setPerDayTimes(initialMap);
+          setFulfillmentDate(distinctCartDateGroups[0].dateStr);
+          setFulfillmentTime(initialMap[distinctCartDateGroups[0].dateStr] || '12:30 PM');
         } else {
-          // Compute guaranteed earliest valid date & time slot satisfying Central Time cutoff
-          const firstValid = findFirstValidFulfillmentSlot(dates, cart);
-          setFulfillmentDate(firstValid.dateStr);
-          setFulfillmentTime(firstValid.timeSlot);
+          // Check if cart contains tiffin items with a specific target YYYY-MM-DD date in ID
+          const tiffinItemWithDate = cart.find(i => i.category === 'tiffin' && /\d{4}-\d{2}-\d{2}/.test(i.id));
+          let preferredDate: string | undefined;
+          if (tiffinItemWithDate) {
+            const match = tiffinItemWithDate.id.match(/\d{4}-\d{2}-\d{2}/);
+            if (match) preferredDate = match[0];
+          }
+
+          if (preferredDate && !dates.includes(preferredDate)) {
+            setFulfillmentDate(preferredDate);
+            for (const slot of TIME_SLOTS) {
+              if (isTimeSlotValidForDate(preferredDate, slot, cart)) {
+                setFulfillmentTime(slot);
+                break;
+              }
+            }
+          } else {
+            // Compute guaranteed earliest valid date & time slot satisfying Central Time cutoff
+            const firstValid = findFirstValidFulfillmentSlot(dates, cart);
+            setFulfillmentDate(firstValid.dateStr);
+            setFulfillmentTime(firstValid.timeSlot);
+          }
         }
       });
     }
-  }, [isOpen, cart]);
+  }, [isOpen, cart, distinctCartDateGroups]);
 
   // Handle user selecting a date (auto-corrects time slot if chosen time is past cutoff on new date)
   const handleSelectDate = (newDateStr: string) => {
@@ -259,8 +308,30 @@ export default function CheckoutModal({
         ? `${deliveryStreet.trim()}${deliveryApt.trim() ? `, Apt/Ste ${deliveryApt.trim()}` : ''}, ${deliveryCity.trim()}, TX ${deliveryZip.trim()}`
         : null;
 
+      let effectiveFulfillmentDate = fulfillmentDate;
+      let effectiveFulfillmentTime = fulfillmentTime;
+
+      if (distinctCartDateGroups.length > 0) {
+        effectiveFulfillmentDate = distinctCartDateGroups[0].dateStr;
+      }
+
+      if (distinctCartDateGroups.length > 1) {
+        if (!sameTimeForAllDays) {
+          effectiveFulfillmentTime = distinctCartDateGroups
+            .map(g => `${g.displayLabel.split(',')[0]}: ${perDayTimes[g.dateStr] || fulfillmentTime}`)
+            .join(' | ');
+        } else {
+          effectiveFulfillmentTime = `${fulfillmentTime} (All ${distinctCartDateGroups.length} Days)`;
+        }
+      }
+
+      const multiDayBreakdown = distinctCartDateGroups.length > 1
+        ? `[MULTI-DAY SCHEDULE] ${distinctCartDateGroups.map(g => `${g.displayLabel}: ${sameTimeForAllDays ? fulfillmentTime : (perDayTimes[g.dateStr] || fulfillmentTime)}`).join(' • ')}`
+        : '';
+
       const fullDietaryNotes = [
         isSatvikRequested ? 'SATVIK / JAIN-FRIENDLY REQUESTED (No Onion, No Garlic)' : '',
+        multiDayBreakdown,
         dietaryNotes.trim()
       ].filter(Boolean).join(' | ');
 
@@ -277,8 +348,8 @@ export default function CheckoutModal({
         processing_fee: processingFee,
         total_amount: totalAmount,
         order_description: cart.map(i => `${i.name}${i.notes ? ` [${i.notes}]` : ''} (${i.selectionLabel} × ${i.quantity}) [$${i.totalPrice.toFixed(2)}]`).join('; '),
-        fulfillment_date: fulfillmentDate,
-        fulfillment_time: fulfillmentTime,
+        fulfillment_date: effectiveFulfillmentDate,
+        fulfillment_time: effectiveFulfillmentTime,
         dietary_notes: fullDietaryNotes || null,
         order_type: orderType,
         status: (orderType === 'estimate' ? 'new' : 'new') as any,
@@ -579,11 +650,19 @@ export default function CheckoutModal({
 
                   <div>
                     <label className="block text-xs font-semibold text-gray-700 mb-1">
-                      Fulfillment Window
+                      {distinctCartDateGroups.length > 1 ? 'Primary / Default Time Window' : 'Fulfillment Window'}
                     </label>
                     <select
                       value={fulfillmentTime}
-                      onChange={(e) => setFulfillmentTime(e.target.value)}
+                      onChange={(e) => {
+                        const newTime = e.target.value;
+                        setFulfillmentTime(newTime);
+                        if (sameTimeForAllDays) {
+                          const updated: Record<string, string> = {};
+                          distinctCartDateGroups.forEach(g => updated[g.dateStr] = newTime);
+                          setPerDayTimes(updated);
+                        }
+                      }}
                       className="w-full bg-white border border-gray-300 rounded-xl px-3 py-2.5 min-h-[44px] text-base sm:text-xs text-gray-800 focus:outline-none focus:border-[#00346f]"
                     >
                       {TIME_SLOTS.map(slot => {
@@ -597,6 +676,97 @@ export default function CheckoutModal({
                     </select>
                   </div>
                 </div>
+
+                {/* Multi-Day Fulfillment Schedule Selector */}
+                {distinctCartDateGroups.length > 1 && (
+                  <div className="p-4 bg-blue-50/90 rounded-2xl border border-blue-200 space-y-3 pt-3 mt-3">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-blue-200/70 pb-2.5">
+                      <div>
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-[#775a19] block">
+                          MULTI-DAY ORDER SCHEDULE ({distinctCartDateGroups.length} DATES)
+                        </span>
+                        <h4 className="font-serif font-bold text-sm text-[#00346f] flex items-center gap-1.5">
+                          <CalendarIcon className="w-4 h-4 text-[#00346f]" />
+                          <span>Pickup Time per Scheduled Date</span>
+                        </h4>
+                      </div>
+
+                      <label className="inline-flex items-center gap-2 text-xs font-bold text-[#00346f] cursor-pointer bg-white px-3 py-1.5 rounded-xl border border-blue-200 shadow-2xs self-start sm:self-auto">
+                        <input
+                          type="checkbox"
+                          checked={sameTimeForAllDays}
+                          onChange={(e) => {
+                            const checked = e.target.checked;
+                            setSameTimeForAllDays(checked);
+                            if (checked) {
+                              const updated: Record<string, string> = {};
+                              distinctCartDateGroups.forEach(g => updated[g.dateStr] = fulfillmentTime);
+                              setPerDayTimes(updated);
+                            }
+                          }}
+                          className="w-4 h-4 rounded text-[#00346f] focus:ring-[#00346f] cursor-pointer"
+                        />
+                        <span>Same time for all orders ({fulfillmentTime})</span>
+                      </label>
+                    </div>
+
+                    {sameTimeForAllDays ? (
+                      <div className="space-y-2">
+                        <p className="text-xs text-gray-600">
+                          All {distinctCartDateGroups.length} scheduled order days will use the pickup window <strong>{fulfillmentTime}</strong>. Uncheck the option above if you wish to select different pickup times for individual days.
+                        </p>
+                        <div className="flex flex-wrap items-center gap-2 pt-1">
+                          {distinctCartDateGroups.map(g => (
+                            <span key={g.dateStr} className="px-2.5 py-1 bg-white rounded-lg border border-gray-200 text-[11px] font-semibold text-gray-800 shadow-2xs">
+                              {g.displayLabel}: <strong className="text-[#00346f]">{fulfillmentTime}</strong>
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="space-y-2.5 pt-1">
+                        <p className="text-xs text-gray-600 font-medium">
+                          Select the exact pickup time window for each scheduled day:
+                        </p>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          {distinctCartDateGroups.map(g => {
+                            const currentTime = perDayTimes[g.dateStr] || fulfillmentTime;
+                            return (
+                              <div key={g.dateStr} className="p-3 bg-white rounded-xl border border-gray-200 flex flex-col justify-between gap-2 shadow-2xs">
+                                <div>
+                                  <span className="font-bold text-xs text-[#00346f] block">{g.displayLabel}</span>
+                                  <span className="text-[11px] text-gray-500 block truncate">
+                                    {g.items.map(i => i.name).join(', ')}
+                                  </span>
+                                </div>
+                                <div className="flex items-center justify-between pt-2 border-t border-gray-150">
+                                  <span className="text-[11px] font-semibold text-gray-600">Pickup Time:</span>
+                                  <select
+                                    value={currentTime}
+                                    onChange={(e) => {
+                                      const newTime = e.target.value;
+                                      setPerDayTimes(prev => ({ ...prev, [g.dateStr]: newTime }));
+                                    }}
+                                    className="px-2.5 py-1.5 bg-gray-50 border border-gray-300 rounded-lg text-xs font-bold text-[#00346f] focus:outline-none focus:border-[#00346f]"
+                                  >
+                                    {TIME_SLOTS.map(slot => {
+                                      const isSlotValid = isTimeSlotValidForDate(g.dateStr, slot, cart);
+                                      return (
+                                        <option key={slot} value={slot} disabled={!isSlotValid}>
+                                          {slot} {!isSlotValid ? '(cutoff)' : ''}
+                                        </option>
+                                      );
+                                    })}
+                                  </select>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
 
               </div>
 
