@@ -55,6 +55,7 @@ export default function CheckoutModal({
 
   // Customer Form state
   const [customerName, setCustomerName] = useState('');
+  const [countryCode, setCountryCode] = useState('+1');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [email, setEmail] = useState('');
   const [deliveryStreet, setDeliveryStreet] = useState('');
@@ -267,8 +268,8 @@ export default function CheckoutModal({
     }
 
     const cleanPhone = phoneNumber.replace(/\D/g, '');
-    if (cleanPhone.length < 10) {
-      errors.phoneNumber = 'Valid 10-digit US phone number is required.';
+    if (cleanPhone.length < 7) {
+      errors.phoneNumber = 'Valid contact number is required.';
     }
 
     if (email.trim() && (!email.includes('@') || !email.includes('.'))) {
@@ -335,9 +336,11 @@ export default function CheckoutModal({
         dietaryNotes.trim()
       ].filter(Boolean).join(' | ');
 
+      const formattedContactNumber = `${countryCode} ${phoneNumber.trim()}`.trim();
+
       const payload = {
         customer_name: customerName.trim(),
-        phone_number: phoneNumber.trim(),
+        phone_number: formattedContactNumber,
         email: email.trim(),
         is_delivery: isDelivery,
         delivery_address: fullDeliveryAddress,
@@ -820,17 +823,35 @@ export default function CheckoutModal({
 
                   <div>
                     <label className="block text-xs font-semibold text-gray-700 mb-1">
-                      US Phone Number <span className="text-rose-500">*</span>
+                      Contact Number <span className="text-rose-500">*</span>
                     </label>
-                    <input
-                      type="text"
-                      placeholder="(945) 527-4566"
-                      value={phoneNumber}
-                      onChange={(e) => handlePhoneChange(e.target.value)}
-                      className={`w-full px-3 py-2.5 min-h-[44px] text-base sm:text-xs bg-gray-50 border rounded-xl focus:outline-none focus:bg-white transition-all ${
-                        formErrors.phoneNumber ? 'border-rose-500' : 'border-gray-200 focus:border-[#00346f]'
-                      }`}
-                    />
+                    <div className="flex items-center gap-1.5">
+                      <select
+                        value={countryCode}
+                        onChange={(e) => setCountryCode(e.target.value)}
+                        className="bg-gray-50 border border-gray-200 rounded-xl px-2.5 py-2.5 min-h-[44px] text-xs font-bold text-[#00346f] focus:outline-none focus:bg-white focus:border-[#00346f] transition-all shrink-0 cursor-pointer"
+                        aria-label="Country Code"
+                      >
+                        <option value="+1">🇺🇸 +1 (US/CA)</option>
+                        <option value="+91">🇮🇳 +91 (India)</option>
+                        <option value="+44">🇬🇧 +44 (UK)</option>
+                        <option value="+61">🇦🇺 +61 (Australia)</option>
+                        <option value="+971">🇦🇪 +971 (UAE)</option>
+                        <option value="+65">🇸🇬 +65 (Singapore)</option>
+                        <option value="+49">🇩🇪 +49 (Germany)</option>
+                        <option value="+33">🇫🇷 +33 (France)</option>
+                        <option value="+81">🇯🇵 +81 (Japan)</option>
+                      </select>
+                      <input
+                        type="tel"
+                        placeholder="(945) 527-4566"
+                        value={phoneNumber}
+                        onChange={(e) => handlePhoneChange(e.target.value)}
+                        className={`w-full px-3 py-2.5 min-h-[44px] text-base sm:text-xs bg-gray-50 border rounded-xl focus:outline-none focus:bg-white transition-all ${
+                          formErrors.phoneNumber ? 'border-rose-500' : 'border-gray-200 focus:border-[#00346f]'
+                        }`}
+                      />
+                    </div>
                     {formErrors.phoneNumber && (
                       <p className="text-[10px] text-rose-500 mt-0.5">{formErrors.phoneNumber}</p>
                     )}
@@ -939,7 +960,7 @@ export default function CheckoutModal({
               <div className="p-3.5 bg-gray-50 border border-gray-200 rounded-xl space-y-1.5 text-xs">
                 <div className="flex justify-between">
                   <span className="text-gray-500">Recipient:</span>
-                  <strong className="text-gray-900">{customerName} • {phoneNumber}</strong>
+                  <strong className="text-gray-900">{customerName} • {countryCode} {phoneNumber}</strong>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-500">Fulfillment:</span>
