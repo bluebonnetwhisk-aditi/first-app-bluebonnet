@@ -648,8 +648,8 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
     return (
       <div className="min-h-[70vh] flex items-center justify-center p-4 bg-[#fbfbfa] font-sans">
         <div className="w-full max-w-md bg-white rounded-2xl shadow-xl border border-[#775a19]/20 p-8 text-center animate-fade-in">
-          <div className="w-20 h-20 rounded-2xl overflow-hidden shadow-md border-2 border-[#ffdea5]/60 mx-auto mb-4 bg-[#00346f] flex items-center justify-center p-0.5">
-            <img src="/bluebonnet_oms_logo.jpg" alt="BlueBonnet Logo" className="w-full h-full object-cover rounded-xl" />
+          <div className="w-32 h-32 rounded-3xl overflow-hidden shadow-xl border-4 border-[#ffdea5] mx-auto mb-5 bg-[#00346f] flex items-center justify-center p-1 ring-4 ring-[#00346f]/10">
+            <img src="/bluebonnet_oms_logo.jpg" alt="BlueBonnet Logo" className="w-full h-full object-cover rounded-2xl" />
           </div>
 
           <h2 className="font-serif text-xl sm:text-2xl font-bold text-[#00346f] leading-snug">
@@ -735,8 +735,8 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
         
         {/* ── TOP NAV & CONTROLS ── */}
         <div className="bg-white rounded-2xl border border-gray-200 p-4 sm:p-5 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="w-13 h-13 rounded-2xl overflow-hidden border-2 border-[#ffdea5]/60 shadow-sm shrink-0 bg-[#00346f] flex items-center justify-center p-0.5">
+          <div className="flex items-center gap-3.5">
+            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl overflow-hidden border-2 border-[#ffdea5] shadow-md shrink-0 bg-[#00346f] flex items-center justify-center p-1 ring-2 ring-[#00346f]/10">
               <img src="/bluebonnet_oms_logo.jpg" alt="BlueBonnet Logo" className="w-full h-full object-cover rounded-xl" />
             </div>
             <div>
