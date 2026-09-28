@@ -13,7 +13,8 @@ import {
   ArrowRight, 
   FileText,
   Calendar,
-  Layers
+  Layers,
+  Maximize2
 } from 'lucide-react';
 import type { CartItem, MenuItem, TiffinSpecialDish, TiffinMenuSettings } from '../../types/catering';
 import { getCentralTimeNow } from '../../utils/centralTime';
@@ -547,31 +548,40 @@ export default function TiffinOrderView({
         </div>
       )}
 
-      {/* ── TOP HEADER & FLYER LINK ── */}
-      <div className="bg-gradient-to-r from-[#00346f] via-[#002856] to-[#111827] rounded-3xl p-6 sm:p-8 text-white shadow-md space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#ffdea5]/15 border border-[#ffdea5]/30 text-[#ffdea5] text-[10px] font-bold uppercase tracking-widest mb-2">
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>Ghar Ka Khana • Little Elm, TX</span>
-            </div>
-            <h1 className="font-serif text-2xl sm:text-3xl md:text-4xl font-extrabold text-white tracking-tight">
-              Desi Dabba <span className="text-[#ffdea5] font-normal italic">Weekly Tiffin</span>
-            </h1>
-            <p className="text-xs sm:text-sm text-gray-200 mt-1 max-w-xl font-light">
-              Scratch-prepared homestyle Indian meals, rotated daily. Order complete Dabbas, 5-day subscriptions, or extra 8oz/16oz tubs & sides.
-            </p>
+      {/* ── TOP HEADER & FLYER THUMBNAIL ── */}
+      <div className="bg-gradient-to-r from-[#00346f] via-[#002856] to-[#111827] rounded-3xl p-5 sm:p-6 text-white shadow-md flex flex-col md:flex-row items-center justify-between gap-5 overflow-hidden">
+        <div className="space-y-2 max-w-xl">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#ffdea5]/15 border border-[#ffdea5]/30 text-[#ffdea5] text-[10px] font-bold uppercase tracking-widest">
+            <Sparkles className="w-3.5 h-3.5" />
+            <span>Ghar Ka Khana • Little Elm, TX</span>
           </div>
-
-          <button
-            type="button"
-            onClick={() => setIsLightboxOpen(true)}
-            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-white/10 hover:bg-white/20 border border-white/20 text-white rounded-2xl text-xs font-bold transition-all cursor-pointer shrink-0 backdrop-blur-xs self-start sm:self-auto"
-          >
-            <FileText className="w-4 h-4 text-[#ffdea5]" />
-            <span>View Menu Flyer</span>
-          </button>
+          <h1 className="font-serif text-2xl sm:text-3xl md:text-4xl font-extrabold text-white tracking-tight">
+            Desi Dabba <span className="text-[#ffdea5] font-normal italic">Weekly Tiffin</span>
+          </h1>
+          <p className="text-xs sm:text-sm text-gray-200 font-light leading-relaxed">
+            Scratch-prepared homestyle Indian meals, rotated daily. Order complete Dabbas, 5-day subscriptions, or extra 8oz/16oz tubs &amp; sides.
+          </p>
         </div>
+
+        {/* Mini Flyer Thumbnail matching Ribbon Height */}
+        <button
+          type="button"
+          onClick={() => setIsLightboxOpen(true)}
+          className="relative group cursor-pointer shrink-0 rounded-2xl overflow-hidden border-2 border-[#ffdea5]/40 shadow-lg hover:border-[#ffdea5] transition-all h-28 sm:h-32 w-44 sm:w-52 bg-gray-950 text-left focus:outline-none ring-offset-2 ring-offset-gray-900 focus:ring-2 focus:ring-[#ffdea5]"
+          title="Click to expand full menu flyer"
+        >
+          <img
+            src={settings.saturdaySpecialImageUrl || "/tiffin-flyer.jpg"}
+            alt="Weekly Tiffin Menu Flyer Thumbnail"
+            className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-300 opacity-90 group-hover:opacity-100"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent flex items-end justify-center p-2 group-hover:bg-black/60 transition-colors">
+            <span className="text-[10px] font-extrabold uppercase tracking-wider text-white bg-black/60 px-2.5 py-1 rounded-lg border border-white/20 flex items-center gap-1.5 group-hover:bg-[#00346f] group-hover:text-[#ffdea5] group-hover:border-[#ffdea5]/50 transition-all shadow-xs">
+              <Maximize2 className="w-3 h-3 text-[#ffdea5]" />
+              <span>Expand Menu Flyer</span>
+            </span>
+          </div>
+        </button>
       </div>
 
       {/* ── 1. UNIFIED DATE & WEEK CONTROLLER (SINGLE SOURCE OF TRUTH) ── */}
@@ -1457,7 +1467,7 @@ export default function TiffinOrderView({
 
             <div className="flex-1 overflow-auto p-4 flex items-center justify-center bg-gray-950">
               <img
-                src={settings.saturdaySpecialImageUrl || "/desidabba_flyer.jpeg"}
+                src={settings.saturdaySpecialImageUrl || "/tiffin-flyer.jpg"}
                 alt="Weekly Tiffin Menu Flyer"
                 className="max-w-full max-h-full object-contain rounded-xl shadow-md"
               />
