@@ -113,7 +113,7 @@ function parseTimeToMinutes(timeStr?: string): number {
 }
 
 /**
- * Generates WhatsApp message template for Order Accepted or Order Ready
+ * Generates WhatsApp message template for Order Accepted, Order Ready, or Order Declined
  */
 function buildWhatsAppMessage(order: CateringOrder, eventType: 'accepted' | 'ready' | 'rejected'): string {
   const shortId = order.id ? order.id.slice(0, 8).toUpperCase() : '';
@@ -121,14 +121,34 @@ function buildWhatsAppMessage(order: CateringOrder, eventType: 'accepted' | 'rea
   const dateStr = order.fulfillment_date || '';
   const timeStr = order.fulfillment_time || '';
   
-  // Format items list with quantities
+  // Format item list with item name, tray size, quantity, unit price & line total
   const itemsText = order.items && order.items.length > 0
-    ? order.items.map(i => `• ${i.quantity}x ${i.name} (${i.selectionLabel}${i.notes ? ` - ${i.notes}` : ''})`).join('\n')
+    ? order.items.map(i => {
+        const sizeStr = i.selectionLabel ? ` (${i.selectionLabel})` : '';
+        const notesStr = i.notes ? ` [${i.notes}]` : '';
+        const unitPriceStr = i.unitPrice > 0 ? ` @ $${i.unitPrice.toFixed(2)} ea` : '';
+        return `• ${i.name}${sizeStr}${notesStr} — Qty: ${i.quantity}${unitPriceStr} = $${i.totalPrice.toFixed(2)}`;
+      }).join('\n')
     : (order.order_description || 'Catering items');
 
   const fulfillmentDetails = order.is_delivery
     ? `🚚 *Delivery Address:*\n${order.delivery_address || 'Address provided on file'}`
     : `🏪 *Self-Pickup Location:*\n2437 Deerwood Dr, Little Elm, TX`;
+
+  const foodSubtotal = order.food_subtotal || 0;
+  const deliveryFee = order.delivery_fee || 0;
+  const taxAmount = order.tax_amount || 0;
+  const processingFee = order.processing_fee || 0;
+  const grandTotal = order.total_amount || 0;
+
+  const financialSummaryLines = [
+    `💵 *Payment Breakdown:*`,
+    `• Food Subtotal: $${foodSubtotal.toFixed(2)}`,
+    order.is_delivery && deliveryFee > 0 ? `• Delivery Fee: $${deliveryFee.toFixed(2)}` : null,
+    `• Texas Sales Tax (8.25%): $${taxAmount.toFixed(2)}`,
+    processingFee > 0 ? `• Card Processing Fee (3.5%): $${processingFee.toFixed(2)}` : null,
+    `• *Grand Total:* $${grandTotal.toFixed(2)}`
+  ].filter(Boolean).join('\n');
 
   if (eventType === 'rejected') {
     return (
@@ -141,7 +161,7 @@ Regrettably, we are unable to fulfill your catering order request #${shortId} fo
 📋 *Requested Order Details:*
 ${itemsText}
 
-💰 *Total Amount:* $${order.total_amount.toFixed(2)}
+${financialSummaryLines}
 
 We sincerely apologize for any inconvenience caused. If you would like to reschedule for an alternate date or time, please reply directly to this message or call us at (945) 527-4566.
 
@@ -158,12 +178,12 @@ Your catering order #${shortId} has been *ACCEPTED* by Bluebonnet Whisk / Desi D
 📅 *Scheduled Date:* ${dateStr}
 ⏰ *Time:* ${timeStr}
 
-📋 *Order Details:*
+📋 *Order Details (Item, Size, Qty & Price):*
 ${itemsText}
 
 ${fulfillmentDetails}
 
-💰 *Total Amount:* $${order.total_amount.toFixed(2)}
+${financialSummaryLines}
 
 Our kitchen team has scheduled your preparation fresh. If you need any adjustments, please reply directly to this message.
 
@@ -182,6 +202,8 @@ Great news! Your order #${shortId} is *READY* ${order.is_delivery ? 'for deliver
 ${itemsText}
 
 ${fulfillmentDetails}
+
+${financialSummaryLines}
 
 ${order.is_delivery ? 'Our delivery driver is packing your order now and will be on the way shortly. 🚗💨' : 'Please come to 2437 Deerwood Dr, Little Elm, TX for pickup. We look forward to seeing you! 😊'}
 

@@ -21,38 +21,45 @@ export function getPaymentMethodLabel(method?: string): string {
  */
 export function buildOrderNotificationText(order: CateringOrder): string {
   const isDelivery = order.is_delivery;
-  const itemsText = order.items
-    .map(i => `• ${i.name}${i.notes ? ` [${i.notes}]` : ''} (${i.selectionLabel}) × ${i.quantity} = $${i.totalPrice.toFixed(2)}`)
-    .join('\n');
+  const itemsText = order.items && order.items.length > 0
+    ? order.items
+        .map(i => {
+          const sizeStr = i.selectionLabel ? ` (${i.selectionLabel})` : '';
+          const notesStr = i.notes ? ` [${i.notes}]` : '';
+          const unitPriceStr = i.unitPrice > 0 ? ` @ $${i.unitPrice.toFixed(2)} ea` : '';
+          return `• ${i.name}${sizeStr}${notesStr} — Qty: ${i.quantity}${unitPriceStr} = $${i.totalPrice.toFixed(2)}`;
+        })
+        .join('\n')
+    : (order.order_description || 'Catering items');
 
   const lines = [
     `*🎉 New Desi Dabba Catering Submission!*`,
     ``,
-    `*Reference #:* #${order.id.slice(0, 8).toUpperCase()}`,
+    `*Reference #:* #${order.id ? order.id.slice(0, 8).toUpperCase() : ''}`,
     `*Submission Type:* ${order.order_type === 'estimate' ? 'SAVED ESTIMATE' : 'OFFICIAL CATERING ORDER'}`,
     `*Customer Name:* ${order.customer_name}`,
     `*Phone:* ${order.phone_number}`,
     `*Email:* ${order.email || 'Not Provided'}`,
     `*Payment Method:* ${getPaymentMethodLabel(order.payment_method)}`,
     ``,
-    `*Fulfillment:* ${isDelivery ? 'Venue Delivery (+$50 Flat Fee)' : 'Client Self-Pickup (Frisco Workshop)'}`,
+    `*Fulfillment:* ${isDelivery ? 'Venue Delivery (+$50 Flat Fee)' : 'Client Self-Pickup (Little Elm Kitchen)'}`,
     isDelivery && order.delivery_address ? `*Delivery Destination:* ${order.delivery_address}` : null,
     `*Fulfillment Date:* ${order.fulfillment_date}`,
     `*Target Window:* ${order.fulfillment_time} (US Central Time)`,
     order.dietary_notes ? `*Dietary / Satvik Notes:* ${order.dietary_notes}` : null,
     ``,
-    `*Itemized Trays & Dishes:*`,
+    `*Itemized Trays & Dishes (Item, Size, Qty & Price):*`,
     itemsText,
     ``,
-    `*Food Subtotal:* $${order.food_subtotal.toFixed(2)}`,
-    `*Delivery Fee:* $${order.delivery_fee.toFixed(2)}`,
-    `*Texas Tax (8.25%):* $${order.tax_amount.toFixed(2)}`,
+    `*Food Subtotal:* $${(order.food_subtotal || 0).toFixed(2)}`,
+    isDelivery && (order.delivery_fee || 0) > 0 ? `*Delivery Fee:* $${(order.delivery_fee || 0).toFixed(2)}` : null,
+    `*Texas Tax (8.25%):* $${(order.tax_amount || 0).toFixed(2)}`,
     (order.processing_fee && order.processing_fee > 0) 
       ? `*Card Processing Fee (3.5%):* $${order.processing_fee.toFixed(2)}` 
       : null,
-    `*Grand Total:* $${order.total_amount.toFixed(2)}`,
+    `*Grand Total:* $${(order.total_amount || 0).toFixed(2)}`,
     ``,
-    `_Sent via Bluebonnet Whisk Online Catering Portal (bluebonnetwhisk.com)_`
+    `_Sent via Bluebonnet Whisk Online Order Portal (bluebonnetwhisk.com)_`
   ];
 
   return lines.filter(l => l !== null).join('\n');
