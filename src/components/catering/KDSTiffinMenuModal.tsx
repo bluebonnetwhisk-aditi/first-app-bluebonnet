@@ -499,7 +499,7 @@ export default function KDSTiffinMenuModal({
             <ImageIcon className="w-5 h-5 text-[#ffdea5]" />
             <div>
               <span className="text-[10px] font-bold uppercase tracking-widest text-[#ffdea5] block">
-                KDS TIFFIN MANAGEMENT
+                BLUEBONNET TIFFIN MANAGEMENT
               </span>
               <h3 className="font-serif text-lg font-bold">
                 Weekly Tiffin Flyer &amp; Chef's Specials

@@ -1,7 +1,7 @@
 {
-  "name": "Bluebonnet Whisk - Desi Dabba Kitchen KDS",
-  "short_name": "Kitchen KDS",
-  "description": "Real-time Kitchen Display System for Bluebonnet Whisk & Desi Dabba Catering",
+  "name": "BlueBonnet Order Management and Financial Reconciliation System",
+  "short_name": "BlueBonnet OMS",
+  "description": "Real-time Order Management & Financial Reconciliation System for Bluebonnet Whisk",
   "start_url": "/catering/kitchen",
   "scope": "/",
   "display": "standalone",
@@ -10,9 +10,9 @@
   "theme_color": "#00346f",
   "icons": [
     {
-      "src": "/favicon.svg",
+      "src": "/bluebonnet_oms_logo.jpg",
       "sizes": "192x192 512x512",
-      "type": "image/svg+xml",
+      "type": "image/jpeg",
       "purpose": "any maskable"
     }
   ]

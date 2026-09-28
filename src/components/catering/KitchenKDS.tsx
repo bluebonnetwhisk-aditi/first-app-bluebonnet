@@ -254,11 +254,11 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
     return 'unsupported';
   });
 
-  // Set dedicated page title for KDS web app
+  // Set dedicated page title for Order System
   useEffect(() => {
     if (typeof document !== 'undefined') {
       const prevTitle = document.title;
-      document.title = "Desi Dabba Kitchen KDS | Bluebonnet Whisk";
+      document.title = "BlueBonnet Order Management & Financial Reconciliation System | Bluebonnet Whisk";
       return () => {
         document.title = prevTitle;
       };
@@ -648,15 +648,15 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
     return (
       <div className="min-h-[70vh] flex items-center justify-center p-4 bg-[#fbfbfa] font-sans">
         <div className="w-full max-w-md bg-white rounded-2xl shadow-xl border border-[#775a19]/20 p-8 text-center animate-fade-in">
-          <div className="w-16 h-16 rounded-full bg-[#00346f]/10 text-[#00346f] flex items-center justify-center mx-auto mb-4">
-            <Lock className="w-8 h-8" />
+          <div className="w-20 h-20 rounded-2xl overflow-hidden shadow-md border-2 border-[#ffdea5]/60 mx-auto mb-4 bg-[#00346f] flex items-center justify-center p-0.5">
+            <img src="/bluebonnet_oms_logo.jpg" alt="BlueBonnet Logo" className="w-full h-full object-cover rounded-xl" />
           </div>
 
-          <h2 className="font-serif text-2xl font-bold text-[#00346f]">
-            Kitchen KDS Protected
+          <h2 className="font-serif text-xl sm:text-2xl font-bold text-[#00346f] leading-snug">
+            BlueBonnet Order Management &amp; Financial Reconciliation System
           </h2>
           <p className="text-xs text-gray-500 mt-1 mb-6">
-            Authorized BlueBonnet Whisk kitchen staff only. Please enter your kitchen access PIN.
+            Authorized BlueBonnet Whisk staff only. Please enter your security access PIN.
           </p>
 
           <form onSubmit={handlePinSubmit} className="space-y-4">
@@ -709,7 +709,7 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
                 type="submit"
                 className="w-full bg-[#00346f] hover:bg-[#00224d] text-white py-3 rounded-xl font-bold text-xs uppercase tracking-wider transition-all shadow-md cursor-pointer"
               >
-                Unlock KDS Screen
+                Unlock Order System
               </button>
               {onBackToOrder && (
                 <button
@@ -728,7 +728,7 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
     );
   }
 
-  // ── UNLOCKED KITCHEN DISPLAY SCREEN (KDS) ──
+  // ── UNLOCKED SYSTEM SCREEN ──
   return (
     <div className="min-h-screen bg-[#f7f8fa] p-4 sm:p-6 lg:p-8 font-sans">
       <div className="max-w-7xl mx-auto space-y-6">
@@ -736,21 +736,21 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
         {/* ── TOP NAV & CONTROLS ── */}
         <div className="bg-white rounded-2xl border border-gray-200 p-4 sm:p-5 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-xl bg-[#00346f] text-white flex items-center justify-center shadow-sm">
-              <ChefHat className="w-6 h-6 text-[#ffdea5]" />
+            <div className="w-13 h-13 rounded-2xl overflow-hidden border-2 border-[#ffdea5]/60 shadow-sm shrink-0 bg-[#00346f] flex items-center justify-center p-0.5">
+              <img src="/bluebonnet_oms_logo.jpg" alt="BlueBonnet Logo" className="w-full h-full object-cover rounded-xl" />
             </div>
             <div>
-              <div className="flex items-center gap-2">
-                <h1 className="font-serif text-xl sm:text-2xl font-bold text-[#00346f]">
-                  Desi Dabba Kitchen Display (KDS)
+              <div className="flex items-center gap-2 flex-wrap">
+                <h1 className="font-serif text-lg sm:text-xl font-bold text-[#00346f] leading-tight">
+                  BlueBonnet Order Management &amp; Financial Reconciliation System
                 </h1>
                 <span className="flex items-center gap-1 bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
                   <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                  Supabase Live Sync
+                  Supabase &amp; QBO Live Sync
                 </span>
               </div>
               <p className="text-xs text-gray-500 mt-0.5">
-                Real-time Supabase cloud database • Central Time: <strong>{new Date().toLocaleDateString('en-US', { timeZone: 'America/Chicago', weekday: 'short', month: 'short', day: 'numeric' })}</strong> • <strong className="text-[#00346f] font-bold">{allOrders.filter(o => o.status !== 'cancelled').length} Active Orders</strong>
+                Real-time Cloud Database • Central Time: <strong>{new Date().toLocaleDateString('en-US', { timeZone: 'America/Chicago', weekday: 'short', month: 'short', day: 'numeric' })}</strong> • <strong className="text-[#00346f] font-bold">{allOrders.filter(o => o.status !== 'cancelled').length} Active Orders</strong>
               </p>
             </div>
           </div>

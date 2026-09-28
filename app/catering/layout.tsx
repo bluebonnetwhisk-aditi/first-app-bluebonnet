@@ -2,8 +2,8 @@ import type { Metadata } from 'next';
 import React from 'react';
 
 export const metadata: Metadata = {
-  title: 'Desi Dabba Catering & KDS | Bluebonnet Whisk',
-  description: 'Full-stack Vegetarian Catering Order Form, Real-Time Cost Estimator, and Kitchen Display System for bluebonnetwhisk.com',
+  title: 'BlueBonnet Order Management & Financial Reconciliation System | Bluebonnet Whisk',
+  description: 'Full-stack Vegetarian Catering Order Form, Real-Time Cost Estimator, and Order Management & Financial Reconciliation System for bluebonnetwhisk.com',
 };
 
 export default function CateringLayout({

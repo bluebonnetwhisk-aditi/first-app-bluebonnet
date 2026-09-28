@@ -218,7 +218,7 @@ export default function KDSEditOrderModal({
             <FileEdit className="w-5 h-5 text-[#ffdea5]" />
             <div>
               <span className="text-[10px] font-bold uppercase tracking-widest text-[#ffdea5] block">
-                KITCHEN DISPLAY SYSTEM • ORDER MODIFIER
+                BLUEBONNET ORDER SYSTEM • ORDER MODIFIER
               </span>
               <h3 className="font-serif text-lg font-bold">
                 Edit Order #{order.id.slice(0, 8).toUpperCase()} — {order.customer_name}
