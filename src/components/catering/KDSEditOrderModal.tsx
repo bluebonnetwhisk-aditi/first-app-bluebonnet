@@ -33,7 +33,21 @@ function parseInitialOrderItems(order: CateringOrder): CartItem[] {
 
   if (rawItems.length > 0) {
     return rawItems.map((item, idx) => {
-      const dishName = item.name || item.title || item.dishName || item.itemName || item.item_name || item.label || item.description || `Dish Item #${idx + 1}`;
+      let dishName = item.name || item.title || item.dishName || item.itemName || item.item_name || item.label || item.description || '';
+      
+      // If dishName is generic (e.g. Dabba plan name) and notes contains specific dishes (e.g. "Dal + Sabzi"), combine them
+      if (item.notes && (!dishName || /dabba|tiffin|plan|daily tubs|tub/i.test(dishName))) {
+        if (dishName && !dishName.includes(item.notes)) {
+          dishName = `${dishName} - ${item.notes}`;
+        } else if (!dishName) {
+          dishName = item.notes;
+        }
+      }
+
+      if (!dishName) {
+        dishName = item.selectionLabel || `Dish Item #${idx + 1}`;
+      }
+
       const quantity = Math.max(1, Number(item.quantity) || 1);
       const unitPrice = Math.max(0, Number(item.unitPrice ?? item.price ?? item.unit_price) || 0);
       const totalPrice = Math.max(0, Number(item.totalPrice ?? item.total_price) || Math.round(unitPrice * quantity * 100) / 100);
@@ -394,26 +408,32 @@ export default function KDSEditOrderModal({
               <div className="space-y-2">
                 {items.map((item, idx) => (
                   <div key={item.id || idx} className="p-3.5 bg-white border border-gray-250 rounded-xl flex items-center justify-between gap-3 shadow-2xs">
-                    <div className="flex-1 min-w-0 space-y-1">
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Dish Name:</span>
+                    <div className="flex-1 min-w-0 space-y-1.5">
+                      <div>
+                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">Dish / Item Name:</span>
+                        <input
+                          type="text"
+                          value={item.name || ''}
+                          onChange={(e) => handleItemNameChange(idx, e.target.value)}
+                          placeholder="Dish / Item Name"
+                          className="w-full font-bold text-xs sm:text-sm text-gray-900 bg-white border border-gray-300 rounded-lg px-2.5 py-1 focus:border-[#00346f] focus:outline-none focus:ring-1 focus:ring-[#00346f]"
+                        />
                       </div>
-                      <input
-                        type="text"
-                        value={item.name || ''}
-                        onChange={(e) => handleItemNameChange(idx, e.target.value)}
-                        placeholder="Dish / Item Name"
-                        className="w-full font-bold text-xs sm:text-sm text-gray-900 bg-white border border-gray-300 rounded px-2.5 py-1 focus:border-[#00346f] focus:outline-none focus:ring-1 focus:ring-[#00346f]"
-                      />
-                      <div className="flex items-center gap-2">
-                        <span className="text-[11px] text-gray-500 block">
-                          {item.selectionLabel}
-                        </span>
-                        {item.notes && (
-                          <span className="text-[10px] text-gray-600 italic block">
-                            • {item.notes}
-                          </span>
-                        )}
+                      <div>
+                        <input
+                          type="text"
+                          value={item.notes || item.selectionLabel || ''}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setItems(prev => {
+                              const copy = [...prev];
+                              copy[idx].notes = val;
+                              return copy;
+                            });
+                          }}
+                          placeholder="Portion / Menu details (e.g. 16 oz, Dal Makhani + Sabzi)"
+                          className="w-full text-xs text-gray-600 bg-gray-50 border border-gray-250 rounded-lg px-2 py-0.5 focus:bg-white focus:border-[#00346f] focus:outline-none"
+                        />
                       </div>
                     </div>
 
