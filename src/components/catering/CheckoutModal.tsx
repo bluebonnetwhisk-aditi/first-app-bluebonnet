@@ -143,23 +143,39 @@ export default function CheckoutModal({
   const cutoffValidation = validateFulfillmentCutoff(fulfillmentDate, fulfillmentTime, blackouts, cart);
   const upcomingDateOptions = getUpcomingDates(21);
 
-  // Cost calculations
-  const foodSubtotal = cart.reduce((sum, item) => sum + item.totalPrice, 0);
-  const cakeSubtotal = cart.filter(item => item.category === 'cakes').reduce((sum, item) => sum + item.totalPrice, 0);
-  const nonCakeSubtotal = cart.filter(item => item.category !== 'cakes').reduce((sum, item) => sum + item.totalPrice, 0);
+  // Cost & Tax Bifurcation calculations
+  // 1. Tiffin Items (Prices are tax-INCLUSIVE @ 8.25% Texas sales tax)
+  const tiffinTotal = cart
+    .filter(item => item.category === 'tiffin' || (item.menuItemId && item.menuItemId.includes('tiffin')))
+    .reduce((sum, item) => sum + item.totalPrice, 0);
+  const tiffinBase = Math.round((tiffinTotal / 1.0825) * 100) / 100;
+  const tiffinTax = Math.round((tiffinTotal - tiffinBase) * 100) / 100;
+
+  // 2. Cake Items (Tax Exempt @ 0%)
+  const cakeSubtotal = cart
+    .filter(item => item.category === 'cakes')
+    .reduce((sum, item) => sum + item.totalPrice, 0);
+
+  // 3. Catering Food Items (Tax EXCLUSIVE @ 8.25%)
+  const cateringSubtotal = cart
+    .filter(item => item.category !== 'cakes' && item.category !== 'tiffin' && (!item.menuItemId || !item.menuItemId.includes('tiffin')))
+    .reduce((sum, item) => sum + item.totalPrice, 0);
 
   const deliveryFee = isDelivery ? 50.00 : 0.00;
+  const cateringTaxable = cateringSubtotal + (cateringSubtotal > 0 && isDelivery ? deliveryFee : 0);
+  const cateringTax = Math.round(cateringTaxable * 0.0825 * 100) / 100;
 
-  // Texas Sales Tax: Bakery products (cakes) are 0% exempt. Catering food + delivery are subject to 8.25%
-  const taxableAmount = nonCakeSubtotal + (nonCakeSubtotal > 0 && isDelivery ? deliveryFee : 0);
-  const taxAmount = Math.round(taxableAmount * 0.0825 * 100) / 100;
+  const taxAmount = Math.round((tiffinTax + cateringTax) * 100) / 100;
+  const foodSubtotal = Math.round((tiffinBase + cateringSubtotal + cakeSubtotal) * 100) / 100;
+
+  const preCardTotal = Math.round((foodSubtotal + deliveryFee + taxAmount) * 100) / 100;
 
   // Credit Card 3.5% Processing Fee
   const processingFee = paymentMethod === 'credit_card'
-    ? Math.round((foodSubtotal + deliveryFee + taxAmount) * 0.035 * 100) / 100
+    ? Math.round(preCardTotal * 0.035 * 100) / 100
     : 0.00;
 
-  const totalAmount = Math.round((foodSubtotal + deliveryFee + taxAmount + processingFee) * 100) / 100;
+  const totalAmount = Math.round((preCardTotal + processingFee) * 100) / 100;
 
   // Format phone helper
   const handlePhoneChange = (val: string) => {
@@ -867,16 +883,26 @@ export default function CheckoutModal({
                   <span>Food Subtotal ({cart.length} item kinds):</span>
                   <span className="font-bold text-gray-900">${foodSubtotal.toFixed(2)}</span>
                 </div>
-                {cakeSubtotal > 0 && nonCakeSubtotal > 0 && (
+                {(cakeSubtotal > 0 || tiffinTotal > 0) && (
                   <div className="pl-2 space-y-0.5 text-[11px] text-gray-500 border-l-2 border-gray-200">
-                    <div className="flex justify-between">
-                      <span>• Catering Food (Taxable)</span>
-                      <span>${nonCakeSubtotal.toFixed(2)}</span>
-                    </div>
-                    <div className="flex justify-between text-emerald-700">
-                      <span>• Cakes (0% Tax-Exempt)</span>
-                      <span>${cakeSubtotal.toFixed(2)}</span>
-                    </div>
+                    {cateringSubtotal > 0 && (
+                      <div className="flex justify-between">
+                        <span>• Catering Food (Taxable)</span>
+                        <span>${cateringSubtotal.toFixed(2)}</span>
+                      </div>
+                    )}
+                    {tiffinTotal > 0 && (
+                      <div className="flex justify-between text-blue-700">
+                        <span>• Tiffin Meals (Base Food, Tax-Inc.)</span>
+                        <span>${tiffinBase.toFixed(2)}</span>
+                      </div>
+                    )}
+                    {cakeSubtotal > 0 && (
+                      <div className="flex justify-between text-emerald-700">
+                        <span>• Cakes (0% Tax-Exempt)</span>
+                        <span>${cakeSubtotal.toFixed(2)}</span>
+                      </div>
+                    )}
                   </div>
                 )}
                 <div className="flex justify-between text-gray-600">
@@ -885,7 +911,10 @@ export default function CheckoutModal({
                 </div>
                 <div className="flex justify-between text-gray-600">
                   <div>
-                    <span>Texas Sales Tax {nonCakeSubtotal > 0 ? '(8.25%)' : '(0% Exempt)'}:</span>
+                    <span>Texas Sales Tax (8.25%):</span>
+                    {tiffinTotal > 0 && (
+                      <span className="text-[10px] text-blue-700 block">Includes ${tiffinTax.toFixed(2)} bifurcated from Tiffin price</span>
+                    )}
                     {cakeSubtotal > 0 && (
                       <span className="text-[10px] text-emerald-700 block">Bakery products: 0% tax</span>
                     )}

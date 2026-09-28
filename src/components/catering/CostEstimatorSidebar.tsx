@@ -44,15 +44,27 @@ export default function CostEstimatorSidebar({
     .filter(item => item.selectionType === 'third' || item.selectionType === 'half' || item.selectionType === 'full')
     .reduce((sum, item) => sum + item.quantity, 0);
 
-  const foodSubtotal = cart.reduce((sum, item) => sum + item.totalPrice, 0);
-  const nonCakeSubtotal = cart.filter(item => item.category !== 'cakes').reduce((sum, item) => sum + item.totalPrice, 0);
-  const hasTiffin = cart.some(item => item.category === 'tiffin');
+  const tiffinTotal = cart
+    .filter(item => item.category === 'tiffin' || (item.menuItemId && item.menuItemId.includes('tiffin')))
+    .reduce((sum, item) => sum + item.totalPrice, 0);
+  const tiffinBase = Math.round((tiffinTotal / 1.0825) * 100) / 100;
+  const tiffinTax = Math.round((tiffinTotal - tiffinBase) * 100) / 100;
 
+  const cakeSubtotal = cart
+    .filter(item => item.category === 'cakes')
+    .reduce((sum, item) => sum + item.totalPrice, 0);
+
+  const cateringSubtotal = cart
+    .filter(item => item.category !== 'cakes' && item.category !== 'tiffin' && (!item.menuItemId || !item.menuItemId.includes('tiffin')))
+    .reduce((sum, item) => sum + item.totalPrice, 0);
+
+  const hasTiffin = tiffinTotal > 0;
   const deliveryFee = isDelivery ? 50.00 : 0.00;
   
-  // Texas Sales Tax: Bakery items (cakes) are exempt (0% tax). Catering food & delivery are subject to 8.25%
-  const taxableAmount = nonCakeSubtotal + (nonCakeSubtotal > 0 && isDelivery ? deliveryFee : 0);
-  const taxAmount = Math.round(taxableAmount * 0.0825 * 100) / 100;
+  const cateringTaxable = cateringSubtotal + (cateringSubtotal > 0 && isDelivery ? deliveryFee : 0);
+  const cateringTax = Math.round(cateringTaxable * 0.0825 * 100) / 100;
+  const taxAmount = Math.round((tiffinTax + cateringTax) * 100) / 100;
+  const foodSubtotal = Math.round((tiffinBase + cateringSubtotal + cakeSubtotal) * 100) / 100;
   const totalAmount = Math.round((foodSubtotal + deliveryFee + taxAmount) * 100) / 100;
 
   // Cutoff lead time requirement

@@ -50,27 +50,52 @@ export default function KDSEditOrderModal({
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  // Recalculations
-  const foodSubtotal = items.reduce((sum, item) => sum + (item.unitPrice * item.quantity), 0);
+  // Categorize items
+  const tiffinTotal = items
+    .filter(item => item.category === 'tiffin' || (item.menuItemId && item.menuItemId.includes('tiffin')))
+    .reduce((sum, item) => sum + (item.unitPrice * item.quantity), 0);
+
+  const cakeSubtotal = items
+    .filter(item => item.category === 'cakes')
+    .reduce((sum, item) => sum + (item.unitPrice * item.quantity), 0);
+
+  const cateringSubtotal = items
+    .filter(item => item.category !== 'cakes' && item.category !== 'tiffin' && (!item.menuItemId || !item.menuItemId.includes('tiffin')))
+    .reduce((sum, item) => sum + (item.unitPrice * item.quantity), 0);
+
+  const grossFood = tiffinTotal + cakeSubtotal + cateringSubtotal;
   const deliveryFee = order.delivery_fee || 0;
   
   // Percent discount calculation
   const percentVal = Math.max(0, parseFloat(percentDiscountInput) || 0);
-  const percentDiscountDollars = Math.round((foodSubtotal * percentVal / 100) * 100) / 100;
+  const percentDiscountDollars = Math.round((grossFood * percentVal / 100) * 100) / 100;
 
   // Fixed number discount calculation
   const fixedDiscountDollars = Math.max(0, parseFloat(fixedDiscountInput) || 0);
 
-  const totalDiscountDollars = Math.min(foodSubtotal, Math.round((percentDiscountDollars + fixedDiscountDollars) * 100) / 100);
+  const totalDiscountDollars = Math.min(grossFood, Math.round((percentDiscountDollars + fixedDiscountDollars) * 100) / 100);
 
-  // Net after discount & delivery
-  const netBeforeTax = Math.max(0, foodSubtotal - totalDiscountDollars + deliveryFee);
-  const taxAmount = Math.round(netBeforeTax * 0.0825 * 100) / 100;
+  // Pro-rate discount across categories if any discount applied
+  const discountRatio = grossFood > 0 ? (1 - (totalDiscountDollars / grossFood)) : 1;
+  const netTiffinTotal = tiffinTotal * discountRatio;
+  const netCateringSubtotal = cateringSubtotal * discountRatio;
+  const netCakeSubtotal = cakeSubtotal * discountRatio;
+
+  const tiffinBase = Math.round((netTiffinTotal / 1.0825) * 100) / 100;
+  const tiffinTax = Math.round((netTiffinTotal - tiffinBase) * 100) / 100;
+
+  const cateringTaxable = netCateringSubtotal + (netCateringSubtotal > 0 && deliveryFee > 0 ? deliveryFee : 0);
+  const cateringTax = Math.round(cateringTaxable * 0.0825 * 100) / 100;
+
+  const taxAmount = Math.round((tiffinTax + cateringTax) * 100) / 100;
+  const foodSubtotal = Math.round((tiffinBase + netCateringSubtotal + netCakeSubtotal) * 100) / 100;
+
+  const netBeforeCardFee = Math.round((foodSubtotal + deliveryFee + taxAmount) * 100) / 100;
   
   const isCreditCard = order.payment_method === 'credit_card';
-  const processingFee = isCreditCard ? Math.round((netBeforeTax + taxAmount) * 0.035 * 100) / 100 : 0;
+  const processingFee = isCreditCard ? Math.round(netBeforeCardFee * 0.035 * 100) / 100 : 0;
   
-  const grandTotal = Math.round((netBeforeTax + taxAmount + processingFee) * 100) / 100;
+  const grandTotal = Math.round((netBeforeCardFee + processingFee) * 100) / 100;
 
   // Change name of item
   const handleItemNameChange = (idx: number, newName: string) => {
