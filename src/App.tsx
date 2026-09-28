@@ -190,7 +190,7 @@ export default function App() {
   const navLinks = [
     { name: "Home", id: "Home" },
     { name: "Cakes", id: "Cakes" },
-    { name: "Catering", id: "Catering" },
+    { name: "Ordering", id: "Catering" },
     { name: "Party Packages", id: "Live Counters" },
     { name: "Lux Gifting", id: "Gifting" },
     { name: "Gallery", id: "Gallery" },
