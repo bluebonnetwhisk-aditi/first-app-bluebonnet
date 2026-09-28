@@ -127,13 +127,13 @@ function buildWhatsAppMessage(order: CateringOrder, eventType: 'accepted' | 'rea
         const sizeStr = i.selectionLabel ? ` (${i.selectionLabel})` : '';
         const notesStr = i.notes ? ` [${i.notes}]` : '';
         const unitPriceStr = i.unitPrice > 0 ? ` @ $${i.unitPrice.toFixed(2)} ea` : '';
-        return `• ${i.name}${sizeStr}${notesStr} — Qty: ${i.quantity}${unitPriceStr} = $${i.totalPrice.toFixed(2)}`;
+        return `• ${i.name}${sizeStr}${notesStr} - Qty: ${i.quantity}${unitPriceStr} = $${i.totalPrice.toFixed(2)}`;
       }).join('\n')
     : (order.order_description || 'Catering items');
 
   const fulfillmentDetails = order.is_delivery
-    ? `🚚 *Delivery Address:*\n${order.delivery_address || 'Address provided on file'}`
-    : `🏪 *Self-Pickup Location:*\n2437 Deerwood Dr, Little Elm, TX`;
+    ? `Fulfillment: Delivery to ${order.delivery_address || 'Address provided on file'}`
+    : `Fulfillment: Self-Pickup at 2437 Deerwood Dr, Little Elm, TX`;
 
   const foodSubtotal = order.food_subtotal || 0;
   const deliveryFee = order.delivery_fee || 0;
@@ -142,72 +142,55 @@ function buildWhatsAppMessage(order: CateringOrder, eventType: 'accepted' | 'rea
   const grandTotal = order.total_amount || 0;
 
   const financialSummaryLines = [
-    `💵 *Payment Breakdown:*`,
+    `Payment Breakdown:`,
     `• Food Subtotal: $${foodSubtotal.toFixed(2)}`,
     order.is_delivery && deliveryFee > 0 ? `• Delivery Fee: $${deliveryFee.toFixed(2)}` : null,
     `• Texas Sales Tax (8.25%): $${taxAmount.toFixed(2)}`,
     processingFee > 0 ? `• Card Processing Fee (3.5%): $${processingFee.toFixed(2)}` : null,
-    `• *Grand Total:* $${grandTotal.toFixed(2)}`
+    `• Total Amount: $${grandTotal.toFixed(2)}`
   ].filter(Boolean).join('\n');
 
   if (eventType === 'rejected') {
     return (
-`Namaste ${customerName}! 🙏
+`ORDER CANNOT BE FULFILLED - #${shortId}
+Hi ${customerName}, we regret that order #${shortId} for ${dateStr} (${timeStr}) cannot be accepted as we are sold to capacity.
 
-Thank you for choosing Bluebonnet Whisk / Desi Dabba Kitchen.
-
-Regrettably, we are unable to fulfill your catering order request #${shortId} for ${dateStr} (${timeStr}) due to kitchen capacity constraints or scheduling conflicts.
-
-📋 *Requested Order Details:*
+Requested Items:
 ${itemsText}
 
 ${financialSummaryLines}
 
-We sincerely apologize for any inconvenience caused. If you would like to reschedule for an alternate date or time, please reply directly to this message or call us at (945) 527-4566.
-
-Warm regards,
-Aditi & Team
-Bluebonnet Whisk / Desi Dabba`
+Apologies for the inconvenience. Reschedule via the web ordering portal.`
     );
   } else if (eventType === 'accepted') {
     return (
-`Namaste ${customerName}! 🙏
+`ORDER CONFIRMED - #${shortId}
+Hi ${customerName}, your order has been accepted.
 
-Your catering order #${shortId} has been *ACCEPTED* by Bluebonnet Whisk / Desi Dabba Kitchen! 👨‍🍳✨
-
-📅 *Scheduled Date:* ${dateStr}
-⏰ *Time:* ${timeStr}
-
-📋 *Order Details (Item, Size, Qty & Price):*
-${itemsText}
-
+Date/Time: ${dateStr} at ${timeStr}
 ${fulfillmentDetails}
+
+Order Details:
+${itemsText}
 
 ${financialSummaryLines}
 
-Our kitchen team has scheduled your preparation fresh. If you need any adjustments, please reply directly to this message.
-
-Thank you for choosing Bluebonnet Whisk! 💙`
+Thank you for your business. Desi Dabba | BlueBonnet Whisk`
     );
   } else {
     return (
-`Namaste ${customerName}! 🙏
+`ORDER READY - #${shortId}
+Hi ${customerName}, your order is ready ${order.is_delivery ? 'for delivery' : 'for pickup'}.
 
-Great news! Your order #${shortId} is *READY* ${order.is_delivery ? 'for delivery' : 'for pickup'}! 🎉🍲
-
-📅 *Date:* ${dateStr}
-⏰ *Scheduled Time:* ${timeStr}
-
-📋 *Items Ready:*
-${itemsText}
-
+Schedule: ${dateStr} at ${timeStr}
 ${fulfillmentDetails}
+
+Order Details:
+${itemsText}
 
 ${financialSummaryLines}
 
-${order.is_delivery ? 'Our delivery driver is packing your order now and will be on the way shortly. 🚗💨' : 'Please come to 2437 Deerwood Dr, Little Elm, TX for pickup. We look forward to seeing you! 😊'}
-
-Thank you for choosing Bluebonnet Whisk! 💙`
+Thank you for your business. Desi Dabba | BlueBonnet Whisk`
     );
   }
 }
