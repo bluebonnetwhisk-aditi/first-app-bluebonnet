@@ -20,14 +20,87 @@ interface KDSEditOrderModalProps {
   onOrderUpdated: () => void;
 }
 
+function parseInitialOrderItems(order: CateringOrder): CartItem[] {
+  let rawItems: any[] = [];
+  if (Array.isArray(order.items)) {
+    rawItems = JSON.parse(JSON.stringify(order.items));
+  } else if (typeof order.items === 'string') {
+    try {
+      const p = JSON.parse(order.items);
+      if (Array.isArray(p)) rawItems = p;
+    } catch {}
+  }
+
+  if (rawItems.length > 0) {
+    return rawItems.map((item, idx) => {
+      const dishName = item.name || item.title || item.dishName || item.itemName || item.item_name || item.label || item.description || `Dish Item #${idx + 1}`;
+      const quantity = Math.max(1, Number(item.quantity) || 1);
+      const unitPrice = Math.max(0, Number(item.unitPrice ?? item.price ?? item.unit_price) || 0);
+      const totalPrice = Math.max(0, Number(item.totalPrice ?? item.total_price) || Math.round(unitPrice * quantity * 100) / 100);
+      return {
+        ...item,
+        id: item.id || `item-${idx}-${Date.now()}`,
+        name: dishName,
+        category: item.category || 'mains',
+        categoryLabel: item.categoryLabel || 'Mains',
+        selectionLabel: item.selectionLabel || item.selectionType || item.portion || item.size || 'Standard Portion',
+        quantity,
+        unitPrice,
+        totalPrice
+      };
+    });
+  }
+
+  if (order.order_description && typeof order.order_description === 'string') {
+    const segments = order.order_description.split(/;|\n/).map(s => s.trim()).filter(Boolean);
+    const extracted: CartItem[] = [];
+
+    for (let i = 0; i < segments.length; i++) {
+      const seg = segments[i].replace(/^•\s*/, '');
+      const priceMatch = seg.match(/\[\$(\d+(?:\.\d{1,2})?)\]/) || seg.match(/\$?(\d+(?:\.\d{1,2})?)\s*$/);
+      const totalPrice = priceMatch ? parseFloat(priceMatch[1]) : 0;
+
+      const qtyMatch = seg.match(/(?:Qty:|×|x|\*)\s*(\d+)/i) || seg.match(/\((\d+)\s*(?:pcs|trays|tubs)?\)/i);
+      const quantity = qtyMatch ? parseInt(qtyMatch[1], 10) : 1;
+      const unitPrice = quantity > 0 ? Math.round((totalPrice / quantity) * 100) / 100 : totalPrice;
+
+      let name = seg
+        .replace(/\(Portion × \d+\)/i, '')
+        .replace(/\(\d+\s*pcs\)/i, '')
+        .replace(/-\s*Qty:.*$/i, '')
+        .replace(/\[\$[\d.]+\].*$/, '')
+        .trim();
+
+      if (!name) name = `Dish #${i + 1}`;
+
+      extracted.push({
+        id: `extracted-${i}-${Date.now()}`,
+        menuItemId: `extracted-${i}`,
+        name,
+        category: 'mains',
+        categoryLabel: 'Mains',
+        selectionType: 'pieces',
+        selectionLabel: 'Order Item',
+        quantity,
+        unitPrice,
+        totalPrice: totalPrice || Math.round(unitPrice * quantity * 100) / 100,
+        allergens: [],
+        leadTimeHours: 0
+      });
+    }
+
+    if (extracted.length > 0) return extracted;
+  }
+
+  return [];
+}
+
 export default function KDSEditOrderModal({
   order,
   onClose,
   onOrderUpdated
 }: KDSEditOrderModalProps) {
-  const [items, setItems] = useState<CartItem[]>(() => {
-    return Array.isArray(order.items) ? JSON.parse(JSON.stringify(order.items)) : [];
-  });
+  const [items, setItems] = useState<CartItem[]>(() => parseInitialOrderItems(order));
 
   // Two discount sections: Percent (%) discount and Fixed Amount ($) discount
   // Do NOT prepopulate any numbers in the discount inputs
@@ -322,12 +395,15 @@ export default function KDSEditOrderModal({
                 {items.map((item, idx) => (
                   <div key={item.id || idx} className="p-3.5 bg-white border border-gray-250 rounded-xl flex items-center justify-between gap-3 shadow-2xs">
                     <div className="flex-1 min-w-0 space-y-1">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Dish Name:</span>
+                      </div>
                       <input
                         type="text"
-                        value={item.name}
+                        value={item.name || ''}
                         onChange={(e) => handleItemNameChange(idx, e.target.value)}
                         placeholder="Dish / Item Name"
-                        className="w-full font-bold text-xs sm:text-sm text-gray-900 bg-white border border-gray-300 rounded px-2 py-1 focus:border-[#00346f] focus:outline-none focus:ring-1 focus:ring-[#00346f]"
+                        className="w-full font-bold text-xs sm:text-sm text-gray-900 bg-white border border-gray-300 rounded px-2.5 py-1 focus:border-[#00346f] focus:outline-none focus:ring-1 focus:ring-[#00346f]"
                       />
                       <div className="flex items-center gap-2">
                         <span className="text-[11px] text-gray-500 block">
@@ -355,22 +431,24 @@ export default function KDSEditOrderModal({
                         />
                       </div>
 
-                      {/* Quantity Stepper */}
-                      <div className="flex items-center bg-gray-100 rounded-lg p-0.5 border border-gray-250">
+                      {/* Streamlined Quantity Controls (Box removed) */}
+                      <div className="flex items-center gap-1 text-xs">
                         <button
                           type="button"
                           onClick={() => handleItemQtyChange(idx, -1)}
-                          className="w-6 h-6 rounded flex items-center justify-center hover:bg-white text-gray-700"
+                          className="w-6 h-6 rounded-md hover:bg-gray-150 text-gray-700 flex items-center justify-center cursor-pointer transition-colors"
+                          title="Decrease quantity"
                         >
-                          <Minus className="w-3 h-3" />
+                          <Minus className="w-3.5 h-3.5" />
                         </button>
-                        <span className="w-6 text-center font-bold text-xs">{item.quantity}</span>
+                        <span className="w-5 text-center font-bold text-xs text-gray-900">{item.quantity}</span>
                         <button
                           type="button"
                           onClick={() => handleItemQtyChange(idx, 1)}
-                          className="w-6 h-6 rounded flex items-center justify-center hover:bg-white text-gray-700"
+                          className="w-6 h-6 rounded-md hover:bg-gray-150 text-gray-700 flex items-center justify-center cursor-pointer transition-colors"
+                          title="Increase quantity"
                         >
-                          <Plus className="w-3 h-3" />
+                          <Plus className="w-3.5 h-3.5" />
                         </button>
                       </div>
 

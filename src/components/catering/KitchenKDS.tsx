@@ -580,7 +580,12 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
   }, 0);
 
   // Bifurcated Financials in view (excluding cancelled)
-  const totalFoodSubtotalInView = nonCancelledOrders.reduce((sum, order) => sum + (order.food_subtotal || 0), 0);
+  const totalNetFoodRevenueInView = nonCancelledOrders.reduce((sum, order) => {
+    const foodBase = order.food_subtotal || 0;
+    const discount = order.discount_amount || 0;
+    const rebate = order.rebate_amount || 0;
+    return sum + Math.max(0, foodBase - discount - rebate);
+  }, 0);
   const totalTaxInView = nonCancelledOrders.reduce((sum, order) => sum + (order.tax_amount || 0), 0);
   const totalRevenueInView = nonCancelledOrders.reduce((sum, order) => sum + (order.total_amount || 0), 0);
 
@@ -1471,11 +1476,14 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
               </div>
               <div className="min-w-0">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500 block truncate">
-                  Food Subtotal
+                  Total Food Base Revenue
                 </span>
                 <div className="font-serif text-xl sm:text-2xl font-bold text-indigo-900 leading-tight">
-                  ${totalFoodSubtotalInView.toFixed(2)}
+                  ${totalNetFoodRevenueInView.toFixed(2)}
                 </div>
+                <span className="text-[9px] text-indigo-600 font-semibold block truncate">
+                  (After discounts &amp; adjustments)
+                </span>
               </div>
             </div>
 
