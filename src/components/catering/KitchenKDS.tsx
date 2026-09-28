@@ -183,7 +183,7 @@ ${itemsText}
 ${financialSummaryLines}
 
 ───────────────
-Thank you for your business.
+Thank you for supporting a local woman owned small business.
 Desi Dabba | BlueBonnet Whisk`
     );
   } else {
