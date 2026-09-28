@@ -1027,12 +1027,11 @@ export default function InquiryWizard({
 
                 <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
                   <div>
-                    <label className="block text-xs font-semibold uppercase tracking-wider text-gray-700 mb-1.5 font-bold">Email Address</label>
+                    <label className="block text-xs font-semibold uppercase tracking-wider text-gray-700 mb-1.5 font-bold">Email Address <span className="text-gray-400 font-normal lowercase">(optional)</span></label>
                     <div className="relative">
                       <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
                       <input
                         type="email"
-                        required
                         value={formData.email}
                         onChange={(e) => setFormData({...formData, email: e.target.value})}
                         placeholder="email@example.com"

@@ -49,10 +49,8 @@ export default function EnquiryModal({
   const validate = () => {
     const newErrors: Record<string, string> = {};
     if (!formData.name.trim()) newErrors.name = 'Name is required';
-    if (!formData.email.trim()) {
-      newErrors.email = 'Email is required';
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = 'Email is invalid';
+    if (formData.email.trim() && !/\S+@\S+\.\S+/.test(formData.email)) {
+      newErrors.email = 'Email format is invalid';
     }
     if (!formData.phone.trim()) newErrors.phone = 'Phone address is required';
     if (!formData.date) newErrors.date = 'Event date is required';
@@ -178,7 +176,7 @@ export default function EnquiryModal({
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1 font-sans">
-                        Email Address *
+                        Email Address <span className="text-gray-400 font-normal lowercase">(optional)</span>
                       </label>
                       <div className="relative">
                         <Mail size={16} className="absolute left-3 top-3.5 text-gray-400 pointer-events-none" />

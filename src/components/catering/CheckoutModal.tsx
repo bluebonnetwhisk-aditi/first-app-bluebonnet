@@ -206,8 +206,8 @@ export default function CheckoutModal({
       errors.phoneNumber = 'Valid 10-digit US phone number is required.';
     }
 
-    if (!email.trim() || !email.includes('@') || !email.includes('.')) {
-      errors.email = 'Valid email address is required.';
+    if (email.trim() && (!email.includes('@') || !email.includes('.'))) {
+      errors.email = 'Please enter a valid email format if provided.';
     }
 
     if (isDelivery) {
@@ -364,7 +364,7 @@ export default function CheckoutModal({
             <button
               type="button"
               onClick={() => {
-                if (customerName.trim() && phoneNumber.length >= 10 && email.trim()) {
+                if (customerName.trim() && phoneNumber.length >= 10) {
                   setStep('payment');
                 }
               }}
@@ -653,7 +653,7 @@ export default function CheckoutModal({
 
                 <div>
                   <label className="block text-xs font-semibold text-gray-700 mb-1">
-                    Email Address <span className="text-rose-500">*</span>
+                    Email Address <span className="text-gray-400 font-normal">(Optional)</span>
                   </label>
                   <input
                     type="email"

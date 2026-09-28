@@ -45,6 +45,7 @@ export function getCentralTimeNow(): {
 /**
  * Calculates the required lead time hours based on items in the cart.
  * - Cakes present: 48 hours notice.
+ * - Tiffin items: 12 hours notice.
  * - Catering items (trays, breads, beverages): 24 hours notice.
  * - Default: 24 hours notice.
  */
@@ -53,6 +54,9 @@ export function getRequiredNoticeHours(items: CartItem[]): number {
   
   const hasCakes = items.some(item => item.category === 'cakes' || item.leadTimeHours >= 48);
   if (hasCakes) return 48;
+
+  const hasTiffin = items.some(item => item.category === 'tiffin' || (item.menuItemId && item.menuItemId.includes('tiffin')));
+  if (hasTiffin) return 12;
   
   return 24;
 }
@@ -62,7 +66,7 @@ export const TIME_SLOTS = [
   '12:00 PM', '12:30 PM', '1:00 PM', '1:30 PM',
   '2:00 PM', '2:30 PM', '3:00 PM', '3:30 PM',
   '4:00 PM', '4:30 PM', '5:00 PM', '5:30 PM',
-  '6:00 PM', '6:30 PM', '7:00 PM', '7:30 PM', '8:00 PM'
+  '6:00 PM', '6:30 PM', '7:00 PM'
 ];
 
 /**
@@ -137,8 +141,8 @@ export function isDateSelectable(
 
   const noticeHours = getRequiredNoticeHours(items);
 
-  // Target date checked against latest possible slot (8:00 PM = 20:00)
-  const latestPossibleSlotOnDate = new Date(y, m - 1, d, 20, 0, 0);
+  // Target date checked against latest possible slot (7:00 PM = 19:00)
+  const latestPossibleSlotOnDate = new Date(y, m - 1, d, 19, 0, 0);
   const diffHours = (latestPossibleSlotOnDate.getTime() - nowDate.getTime()) / (1000 * 60 * 60);
 
   if (diffHours < noticeHours) {
