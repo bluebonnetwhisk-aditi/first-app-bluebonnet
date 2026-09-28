@@ -447,15 +447,12 @@ function getStoredOrders(): CateringOrder[] {
       return initial;
     }
     const parsed = JSON.parse(raw);
-    // If cache has old outdated mock orders, auto-upgrade to real active seed
-    if (!Array.isArray(parsed) || parsed.length === 0 || parsed.some((o: any) => o.id === 'ord-1001' || o.id === 'ord-1002')) {
-      const initial = getInitialMockOrders();
-      localStorage.setItem(LOCAL_STORAGE_ORDERS_KEY, JSON.stringify(initial));
-      return initial;
+    if (!Array.isArray(parsed)) {
+      return [];
     }
     return parsed;
   } catch {
-    return getInitialMockOrders();
+    return [];
   }
 }
 
@@ -695,19 +692,21 @@ export async function createOrder(orderPayload: Omit<CateringOrder, 'id' | 'crea
 export async function fetchOrders(fulfillmentDate?: string): Promise<CateringOrder[]> {
   if (supabase) {
     try {
-      let query = supabase.from('orders').select('*').order('created_at', { ascending: false });
+      let query = supabase.from('orders').select('*').neq('status', 'cancelled').order('created_at', { ascending: false });
       if (fulfillmentDate) {
         query = query.eq('fulfillment_date', fulfillmentDate);
       }
       const { data, error } = await query;
       if (!error && data) {
         // Map [ACCEPTED] flag in order_description to 'accepted' status
-        const parsed = (data as CateringOrder[]).map(o => {
-          if (o.status === 'new' && o.order_description?.includes('[ACCEPTED]')) {
-            return { ...o, status: 'accepted' as OrderStatus };
-          }
-          return o;
-        });
+        const parsed = (data as CateringOrder[])
+          .filter(o => o.status !== 'cancelled')
+          .map(o => {
+            if (o.status === 'new' && o.order_description?.includes('[ACCEPTED]')) {
+              return { ...o, status: 'accepted' as OrderStatus };
+            }
+            return o;
+          });
 
         // Cache live Supabase orders into localStorage
         try {
@@ -725,12 +724,14 @@ export async function fetchOrders(fulfillmentDate?: string): Promise<CateringOrd
 
   // Local fallback
   const all = getStoredOrders();
-  const parsed = all.map(o => {
-    if (o.status === 'new' && o.order_description?.includes('[ACCEPTED]')) {
-      return { ...o, status: 'accepted' as OrderStatus };
-    }
-    return o;
-  });
+  const parsed = all
+    .filter(o => o.status !== 'cancelled')
+    .map(o => {
+      if (o.status === 'new' && o.order_description?.includes('[ACCEPTED]')) {
+        return { ...o, status: 'accepted' as OrderStatus };
+      }
+      return o;
+    });
 
   if (fulfillmentDate) {
     return parsed.filter(o => o.fulfillment_date === fulfillmentDate);
@@ -913,6 +914,13 @@ export async function deleteOrderFromSupabase(orderId: string): Promise<boolean>
 
   if (supabase) {
     try {
+      // 1. Mark status as 'cancelled' first in Supabase so queries hide it immediately even if RLS restricts hard DELETE
+      await supabase
+        .from('orders')
+        .update({ status: 'cancelled' })
+        .eq('id', orderId);
+
+      // 2. Attempt hard DELETE from Supabase database table
       const { error } = await supabase
         .from('orders')
         .delete()
@@ -921,7 +929,7 @@ export async function deleteOrderFromSupabase(orderId: string): Promise<boolean>
       if (!error) {
         deletedSuccessfully = true;
       } else {
-        console.warn('Supabase deleteOrder error:', error);
+        console.warn('Supabase deleteOrder query warning:', error);
       }
     } catch (err) {
       console.warn('Supabase deleteOrder connection failed:', err);

@@ -335,18 +335,19 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
     try {
       // Fetch all orders from database to calculate badge counts and notify for any upcoming date
       const data = await fetchOrders();
+      const activeData = data.filter(o => o.status !== 'cancelled');
       
       // If not initial load, check if any newly added order with 'new' status was fetched
       if (!isInitialLoadRef.current) {
-        const newlyAdded = data.find(o => !knownOrderIdsRef.current.has(o.id) && o.status === 'new');
+        const newlyAdded = activeData.find(o => !knownOrderIdsRef.current.has(o.id) && o.status === 'new');
         if (newlyAdded) {
           handleIncomingNewOrder(newlyAdded);
         }
       }
 
-      data.forEach(o => knownOrderIdsRef.current.add(o.id));
+      activeData.forEach(o => knownOrderIdsRef.current.add(o.id));
       isInitialLoadRef.current = false;
-      setAllOrders(data);
+      setAllOrders(activeData);
     } finally {
       setIsLoading(false);
       setIsRefreshing(false);
@@ -449,7 +450,7 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
     window.open(url, '_blank');
   };
 
-  // Deny / Reject Order handler: Triggers WhatsApp rejection message and deletes from Supabase
+  // Deny / Reject Order handler: Triggers WhatsApp rejection message and deletes from Supabase & KDS
   const handleDenyOrder = async (order: CateringOrder) => {
     const shortId = order.id ? order.id.slice(0, 8).toUpperCase() : '';
     const confirmDeny = window.confirm(
@@ -457,11 +458,16 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
     );
     if (!confirmDeny) return;
 
-    // 1. Trigger WhatsApp rejection notification
+    // 1. Delete from known IDs ref so polling won't re-trigger notification or re-add
+    knownOrderIdsRef.current.delete(order.id);
+
+    // 2. Optimistic UI update: remove from active screen state immediately
+    setAllOrders(prev => prev.filter(o => o.id !== order.id));
+
+    // 3. Trigger WhatsApp rejection notification to customer
     openWhatsAppForOrder(order, 'rejected');
 
-    // 2. Optimistic UI update and delete entry from Supabase
-    setAllOrders(prev => prev.filter(o => o.id !== order.id));
+    // 4. Delete entry from Supabase & local storage
     await deleteOrderFromSupabase(order.id);
   };
 
