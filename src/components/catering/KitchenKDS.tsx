@@ -28,7 +28,7 @@ import {
 } from 'lucide-react';
 import type { CateringOrder, OrderStatus } from '../../types/catering';
 import { getCentralTimeNow, getUpcomingDates } from '../../utils/centralTime';
-import { fetchOrders, updateOrderStatus, subscribeToOrders } from '../../services/supabase';
+import { fetchOrders, updateOrderStatus, subscribeToOrders, deleteOrderFromSupabase } from '../../services/supabase';
 import KDSBlackoutManager from './KDSBlackoutManager';
 import KDSEditOrderModal from './KDSEditOrderModal';
 import KDSTiffinMenuModal from './KDSTiffinMenuModal';
@@ -115,7 +115,7 @@ function parseTimeToMinutes(timeStr?: string): number {
 /**
  * Generates WhatsApp message template for Order Accepted or Order Ready
  */
-function buildWhatsAppMessage(order: CateringOrder, eventType: 'accepted' | 'ready'): string {
+function buildWhatsAppMessage(order: CateringOrder, eventType: 'accepted' | 'ready' | 'rejected'): string {
   const shortId = order.id ? order.id.slice(0, 8).toUpperCase() : '';
   const customerName = order.customer_name || 'Valued Customer';
   const dateStr = order.fulfillment_date || '';
@@ -130,7 +130,26 @@ function buildWhatsAppMessage(order: CateringOrder, eventType: 'accepted' | 'rea
     ? `🚚 *Delivery Address:*\n${order.delivery_address || 'Address provided on file'}`
     : `🏪 *Self-Pickup Location:*\n2437 Deerwood Dr, Little Elm, TX`;
 
-  if (eventType === 'accepted') {
+  if (eventType === 'rejected') {
+    return (
+`Namaste ${customerName}! 🙏
+
+Thank you for choosing Bluebonnet Whisk / Desi Dabba Kitchen.
+
+Regrettably, we are unable to fulfill your catering order request #${shortId} for ${dateStr} (${timeStr}) due to kitchen capacity constraints or scheduling conflicts.
+
+📋 *Requested Order Details:*
+${itemsText}
+
+💰 *Total Amount:* $${order.total_amount.toFixed(2)}
+
+We sincerely apologize for any inconvenience caused. If you would like to reschedule for an alternate date or time, please reply directly to this message or call us at (945) 527-4566.
+
+Warm regards,
+Aditi & Team
+Bluebonnet Whisk / Desi Dabba`
+    );
+  } else if (eventType === 'accepted') {
     return (
 `Namaste ${customerName}! 🙏
 
@@ -419,7 +438,7 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
   };
 
   // Open WhatsApp in new tab with pre-filled message
-  const openWhatsAppForOrder = (order: CateringOrder, eventType: 'accepted' | 'ready') => {
+  const openWhatsAppForOrder = (order: CateringOrder, eventType: 'accepted' | 'ready' | 'rejected') => {
     const phone = formatWhatsAppPhone(order.phone_number);
     if (!phone) {
       alert(`No valid phone number on file for ${order.customer_name}.`);
@@ -428,6 +447,22 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
     const text = buildWhatsAppMessage(order, eventType);
     const url = `https://wa.me/${phone}?text=${encodeURIComponent(text)}`;
     window.open(url, '_blank');
+  };
+
+  // Deny / Reject Order handler: Triggers WhatsApp rejection message and deletes from Supabase
+  const handleDenyOrder = async (order: CateringOrder) => {
+    const shortId = order.id ? order.id.slice(0, 8).toUpperCase() : '';
+    const confirmDeny = window.confirm(
+      `Are you sure you want to DENY / REJECT order #${shortId} for ${order.customer_name}?\n\nThis will trigger a rejection WhatsApp message to the customer, and permanently delete the order entry from Supabase and KDS.`
+    );
+    if (!confirmDeny) return;
+
+    // 1. Trigger WhatsApp rejection notification
+    openWhatsAppForOrder(order, 'rejected');
+
+    // 2. Optimistic UI update and delete entry from Supabase
+    setAllOrders(prev => prev.filter(o => o.id !== order.id));
+    await deleteOrderFromSupabase(order.id);
   };
 
   // Status transition handler
@@ -1219,21 +1254,33 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
                         <FileEdit className="w-3.5 h-3.5 text-[#00346f]" />
                         <span>Edit</span>
                       </button>
-                      {/* Status: new -> Accept Order */}
+                      {/* Status: new -> Accept Order OR Deny Order */}
                       {order.status === 'new' && (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            handleStatusChange(order.id, 'accepted');
-                            openWhatsAppForOrder(order, 'accepted');
-                          }}
-                          className="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-all shadow-xs cursor-pointer flex items-center gap-1.5"
-                          title="Accept order and notify customer via WhatsApp"
-                        >
-                          <Check className="w-3.5 h-3.5" />
-                          <span>Accept Order</span>
-                          <MessageCircle className="w-3.5 h-3.5 text-emerald-200" />
-                        </button>
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              handleStatusChange(order.id, 'accepted');
+                              openWhatsAppForOrder(order, 'accepted');
+                            }}
+                            className="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-all shadow-xs cursor-pointer flex items-center gap-1.5"
+                            title="Accept order and notify customer via WhatsApp"
+                          >
+                            <Check className="w-3.5 h-3.5" />
+                            <span>Accept Order</span>
+                            <MessageCircle className="w-3.5 h-3.5 text-emerald-200" />
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => handleDenyOrder(order)}
+                            className="bg-rose-600 hover:bg-rose-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-all shadow-xs cursor-pointer flex items-center gap-1.5"
+                            title="Deny order, send WhatsApp rejection message to customer, and delete entry from Supabase"
+                          >
+                            <Ban className="w-3.5 h-3.5" />
+                            <span>Deny &amp; Delete</span>
+                          </button>
+                        </div>
                       )}
 
                       {/* Status: accepted -> Start Prep */}
@@ -1308,14 +1355,14 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
                         </button>
                       )}
 
-                      {order.status !== 'cancelled' && order.status !== 'completed' && (
+                      {order.status !== 'cancelled' && order.status !== 'completed' && order.status !== 'new' && (
                         <button
                           type="button"
-                          onClick={() => handleStatusChange(order.id, 'cancelled')}
-                          className="text-[10px] text-gray-400 hover:text-rose-600 p-1"
-                          title="Cancel order"
+                          onClick={() => handleDenyOrder(order)}
+                          className="text-[10px] text-rose-500 hover:text-rose-700 font-semibold underline cursor-pointer p-1"
+                          title="Deny order, notify customer via WhatsApp, and delete from Supabase"
                         >
-                          Cancel
+                          Deny &amp; Delete
                         </button>
                       )}
                     </div>

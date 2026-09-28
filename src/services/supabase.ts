@@ -905,6 +905,43 @@ export async function updateOrderDetails(orderId: string, updates: Partial<Cater
   return updatedSuccessfully;
 }
 
+/**
+ * Permanently deletes an order from Supabase public.orders database and local storage caches
+ */
+export async function deleteOrderFromSupabase(orderId: string): Promise<boolean> {
+  let deletedSuccessfully = false;
+
+  if (supabase) {
+    try {
+      const { error } = await supabase
+        .from('orders')
+        .delete()
+        .eq('id', orderId);
+
+      if (!error) {
+        deletedSuccessfully = true;
+      } else {
+        console.warn('Supabase deleteOrder error:', error);
+      }
+    } catch (err) {
+      console.warn('Supabase deleteOrder connection failed:', err);
+    }
+  }
+
+  // Always update local cache and dispatch event
+  try {
+    const all = getStoredOrders();
+    const filtered = all.filter(o => o.id !== orderId);
+    saveStoredOrders(filtered);
+    window.dispatchEvent(new CustomEvent('bbw_orders_updated', { detail: { orderId, action: 'delete' } }));
+    deletedSuccessfully = true;
+  } catch (err) {
+    console.warn('localStorage deleteOrder warning:', err);
+  }
+
+  return deletedSuccessfully;
+}
+
 const LOCAL_STORAGE_TIFFIN_KEY = 'bbw_tiffin_menu_settings_v1';
 
 export const DEFAULT_WEEKDAY_MENUS: Record<string, WeekdayMenuEntry> = {
