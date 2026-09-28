@@ -17,7 +17,7 @@ import {
   MapPin,
   ArrowRight
 } from 'lucide-react';
-import type { CartItem, MenuItem, TiffinSpecialDish, TiffinMenuSettings, ContainerAddonItem } from '../../types/catering';
+import type { CartItem, MenuItem, TiffinSpecialDish, TiffinMenuSettings } from '../../types/catering';
 import { getCentralTimeNow } from '../../utils/centralTime';
 import { 
   fetchTiffinMenuSettings, 
@@ -26,7 +26,6 @@ import {
   getCurrentMondayTitle,
   DEFAULT_TIFFIN_SETTINGS, 
   DEFAULT_WEEKDAY_MENUS, 
-  DEFAULT_CONTAINER_ADDONS, 
   DEFAULT_DABBA_PRICING 
 } from '../../services/supabase';
 
@@ -76,15 +75,9 @@ export default function TiffinOrderView({
   const familyPrice = settings.dabbaPricing?.familyPrice || DEFAULT_DABBA_PRICING.familyPrice;
   const weeklyPrice = settings.dabbaPricing?.weeklyPrice || DEFAULT_DABBA_PRICING.weeklyPrice;
 
-  // Active containers list
-  const containerList: ContainerAddonItem[] = (settings.containerAddons && settings.containerAddons.length > 0)
-    ? settings.containerAddons
-    : DEFAULT_CONTAINER_ADDONS;
-
   // Quantity selectors state
   const [singleQuantities, setSingleQuantities] = useState<Record<string, number>>({});
   const [familyQuantities, setFamilyQuantities] = useState<Record<string, number>>({});
-  const [containerQuantities, setContainerQuantities] = useState<Record<string, number>>({});
   const [specialQuantities, setSpecialQuantities] = useState<Record<string, number>>({});
 
   const getSingleQty = (dateStr: string) => singleQuantities[dateStr] || 1;
@@ -103,12 +96,30 @@ export default function TiffinOrderView({
     }));
   };
 
-  const getContainerQty = (id: string) => containerQuantities[id] || 1;
-  const updateContainerQty = (id: string, delta: number) => {
-    setContainerQuantities(prev => ({
-      ...prev,
-      [id]: Math.max(1, (prev[id] || 1) + delta)
-    }));
+  // Dynamic 8oz/16oz container and add-on quantity state
+  const [containerSizeSelection, setContainerSizeSelection] = useState<Record<string, '8oz' | '16oz'>>({});
+  const [container8ozQty, setContainer8ozQty] = useState<Record<string, number>>({});
+  const [container16ozQty, setContainer16ozQty] = useState<Record<string, number>>({});
+  const [addonQtyState, setAddonQtyState] = useState<Record<string, number>>({});
+
+  const getContainerSize = (id: string) => containerSizeSelection[id] || '16oz';
+  const setContainerSize = (id: string, size: '8oz' | '16oz') => {
+    setContainerSizeSelection(prev => ({ ...prev, [id]: size }));
+  };
+
+  const get8ozQty = (id: string) => container8ozQty[id] || 1;
+  const update8ozQty = (id: string, delta: number) => {
+    setContainer8ozQty(prev => ({ ...prev, [id]: Math.max(1, (prev[id] || 1) + delta) }));
+  };
+
+  const get16ozQty = (id: string) => container16ozQty[id] || 1;
+  const update16ozQty = (id: string, delta: number) => {
+    setContainer16ozQty(prev => ({ ...prev, [id]: Math.max(1, (prev[id] || 1) + delta) }));
+  };
+
+  const getAddonQty = (id: string) => addonQtyState[id] || 1;
+  const updateAddonQty = (id: string, delta: number) => {
+    setAddonQtyState(prev => ({ ...prev, [id]: Math.max(1, (prev[id] || 1) + delta) }));
   };
 
   const getSpecialQty = (dishId: string) => specialQuantities[dishId] || 1;
@@ -458,20 +469,25 @@ export default function TiffinOrderView({
     triggerAddedAlert(`✓ Added ${weeklyQty} × Weekly Dabba Plan for ${activeWeeklyPlan.shortRange} ($${(unitPrice * weeklyQty).toFixed(2)}) to your order!`);
   };
 
-  // Add 16 oz Container to Cart
-  const handleAddContainer = (container: ContainerAddonItem) => {
-    const qty = getContainerQty(container.id);
-    const itemId = `tiffin-container-${container.id}`;
+  // Add Dynamic 8oz/16oz Container to Cart
+  const handleAddDynamicContainer = (
+    containerName: string,
+    size: '8oz' | '16oz',
+    unitPrice: number,
+    qty: number,
+    day: DaySchedule
+  ) => {
+    const itemId = `tiffin-extra-${containerName.toLowerCase().replace(/[^a-z0-9]/g, '-')}-${size}-${day.dateStr}`;
 
     const menuItem: MenuItem = {
       id: itemId,
-      name: container.name,
+      name: `${containerName} [${size}] (${day.displayDate})`,
       category: 'tiffin',
-      categoryLabel: '16 oz Containers',
-      description: container.description,
-      allergens: ['D'],
+      categoryLabel: `${size} Container`,
+      description: `${size} portion of ${containerName} for ${day.dayName} (${day.displayDate})`,
+      allergens: ['D', 'G'],
       pricingType: 'tiffin',
-      leadTimeHours: 24,
+      leadTimeHours: 12,
       isSatvikAvailable: true
     };
 
@@ -479,12 +495,45 @@ export default function TiffinOrderView({
       menuItem,
       'container_16oz',
       qty,
-      '16 oz Container',
-      container.price,
-      `16 oz portion of ${container.name} (Qty: ${qty})`
+      `${size} Container (${day.displayDate})`,
+      unitPrice,
+      `${size} portion of ${containerName} for ${day.dayName}, ${day.displayDate}`
     );
 
-    triggerAddedAlert(`✓ Added ${qty} × 16 oz ${container.name} ($${(container.price * qty).toFixed(2)}) to your order!`);
+    triggerAddedAlert(`✨ Added ${qty} × ${size} ${containerName} ($${(unitPrice * qty).toFixed(2)}) to your order!`);
+  };
+
+  // Add Add-on / Side / Bread to Cart
+  const handleAddAddonItem = (
+    addonName: string,
+    portionLabel: string,
+    unitPrice: number,
+    qty: number
+  ) => {
+    const itemId = `tiffin-addon-${addonName.toLowerCase().replace(/[^a-z0-9]/g, '-')}`;
+
+    const menuItem: MenuItem = {
+      id: itemId,
+      name: `${addonName} [${portionLabel}]`,
+      category: 'tiffin',
+      categoryLabel: 'Tiffin Side & Add-on',
+      description: `${portionLabel} of ${addonName}`,
+      allergens: ['G', 'D'],
+      pricingType: 'tiffin',
+      leadTimeHours: 12,
+      isSatvikAvailable: true
+    };
+
+    onUpdateCartItem(
+      menuItem,
+      'container_16oz',
+      qty,
+      portionLabel,
+      unitPrice,
+      `Tiffin Side: ${addonName} (${portionLabel})`
+    );
+
+    triggerAddedAlert(`✨ Added ${qty} × ${addonName} [${portionLabel}] ($${(unitPrice * qty).toFixed(2)}) to your order!`);
   };
 
   // Cart items under tiffin category
@@ -1025,70 +1074,414 @@ export default function TiffinOrderView({
         </div>
       </div>
 
-      {/* ── 3. 16 OZ A LA CARTE CONTAINERS (FROM FLYER) ── */}
-      <div className="bg-white rounded-3xl border border-gray-200 p-6 sm:p-8 shadow-xs space-y-4">
-        <div>
-          <span className="text-[10px] font-bold uppercase tracking-widest text-[#775a19] block">
-            INDIVIDUAL ADD-ONS &amp; SIDES
-          </span>
-          <h3 className="font-serif text-xl sm:text-2xl font-bold text-[#00346f]">
-            16 oz Containers Also Available
-          </h3>
-          <p className="text-xs text-gray-500 mt-0.5">
-            Add extra tubs of slow-cooked gravies, paneer, dry sabzi, fragrant rice or cooling raita to your meal.
-          </p>
-        </div>
+      {/* ── 3. DYNAMIC A LA CARTE CONTAINERS & ADD-ONS ── */}
+      <div className="space-y-6">
+        
+        {/* A) DYNAMIC 8 OZ / 16 OZ CONTAINERS FOR DAY'S MENU */}
+        <div className="bg-white rounded-3xl border border-gray-200 p-6 sm:p-8 shadow-xs space-y-5">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <span className="text-[10px] font-bold uppercase tracking-widest text-[#775a19] block">
+                DYNAMIC DAILY TUBS (8 OZ &amp; 16 OZ)
+              </span>
+              <h3 className="font-serif text-xl sm:text-2xl font-bold text-[#00346f]">
+                Individual Curry, Sabzi &amp; Rice Containers
+              </h3>
+              <p className="text-xs text-gray-500 mt-0.5">
+                Order extra tubs of today’s fresh Dabba Curry, Dry Sabzi, or Steamed Rice in 8 oz &amp; 16 oz portions.
+              </p>
+            </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 pt-2">
-          {containerList.map(c => {
-            const qty = getContainerQty(c.id);
+            {/* Quick Day Selector for Containers */}
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none shrink-0">
+              {schedule.filter(s => !s.isSundayClosed).map(s => {
+                const isSel = s.dateStr === selectedDayTab;
+                return (
+                  <button
+                    key={s.dateStr}
+                    type="button"
+                    onClick={() => setSelectedDayTab(s.dateStr)}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
+                      isSel 
+                        ? 'bg-[#00346f] text-white shadow-xs' 
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    }`}
+                  >
+                    {s.dayName.slice(0, 3)} ({s.displayDate})
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Active Day Menu Header */}
+          {(() => {
+            const activeDayObj = schedule.find(s => s.dateStr === selectedDayTab) || schedule.find(s => s.isSelectable) || schedule[0];
+            const curryName = activeDayObj?.dalOrCurry || 'Special Curry';
+            const sabziName = activeDayObj?.sabzi || 'Seasonal Sabzi';
+
+            const isDalRajmaChole = /dal|rajma|chole/i.test(curryName);
+            const curry8ozPrice = isDalRajmaChole ? 6.99 : 8.99;
+            const curry16ozPrice = isDalRajmaChole ? 11.49 : 14.99;
+
+            const sabzi8ozPrice = 6.99;
+            const sabzi16ozPrice = 10.99;
+
+            const rice8ozPrice = 2.99;
+            const rice16ozPrice = 4.99;
+
+            const containerItems = [
+              {
+                id: `curry-${activeDayObj.dateStr}`,
+                type: 'curry' as const,
+                name: curryName,
+                tag: isDalRajmaChole ? 'Dal / Legume Gravy' : 'Special Curry / Gravy',
+                p8oz: curry8ozPrice,
+                p16oz: curry16ozPrice,
+                desc: `Freshly prepared ${curryName} from today's menu.`
+              },
+              {
+                id: `sabzi-${activeDayObj.dateStr}`,
+                type: 'sabzi' as const,
+                name: sabziName,
+                tag: 'Dry Sabzi of the Day',
+                p8oz: sabzi8ozPrice,
+                p16oz: sabzi16ozPrice,
+                desc: `Homestyle ${sabziName} prepared with fresh spices.`
+              },
+              {
+                id: `rice-${activeDayObj.dateStr}`,
+                type: 'rice' as const,
+                name: 'Fragrant Basmati Rice',
+                tag: 'Steamed Jeera / Basmati Rice',
+                p8oz: rice8ozPrice,
+                p16oz: rice16ozPrice,
+                desc: 'Fluffy long-grain aromatic basmati rice.'
+              }
+            ];
+
             return (
-              <div key={c.id} className="p-4 rounded-2xl border border-gray-200 bg-gray-50/70 hover:bg-white hover:border-[#00346f] transition-all flex flex-col justify-between gap-3 shadow-2xs">
-                <div>
-                  <div className="flex items-center justify-between">
-                    <h4 className="font-bold text-xs sm:text-sm text-gray-900">{c.name}</h4>
-                    <span className="font-serif font-black text-sm text-[#00346f]">${c.price.toFixed(2)}</span>
-                  </div>
-                  <p className="text-[11px] text-gray-500 mt-1">{c.description}</p>
+              <div className="space-y-4">
+                <div className="p-3 bg-blue-50/70 rounded-2xl border border-blue-100 flex items-center justify-between text-xs text-[#00346f]">
+                  <span>Viewing Dabba Menu for: <strong>{activeDayObj.dayName} ({activeDayObj.displayDate})</strong></span>
+                  <span className="text-[11px] font-semibold text-blue-700">{curryName} • {sabziName}</span>
                 </div>
 
-                <div className="space-y-2 pt-2 border-t border-gray-200">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[11px] font-semibold text-gray-600">Quantity:</span>
-                    <div className="flex items-center bg-gray-100 rounded-lg p-0.5 border border-gray-200">
-                      <button
-                        type="button"
-                        onClick={() => updateContainerQty(c.id, -1)}
-                        className="w-7 h-7 rounded-md flex items-center justify-center hover:bg-white text-gray-700 cursor-pointer"
-                        aria-label="Decrease quantity"
-                      >
-                        <Minus className="w-3.5 h-3.5" />
-                      </button>
-                      <span className="w-7 text-center font-bold text-xs">{qty}</span>
-                      <button
-                        type="button"
-                        onClick={() => updateContainerQty(c.id, 1)}
-                        className="w-7 h-7 rounded-md flex items-center justify-center hover:bg-white text-gray-700 cursor-pointer"
-                        aria-label="Increase quantity"
-                      >
-                        <Plus className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {containerItems.map(item => {
+                    const selectedSize = getContainerSize(item.id);
+                    const qty8 = get8ozQty(item.id);
+                    const qty16 = get16ozQty(item.id);
 
-                  <button
-                    type="button"
-                    onClick={() => handleAddContainer(c)}
-                    className="w-full min-h-[44px] inline-flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl border border-[#00346f] text-[#00346f] hover:bg-[#00346f] hover:text-white transition-colors text-xs font-bold uppercase tracking-wider cursor-pointer"
-                  >
-                    <Plus className="w-4 h-4" />
-                    <span>Add {qty} Tub{qty !== 1 ? 's' : ''} • ${(c.price * qty).toFixed(2)}</span>
-                  </button>
+                    const activeQty = selectedSize === '8oz' ? qty8 : qty16;
+                    const activeUnitPrice = selectedSize === '8oz' ? item.p8oz : item.p16oz;
+                    const totalItemPrice = activeUnitPrice * activeQty;
+
+                    return (
+                      <div key={item.id} className="p-5 rounded-2xl border border-gray-200 bg-gray-50/60 hover:bg-white hover:border-[#00346f] transition-all flex flex-col justify-between gap-4 shadow-2xs">
+                        <div>
+                          <div className="flex items-center justify-between">
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-[#775a19] bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200">
+                              {item.tag}
+                            </span>
+                            <span className="font-serif font-extrabold text-base text-[#00346f]">
+                              ${activeUnitPrice.toFixed(2)}
+                            </span>
+                          </div>
+                          <h4 className="font-bold text-sm text-gray-900 mt-2">{item.name}</h4>
+                          <p className="text-[11px] text-gray-500 mt-1">{item.desc}</p>
+                        </div>
+
+                        <div className="space-y-3 pt-3 border-t border-gray-200">
+                          {/* Size Selector Tabs (8oz vs 16oz) */}
+                          <div className="flex items-center gap-1 bg-gray-200/70 p-1 rounded-xl">
+                            <button
+                              type="button"
+                              onClick={() => setContainerSize(item.id, '8oz')}
+                              className={`flex-1 py-1.5 text-center text-xs font-bold rounded-lg transition-all cursor-pointer ${
+                                selectedSize === '8oz'
+                                  ? 'bg-white text-[#00346f] shadow-xs font-extrabold'
+                                  : 'text-gray-600 hover:text-gray-900'
+                              }`}
+                            >
+                              8 oz (${item.p8oz.toFixed(2)})
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setContainerSize(item.id, '16oz')}
+                              className={`flex-1 py-1.5 text-center text-xs font-bold rounded-lg transition-all cursor-pointer ${
+                                selectedSize === '16oz'
+                                  ? 'bg-white text-[#00346f] shadow-xs font-extrabold'
+                                  : 'text-gray-600 hover:text-gray-900'
+                              }`}
+                            >
+                              16 oz (${item.p16oz.toFixed(2)})
+                            </button>
+                          </div>
+
+                          {/* Quantity Selector */}
+                          <div className="flex items-center justify-between">
+                            <span className="text-[11px] font-semibold text-gray-600">Quantity:</span>
+                            <div className="flex items-center bg-gray-100 rounded-lg p-0.5 border border-gray-200">
+                              <button
+                                type="button"
+                                onClick={() => selectedSize === '8oz' ? update8ozQty(item.id, -1) : update16ozQty(item.id, -1)}
+                                className="w-7 h-7 rounded-md flex items-center justify-center hover:bg-white text-gray-700 cursor-pointer"
+                                aria-label="Decrease quantity"
+                              >
+                                <Minus className="w-3.5 h-3.5" />
+                              </button>
+                              <span className="w-7 text-center font-bold text-xs">{activeQty}</span>
+                              <button
+                                type="button"
+                                onClick={() => selectedSize === '8oz' ? update8ozQty(item.id, 1) : update16ozQty(item.id, 1)}
+                                className="w-7 h-7 rounded-md flex items-center justify-center hover:bg-white text-gray-700 cursor-pointer"
+                                aria-label="Increase quantity"
+                              >
+                                <Plus className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          </div>
+
+                          {/* Add to Order Button */}
+                          <button
+                            type="button"
+                            onClick={() => handleAddDynamicContainer(item.name, selectedSize, activeUnitPrice, activeQty, activeDayObj)}
+                            className="w-full min-h-[42px] inline-flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-[#00346f] hover:bg-[#00224d] text-white transition-colors text-xs font-bold uppercase tracking-wider cursor-pointer shadow-xs"
+                          >
+                            <Plus className="w-4 h-4 text-[#ffdea5]" />
+                            <span>Add {activeQty} × {selectedSize} • ${totalItemPrice.toFixed(2)}</span>
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             );
-          })}
+          })()}
         </div>
+
+        {/* B) EVERYDAY $1.00 ADD-ONS & SIDES */}
+        <div className="bg-white rounded-3xl border border-gray-200 p-6 sm:p-8 shadow-xs space-y-4">
+          <div>
+            <span className="text-[10px] font-bold uppercase tracking-widest text-[#775a19] block">
+              HOMESTYLE EXTRAS &amp; BREADS
+            </span>
+            <h3 className="font-serif text-xl sm:text-2xl font-bold text-[#00346f]">
+              $1.00 Everyday Add-Ons &amp; Sides
+            </h3>
+            <p className="text-xs text-gray-500 mt-0.5">
+              Fresh hot rotis, fluffy puris, cooling raita, crisp papad, homestyle pickles &amp; salads to complement your meal.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-2">
+            {[
+              { id: 'roti', name: 'Phulka Tawa Roti', portion: '1 Pc', price: 1.00, desc: 'Fresh whole wheat tawa roti' },
+              { id: 'puri', name: 'Puri (2 Pcs)', portion: '2 Pcs Pack', price: 1.00, desc: 'Golden fluffy fried puris' },
+              { id: 'missi-roti', name: 'Missi Roti', portion: '1 Pc', price: 1.00, desc: 'Spiced besan flatbread' },
+              { id: 'raita', name: 'Boondi / Veg Raita (8oz)', portion: '8 oz Container', price: 1.00, desc: 'Cooling spiced yogurt raita' },
+              { id: 'papad', name: 'Roasted Papad', portion: '1 Pc', price: 1.00, desc: 'Crispy fire-roasted urad papad' },
+              { id: 'pickle', name: 'Homestyle Pickle', portion: '2 oz Dip', price: 1.00, desc: 'Spiced mango / chili pickle' },
+              { id: 'salad', name: 'Fresh Green Salad (8oz)', portion: '8 oz Container', price: 1.00, desc: 'Sliced cucumber, carrot & lemon' },
+              { id: 'chutney', name: 'Mint & Tamarind Chutney', portion: '4 oz Dip', price: 1.00, desc: 'Tangy sweet & mint chutneys' }
+            ].map(item => {
+              const qty = getAddonQty(item.id);
+              const totalPrice = item.price * qty;
+
+              return (
+                <div key={item.id} className="p-3.5 rounded-2xl border border-gray-200 bg-gray-50/70 hover:bg-white hover:border-[#00346f] transition-all flex flex-col justify-between gap-3 shadow-2xs">
+                  <div>
+                    <div className="flex items-center justify-between">
+                      <h4 className="font-bold text-xs sm:text-sm text-gray-900">{item.name}</h4>
+                      <span className="font-serif font-black text-xs text-[#00346f] bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
+                        ${item.price.toFixed(2)}
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-gray-500 mt-1">{item.desc}</p>
+                  </div>
+
+                  <div className="space-y-2 pt-2 border-t border-gray-200">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] font-semibold text-gray-600">Qty:</span>
+                      <div className="flex items-center bg-gray-100 rounded-lg p-0.5 border border-gray-200">
+                        <button
+                          type="button"
+                          onClick={() => updateAddonQty(item.id, -1)}
+                          className="w-6 h-6 rounded-md flex items-center justify-center hover:bg-white text-gray-700 cursor-pointer"
+                        >
+                          <Minus className="w-3 h-3" />
+                        </button>
+                        <span className="w-6 text-center font-bold text-xs">{qty}</span>
+                        <button
+                          type="button"
+                          onClick={() => updateAddonQty(item.id, 1)}
+                          className="w-6 h-6 rounded-md flex items-center justify-center hover:bg-white text-gray-700 cursor-pointer"
+                        >
+                          <Plus className="w-3 h-3" />
+                        </button>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => handleAddAddonItem(item.name, item.portion, item.price, qty)}
+                      className="w-full min-h-[36px] inline-flex items-center justify-center gap-1 py-1.5 px-2 rounded-xl border border-[#00346f] text-[#00346f] hover:bg-[#00346f] hover:text-white transition-colors text-[11px] font-bold uppercase tracking-wider cursor-pointer"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>Add {qty} • ${totalPrice.toFixed(2)}</span>
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* C) FRESH TAWA PARATHAS (STANDARD $5 / PREMIUM $6 FOR 2 PCS) */}
+        <div className="bg-white rounded-3xl border border-gray-200 p-6 sm:p-8 shadow-xs space-y-4">
+          <div>
+            <span className="text-[10px] font-bold uppercase tracking-widest text-[#775a19] block">
+              STUFFED TAWA PARATHAS (PACK OF 2)
+            </span>
+            <h3 className="font-serif text-xl sm:text-2xl font-bold text-[#00346f]">
+              Handcrafted Stuffed Parathas
+            </h3>
+            <p className="text-xs text-gray-500 mt-0.5">
+              Generously stuffed, whole wheat tawa parathas served in packs of 2 (multiples available).
+            </p>
+          </div>
+
+          <div className="space-y-4 pt-1">
+            {/* Standard Parathas ($5.00 for 2) */}
+            <div>
+              <h4 className="text-xs font-bold uppercase tracking-wider text-gray-700 mb-2 flex items-center gap-2">
+                <span>Standard Stuffed Parathas ($5.00 for 2 Pcs)</span>
+              </h4>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                {[
+                  { id: 'paratha-aloo', name: 'Aloo Paratha (2 Pcs)', portion: '2 Pcs Pack', price: 5.00, desc: 'Spiced potato stuffed parathas with butter' },
+                  { id: 'paratha-methi', name: 'Methi Paratha (2 Pcs)', portion: '2 Pcs Pack', price: 5.00, desc: 'Fresh fenugreek leaf parathas' },
+                  { id: 'paratha-pyaaz', name: 'Pyaaz Paratha (2 Pcs)', portion: '2 Pcs Pack', price: 5.00, desc: 'Spiced onion stuffed flatbreads' }
+                ].map(item => {
+                  const qty = getAddonQty(item.id);
+                  const totalPrice = item.price * qty;
+
+                  return (
+                    <div key={item.id} className="p-4 rounded-2xl border border-gray-200 bg-gray-50/70 hover:bg-white hover:border-[#00346f] transition-all flex flex-col justify-between gap-3 shadow-2xs">
+                      <div>
+                        <div className="flex items-center justify-between">
+                          <h4 className="font-bold text-xs sm:text-sm text-gray-900">{item.name}</h4>
+                          <span className="font-serif font-black text-xs text-[#00346f] bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200">
+                            $5.00 / 2 pcs
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-gray-500 mt-1">{item.desc}</p>
+                      </div>
+
+                      <div className="space-y-2 pt-2 border-t border-gray-200">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[11px] font-semibold text-gray-600">Packs (2 Pcs):</span>
+                          <div className="flex items-center bg-gray-100 rounded-lg p-0.5 border border-gray-200">
+                            <button
+                              type="button"
+                              onClick={() => updateAddonQty(item.id, -1)}
+                              className="w-6 h-6 rounded-md flex items-center justify-center hover:bg-white text-gray-700 cursor-pointer"
+                            >
+                              <Minus className="w-3 h-3" />
+                            </button>
+                            <span className="w-6 text-center font-bold text-xs">{qty}</span>
+                            <button
+                              type="button"
+                              onClick={() => updateAddonQty(item.id, 1)}
+                              className="w-6 h-6 rounded-md flex items-center justify-center hover:bg-white text-gray-700 cursor-pointer"
+                            >
+                              <Plus className="w-3 h-3" />
+                            </button>
+                          </div>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => handleAddAddonItem(item.name, item.portion, item.price, qty)}
+                          className="w-full min-h-[38px] inline-flex items-center justify-center gap-1 py-1.5 px-3 rounded-xl border border-[#00346f] text-[#00346f] hover:bg-[#00346f] hover:text-white transition-colors text-xs font-bold uppercase tracking-wider cursor-pointer"
+                        >
+                          <Plus className="w-3.5 h-3.5" />
+                          <span>Add {qty} Pack{qty !== 1 ? 's' : ''} • ${totalPrice.toFixed(2)}</span>
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Premium Parathas ($6.00 for 2) */}
+            <div>
+              <h4 className="text-xs font-bold uppercase tracking-wider text-gray-700 mb-2 flex items-center gap-2">
+                <span>Premium Stuffed Parathas ($6.00 for 2 Pcs)</span>
+              </h4>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                {[
+                  { id: 'paratha-paneer', name: 'Paneer Paratha (2 Pcs)', portion: '2 Pcs Pack', price: 6.00, desc: 'Grated paneer & herb stuffed parathas' },
+                  { id: 'paratha-gobhi', name: 'Gobhi Paratha (2 Pcs)', portion: '2 Pcs Pack', price: 6.00, desc: 'Spiced cauliflower stuffed parathas' },
+                  { id: 'paratha-mooli', name: 'Mooli Paratha (2 Pcs)', portion: '2 Pcs Pack', price: 6.00, desc: 'Traditional daikon radish parathas' }
+                ].map(item => {
+                  const qty = getAddonQty(item.id);
+                  const totalPrice = item.price * qty;
+
+                  return (
+                    <div key={item.id} className="p-4 rounded-2xl border border-purple-200 bg-purple-50/30 hover:bg-white hover:border-[#00346f] transition-all flex flex-col justify-between gap-3 shadow-2xs">
+                      <div>
+                        <div className="flex items-center justify-between">
+                          <h4 className="font-bold text-xs sm:text-sm text-gray-900">{item.name}</h4>
+                          <span className="font-serif font-black text-xs text-purple-900 bg-purple-100 px-2 py-0.5 rounded-md border border-purple-200">
+                            $6.00 / 2 pcs
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-gray-500 mt-1">{item.desc}</p>
+                      </div>
+
+                      <div className="space-y-2 pt-2 border-t border-gray-200">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[11px] font-semibold text-gray-600">Packs (2 Pcs):</span>
+                          <div className="flex items-center bg-gray-100 rounded-lg p-0.5 border border-gray-200">
+                            <button
+                              type="button"
+                              onClick={() => updateAddonQty(item.id, -1)}
+                              className="w-6 h-6 rounded-md flex items-center justify-center hover:bg-white text-gray-700 cursor-pointer"
+                            >
+                              <Minus className="w-3 h-3" />
+                            </button>
+                            <span className="w-6 text-center font-bold text-xs">{qty}</span>
+                            <button
+                              type="button"
+                              onClick={() => updateAddonQty(item.id, 1)}
+                              className="w-6 h-6 rounded-md flex items-center justify-center hover:bg-white text-gray-700 cursor-pointer"
+                            >
+                              <Plus className="w-3 h-3" />
+                            </button>
+                          </div>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => handleAddAddonItem(item.name, item.portion, item.price, qty)}
+                          className="w-full min-h-[38px] inline-flex items-center justify-center gap-1 py-1.5 px-3 rounded-xl border border-[#00346f] text-[#00346f] hover:bg-[#00346f] hover:text-white transition-colors text-xs font-bold uppercase tracking-wider cursor-pointer"
+                        >
+                          <Plus className="w-3.5 h-3.5" />
+                          <span>Add {qty} Pack{qty !== 1 ? 's' : ''} • ${totalPrice.toFixed(2)}</span>
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </div>
+
       </div>
 
       {/* ── 4. CURRENT TIFFIN CART ITEMS SUMMARY ── */}
