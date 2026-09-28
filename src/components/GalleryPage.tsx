@@ -10,7 +10,6 @@ import {
   Edit3, 
   Trash2, 
   Check, 
-  KeyRound,
   RotateCw,
   RefreshCw,
   Download,
@@ -453,90 +452,92 @@ export default function GalleryPage({ onNavigateToAdmin: _onNavigateToAdmin }: G
           <div className="h-0.5 w-20 bg-[#D4AF37] mt-6 mx-auto" />
 
           {/* Admin Mode Status & Toggle Bar */}
-          <div className="mt-8 flex items-center justify-center gap-3">
-            {isAdminMode ? (
-              <div className="flex flex-wrap items-center justify-center gap-3 bg-[#C85A32]/20 border border-[#C85A32]/50 text-[#ffdea5] p-3 rounded-2xl text-xs font-bold font-sans shadow-lg">
-                <span className="flex items-center gap-1.5 text-emerald-400 font-bold">
-                  <Check className="w-4 h-4" /> Admin Controls Unlocked
-                </span>
+          {isAdminMode ? (
+            <div className="mt-8 flex flex-wrap items-center justify-center gap-3 bg-[#C85A32]/20 border border-[#C85A32]/50 text-[#ffdea5] p-3 rounded-2xl text-xs font-bold font-sans shadow-lg">
+              <span className="flex items-center gap-1.5 text-emerald-400 font-bold">
+                <Check className="w-4 h-4" /> Admin Controls Unlocked
+              </span>
 
-                <button
-                  onClick={() => setShowAddModal(true)}
-                  className="bg-[#D4AF37] hover:bg-[#b5932a] text-[#1A1614] px-3.5 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all cursor-pointer flex items-center gap-1.5 shadow"
-                >
-                  <Plus className="w-3.5 h-3.5" /> Add Photo
-                </button>
-
-                <button
-                  onClick={async () => {
-                    setSyncStatus("Syncing live to Supabase...");
-                    const ok = await saveGalleryItemsToSupabase(items);
-                    if (ok) {
-                      setSyncStatus("✓ Synced live with Supabase & site!");
-                    } else {
-                      setSyncStatus("❌ Sync warning: Check browser console or network connection.");
-                    }
-                    setTimeout(() => setSyncStatus(""), 4000);
-                  }}
-                  className="bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all cursor-pointer flex items-center gap-1.5 shadow"
-                  title="Push current gallery items live to Supabase & all visitors"
-                >
-                  <RefreshCw className="w-3.5 h-3.5" /> Push &amp; Sync to Site
-                </button>
-
-                <button
-                  onClick={() => {
-                    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(items, null, 2));
-                    const downloadAnchor = document.createElement('a');
-                    downloadAnchor.setAttribute("href", dataStr);
-                    downloadAnchor.setAttribute("download", "galleryData.json");
-                    document.body.appendChild(downloadAnchor);
-                    downloadAnchor.click();
-                    downloadAnchor.remove();
-                  }}
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-3.5 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all cursor-pointer flex items-center gap-1.5 shadow"
-                  title="Export updated gallery items JSON file"
-                >
-                  <Download className="w-3.5 h-3.5" /> Export JSON
-                </button>
-
-                <button
-                  onClick={() => {
-                    if (window.confirm("Reset gallery cache to initial site defaults?")) {
-                      clearDeletedGalleryIds();
-                      setItems(initialGalleryData as GalleryItem[]);
-                      saveGalleryItemsToSupabase(initialGalleryData as GalleryItem[]);
-                    }
-                  }}
-                  className="bg-amber-600/30 hover:bg-amber-600/50 text-amber-200 border border-amber-500/40 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer"
-                  title="Reset cache to initial site bundled items"
-                >
-                  Reset Defaults
-                </button>
-
-                <button
-                  onClick={() => setIsAdminMode(false)}
-                  className="bg-white/10 hover:bg-white/20 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer"
-                >
-                  Exit Admin
-                </button>
-
-                {syncStatus && (
-                  <span className="w-full text-center text-xs text-emerald-300 font-bold animate-pulse pt-1">
-                    {syncStatus}
-                  </span>
-                )}
-              </div>
-            ) : (
               <button
-                onClick={() => setShowPinModal(true)}
-                className="inline-flex items-center gap-2 bg-[#241E1B] hover:bg-[#382F2A] text-[#D4AF37] border border-[#D4AF37]/30 px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer shadow-sm"
+                onClick={() => setShowAddModal(true)}
+                className="bg-[#D4AF37] hover:bg-[#b5932a] text-[#1A1614] px-3.5 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all cursor-pointer flex items-center gap-1.5 shadow"
               >
-                <KeyRound className="w-3.5 h-3.5 text-[#D4AF37]" />
-                <span>Admin Gallery Portal</span>
+                <Plus className="w-3.5 h-3.5" /> Add Photo
               </button>
-            )}
-          </div>
+
+              <button
+                onClick={async () => {
+                  setSyncStatus("Syncing live to Supabase...");
+                  const ok = await saveGalleryItemsToSupabase(items);
+                  if (ok) {
+                    setSyncStatus("✓ Synced live with Supabase & site!");
+                  } else {
+                    setSyncStatus("❌ Sync warning: Check browser console or network connection.");
+                  }
+                  setTimeout(() => setSyncStatus(""), 4000);
+                }}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all cursor-pointer flex items-center gap-1.5 shadow"
+                title="Push current gallery items live to Supabase & all visitors"
+              >
+                <RefreshCw className="w-3.5 h-3.5" /> Push &amp; Sync to Site
+              </button>
+
+              <button
+                onClick={() => {
+                  const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(items, null, 2));
+                  const downloadAnchor = document.createElement('a');
+                  downloadAnchor.setAttribute("href", dataStr);
+                  downloadAnchor.setAttribute("download", "galleryData.json");
+                  document.body.appendChild(downloadAnchor);
+                  downloadAnchor.click();
+                  downloadAnchor.remove();
+                }}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-3.5 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all cursor-pointer flex items-center gap-1.5 shadow"
+                title="Export updated gallery items JSON file"
+              >
+                <Download className="w-3.5 h-3.5" /> Export JSON
+              </button>
+
+              <button
+                onClick={() => {
+                  if (window.confirm("Reset gallery cache to initial site defaults?")) {
+                    clearDeletedGalleryIds();
+                    setItems(initialGalleryData as GalleryItem[]);
+                    saveGalleryItemsToSupabase(initialGalleryData as GalleryItem[]);
+                  }
+                }}
+                className="bg-amber-600/30 hover:bg-amber-600/50 text-amber-200 border border-amber-500/40 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer"
+                title="Reset cache to initial site bundled items"
+              >
+                Reset Defaults
+              </button>
+
+              <button
+                onClick={() => setIsAdminMode(false)}
+                className="bg-white/10 hover:bg-white/20 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer"
+              >
+                Exit Admin
+              </button>
+
+              {syncStatus && (
+                <span className="w-full text-center text-xs text-emerald-300 font-bold animate-pulse pt-1">
+                  {syncStatus}
+                </span>
+              )}
+            </div>
+          ) : (
+            <div className="flex justify-end pt-2">
+              <button
+                type="button"
+                onClick={() => setShowPinModal(true)}
+                className="p-1.5 rounded-md text-gray-600 hover:text-[#D4AF37] transition-all opacity-30 hover:opacity-100 cursor-pointer flex items-center gap-1 text-[10px]"
+                title="Admin Portal"
+                aria-label="Admin Portal"
+              >
+                <Lock className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Category Filters Bar */}
