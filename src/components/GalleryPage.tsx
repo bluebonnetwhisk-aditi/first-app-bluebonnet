@@ -162,9 +162,9 @@ const mergeWithInitialData = (sourceItems: any[]): GalleryItem[] => {
 
       return {
         ...item,
-        title: initMatch.title || item.title,
-        category: initMatch.category || item.category,
-        autoDescription: initMatch.autoDescription || item.autoDescription,
+        title: item.title || initMatch.title,
+        category: (item.category && item.category.length > 0) ? item.category : initMatch.category,
+        autoDescription: item.autoDescription !== undefined ? item.autoDescription : (initMatch.autoDescription || ''),
         imagePath: effectiveImagePath,
         originalImagePath: effectiveOrigPath,
         visible: item.visible !== undefined ? item.visible : true,
