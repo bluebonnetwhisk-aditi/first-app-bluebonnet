@@ -117,6 +117,26 @@ export default function TiffinOrderView({
     }));
   };
 
+  // Container size selection (8oz vs 16oz) and quantity state
+  const [containerSizeSelection, setContainerSizeSelection] = useState<Record<string, '8oz' | '16oz'>>({});
+  const [container8ozQty, setContainer8ozQty] = useState<Record<string, number>>({});
+  const [container16ozQty, setContainer16ozQty] = useState<Record<string, number>>({});
+
+  const getContainerSize = (id: string) => containerSizeSelection[id] || '16oz';
+  const setContainerSize = (id: string, size: '8oz' | '16oz') => {
+    setContainerSizeSelection(prev => ({ ...prev, [id]: size }));
+  };
+
+  const get8ozQty = (id: string) => container8ozQty[id] || 1;
+  const update8ozQty = (id: string, delta: number) => {
+    setContainer8ozQty(prev => ({ ...prev, [id]: Math.max(1, (prev[id] || 1) + delta) }));
+  };
+
+  const get16ozQty = (id: string) => container16ozQty[id] || 1;
+  const update16ozQty = (id: string, delta: number) => {
+    setContainer16ozQty(prev => ({ ...prev, [id]: Math.max(1, (prev[id] || 1) + delta) }));
+  };
+
   // Saturday / Weekend Chef's Specials List
   const specialsList: TiffinSpecialDish[] = (settings.specialDishes && settings.specialDishes.length > 0)
     ? settings.specialDishes
@@ -1035,18 +1055,18 @@ export default function TiffinOrderView({
       {activeTab === 'alacarte' && (
         <div className="space-y-6 animate-fade-in">
 
-          {/* A) DYNAMIC 8 OZ / 16 OZ CONTAINERS FOR ACTIVE DAY */}
+          {/* A) DAILY TUBS (8 OZ & 16 OZ) FOR ACTIVE DAY */}
           <div className="bg-white rounded-3xl border border-gray-200 p-6 sm:p-8 shadow-xs space-y-5">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-gray-150 pb-4">
               <div>
                 <span className="text-[10px] font-bold uppercase tracking-widest text-[#775a19] block">
-                  DYNAMIC DAILY TUBS (8 OZ &amp; 16 OZ)
+                  DAILY TUBS (8 OZ &amp; 16 OZ)
                 </span>
                 <h3 className="font-serif text-xl sm:text-2xl font-bold text-[#00346f]">
-                  Today's Curry, Sabzi &amp; Rice Containers
+                  Daily Tubs for Curry, Sabzi &amp; Rice
                 </h3>
                 <p className="text-xs text-gray-500 mt-0.5">
-                  Order extra tubs of today’s fresh menu items for <strong>{activeDay?.dayName} ({activeDay?.displayDate})</strong>.
+                  Order extra tubs of today’s fresh menu items for <strong>{activeDay?.dayName} ({activeDay?.displayDate})</strong> in multiple quantities.
                 </p>
               </div>
 
@@ -1089,47 +1109,96 @@ export default function TiffinOrderView({
 
               return (
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {containerItems.map(item => (
-                    <div 
-                      key={item.id} 
-                      className="p-5 rounded-2xl border border-gray-200 bg-gray-50/60 hover:bg-white hover:border-[#00346f] transition-all flex flex-col justify-between gap-4 shadow-2xs"
-                    >
-                      <div>
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-[#775a19] bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200 inline-block mb-1.5">
-                          {item.tag}
-                        </span>
-                        <h4 className="font-bold text-sm text-gray-900">{item.name}</h4>
-                        <p className="text-[11px] text-gray-500 mt-1">Fresh portion for {activeDay.displayDate}</p>
-                      </div>
+                  {containerItems.map(item => {
+                    const selectedSize = getContainerSize(item.id);
+                    const qty8 = get8ozQty(item.id);
+                    const qty16 = get16ozQty(item.id);
+                    const activeQty = selectedSize === '8oz' ? qty8 : qty16;
+                    const activeUnitPrice = selectedSize === '8oz' ? item.p8oz : item.p16oz;
+                    const totalItemPrice = activeUnitPrice * activeQty;
 
-                      {/* Direct Quick-Add Buttons for 8 oz and 16 oz */}
-                      <div className="space-y-2 pt-3 border-t border-gray-200">
-                        <button
-                          type="button"
-                          onClick={() => handleAddDynamicContainer(item.name, '8oz', item.p8oz, 1, activeDay)}
-                          className="w-full py-2 px-3 rounded-xl border border-[#00346f] text-[#00346f] hover:bg-[#00346f] hover:text-white transition-all text-xs font-bold flex items-center justify-between cursor-pointer"
-                        >
-                          <span className="flex items-center gap-1">
-                            <Plus className="w-3.5 h-3.5" />
-                            <span>Add 8 oz</span>
-                          </span>
-                          <span className="font-serif font-extrabold">${item.p8oz.toFixed(2)}</span>
-                        </button>
+                    return (
+                      <div 
+                        key={item.id} 
+                        className="p-5 rounded-2xl border border-gray-200 bg-gray-50/60 hover:bg-white hover:border-[#00346f] transition-all flex flex-col justify-between gap-4 shadow-2xs"
+                      >
+                        <div>
+                          <div className="flex items-center justify-between">
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-[#775a19] bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200">
+                              {item.tag}
+                            </span>
+                            <span className="font-serif font-extrabold text-base text-[#00346f]">
+                              ${activeUnitPrice.toFixed(2)}
+                            </span>
+                          </div>
+                          <h4 className="font-bold text-sm text-gray-900 mt-2">{item.name}</h4>
+                          <p className="text-[11px] text-gray-500 mt-1">Fresh portion for {activeDay.displayDate}</p>
+                        </div>
 
-                        <button
-                          type="button"
-                          onClick={() => handleAddDynamicContainer(item.name, '16oz', item.p16oz, 1, activeDay)}
-                          className="w-full py-2 px-3 rounded-xl bg-[#00346f] hover:bg-[#00224d] text-white transition-all text-xs font-bold flex items-center justify-between cursor-pointer shadow-xs"
-                        >
-                          <span className="flex items-center gap-1">
-                            <Plus className="w-3.5 h-3.5 text-[#ffdea5]" />
-                            <span>Add 16 oz</span>
-                          </span>
-                          <span className="font-serif font-extrabold">${item.p16oz.toFixed(2)}</span>
-                        </button>
+                        <div className="space-y-3 pt-3 border-t border-gray-200">
+                          {/* Size Selector Tabs (8oz vs 16oz) */}
+                          <div className="flex items-center gap-1 bg-gray-200/70 p-1 rounded-xl">
+                            <button
+                              type="button"
+                              onClick={() => setContainerSize(item.id, '8oz')}
+                              className={`flex-1 py-1.5 text-center text-xs font-bold rounded-lg transition-all cursor-pointer ${
+                                selectedSize === '8oz'
+                                  ? 'bg-white text-[#00346f] shadow-xs font-extrabold'
+                                  : 'text-gray-600 hover:text-gray-900'
+                              }`}
+                            >
+                              8 oz (${item.p8oz.toFixed(2)})
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setContainerSize(item.id, '16oz')}
+                              className={`flex-1 py-1.5 text-center text-xs font-bold rounded-lg transition-all cursor-pointer ${
+                                selectedSize === '16oz'
+                                  ? 'bg-white text-[#00346f] shadow-xs font-extrabold'
+                                  : 'text-gray-600 hover:text-gray-900'
+                              }`}
+                            >
+                              16 oz (${item.p16oz.toFixed(2)})
+                            </button>
+                          </div>
+
+                          {/* Quantity Stepper Selector */}
+                          <div className="flex items-center justify-between">
+                            <span className="text-[11px] font-semibold text-gray-600">Quantity:</span>
+                            <div className="flex items-center bg-gray-100 rounded-lg p-0.5 border border-gray-200">
+                              <button
+                                type="button"
+                                onClick={() => selectedSize === '8oz' ? update8ozQty(item.id, -1) : update16ozQty(item.id, -1)}
+                                className="w-7 h-7 rounded-md flex items-center justify-center hover:bg-white text-gray-700 cursor-pointer"
+                                aria-label="Decrease quantity"
+                              >
+                                <Minus className="w-3.5 h-3.5" />
+                              </button>
+                              <span className="w-7 text-center font-bold text-xs">{activeQty}</span>
+                              <button
+                                type="button"
+                                onClick={() => selectedSize === '8oz' ? update8ozQty(item.id, 1) : update16ozQty(item.id, 1)}
+                                className="w-7 h-7 rounded-md flex items-center justify-center hover:bg-white text-gray-700 cursor-pointer"
+                                aria-label="Increase quantity"
+                              >
+                                <Plus className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          </div>
+
+                          {/* Add to Order Button */}
+                          <button
+                            type="button"
+                            onClick={() => handleAddDynamicContainer(item.name, selectedSize, activeUnitPrice, activeQty, activeDay)}
+                            className="w-full min-h-[42px] inline-flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-[#00346f] hover:bg-[#00224d] text-white transition-colors text-xs font-bold uppercase tracking-wider cursor-pointer shadow-xs"
+                          >
+                            <Plus className="w-4 h-4 text-[#ffdea5]" />
+                            <span>Add {activeQty} × {selectedSize} • ${totalItemPrice.toFixed(2)}</span>
+                          </button>
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               );
             })()}
