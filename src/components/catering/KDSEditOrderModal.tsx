@@ -9,9 +9,12 @@ import {
   AlertCircle, 
   Save, 
   FileEdit,
-  Percent
+  Percent,
+  Search,
+  UtensilsCrossed
 } from 'lucide-react';
 import type { CateringOrder, CartItem } from '../../types/catering';
+import { DESI_DABBA_ITEMS } from '../../data/desiDabbaMenu';
 import { updateOrderDetails } from '../../services/supabase';
 
 interface KDSEditOrderModalProps {
@@ -57,7 +60,7 @@ function parseInitialOrderItems(order: CateringOrder): CartItem[] {
         name: dishName,
         category: item.category || 'mains',
         categoryLabel: item.categoryLabel || 'Mains',
-        selectionLabel: item.selectionLabel || item.selectionType || item.portion || item.size || 'Standard Portion',
+        selectionLabel: item.selectionLabel || item.selectionType || item.portion || item.size || 'Half Tray',
         quantity,
         unitPrice,
         totalPrice
@@ -94,7 +97,7 @@ function parseInitialOrderItems(order: CateringOrder): CartItem[] {
         category: 'mains',
         categoryLabel: 'Mains',
         selectionType: 'pieces',
-        selectionLabel: 'Order Item',
+        selectionLabel: 'Half Tray',
         quantity,
         unitPrice,
         totalPrice: totalPrice || Math.round(unitPrice * quantity * 100) / 100,
@@ -117,7 +120,6 @@ export default function KDSEditOrderModal({
   const [items, setItems] = useState<CartItem[]>(() => parseInitialOrderItems(order));
 
   // Two discount sections: Percent (%) discount and Fixed Amount ($) discount
-  // Do NOT prepopulate any numbers in the discount inputs
   const [percentDiscountInput, setPercentDiscountInput] = useState<string>('');
   const [percentDiscountReason, setPercentDiscountReason] = useState<string>('');
   const [fixedDiscountInput, setFixedDiscountInput] = useState<string>(() => {
@@ -125,12 +127,14 @@ export default function KDSEditOrderModal({
   });
   const [fixedDiscountReason, setFixedDiscountReason] = useState<string>(order.discount_reason || '');
 
-  // Add new item state
+  // Add new item state with dynamic menu search
   const [showAddItem, setShowAddItem] = useState(false);
   const [newItemName, setNewItemName] = useState('');
+  const [newItemPortion, setNewItemPortion] = useState('Half Tray');
   const [newItemQty, setNewItemQty] = useState(1);
-  const [newItemPrice, setNewItemPrice] = useState(15.00);
+  const [newItemPrice, setNewItemPrice] = useState(50.00);
   const [newItemNotes, setNewItemNotes] = useState('');
+  const [showMenuDropdown, setShowMenuDropdown] = useState(false);
 
   // Saving state
   const [isSaving, setIsSaving] = useState(false);
@@ -222,7 +226,7 @@ export default function KDSEditOrderModal({
     setItems(prev => prev.filter((_, i) => i !== idx));
   };
 
-  // Add new custom item
+  // Add new custom item with dynamic menu search & portion size
   const handleAddNewItem = () => {
     if (!newItemName.trim()) return;
 
@@ -231,9 +235,9 @@ export default function KDSEditOrderModal({
       menuItemId: `custom-${Date.now()}`,
       name: newItemName.trim(),
       category: 'mains',
-      categoryLabel: 'Custom Addition',
+      categoryLabel: 'Mains',
       selectionType: 'pieces',
-      selectionLabel: 'Custom KDS Item',
+      selectionLabel: newItemPortion.trim() || 'Half Tray',
       quantity: newItemQty,
       unitPrice: newItemPrice,
       totalPrice: Math.round(newItemPrice * newItemQty * 100) / 100,
@@ -244,10 +248,12 @@ export default function KDSEditOrderModal({
 
     setItems(prev => [...prev, newItem]);
     setNewItemName('');
+    setNewItemPortion('Half Tray');
     setNewItemQty(1);
-    setNewItemPrice(15.00);
+    setNewItemPrice(50.00);
     setNewItemNotes('');
     setShowAddItem(false);
+    setShowMenuDropdown(false);
   };
 
   // Save changes to Supabase
@@ -296,18 +302,18 @@ export default function KDSEditOrderModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-xs p-3 sm:p-4 overflow-y-auto animate-fade-in font-sans">
-      <div className="relative w-full max-w-3xl bg-white rounded-2xl shadow-2xl border border-gray-200 overflow-hidden my-6 max-h-[92vh] flex flex-col">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-xs p-2 sm:p-4 overflow-y-auto animate-fade-in font-sans">
+      <div className="relative w-full max-w-3xl bg-white rounded-2xl shadow-2xl border border-gray-200 overflow-hidden my-2 sm:my-6 max-h-[96vh] flex flex-col">
         
         {/* Header */}
-        <div className="bg-[#00346f] text-white p-5 flex items-center justify-between shrink-0">
-          <div className="flex items-center gap-2">
-            <FileEdit className="w-5 h-5 text-[#ffdea5]" />
-            <div>
-              <span className="text-[10px] font-bold uppercase tracking-widest text-[#ffdea5] block">
-                BLUEBONNET ORDER SYSTEM • ORDER MODIFIER
+        <div className="bg-[#00346f] text-white p-3.5 sm:p-5 flex items-center justify-between shrink-0">
+          <div className="flex items-center gap-2 min-w-0">
+            <FileEdit className="w-5 h-5 text-[#ffdea5] shrink-0" />
+            <div className="min-w-0">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-[#ffdea5] block truncate">
+                BLUEBONNET ORDER MODIFIER
               </span>
-              <h3 className="font-serif text-lg font-bold">
+              <h3 className="font-serif text-sm sm:text-lg font-bold truncate">
                 Edit Order #{order.id.slice(0, 8).toUpperCase()} — {order.customer_name}
               </h3>
             </div>
@@ -315,19 +321,19 @@ export default function KDSEditOrderModal({
           <button
             type="button"
             onClick={onClose}
-            className="p-1.5 rounded-full text-white/80 hover:text-white hover:bg-white/10"
+            className="p-1.5 rounded-full text-white/80 hover:text-white hover:bg-white/10 shrink-0"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Scrollable Body */}
-        <div className="p-6 overflow-y-auto space-y-6">
+        <div className="p-3 sm:p-6 overflow-y-auto space-y-4 sm:space-y-6">
           
           {saveSuccess && (
             <div className="p-3 bg-emerald-50 border border-emerald-300 text-emerald-900 rounded-xl text-xs font-bold flex items-center gap-2">
-              <Check className="w-4 h-4 text-emerald-600" />
-              <span>✓ Order items, discounts &amp; totals successfully updated and synced with Supabase!</span>
+              <Check className="w-4 h-4 text-emerald-600 shrink-0" />
+              <span>✓ Order items &amp; totals successfully updated and synced!</span>
             </div>
           )}
 
@@ -354,20 +360,95 @@ export default function KDSEditOrderModal({
               </button>
             </div>
 
-            {/* Quick Add Form */}
+            {/* Quick Add Form with Dynamic Catering Menu Search */}
             {showAddItem && (
-              <div className="p-4 bg-gray-50 border border-gray-250 rounded-xl space-y-3 animate-fade-in">
-                <span className="text-xs font-bold text-gray-800 block">Add New Dish / Special Item</span>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  <input
-                    type="text"
-                    placeholder="Dish Name (e.g. Extra Dal Makhani)"
-                    value={newItemName}
-                    onChange={(e) => setNewItemName(e.target.value)}
-                    className="sm:col-span-2 px-3 py-2 text-xs bg-white border border-gray-300 rounded-lg focus:outline-none focus:border-[#00346f]"
-                  />
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs text-gray-500 font-bold">$</span>
+              <div className="p-3.5 sm:p-4 bg-blue-50/50 border border-blue-200 rounded-xl space-y-3 animate-fade-in">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-[#00346f] flex items-center gap-1.5">
+                    <UtensilsCrossed className="w-3.5 h-3.5 text-[#00346f]" />
+                    <span>Add Dish from Catering Menu or Custom Item</span>
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setShowAddItem(false)}
+                    className="text-gray-400 hover:text-gray-700"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-12 gap-2.5">
+                  {/* Search / Dish Name Input */}
+                  <div className="relative sm:col-span-6">
+                    <div className="relative">
+                      <input
+                        type="text"
+                        placeholder="Search catering menu or enter dish name..."
+                        value={newItemName}
+                        onChange={(e) => {
+                          setNewItemName(e.target.value);
+                          setShowMenuDropdown(true);
+                        }}
+                        onFocus={() => setShowMenuDropdown(true)}
+                        className="w-full pl-8 pr-3 py-2 text-xs bg-white border border-gray-300 rounded-lg focus:outline-none focus:border-[#00346f] font-bold text-gray-900"
+                      />
+                      <Search className="w-3.5 h-3.5 text-gray-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                    </div>
+
+                    {/* Dynamic Menu Dropdown */}
+                    {showMenuDropdown && newItemName.trim().length > 0 && (
+                      <div className="absolute left-0 right-0 top-full mt-1 bg-white border border-gray-250 rounded-xl shadow-xl z-50 max-h-48 overflow-y-auto">
+                        {DESI_DABBA_ITEMS.filter(m => 
+                          m.name.toLowerCase().includes(newItemName.toLowerCase()) || 
+                          m.categoryLabel.toLowerCase().includes(newItemName.toLowerCase())
+                        ).length > 0 ? (
+                          DESI_DABBA_ITEMS.filter(m => 
+                            m.name.toLowerCase().includes(newItemName.toLowerCase()) || 
+                            m.categoryLabel.toLowerCase().includes(newItemName.toLowerCase())
+                          ).slice(0, 10).map(m => (
+                            <button
+                              key={m.id}
+                              type="button"
+                              onClick={() => {
+                                setNewItemName(m.name);
+                                setNewItemPrice(m.trayPricing?.half || m.pricePer30Pcs || m.unitPricePiece || 50.00);
+                                setNewItemPortion(m.pricingType === 'tray' ? 'Half Tray' : m.pricingType === 'bread' ? '30 Pcs' : '16 oz Container');
+                                setShowMenuDropdown(false);
+                              }}
+                              className="w-full text-left px-3 py-2 hover:bg-blue-50 flex items-center justify-between border-b border-gray-100 last:border-0 cursor-pointer text-xs"
+                            >
+                              <div>
+                                <span className="font-bold text-gray-900 block">{m.name}</span>
+                                <span className="text-[10px] text-gray-500 block">{m.categoryLabel} {m.tier ? `• ${m.tier}` : ''}</span>
+                              </div>
+                              <span className="font-mono text-[11px] font-bold text-[#00346f]">
+                                ${m.trayPricing?.half || m.pricePer30Pcs || m.unitPricePiece || 50.00}
+                              </span>
+                            </button>
+                          ))
+                        ) : (
+                          <div className="p-2.5 text-[11px] text-gray-500 italic text-center">
+                            Custom entry: "{newItemName}"
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Portion Size Input */}
+                  <div className="sm:col-span-3">
+                    <input
+                      type="text"
+                      placeholder="Portion (e.g. Half Tray / 16 oz)"
+                      value={newItemPortion}
+                      onChange={(e) => setNewItemPortion(e.target.value)}
+                      className="w-full px-3 py-2 text-xs bg-white border border-gray-300 rounded-lg focus:outline-none focus:border-[#00346f]"
+                    />
+                  </div>
+
+                  {/* Price Input */}
+                  <div className="sm:col-span-3 flex items-center gap-1">
+                    <span className="text-xs text-gray-400 font-bold">$</span>
                     <input
                       type="number"
                       step="0.01"
@@ -375,23 +456,24 @@ export default function KDSEditOrderModal({
                       placeholder="Unit Price"
                       value={newItemPrice}
                       onChange={(e) => setNewItemPrice(parseFloat(e.target.value) || 0)}
-                      className="w-full px-2 py-2 text-xs bg-white border border-gray-300 rounded-lg focus:outline-none focus:border-[#00346f]"
+                      className="w-full px-2 py-2 text-xs bg-white border border-gray-300 rounded-lg focus:outline-none focus:border-[#00346f] text-right font-mono font-bold"
                     />
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between gap-3">
+                {/* Notes & Confirm Add Row */}
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2">
                   <input
                     type="text"
-                    placeholder="Optional notes or portions"
+                    placeholder="Notes or description (e.g. Satvik / Extra Spicy)"
                     value={newItemNotes}
                     onChange={(e) => setNewItemNotes(e.target.value)}
-                    className="flex-1 px-3 py-1.5 text-xs bg-white border border-gray-300 rounded-lg"
+                    className="flex-1 px-3 py-1.5 text-xs bg-white border border-gray-300 rounded-lg focus:outline-none focus:border-[#00346f]"
                   />
                   <button
                     type="button"
                     onClick={handleAddNewItem}
-                    className="px-4 py-2 bg-[#00346f] text-white text-xs font-bold rounded-lg hover:bg-[#00224d] cursor-pointer shrink-0"
+                    className="px-4 py-2 bg-[#00346f] text-white text-xs font-bold rounded-lg hover:bg-[#00224d] cursor-pointer shrink-0 text-center"
                   >
                     Confirm Add
                   </button>
@@ -407,22 +489,35 @@ export default function KDSEditOrderModal({
             ) : (
               <div className="space-y-2">
                 {items.map((item, idx) => (
-                  <div key={item.id || idx} className="p-3.5 bg-white border border-gray-250 rounded-xl flex items-center justify-between gap-3 shadow-2xs">
+                  <div key={item.id || idx} className="p-3 sm:p-3.5 bg-white border border-gray-250 rounded-xl space-y-2.5 sm:space-y-0 sm:flex sm:items-center sm:justify-between sm:gap-3 shadow-2xs">
+                    
+                    {/* Dish Name & Portion inputs */}
                     <div className="flex-1 min-w-0 space-y-1.5">
-                      <div>
-                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">Dish / Item Name:</span>
+                      <input
+                        type="text"
+                        value={item.name || ''}
+                        onChange={(e) => handleItemNameChange(idx, e.target.value)}
+                        placeholder="Dish Name"
+                        className="w-full font-bold text-xs sm:text-sm text-gray-900 bg-white border border-gray-300 rounded-lg px-2.5 py-1.5 focus:border-[#00346f] focus:outline-none focus:ring-1 focus:ring-[#00346f]"
+                      />
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
                         <input
                           type="text"
-                          value={item.name || ''}
-                          onChange={(e) => handleItemNameChange(idx, e.target.value)}
-                          placeholder="Dish / Item Name"
-                          className="w-full font-bold text-xs sm:text-sm text-gray-900 bg-white border border-gray-300 rounded-lg px-2.5 py-1 focus:border-[#00346f] focus:outline-none focus:ring-1 focus:ring-[#00346f]"
+                          value={item.selectionLabel || ''}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setItems(prev => {
+                              const copy = [...prev];
+                              copy[idx].selectionLabel = val;
+                              return copy;
+                            });
+                          }}
+                          placeholder="Portion Size (e.g. Half Tray / 16 oz)"
+                          className="w-full text-xs text-gray-700 bg-gray-50 border border-gray-250 rounded-lg px-2 py-1 focus:bg-white focus:border-[#00346f] focus:outline-none"
                         />
-                      </div>
-                      <div>
                         <input
                           type="text"
-                          value={item.notes || item.selectionLabel || ''}
+                          value={item.notes || ''}
                           onChange={(e) => {
                             const val = e.target.value;
                             setItems(prev => {
@@ -431,32 +526,31 @@ export default function KDSEditOrderModal({
                               return copy;
                             });
                           }}
-                          placeholder="Portion / Menu details (e.g. 16 oz, Dal Makhani + Sabzi)"
-                          className="w-full text-xs text-gray-600 bg-gray-50 border border-gray-250 rounded-lg px-2 py-0.5 focus:bg-white focus:border-[#00346f] focus:outline-none"
+                          placeholder="Notes / Description"
+                          className="w-full text-xs text-gray-600 bg-gray-50 border border-gray-250 rounded-lg px-2 py-1 focus:bg-white focus:border-[#00346f] focus:outline-none"
                         />
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-3 shrink-0">
-                      {/* Unit Price Input */}
+                    {/* Controls Row: Price, Qty, Subtotal, Delete */}
+                    <div className="flex items-center justify-between sm:justify-end gap-2 sm:gap-3 pt-2 sm:pt-0 border-t sm:border-t-0 border-gray-150 shrink-0">
                       <div className="flex items-center gap-1 text-xs">
-                        <span className="text-gray-400">$</span>
+                        <span className="text-gray-400 font-bold">$</span>
                         <input
                           type="number"
                           step="0.01"
                           min="0"
                           value={item.unitPrice}
                           onChange={(e) => handleItemUnitPriceChange(idx, parseFloat(e.target.value) || 0)}
-                          className="w-16 px-1.5 py-1 text-xs text-right border border-gray-300 rounded focus:border-[#00346f]"
+                          className="w-16 px-1.5 py-1 text-xs text-right border border-gray-300 rounded-lg font-mono font-bold focus:border-[#00346f]"
                         />
                       </div>
 
-                      {/* Streamlined Quantity Controls (Box removed) */}
-                      <div className="flex items-center gap-1 text-xs">
+                      <div className="flex items-center gap-1 text-xs bg-gray-100 px-1.5 py-0.5 rounded-lg border border-gray-200">
                         <button
                           type="button"
                           onClick={() => handleItemQtyChange(idx, -1)}
-                          className="w-6 h-6 rounded-md hover:bg-gray-150 text-gray-700 flex items-center justify-center cursor-pointer transition-colors"
+                          className="w-6 h-6 rounded hover:bg-white text-gray-700 flex items-center justify-center cursor-pointer transition-colors"
                           title="Decrease quantity"
                         >
                           <Minus className="w-3.5 h-3.5" />
@@ -465,28 +559,27 @@ export default function KDSEditOrderModal({
                         <button
                           type="button"
                           onClick={() => handleItemQtyChange(idx, 1)}
-                          className="w-6 h-6 rounded-md hover:bg-gray-150 text-gray-700 flex items-center justify-center cursor-pointer transition-colors"
+                          className="w-6 h-6 rounded hover:bg-white text-gray-700 flex items-center justify-center cursor-pointer transition-colors"
                           title="Increase quantity"
                         >
                           <Plus className="w-3.5 h-3.5" />
                         </button>
                       </div>
 
-                      {/* Item Subtotal */}
                       <span className="w-16 text-right font-mono font-bold text-xs text-gray-900">
                         ${(item.unitPrice * item.quantity).toFixed(2)}
                       </span>
 
-                      {/* Delete */}
                       <button
                         type="button"
                         onClick={() => handleDeleteItem(idx)}
-                        className="p-1 rounded text-rose-500 hover:text-rose-700 hover:bg-rose-50 cursor-pointer"
+                        className="p-1.5 rounded-lg text-rose-500 hover:text-rose-700 hover:bg-rose-50 cursor-pointer"
                         title="Delete item"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
+
                   </div>
                 ))}
               </div>
