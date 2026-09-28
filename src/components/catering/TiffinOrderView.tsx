@@ -571,7 +571,7 @@ export default function TiffinOrderView({
           title="Click to expand full menu flyer"
         >
           <img
-            src={settings.saturdaySpecialImageUrl || "/tiffin-flyer.jpg"}
+            src={settings.flyerImageUrl || "/tiffin-flyer.jpg"}
             alt="Weekly Tiffin Menu Flyer Thumbnail"
             className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-300 opacity-90 group-hover:opacity-100"
           />
@@ -1441,35 +1441,47 @@ export default function TiffinOrderView({
       {/* ── 7. FLYER LIGHTBOX MODAL ── */}
       {isLightboxOpen && createPortal(
         <div 
-          className="fixed inset-0 z-[9999] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 sm:p-6 animate-fade-in"
+          className="fixed inset-0 z-[9999] bg-black/90 backdrop-blur-md flex items-center justify-center p-2 sm:p-4 md:p-6 animate-fade-in"
           onClick={() => setIsLightboxOpen(false)}
         >
           <div 
-            className="relative bg-gray-900 rounded-3xl max-w-4xl w-full max-h-[90vh] flex flex-col overflow-hidden shadow-2xl border border-white/10"
+            className="relative bg-gray-950 rounded-3xl max-w-5xl w-full max-h-[96vh] flex flex-col overflow-hidden shadow-2xl border border-white/20"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="p-4 bg-gray-950 text-white flex items-center justify-between border-b border-gray-800">
+            <div className="p-3.5 sm:p-4 bg-gray-900 text-white flex items-center justify-between border-b border-gray-800 shrink-0">
               <div className="flex items-center gap-2">
                 <FileText className="w-5 h-5 text-[#ffdea5]" />
                 <span className="font-serif font-bold text-sm sm:text-base">
                   Desi Dabba Weekly Tiffin Menu Flyer
                 </span>
               </div>
-              <button
-                type="button"
-                onClick={() => setIsLightboxOpen(false)}
-                className="w-8 h-8 rounded-full bg-gray-800 hover:bg-gray-700 text-gray-300 flex items-center justify-center cursor-pointer transition-colors"
-                aria-label="Close lightbox"
-              >
-                <X className="w-5 h-5" />
-              </button>
+              <div className="flex items-center gap-2">
+                <a
+                  href={settings.flyerImageUrl || "/tiffin-flyer.jpg"}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-3 py-1.5 bg-gray-800 hover:bg-gray-700 text-gray-200 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-colors"
+                  title="Open full size flyer image in new tab"
+                >
+                  <Maximize2 className="w-3.5 h-3.5 text-[#ffdea5]" />
+                  <span className="hidden sm:inline">Open Original</span>
+                </a>
+                <button
+                  type="button"
+                  onClick={() => setIsLightboxOpen(false)}
+                  className="w-8 h-8 rounded-full bg-gray-800 hover:bg-gray-700 text-gray-300 flex items-center justify-center cursor-pointer transition-colors"
+                  aria-label="Close lightbox"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
             </div>
 
-            <div className="flex-1 overflow-auto p-4 flex items-center justify-center bg-gray-950">
+            <div className="flex-1 overflow-y-auto p-2 sm:p-4 flex items-center justify-center bg-gray-950 min-h-0">
               <img
-                src={settings.saturdaySpecialImageUrl || "/tiffin-flyer.jpg"}
+                src={settings.flyerImageUrl || "/tiffin-flyer.jpg"}
                 alt="Weekly Tiffin Menu Flyer"
-                className="max-w-full max-h-full object-contain rounded-xl shadow-md"
+                className="max-h-[84vh] w-auto max-w-full object-contain rounded-xl shadow-2xl border border-white/10"
               />
             </div>
           </div>
