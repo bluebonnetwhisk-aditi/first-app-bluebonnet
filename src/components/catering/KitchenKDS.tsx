@@ -114,6 +114,7 @@ function parseTimeToMinutes(timeStr?: string): number {
 
 /**
  * Generates WhatsApp message template for Order Accepted, Order Ready, or Order Declined
+ * Using Style 2: Minimalist Editorial Typography with Clean Dividers
  */
 function buildWhatsAppMessage(order: CateringOrder, eventType: 'accepted' | 'ready' | 'rejected'): string {
   const shortId = order.id ? order.id.slice(0, 8).toUpperCase() : '';
@@ -121,19 +122,19 @@ function buildWhatsAppMessage(order: CateringOrder, eventType: 'accepted' | 'rea
   const dateStr = order.fulfillment_date || '';
   const timeStr = order.fulfillment_time || '';
   
-  // Format item list with item name, tray size, quantity, unit price & line total
+  // Format item list cleanly
   const itemsText = order.items && order.items.length > 0
     ? order.items.map(i => {
         const sizeStr = i.selectionLabel ? ` (${i.selectionLabel})` : '';
         const notesStr = i.notes ? ` [${i.notes}]` : '';
         const unitPriceStr = i.unitPrice > 0 ? ` @ $${i.unitPrice.toFixed(2)} ea` : '';
-        return `• ${i.name}${sizeStr}${notesStr} - Qty: ${i.quantity}${unitPriceStr} = $${i.totalPrice.toFixed(2)}`;
+        return `• ${i.name}${sizeStr}${notesStr}\n  Qty: ${i.quantity}${unitPriceStr} = $${i.totalPrice.toFixed(2)}`;
       }).join('\n')
     : (order.order_description || 'Catering items');
 
-  const fulfillmentDetails = order.is_delivery
-    ? `Fulfillment: Delivery to ${order.delivery_address || 'Address provided on file'}`
-    : `Fulfillment: Self-Pickup at 2437 Deerwood Dr, Little Elm, TX`;
+  const locationText = order.is_delivery
+    ? `Delivery destination: ${order.delivery_address || 'Address on file'}`
+    : `Self-Pickup: 2437 Deerwood Dr, Little Elm, TX`;
 
   const foodSubtotal = order.food_subtotal || 0;
   const deliveryFee = order.delivery_fee || 0;
@@ -142,7 +143,7 @@ function buildWhatsAppMessage(order: CateringOrder, eventType: 'accepted' | 'rea
   const grandTotal = order.total_amount || 0;
 
   const financialSummaryLines = [
-    `Payment Breakdown:`,
+    `FINANCIAL SUMMARY`,
     `• Food Subtotal: $${foodSubtotal.toFixed(2)}`,
     order.is_delivery && deliveryFee > 0 ? `• Delivery Fee: $${deliveryFee.toFixed(2)}` : null,
     `• Texas Sales Tax (8.25%): $${taxAmount.toFixed(2)}`,
@@ -152,45 +153,57 @@ function buildWhatsAppMessage(order: CateringOrder, eventType: 'accepted' | 'rea
 
   if (eventType === 'rejected') {
     return (
-`ORDER CANNOT BE FULFILLED - #${shortId}
+`─ ORDER CANNOT BE FULFILLED ─
+Ref: #${shortId} | Customer: ${customerName}
+
 Hi ${customerName}, we regret that order #${shortId} for ${dateStr} (${timeStr}) cannot be accepted as we are sold to capacity.
 
-Requested Items:
+REQUESTED ITEMS
 ${itemsText}
 
 ${financialSummaryLines}
 
-Apologies for the inconvenience. Reschedule via the web ordering portal.`
+───────────────
+Apologies for the inconvenience.
+Reschedule via the web ordering portal.`
     );
   } else if (eventType === 'accepted') {
     return (
-`ORDER CONFIRMED - #${shortId}
-Hi ${customerName}, your order has been accepted.
+`─ ORDER CONFIRMED ─
+Ref: #${shortId} | Customer: ${customerName}
 
-Date/Time: ${dateStr} at ${timeStr}
-${fulfillmentDetails}
+SCHEDULE
+Date: ${dateStr}
+Window: ${timeStr} (Central Time)
+${locationText}
 
-Order Details:
+ORDERED ITEMS
 ${itemsText}
 
 ${financialSummaryLines}
 
-Thank you for your business. Desi Dabba | BlueBonnet Whisk`
+───────────────
+Thank you for your business.
+Desi Dabba | BlueBonnet Whisk`
     );
   } else {
     return (
-`ORDER READY - #${shortId}
-Hi ${customerName}, your order is ready ${order.is_delivery ? 'for delivery' : 'for pickup'}.
+`─ ORDER READY ─
+Ref: #${shortId} | Customer: ${customerName}
 
-Schedule: ${dateStr} at ${timeStr}
-${fulfillmentDetails}
+SCHEDULE
+Date: ${dateStr}
+Window: ${timeStr} (Central Time)
+${locationText}
 
-Order Details:
+ITEMS READY FOR ${order.is_delivery ? 'DELIVERY' : 'PICKUP'}
 ${itemsText}
 
 ${financialSummaryLines}
 
-Thank you for your business. Desi Dabba | BlueBonnet Whisk`
+───────────────
+Thank you for your business.
+Desi Dabba | BlueBonnet Whisk`
     );
   }
 }
