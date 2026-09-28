@@ -26,9 +26,20 @@ CREATE TABLE IF NOT EXISTS public.orders (
     order_description TEXT,
     order_type TEXT DEFAULT 'order' CHECK (order_type IN ('order', 'estimate')),
     status TEXT DEFAULT 'new' CHECK (status IN ('new', 'preparing', 'ready', 'completed', 'cancelled')),
+    is_cancelled BOOLEAN DEFAULT FALSE,
+    reconciled_to_qbo BOOLEAN DEFAULT FALSE,
+    qbo_doc_id TEXT,
+    reconciled_at TIMESTAMPTZ,
     items JSONB NOT NULL DEFAULT '[]'::jsonb,
     created_at TIMESTAMPTZ DEFAULT timezone('America/Chicago', now())
 );
+
+-- Migration Statements for Existing Tables
+ALTER TABLE public.orders 
+    ADD COLUMN IF NOT EXISTS is_cancelled BOOLEAN DEFAULT FALSE,
+    ADD COLUMN IF NOT EXISTS reconciled_to_qbo BOOLEAN DEFAULT FALSE,
+    ADD COLUMN IF NOT EXISTS qbo_doc_id TEXT,
+    ADD COLUMN IF NOT EXISTS reconciled_at TIMESTAMPTZ;
 
 -- 3. Create Calendar Blackouts Table (Specific Dates & Recurring Rules)
 CREATE TABLE IF NOT EXISTS public.calendar_blackouts (

@@ -88,6 +88,10 @@ export interface CateringOrder {
   dietary_notes: string | null;
   order_type: OrderType;
   status: OrderStatus;
+  is_cancelled?: boolean;
+  reconciled_to_qbo?: boolean;
+  qbo_doc_id?: string | null;
+  reconciled_at?: string | null;
   items: CartItem[];
   created_at?: string;
 }

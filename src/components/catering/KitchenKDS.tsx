@@ -561,8 +561,41 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
     return sum + traysInOrder;
   }, 0);
 
-  // Total Revenue ($) in view (excluding cancelled)
-  const totalRevenueInView = nonCancelledOrders.reduce((sum, order) => sum + order.total_amount, 0);
+  // Bifurcated Financials in view (excluding cancelled)
+  const totalFoodSubtotalInView = nonCancelledOrders.reduce((sum, order) => sum + (order.food_subtotal || 0), 0);
+  const totalTaxInView = nonCancelledOrders.reduce((sum, order) => sum + (order.tax_amount || 0), 0);
+  const totalRevenueInView = nonCancelledOrders.reduce((sum, order) => sum + (order.total_amount || 0), 0);
+
+  // QBO Reconciliation Status in View
+  const reconciledOrdersCountInView = nonCancelledOrders.filter(o => o.reconciled_to_qbo).length;
+  const sampleQboDocId = nonCancelledOrders.find(o => o.qbo_doc_id)?.qbo_doc_id;
+
+  // QBO Manual Trigger State
+  const [isSyncingQbo, setIsSyncingQbo] = useState(false);
+  const [syncResultMsg, setSyncResultMsg] = useState<string | null>(null);
+
+  const handleManualQBOReconcile = async () => {
+    setIsSyncingQbo(true);
+    setSyncResultMsg(null);
+    try {
+      const res = await fetch('/api/cron/reconcile-qbo', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setSyncResultMsg(data.message || 'QBO Reconciliation completed!');
+        loadOrders();
+      } else {
+        setSyncResultMsg(data.message || data.error || 'Triggered sync endpoint.');
+      }
+    } catch (err: any) {
+      setSyncResultMsg(`Triggered endpoint: ${err.message || 'Complete'}`);
+    } finally {
+      setIsSyncingQbo(false);
+      setTimeout(() => setSyncResultMsg(null), 6000);
+    }
+  };
 
   // Aggregated Prep Sheet Data
   const prepSheetSummary = useMemo(() => {
@@ -1380,48 +1413,128 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
           </div>
         )}
 
-        {/* ── 3 SUMMARY METRICS TABS (MOVED TO BOTTOM) ── */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4 border-t border-gray-200">
+        {/* ── BIFURCATED FINANCIAL & SUMMARY METRICS + QBO RECONCILIATION ── */}
+        <div className="space-y-4 pt-4 border-t border-gray-200">
           
-          <div className="bg-white rounded-2xl border border-gray-200 p-5 shadow-xs flex items-center gap-4">
-            <div className="p-3 rounded-xl bg-blue-50 text-[#00346f]">
-              <Package className="w-6 h-6" />
-            </div>
-            <div>
-              <span className="text-[11px] font-bold uppercase tracking-wider text-gray-500">
-                Total Orders ({selectedDate === 'all' ? 'All Upcoming' : selectedDate === todayDateStr ? 'Today' : selectedDate})
-              </span>
-              <div className="font-serif text-2xl sm:text-3xl font-bold text-gray-900 mt-0.5">
-                {totalOrdersInView}
+          {/* Top Row: Volume & Financial Metrics Cards */}
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 sm:gap-4">
+            
+            <div className="bg-white rounded-2xl border border-gray-200 p-4 shadow-xs flex items-center gap-3">
+              <div className="p-2.5 rounded-xl bg-blue-50 text-[#00346f] shrink-0">
+                <Package className="w-5 h-5" />
+              </div>
+              <div className="min-w-0">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500 block truncate">
+                  Total Orders
+                </span>
+                <div className="font-serif text-xl sm:text-2xl font-bold text-gray-900 leading-tight">
+                  {totalOrdersInView}
+                </div>
               </div>
             </div>
+
+            <div className="bg-white rounded-2xl border border-gray-200 p-4 shadow-xs flex items-center gap-3">
+              <div className="p-2.5 rounded-xl bg-amber-50 text-[#775a19] shrink-0">
+                <ChefHat className="w-5 h-5" />
+              </div>
+              <div className="min-w-0">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500 block truncate">
+                  Trays to Prep
+                </span>
+                <div className="font-serif text-xl sm:text-2xl font-bold text-[#775a19] leading-tight">
+                  {totalTraysToPrep}
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-2xl border border-gray-200 p-4 shadow-xs flex items-center gap-3">
+              <div className="p-2.5 rounded-xl bg-indigo-50 text-indigo-700 shrink-0">
+                <DollarSign className="w-5 h-5" />
+              </div>
+              <div className="min-w-0">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500 block truncate">
+                  Food Subtotal
+                </span>
+                <div className="font-serif text-xl sm:text-2xl font-bold text-indigo-900 leading-tight">
+                  ${totalFoodSubtotalInView.toFixed(2)}
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-2xl border border-gray-200 p-4 shadow-xs flex items-center gap-3">
+              <div className="p-2.5 rounded-xl bg-purple-50 text-purple-700 shrink-0">
+                <DollarSign className="w-5 h-5" />
+              </div>
+              <div className="min-w-0">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500 block truncate">
+                  Texas Sales Tax
+                </span>
+                <div className="font-serif text-xl sm:text-2xl font-bold text-purple-900 leading-tight">
+                  ${totalTaxInView.toFixed(2)}
+                </div>
+              </div>
+            </div>
+
+            <div className="col-span-2 sm:col-span-1 bg-white rounded-2xl border border-gray-200 p-4 shadow-xs flex items-center gap-3">
+              <div className="p-2.5 rounded-xl bg-emerald-50 text-emerald-800 shrink-0">
+                <DollarSign className="w-5 h-5" />
+              </div>
+              <div className="min-w-0">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500 block truncate">
+                  Grand Total
+                </span>
+                <div className="font-serif text-xl sm:text-2xl font-bold text-emerald-900 leading-tight">
+                  ${totalRevenueInView.toFixed(2)}
+                </div>
+              </div>
+            </div>
+
           </div>
 
-          <div className="bg-white rounded-2xl border border-gray-200 p-5 shadow-xs flex items-center gap-4">
-            <div className="p-3 rounded-xl bg-amber-50 text-[#775a19]">
-              <ChefHat className="w-6 h-6" />
-            </div>
-            <div>
-              <span className="text-[11px] font-bold uppercase tracking-wider text-gray-500">
-                Total Trays to Prep
-              </span>
-              <div className="font-serif text-2xl sm:text-3xl font-bold text-[#775a19] mt-0.5">
-                {totalTraysToPrep} <span className="text-xs font-normal text-gray-500">Trays</span>
+          {/* Bottom Banner: QuickBooks Online (QBO) Reconciliation Status */}
+          <div className="bg-gradient-to-r from-[#00346f]/5 to-blue-50/60 rounded-2xl border border-[#00346f]/15 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+            <div className="flex items-center gap-3">
+              <div className={`p-2 rounded-xl shrink-0 ${reconciledOrdersCountInView > 0 ? 'bg-emerald-100 text-emerald-800' : 'bg-blue-100 text-[#00346f]'}`}>
+                <CheckCircle2 className="w-5 h-5" />
+              </div>
+              <div>
+                <div className="font-bold text-gray-900 flex items-center gap-2">
+                  <span>QuickBooks Online (QBO) Reconciliation Status</span>
+                  {reconciledOrdersCountInView > 0 ? (
+                    <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] uppercase font-extrabold tracking-wider">
+                      Reconciled ({reconciledOrdersCountInView}/{totalOrdersInView})
+                    </span>
+                  ) : (
+                    <span className="px-2 py-0.5 rounded-full bg-blue-100 text-[#00346f] text-[10px] uppercase font-extrabold tracking-wider">
+                      Scheduled for 11:59 PM CT Cron
+                    </span>
+                  )}
+                </div>
+                <div className="text-gray-600 text-[11px] mt-0.5">
+                  {reconciledOrdersCountInView > 0 && sampleQboDocId ? (
+                    <span>Sales Receipt created in QBO (Doc #{sampleQboDocId})</span>
+                  ) : (
+                    <span>Automated EOD consolidation running nightly via Vercel Cron (`/api/cron/reconcile-qbo`)</span>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
 
-          <div className="bg-white rounded-2xl border border-gray-200 p-5 shadow-xs flex items-center gap-4">
-            <div className="p-3 rounded-xl bg-emerald-50 text-emerald-800">
-              <DollarSign className="w-6 h-6" />
-            </div>
-            <div>
-              <span className="text-[11px] font-bold uppercase tracking-wider text-gray-500">
-                Revenue ({selectedDate === 'all' ? 'All Upcoming' : selectedDate === todayDateStr ? 'Today' : selectedDate})
-              </span>
-              <div className="font-serif text-2xl sm:text-3xl font-bold text-emerald-900 mt-0.5">
-                ${totalRevenueInView.toFixed(2)}
-              </div>
+            <div className="flex items-center gap-2 shrink-0">
+              {syncResultMsg && (
+                <span className="text-[11px] font-semibold text-[#00346f] animate-fade-in">
+                  {syncResultMsg}
+                </span>
+              )}
+              <button
+                type="button"
+                onClick={handleManualQBOReconcile}
+                disabled={isSyncingQbo}
+                className="min-h-[38px] px-3.5 py-1.5 rounded-xl bg-[#00346f] hover:bg-[#00224d] text-white text-xs font-bold uppercase tracking-wider transition-all shadow-xs disabled:opacity-50 cursor-pointer flex items-center gap-1.5"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${isSyncingQbo ? 'animate-spin' : ''}`} />
+                <span>{isSyncingQbo ? 'Syncing...' : 'Sync QBO Now'}</span>
+              </button>
             </div>
           </div>
 

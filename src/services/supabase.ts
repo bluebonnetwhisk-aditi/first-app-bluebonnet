@@ -950,6 +950,50 @@ export async function deleteOrderFromSupabase(orderId: string): Promise<boolean>
   return deletedSuccessfully;
 }
 
+export interface QBOReconciliationSummary {
+  isReconciled: boolean;
+  qboDocId?: string | null;
+  reconciledAt?: string | null;
+  reconciledCount: number;
+  pendingCount: number;
+  totalSales: number;
+  totalTax: number;
+  cashTotal: number;
+  cashCount: number;
+}
+
+/**
+ * Summarizes QBO Reconciliation status & metrics for a given date
+ */
+export async function fetchQBOReconciliationSummary(dateStr: string): Promise<QBOReconciliationSummary> {
+  const orders = await fetchOrders(dateStr);
+  const activeOrders = orders.filter(o => o.status !== 'cancelled' && !o.is_cancelled);
+
+  const reconciledOrders = activeOrders.filter(o => o.reconciled_to_qbo);
+  const isReconciled = reconciledOrders.length > 0 && activeOrders.every(o => o.reconciled_to_qbo);
+
+  const docId = reconciledOrders.find(o => o.qbo_doc_id)?.qbo_doc_id || null;
+  const recAt = reconciledOrders.find(o => o.reconciled_at)?.reconciled_at || null;
+
+  const totalSales = activeOrders.reduce((sum, o) => sum + (o.food_subtotal || 0), 0);
+  const totalTax = activeOrders.reduce((sum, o) => sum + (o.tax_amount || 0), 0);
+
+  const cashOrders = activeOrders.filter(o => o.payment_method === 'cash');
+  const cashTotal = cashOrders.reduce((sum, o) => sum + (o.total_amount || 0), 0);
+
+  return {
+    isReconciled,
+    qboDocId: docId,
+    reconciledAt: recAt,
+    reconciledCount: reconciledOrders.length,
+    pendingCount: activeOrders.length - reconciledOrders.length,
+    totalSales: Math.round(totalSales * 100) / 100,
+    totalTax: Math.round(totalTax * 100) / 100,
+    cashTotal: Math.round(cashTotal * 100) / 100,
+    cashCount: cashOrders.length
+  };
+}
+
 const LOCAL_STORAGE_TIFFIN_KEY = 'bbw_tiffin_menu_settings_v1';
 
 export const DEFAULT_WEEKDAY_MENUS: Record<string, WeekdayMenuEntry> = {
