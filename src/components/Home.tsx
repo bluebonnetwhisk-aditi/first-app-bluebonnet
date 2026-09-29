@@ -390,28 +390,28 @@ export default function Home({ onOpenBaker: _onOpenBaker, onNavigate }: HomeProp
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {[
               {
-                name: "Meenakshi & Alok V.",
+                name: "Ankita & Rahul S.",
                 occasion: "Daughter's 5th Birthday Party • Frisco, TX",
-                itemsOrdered: "Custom Mango & Rasmalai Cake + Live Pani Puri Station",
-                quote: "The custom eggless Mango Rasmalai cake was the absolute highlight of the dessert table—so fresh and beautifully decorated. The live Pani Puri station and crispy Railway Cutlets had guests lining up for seconds!",
+                itemsOrdered: "Custom 2-Tier Theme Cake + Live Pani Puri Bar & Railway Cutlets",
+                quote: "Finding a baker in Frisco who can pull off a Pinterest-worthy theme cake AND a 100% eggless Rasmalai Biscoff flavor was a miracle! The cake was so soft, not overly sweet like American bakery cakes. The live Pani Puri counter was a massive hit!",
                 rating: 5,
                 date: "September 2026"
               },
               {
-                name: "Siddharth & Neha P.",
-                occasion: "25th Anniversary Dinner • Frisco, TX",
-                itemsOrdered: "Grand Catering: Paneer Lababdar, Dal Makhni & Kheer",
-                quote: "The Paneer Lababdar was velvety and rich, and the slow-cooked Dal Makhni tasted straight out of a royal Dhaba in Delhi! Topped off with their slow-simmered cardamom Kheer.",
+                name: "Priya & Venkat M.",
+                occasion: "25th Anniversary Dinner Catering • Plano, TX",
+                itemsOrdered: "Grand Catering: Paneer Lababdar, Dal Makhani & Cardamom Kheer",
+                quote: "We hosted 50+ relatives and friends in Plano. The Paneer Lababdar and Dal Makhani tasted like authentic Dilli-style dhaba food—rich, aromatic, but not heavy. My in-laws visiting from Bengaluru praised the cardamom Kheer!",
                 rating: 5,
                 date: "September 2026"
               },
               {
-                name: "Ananya & Harish K.",
-                occasion: "1st Birthday Brunch • Plano, TX",
-                itemsOrdered: "Custom 2-Tier Theme Cake + Bedmi Poori & Aalu",
-                quote: "The custom 2-tier theme cake was a showstopper! Not only was the cake design gorgeous, but the flavor was divine. For brunch, their Bedmi Poori with Halwai Waale Aalu was nostalgic perfection.",
+                name: "Swati & Rajesh K.",
+                occasion: "Satvik Ganpati Pooja Catering • McKinney, TX",
+                itemsOrdered: "100% Satvik Meal: Bedmi Poori, Halwai Waale Aalu & Shahi Paneer",
+                quote: "We requested a 100% Satvik (strict No Onion & No Garlic) setup for our Ganpati Sthapana pooja in McKinney. Bedmi Poori with Halwai-style Aalu tasted out of this world! Pure ingredients gave us total peace of mind.",
                 rating: 5,
-                date: "July 2026"
+                date: "August 2026"
               }
             ].map((t, idx) => (
               <div 
