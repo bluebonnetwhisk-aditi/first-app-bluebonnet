@@ -55,6 +55,16 @@ const INITIAL_REVIEWS: ReviewItem[] = [
   },
   {
     id: "rev-4",
+    name: "Dr. Meenakshi R.",
+    occasion: "Raksha Bandhan & Festive Luxe Hampers (Coppell, TX)",
+    itemsOrdered: "25x Custom Rakhi Hampers: Biscoff Cookies, Dry Fruit Sweets & Silk Ribbons",
+    rating: 5,
+    reviewText: "Ordered 25 customized luxury Raksha Bandhan gift hampers for our clinic staff and close family in Coppell. The boxes were packed with artisanal Biscoff cookies, fusion sweets, and personalized cards with our family name. The silk ribbon presentation looked super elegant. Everyone messaged me saying it was the best festive hamper they received!",
+    date: "August 24, 2026",
+    verified: true
+  },
+  {
+    id: "rev-5",
     name: "Swati & Rajesh K.",
     occasion: "Satvik Ganpati Pooja Catering (McKinney, TX)",
     itemsOrdered: "100% Satvik Meal: Bedmi Poori, Halwai Waale Aalu, Shahi Paneer & Motichoor Jars",
@@ -64,7 +74,7 @@ const INITIAL_REVIEWS: ReviewItem[] = [
     verified: true
   },
   {
-    id: "rev-5",
+    id: "rev-6",
     name: "Kavita & Nitin D.",
     occasion: "Housewarming Party Catering (Little Elm, TX)",
     itemsOrdered: "Live Jalebi & Rabri Counter + Railway Cutlets & Stuffed Parathas",
@@ -74,23 +84,13 @@ const INITIAL_REVIEWS: ReviewItem[] = [
     verified: true
   },
   {
-    id: "rev-6",
+    id: "rev-7",
     name: "Neha & Ashish G.",
     occasion: "Son's 1st Birthday Party (Southlake, TX)",
     itemsOrdered: "Custom Eggless Lion Safari 2-Tier Cake + Mango Chantilly Jars",
     rating: 5,
     reviewText: "We sent a reference photo from Instagram for a 2-tier lion safari theme cake, and Chef delivered something even more stunning than the photo! We got the eggless Mango & Cardamom Chantilly layer—super moist, delicate sponge, and everyone went for seconds. Honest pricing and fantastic customer service.",
     date: "July 18, 2026",
-    verified: true
-  },
-  {
-    id: "rev-7",
-    name: "Dr. Meenakshi R.",
-    occasion: "Raksha Bandhan & Festive Luxe Hampers (Coppell, TX)",
-    itemsOrdered: "25x Custom Rakhi Hampers: Biscoff Cookies, Dry Fruit Sweets & Silk Ribbons",
-    rating: 5,
-    reviewText: "Ordered 25 customized luxury Raksha Bandhan gift hampers for our clinic staff and close family in Coppell. The boxes were packed with artisanal Biscoff cookies, fusion sweets, and personalized cards with our family name. The silk ribbon presentation looked super elegant. Everyone messaged me saying it was the best festive hamper they received!",
-    date: "August 24, 2026",
     verified: true
   },
   {
@@ -105,7 +105,7 @@ const INITIAL_REVIEWS: ReviewItem[] = [
   }
 ];
 
-const REVIEWS_STORAGE_KEY = "bbw_customer_reviews_v4";
+const REVIEWS_STORAGE_KEY = "bbw_customer_reviews_v5";
 
 export default function ReviewsPage() {
   const [reviews, setReviews] = useState<ReviewItem[]>(() => {
@@ -197,9 +197,10 @@ export default function ReviewsPage() {
     }, 3000);
   };
 
-  const filteredReviews = ratingFilter === "all" 
+  const filteredReviews = (ratingFilter === "all" 
     ? reviews 
-    : reviews.filter(r => r.rating === ratingFilter);
+    : reviews.filter(r => r.rating === ratingFilter)
+  ).slice().sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
   const averageRating = (
     reviews.reduce((acc, curr) => acc + curr.rating, 0) / (reviews.length || 1)
