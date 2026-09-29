@@ -1,4 +1,5 @@
-import { MessageSquare, Sparkles } from "lucide-react";
+import { useState } from "react";
+import { MessageSquare, Sparkles, Cake, Users, ChevronRight, Check } from "lucide-react";
 import { flavorCategories } from "../types";
 
 interface CakesPageProps {
@@ -8,6 +9,8 @@ interface CakesPageProps {
 }
 
 export default function CakesPage({ onOpenBaker, onCreateQuote }: CakesPageProps) {
+  const [selectedTier, setSelectedTier] = useState<number>(2);
+  const [selectedFlavor, setSelectedFlavor] = useState<string>("Rasmalai Fusion");
   return (
     <div className="animate-fade-in bg-brand-cream-light min-h-screen">
       
@@ -585,10 +588,136 @@ export default function CakesPage({ onOpenBaker, onCreateQuote }: CakesPageProps
               </button>
             </div>
           </div>
-
         </div>
       </section>
+
+      {/* ── 3D VISUAL CAKE TIER & PORTION ESTIMATOR ── */}
+      <section className="py-16 bg-silk-cream border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-4 lg:px-8">
+          <div className="text-center mb-10">
+            <span className="text-xs font-bold tracking-widest text-[#775a19] uppercase block mb-2">Interactive Customizer</span>
+            <h2 className="font-serif text-3xl lg:text-4xl font-bold text-[#00346f]">Cake Tier &amp; Serving Estimator</h2>
+            <p className="text-gray-600 text-xs sm:text-sm max-w-xl mx-auto mt-2 font-sans">
+              Select your event size to visualize tiers, estimated guest portions, and handcrafted options.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center bg-white p-6 lg:p-10 rounded-3xl border border-[#c59b27]/20 shadow-xl">
+            
+            {/* Visual Cake Tier Representation */}
+            <div className="lg:col-span-6 flex flex-col items-center justify-center p-8 bg-gradient-to-b from-[#FAF7F2] to-[#F3EEE3] rounded-2xl border border-gray-150 relative min-h-[320px]">
+              
+              {/* 3D Tier Silhouettes */}
+              <div className="flex flex-col items-center justify-end h-64 gap-1.5 transition-all duration-500">
+                {selectedTier >= 3 && (
+                  <div className="w-24 h-12 bg-gradient-to-r from-[#c59b27] via-[#e0ab51] to-[#775a19] rounded-t-lg shadow-md flex items-center justify-center text-white text-[10px] font-bold font-sans animate-fade-in">
+                    6&quot; Top Tier
+                  </div>
+                )}
+                {selectedTier >= 2 && (
+                  <div className="w-36 h-14 bg-gradient-to-r from-[#00346f] via-[#1a4a85] to-[#00224d] rounded-md shadow-md flex items-center justify-center text-brand-cream text-xs font-bold font-sans animate-fade-in">
+                    8&quot; Mid Tier
+                  </div>
+                )}
+                <div className="w-52 h-16 bg-gradient-to-r from-[#775a19] via-[#8b691e] to-[#5d4201] rounded-b-xl shadow-lg flex items-center justify-center text-white text-sm font-bold font-sans">
+                  10&quot; Base Tier
+                </div>
+              </div>
+
+              <div className="mt-6 flex items-center gap-3 bg-white px-4 py-2 rounded-full border border-gray-200 shadow-xs">
+                <Users className="h-4 w-4 text-[#775a19]" />
+                <span className="text-xs font-bold font-sans text-[#00346f]">
+                  Serves {selectedTier === 1 ? "15 - 20" : selectedTier === 2 ? "35 - 50" : "80 - 120+"} Guests
+                </span>
+              </div>
+            </div>
+
+            {/* Configurator Controls */}
+            <div className="lg:col-span-6 space-y-6">
+              <div>
+                <label className="text-xs font-bold text-gray-700 uppercase tracking-wider block mb-3 font-sans">Select Cake Tiers</label>
+                <div className="grid grid-cols-3 gap-3">
+                  {[
+                    { tier: 1, label: "1-Tier", desc: "15-20 Servings" },
+                    { tier: 2, label: "2-Tier", desc: "35-50 Servings" },
+                    { tier: 3, label: "3-Tier", desc: "80-120+ Servings" }
+                  ].map((item) => (
+                    <button
+                      key={item.tier}
+                      onClick={() => setSelectedTier(item.tier)}
+                      className={`p-3.5 rounded-xl border text-center transition-all cursor-pointer font-sans min-h-[44px] ${
+                        selectedTier === item.tier
+                          ? "bg-[#00346f] text-white border-[#00346f] shadow-md scale-102"
+                          : "bg-gray-50 hover:bg-gray-100 text-gray-800 border-gray-200"
+                      }`}
+                    >
+                      <div className="text-xs font-bold">{item.label}</div>
+                      <div className="text-[10px] opacity-80 mt-0.5">{item.desc}</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-gray-700 uppercase tracking-wider block mb-3 font-sans">Popular Artisanal Flavors</label>
+                <div className="flex flex-wrap gap-2">
+                  {["Rasmalai Fusion", "Belgian Biscoff", "Alphonso Mango", "Belgian Chocolate", "Butterscotch Chantilly"].map((fl) => (
+                    <button
+                      key={fl}
+                      onClick={() => setSelectedFlavor(fl)}
+                      className={`text-xs px-3.5 py-2 rounded-lg border font-sans cursor-pointer transition-all min-h-[38px] flex items-center gap-1.5 ${
+                        selectedFlavor === fl
+                          ? "bg-[#775a19] text-white border-[#775a19] shadow-xs"
+                          : "bg-white hover:bg-gray-50 text-gray-700 border-gray-200"
+                      }`}
+                    >
+                      {selectedFlavor === fl && <Check className="h-3.5 w-3.5" />}
+                      <span>{fl}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="p-4 rounded-xl bg-amber-50/60 border border-amber-200/80 flex items-center justify-between">
+                <div>
+                  <span className="text-[10px] font-bold text-[#775a19] uppercase block tracking-wider font-sans">Selected Configuration</span>
+                  <div className="text-xs font-serif font-bold text-[#00346f]">{selectedTier}-Tier Cake ({selectedFlavor})</div>
+                </div>
+                <button
+                  onClick={onCreateQuote}
+                  className="min-h-[44px] bg-[#775a19] hover:bg-[#5d4201] text-white text-xs font-bold uppercase tracking-wider px-5 py-2.5 rounded-lg shadow-sm transition-all flex items-center gap-1.5 cursor-pointer font-sans"
+                >
+                  <span>Build Quote</span>
+                  <ChevronRight className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+      {/* ── MOBILE SAFE-AREA BOTTOM ACTION DOCK ── */}
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-[#00346f]/95 backdrop-blur-md border-t border-[#c59b27]/30 p-3 pb-safe shadow-2xl">
+        <div className="flex items-center gap-3">
+          <button
+            onClick={onCreateQuote}
+            className="flex-1 min-h-[44px] bg-[#775a19] hover:bg-[#5d4201] text-white font-sans text-xs font-bold uppercase tracking-wider rounded-xl shadow-md flex items-center justify-center gap-2 cursor-pointer"
+          >
+            <Cake className="h-4 w-4 text-brand-gold-tint" />
+            <span>Create Cake Quote</span>
+          </button>
+          <button
+            onClick={onOpenBaker}
+            className="flex-1 min-h-[44px] border border-brand-gold-tint hover:bg-white/10 text-brand-cream font-sans text-xs font-bold uppercase tracking-wider rounded-xl flex items-center justify-center gap-1.5 cursor-pointer"
+          >
+            <MessageSquare className="h-4 w-4" />
+            <span>Talk to Baker</span>
+          </button>
+        </div>
+      </div>
 
     </div>
   );
 }
+

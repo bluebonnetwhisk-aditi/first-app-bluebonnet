@@ -113,3 +113,67 @@ img, video, canvas, svg, iframe {
     linear-gradient(to right, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
     linear-gradient(to bottom, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
 }
+
+/* ── LUXURY CHIC STYLING EXTENSIONS ── */
+.bg-silk-cream {
+  background-color: #faf7f2;
+  background-image: radial-gradient(rgba(197, 155, 39, 0.03) 1px, transparent 0);
+  background-size: 24px 24px;
+}
+
+.glass-panel-luxury {
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(197, 155, 39, 0.18);
+  box-shadow: 0 12px 40px -10px rgba(0, 52, 111, 0.08);
+}
+
+.glass-panel-gold {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(251, 247, 242, 0.85));
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(197, 155, 39, 0.3);
+  box-shadow: 0 10px 30px -8px rgba(119, 90, 25, 0.15);
+}
+
+/* 3D Card Hover Perspective */
+.card-3d-wrapper {
+  perspective: 1000px;
+}
+
+.card-3d-content {
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s ease;
+  transform-style: preserve-3d;
+}
+
+.card-3d-wrapper:hover .card-3d-content {
+  transform: translateY(-6px) rotateX(1.5deg) rotateY(-1.5deg) scale(1.015);
+  box-shadow: 0 24px 48px -12px rgba(0, 52, 111, 0.18);
+}
+
+/* Metallic Gold Foil Badge */
+.badge-gold-foil {
+  background: linear-gradient(135deg, #775a19 0%, #c59b27 50%, #775a19 100%);
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(119, 90, 25, 0.25);
+}
+
+.badge-satvik {
+  background: linear-gradient(135deg, #8b2641 0%, #6c0b2b 100%);
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(108, 11, 43, 0.3);
+}
+
+/* Skeleton Shimmer Loading Placeholder */
+.shimmer-placeholder {
+  background: linear-gradient(90deg, rgba(119, 90, 25, 0.04) 25%, rgba(197, 155, 39, 0.12) 50%, rgba(119, 90, 25, 0.04) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.8s infinite ease-in-out;
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
