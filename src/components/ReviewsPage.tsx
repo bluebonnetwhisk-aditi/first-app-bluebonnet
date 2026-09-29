@@ -86,11 +86,11 @@ const INITIAL_REVIEWS: ReviewItem[] = [
   {
     id: "rev-7",
     name: "Dr. Meenakshi R.",
-    occasion: "Diwali Luxe Gift Boxes (Coppell, TX)",
-    itemsOrdered: "30x Custom Diwali Hampers: Biscoff Cookies, Fusion Mithai & Silk Ribbons",
+    occasion: "Raksha Bandhan & Festive Luxe Hampers (Coppell, TX)",
+    itemsOrdered: "25x Custom Rakhi Hampers: Biscoff Cookies, Dry Fruit Sweets & Silk Ribbons",
     rating: 5,
-    reviewText: "Ordered 30 customized luxury gift hampers for our clinic staff and close friends in Coppell. The boxes were packed with artisanal Biscoff cookies, dry fruit sweets, and personalized cards with our family name. The silk ribbon presentation looked super elegant. Everyone messaged me saying it was the best gift box they received this festive season!",
-    date: "June 22, 2026",
+    reviewText: "Ordered 25 customized luxury Raksha Bandhan gift hampers for our clinic staff and close family in Coppell. The boxes were packed with artisanal Biscoff cookies, fusion sweets, and personalized cards with our family name. The silk ribbon presentation looked super elegant. Everyone messaged me saying it was the best festive hamper they received!",
+    date: "August 24, 2026",
     verified: true
   },
   {
@@ -105,7 +105,7 @@ const INITIAL_REVIEWS: ReviewItem[] = [
   }
 ];
 
-const REVIEWS_STORAGE_KEY = "bbw_customer_reviews_v3";
+const REVIEWS_STORAGE_KEY = "bbw_customer_reviews_v4";
 
 export default function ReviewsPage() {
   const [reviews, setReviews] = useState<ReviewItem[]>(() => {
