@@ -11,6 +11,7 @@ interface CakesPageProps {
 export default function CakesPage({ onOpenBaker, onCreateQuote }: CakesPageProps) {
   const [selectedTier, setSelectedTier] = useState<number>(2);
   const [selectedFlavor, setSelectedFlavor] = useState<string>("Rasmalai Fusion");
+  const [isEggless, setIsEggless] = useState<boolean>(false);
   return (
     <div className="animate-fade-in bg-brand-cream-light min-h-screen">
       
@@ -659,7 +660,20 @@ export default function CakesPage({ onOpenBaker, onCreateQuote }: CakesPageProps
               </div>
 
               <div>
-                <label className="text-xs font-bold text-gray-700 uppercase tracking-wider block mb-3 font-sans">Popular Artisanal Flavors</label>
+                <div className="flex items-center justify-between mb-3">
+                  <label className="text-xs font-bold text-gray-700 uppercase tracking-wider font-sans">Popular Artisanal Flavors</label>
+                  <button
+                    onClick={() => setIsEggless(!isEggless)}
+                    className={`text-[11px] font-sans font-bold px-3 py-1 rounded-full border transition-all flex items-center gap-1.5 cursor-pointer ${
+                      isEggless
+                        ? "bg-emerald-600 text-white border-emerald-600 shadow-xs"
+                        : "bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border-emerald-300"
+                    }`}
+                  >
+                    <span>🍃 100% Eggless</span>
+                    <span className="opacity-90 font-mono text-[10px]">{isEggless ? "(Checked: +$5 6″ / +$10 8″)" : "(+$5 for 6″ / +$10 for 8″)"}</span>
+                  </button>
+                </div>
                 <div className="flex flex-wrap gap-2">
                   {["Rasmalai Fusion", "Belgian Biscoff", "Alphonso Mango", "Belgian Chocolate", "Butterscotch Chantilly"].map((fl) => (
                     <button
@@ -681,7 +695,9 @@ export default function CakesPage({ onOpenBaker, onCreateQuote }: CakesPageProps
               <div className="p-4 rounded-xl bg-amber-50/60 border border-amber-200/80 flex items-center justify-between">
                 <div>
                   <span className="text-[10px] font-bold text-[#775a19] uppercase block tracking-wider font-sans">Selected Configuration</span>
-                  <div className="text-xs font-serif font-bold text-[#00346f]">{selectedTier}-Tier Cake ({selectedFlavor})</div>
+                  <div className="text-xs font-serif font-bold text-[#00346f]">
+                    {selectedTier}-Tier Cake ({selectedFlavor}) {isEggless && <span className="text-emerald-700 font-sans text-[11px] font-bold">[Eggless: +${selectedTier === 1 ? 5 : 10}]</span>}
+                  </div>
                 </div>
                 <button
                   onClick={onCreateQuote}

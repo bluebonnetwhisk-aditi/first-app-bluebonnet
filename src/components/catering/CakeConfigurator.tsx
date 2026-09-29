@@ -139,8 +139,10 @@ export default function CakeConfigurator({
   // Active category definition
   const currentCategory = CAKE_CATEGORIES.find(c => c.id === selectedCategoryId) || CAKE_CATEGORIES[0];
 
-  // Unit price based on size and category
-  const unitPrice = selectedSize === '6inch' ? currentCategory.price6 : currentCategory.price8;
+  // Base price and eggless fee (+$5 for 6inch, +$10 for 8inch)
+  const baseUnitPrice = selectedSize === '6inch' ? currentCategory.price6 : currentCategory.price8;
+  const egglessFee = isEggless ? (selectedSize === '6inch' ? 5 : 10) : 0;
+  const unitPrice = baseUnitPrice + egglessFee;
   const totalPrice = unitPrice * quantity;
 
   // Handle switching category
@@ -392,7 +394,7 @@ export default function CakeConfigurator({
 
         </div>
 
-        {/* Eggless Option on Request Checkbox */}
+        {/* Eggless Option Checkbox with $5 (6inch) & $10 (8inch) fee */}
         <div className="p-4 rounded-xl bg-emerald-50/80 border border-emerald-200">
           <label className="flex items-start gap-2.5 cursor-pointer">
             <input
@@ -401,13 +403,18 @@ export default function CakeConfigurator({
               onChange={(e) => setIsEggless(e.target.checked)}
               className="mt-0.5 rounded border-emerald-300 text-emerald-700 focus:ring-emerald-700 cursor-pointer"
             />
-            <div className="text-xs text-emerald-950">
-              <span className="font-bold flex items-center gap-1.5">
-                <Leaf className="w-3.5 h-3.5 text-emerald-700" />
-                Bake as 100% Eggless / Pure Vegetarian (Available on Request)
-              </span>
-              <p className="text-[11px] text-emerald-800 mt-0.5 leading-snug">
-                Available upon request at zero extra charge. Our signature egg-free sponge recipes deliver heavenly moisture, cloud-like crumb, and authentic richness.
+            <div className="text-xs text-emerald-950 flex-1">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <span className="font-bold flex items-center gap-1.5">
+                  <Leaf className="w-3.5 h-3.5 text-emerald-700" />
+                  Bake as 100% Eggless / Pure Vegetarian
+                </span>
+                <span className="text-[10px] font-bold font-mono bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full border border-emerald-300">
+                  +$5 (6″) / +$10 (8″)
+                </span>
+              </div>
+              <p className="text-[11px] text-emerald-800 mt-1 leading-snug">
+                Custom handcrafted eggless recipe (+$5 for 6″ cake, +$10 for 8″ cake). Delivers heavenly moisture, cloud-like crumb, and rich taste.
               </p>
             </div>
           </label>
