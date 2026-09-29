@@ -1310,14 +1310,24 @@ export async function saveGalleryItemsToSupabase(items: any[]): Promise<boolean>
   cleanLegacyGalleryCaches();
 
   const deletedSet = new Set(getDeletedGalleryIds());
-  const cleanItems = (items || []).filter((item: any) => item && item.id && !deletedSet.has(item.id));
+  const cleanItems = (items || [])
+    .filter((item: any) => item && item.id && !deletedSet.has(item.id))
+    .map((item: any) => {
+      // Optimization: If originalImagePath is identical to imagePath (or redundant),
+      // omit duplicate string to optimize payload size for Supabase and localStorage
+      if (item.originalImagePath === item.imagePath) {
+        const copy = { ...item };
+        delete copy.originalImagePath;
+        return copy;
+      }
+      return item;
+    });
 
   try {
     localStorage.setItem(LOCAL_STORAGE_GALLERY_KEY, JSON.stringify(cleanItems));
     window.dispatchEvent(new CustomEvent('bbw_gallery_items_updated'));
   } catch (err) {
     console.warn('localStorage saveGalleryItems quota warning:', err);
-    // If local storage is full, try clearing legacy items and retry
     cleanLegacyGalleryCaches();
     try {
       localStorage.setItem(LOCAL_STORAGE_GALLERY_KEY, JSON.stringify(cleanItems));

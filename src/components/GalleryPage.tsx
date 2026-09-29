@@ -498,6 +498,40 @@ export default function GalleryPage({ onNavigateToAdmin: _onNavigateToAdmin }: G
                 <Download className="w-3.5 h-3.5" /> Export JSON
               </button>
 
+              <label
+                className="bg-purple-600 hover:bg-purple-700 text-white px-3.5 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all cursor-pointer flex items-center gap-1.5 shadow"
+                title="Import/restore galleryData.json exported from browser"
+              >
+                <RefreshCw className="w-3.5 h-3.5" /> Import JSON
+                <input
+                  type="file"
+                  accept=".json,application/json"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      const reader = new FileReader();
+                      reader.onload = async (evt) => {
+                        try {
+                          const parsed = JSON.parse(evt.target?.result as string);
+                          if (Array.isArray(parsed) && parsed.length > 0) {
+                            setItems(parsed);
+                            await saveGalleryItemsToSupabase(parsed);
+                            setSyncStatus("✓ Successfully captured & loaded gallery configuration!");
+                            setTimeout(() => setSyncStatus(""), 4000);
+                          } else {
+                            alert("Invalid gallery JSON file structure.");
+                          }
+                        } catch (err) {
+                          alert("Failed to parse gallery JSON file.");
+                        }
+                      };
+                      reader.readAsText(file);
+                    }
+                  }}
+                />
+              </label>
+
               <button
                 onClick={() => {
                   if (window.confirm("Reset gallery cache to initial site defaults?")) {

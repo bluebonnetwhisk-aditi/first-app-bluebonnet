@@ -61,12 +61,29 @@ export default function App() {
 
   const [activeTab, setActiveTab] = useState(() => {
     if (typeof window !== "undefined") {
-      const path = window.location.pathname.toLowerCase();
+      let path = window.location.pathname.toLowerCase().replace(/\/+$/, "");
+      const search = window.location.search;
+
+      // Handle SPA query redirects (e.g. /?/cakes or /?p=/party-packages)
+      if (search && search.startsWith("?/")) {
+        const decoded = search.slice(2).split("&").map(s => s.replace(/~and~/g, "&")).join("?");
+        path = "/" + decoded.toLowerCase().replace(/^\/+/, "").replace(/\/+$/, "");
+        window.history.replaceState(null, "", path);
+      } else if (search && search.includes("p=/")) {
+        const match = search.match(/p=\/([^&]+)/);
+        if (match) {
+          path = "/" + match[1].toLowerCase();
+          window.history.replaceState(null, "", path);
+        }
+      }
+
       if (path === "/catering/order") {
         window.history.replaceState(null, "", "/catering/food");
       }
       if (path.startsWith("/catering") || path.startsWith("/menu")) return "Catering";
-      if (path.startsWith("/cakes")) return "Cakes";
+      if (path.startsWith("/cakes") || path.startsWith("/cake")) return "Cakes";
+      if (path.startsWith("/party-packages") || path.startsWith("/party-package") || path.startsWith("/live-counters") || path.startsWith("/party")) return "Live Counters";
+      if (path.startsWith("/lux-gifting") || path.startsWith("/gifting")) return "Gifting";
       if (path.startsWith("/gallery")) return "Gallery";
       if (path.startsWith("/reviews")) return "Reviews";
       if (path.startsWith("/about")) return "About";
@@ -119,6 +136,17 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
+  const handleNavigate = (id: string, path: string) => {
+    if (typeof window !== "undefined") {
+      const currentPath = window.location.pathname.toLowerCase().replace(/\/+$/, "");
+      if (currentPath !== path.toLowerCase()) {
+        window.history.pushState(null, "", path);
+      }
+    }
+    setActiveTab(id);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
   const handleNewsletterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (newsletterEmail.trim()) {
@@ -139,12 +167,20 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: "smooth" });
     if (typeof window !== "undefined") {
       const currentPath = window.location.pathname.toLowerCase();
-      if (activeTab === "Catering" && !currentPath.startsWith("/catering")) {
+      if (activeTab === "Catering" && !currentPath.startsWith("/catering") && !currentPath.startsWith("/menu")) {
         window.history.pushState(null, "", "/catering/food");
+      } else if (activeTab === "Cakes" && !currentPath.startsWith("/cakes") && !currentPath.startsWith("/cake")) {
+        window.history.pushState(null, "", "/cakes");
+      } else if (activeTab === "Live Counters" && !currentPath.startsWith("/party-packages") && !currentPath.startsWith("/party-package") && !currentPath.startsWith("/live-counters") && !currentPath.startsWith("/party")) {
+        window.history.pushState(null, "", "/party-packages");
+      } else if (activeTab === "Gifting" && !currentPath.startsWith("/lux-gifting") && !currentPath.startsWith("/gifting")) {
+        window.history.pushState(null, "", "/lux-gifting");
       } else if (activeTab === "Gallery" && !currentPath.startsWith("/gallery")) {
         window.history.pushState(null, "", "/gallery");
       } else if (activeTab === "Reviews" && !currentPath.startsWith("/reviews")) {
         window.history.pushState(null, "", "/reviews");
+      } else if (activeTab === "About" && !currentPath.startsWith("/about")) {
+        window.history.pushState(null, "", "/about");
       } else if (activeTab === "Home" && currentPath !== "/" && currentPath !== "") {
         window.history.pushState(null, "", "/");
       }
@@ -161,7 +197,9 @@ export default function App() {
       }
       setIsKitchenMode(false);
       if (path.startsWith("/catering") || path.startsWith("/menu")) setActiveTab("Catering");
-      else if (path.startsWith("/cakes")) setActiveTab("Cakes");
+      else if (path.startsWith("/cakes") || path.startsWith("/cake")) setActiveTab("Cakes");
+      else if (path.startsWith("/party-packages") || path.startsWith("/party-package") || path.startsWith("/live-counters") || path.startsWith("/party")) setActiveTab("Live Counters");
+      else if (path.startsWith("/lux-gifting") || path.startsWith("/gifting")) setActiveTab("Gifting");
       else if (path.startsWith("/gallery")) setActiveTab("Gallery");
       else if (path.startsWith("/reviews")) setActiveTab("Reviews");
       else if (path.startsWith("/about")) setActiveTab("About");
@@ -188,14 +226,14 @@ export default function App() {
   }
 
   const navLinks = [
-    { name: "Home", id: "Home" },
-    { name: "Cakes", id: "Cakes" },
-    { name: "Ordering", id: "Catering" },
-    { name: "Party Packages", id: "Live Counters" },
-    { name: "Lux Gifting", id: "Gifting" },
-    { name: "Gallery", id: "Gallery" },
-    { name: "Reviews", id: "Reviews" },
-    { name: "About Us", id: "About" }
+    { name: "Home", id: "Home", path: "/" },
+    { name: "Cakes", id: "Cakes", path: "/cakes" },
+    { name: "Ordering", id: "Catering", path: "/catering/food" },
+    { name: "Party Packages", id: "Live Counters", path: "/party-packages" },
+    { name: "Lux Gifting", id: "Gifting", path: "/lux-gifting" },
+    { name: "Gallery", id: "Gallery", path: "/gallery" },
+    { name: "Reviews", id: "Reviews", path: "/reviews" },
+    { name: "About Us", id: "About", path: "/about" }
   ];
 
   return (
@@ -214,7 +252,7 @@ export default function App() {
             
             {/* Logo Brand */}
             <div 
-              onClick={() => setActiveTab("Home")} 
+              onClick={() => handleNavigate("Home", "/")} 
               className="shrink-0 flex items-center cursor-pointer group py-1"
             >
               <img 
@@ -229,7 +267,7 @@ export default function App() {
               {navLinks.map((link) => (
                 <button
                   key={link.id}
-                  onClick={() => setActiveTab(link.id)}
+                  onClick={() => handleNavigate(link.id, link.path)}
                   className={`font-sans text-xs uppercase tracking-wider font-semibold pb-1 transition-all border-b-2 hover:text-[#00346f] hover:border-[#00346f] cursor-pointer whitespace-nowrap ${
                     activeTab === link.id
                       ? "text-[#00346f] border-[#00346f] font-bold"
@@ -241,13 +279,7 @@ export default function App() {
               ))}
 
               <button
-                onClick={() => {
-                  setActiveTab("Catering");
-                  if (typeof window !== "undefined") {
-                    window.history.pushState(null, "", "/catering/food");
-                  }
-                  window.scrollTo({ top: 0, behavior: "smooth" });
-                }}
+                onClick={() => handleNavigate("Catering", "/catering/food")}
                 className="bg-[#00346f] hover:bg-[#00224d] text-white font-sans text-xs uppercase tracking-wider font-bold px-4 py-2 rounded-xl shadow-md transition-all cursor-pointer whitespace-nowrap border border-[#00346f] hover:scale-105 flex items-center gap-1.5 ml-2"
               >
                 <ShoppingBag className="w-3.5 h-3.5 text-[#ffdea5]" />
@@ -258,13 +290,7 @@ export default function App() {
             {/* Mobile Create Order Button */}
             <div className="lg:hidden flex items-center gap-2">
               <button
-                onClick={() => {
-                  setActiveTab("Catering");
-                  if (typeof window !== "undefined") {
-                    window.history.pushState(null, "", "/catering/food");
-                  }
-                  window.scrollTo({ top: 0, behavior: "smooth" });
-                }}
+                onClick={() => handleNavigate("Catering", "/catering/food")}
                 className="bg-[#00346f] hover:bg-[#00224d] text-white font-sans text-[11px] uppercase tracking-wider font-bold px-3 py-1.5 rounded-lg shadow-sm transition-all cursor-pointer whitespace-nowrap flex items-center gap-1"
               >
                 <ShoppingBag className="w-3 h-3 text-[#ffdea5]" />
@@ -281,7 +307,7 @@ export default function App() {
             {navLinks.map((link) => (
               <button
                 key={link.id}
-                onClick={() => setActiveTab(link.id)}
+                onClick={() => handleNavigate(link.id, link.path)}
                 className={`font-sans text-xs uppercase tracking-widest font-semibold min-h-[36px] px-2 py-1 flex items-center transition-all border-b-2 cursor-pointer ${
                   activeTab === link.id
                     ? "text-[#00346f] border-[#00346f] font-bold"

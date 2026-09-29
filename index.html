@@ -10,6 +10,19 @@
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="theme-color" content="#00346f" />
     <link rel="apple-touch-icon" href="/favicon.svg" />
+    <script type="text/javascript">
+      // Restore SPA URL path on page refresh from 404 query redirect
+      (function(l) {
+        if (l.search && l.search[1] === '/') {
+          var decoded = l.search.slice(1).split('&').map(function(s) { 
+            return s.replace(/~and~/g, '&')
+          }).join('?');
+          window.history.replaceState(null, null,
+              l.pathname.slice(0, -1) + decoded + l.hash
+          );
+        }
+      }(window.location));
+    </script>
     <title>Bluebonnet Whisk - Modern Heritage Cakes &amp; Catering</title>
   </head>
   <body>
