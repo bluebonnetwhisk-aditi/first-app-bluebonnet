@@ -483,6 +483,26 @@ export default function GalleryPage({ onNavigateToAdmin: _onNavigateToAdmin }: G
               </button>
 
               <button
+                onClick={async () => {
+                  if (window.confirm("Purge stale deleted IDs and reset Supabase gallery table to current active items?")) {
+                    setSyncStatus("Purging stale records...");
+                    clearDeletedGalleryIds();
+                    const ok = await saveGalleryItemsToSupabase(items);
+                    if (ok) {
+                      setSyncStatus("✓ Supabase gallery table cleaned & synced!");
+                    } else {
+                      setSyncStatus("❌ Purge warning: Check browser console or network connection.");
+                    }
+                    setTimeout(() => setSyncStatus(""), 4000);
+                  }
+                }}
+                className="bg-purple-700 hover:bg-purple-800 text-white px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all cursor-pointer flex items-center gap-1.5 shadow"
+                title="Purge deleted ID history and clean up Supabase storage"
+              >
+                <RotateCw className="w-3.5 h-3.5" /> Purge &amp; Clean Supabase
+              </button>
+
+              <button
                 onClick={() => {
                   const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(items, null, 2));
                   const downloadAnchor = document.createElement('a');
