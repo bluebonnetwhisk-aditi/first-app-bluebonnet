@@ -2,7 +2,6 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { 
   Lock, 
   ChefHat, 
-  Clock, 
   Calendar as CalendarIcon, 
   Phone, 
   Truck, 
@@ -753,13 +752,13 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
 
   // ── UNLOCKED SYSTEM SCREEN ──
   return (
-    <div className="min-h-screen bg-[#f7f8fa] p-4 sm:p-6 lg:p-8 font-sans">
-      <div className="max-w-7xl mx-auto space-y-6">
+    <div className="min-h-screen bg-[#f7f8fa] p-3 sm:p-5 lg:p-8 font-sans">
+      <div className="max-w-7xl mx-auto space-y-5">
         
-        {/* ── TOP NAV & CONTROLS ── */}
-        <div className="bg-white rounded-2xl border border-gray-200 p-4 sm:p-5 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+        {/* ── TOP NAV & COMMAND DASHBOARD HEADER ── */}
+        <div className="bg-white rounded-2xl border border-gray-200 p-4 sm:p-5 shadow-xs flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div className="flex items-center gap-3.5">
-            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl overflow-hidden border-2 border-[#ffdea5] shadow-md shrink-0 bg-[#00346f] flex items-center justify-center p-1 ring-2 ring-[#00346f]/10">
+            <div className="w-14 h-14 sm:w-18 sm:h-18 rounded-2xl overflow-hidden border-2 border-[#ffdea5] shadow-md shrink-0 bg-[#00346f] flex items-center justify-center p-1 ring-2 ring-[#00346f]/10">
               <img src="/bluebonnet_oms_logo.jpg" alt="BlueBonnet Logo" className="w-full h-full object-cover rounded-xl" />
             </div>
             <div>
@@ -767,7 +766,7 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
                 <h1 className="font-serif text-lg sm:text-xl font-bold text-[#00346f] leading-tight">
                   BlueBonnet Order Management &amp; Financial Reconciliation System
                 </h1>
-                <span className="flex items-center gap-1 bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
+                <span className="flex items-center gap-1 bg-emerald-100 text-emerald-800 text-[10px] font-extrabold px-2.5 py-0.5 rounded-full uppercase tracking-wider">
                   <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                   Supabase &amp; QBO Live Sync
                 </span>
@@ -778,6 +777,7 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
             </div>
           </div>
 
+          {/* Header Quick Dock Action Buttons */}
           <div className="flex flex-wrap items-center gap-2">
             {/* Sound / Bell Alert Toggle & Test */}
             <div className="inline-flex items-center rounded-xl border border-gray-200 bg-gray-50/90 p-0.5 shadow-2xs">
@@ -789,7 +789,7 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
                   localStorage.setItem('bbw_kds_sound_enabled', String(next));
                   if (next) playKitchenChime();
                 }}
-                className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
+                className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition cursor-pointer min-h-[38px] ${
                   soundEnabled 
                     ? 'bg-emerald-50 text-emerald-800 border border-emerald-200 shadow-2xs' 
                     : 'text-gray-400 hover:text-gray-600'
@@ -804,7 +804,7 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
                 <button
                   type="button"
                   onClick={() => playKitchenChime()}
-                  className="px-2 py-1.5 text-[11px] font-bold text-gray-500 hover:text-[#00346f] transition cursor-pointer"
+                  className="px-2.5 py-2 text-[11px] font-bold text-gray-500 hover:text-[#00346f] transition cursor-pointer min-h-[38px]"
                   title="Test Kitchen Bell Sound"
                 >
                   Test
@@ -812,12 +812,12 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
               )}
             </div>
 
-            {/* Native Push Notifications Enable (if not yet granted) */}
+            {/* Native Push Notifications Enable */}
             {notificationPermission !== 'granted' && (
               <button
                 type="button"
                 onClick={handleEnableAlerts}
-                className="inline-flex items-center gap-1.5 bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-900 px-3 py-2 rounded-xl text-xs font-semibold transition cursor-pointer"
+                className="inline-flex items-center gap-1.5 bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-900 px-3 py-2 rounded-xl text-xs font-semibold transition cursor-pointer min-h-[38px]"
                 title="Enable browser notifications and test kitchen chime"
               >
                 <BellRing className="w-3.5 h-3.5 text-blue-600 animate-pulse" />
@@ -827,10 +827,28 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
 
             <button
               onClick={() => setShowPrepSheet(true)}
-              className="inline-flex items-center gap-1.5 bg-[#775a19] hover:bg-[#5e4612] text-white px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-xs cursor-pointer"
+              className="inline-flex items-center gap-1.5 bg-[#775a19] hover:bg-[#5e4612] text-white px-3.5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-xs cursor-pointer min-h-[38px]"
             >
               <Printer className="w-4 h-4" />
-              <span>Kitchen Prep Sheet</span>
+              <span>Prep Sheet</span>
+            </button>
+
+            <button
+              onClick={() => setShowTiffinModal(true)}
+              className="inline-flex items-center gap-1.5 border border-purple-300 hover:bg-purple-50 text-purple-900 px-3 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer min-h-[38px]"
+              title="Upload / Update Weekly Tiffin Menu Flyer & Saturday Specials"
+            >
+              <ImageIcon className="w-3.5 h-3.5 text-purple-700" />
+              <span>Tiffin Flyer</span>
+            </button>
+
+            <button
+              onClick={() => setShowBlackoutModal(true)}
+              className="inline-flex items-center gap-1.5 border border-rose-300 hover:bg-rose-50 text-rose-900 px-3 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer min-h-[38px]"
+              title="Manage Kitchen Blackout Dates & Recurring Schedule"
+            >
+              <Ban className="w-3.5 h-3.5 text-rose-700" />
+              <span>Blackouts</span>
             </button>
 
             <button
@@ -842,35 +860,17 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
                 setPinChangeError('');
                 setPinChangeSuccess(false);
               }}
-              className="inline-flex items-center gap-1.5 border border-amber-300 hover:bg-amber-50 text-amber-900 px-3 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer"
+              className="inline-flex items-center gap-1.5 border border-amber-300 hover:bg-amber-50 text-amber-900 px-3 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer min-h-[38px]"
               title="Change Kitchen Access PIN"
             >
               <KeyRound className="w-3.5 h-3.5 text-amber-700" />
-              <span>Change PIN</span>
-            </button>
-
-            <button
-              onClick={() => setShowTiffinModal(true)}
-              className="inline-flex items-center gap-1.5 border border-purple-300 hover:bg-purple-50 text-purple-900 px-3 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer"
-              title="Upload / Update Weekly Tiffin Menu Flyer & Saturday Specials"
-            >
-              <ImageIcon className="w-3.5 h-3.5 text-purple-700" />
-              <span>Tiffin Flyer &amp; Specials</span>
-            </button>
-
-            <button
-              onClick={() => setShowBlackoutModal(true)}
-              className="inline-flex items-center gap-1.5 border border-rose-300 hover:bg-rose-50 text-rose-900 px-3 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer"
-              title="Manage Kitchen Blackout Dates & Recurring Schedule"
-            >
-              <Ban className="w-3.5 h-3.5 text-rose-700" />
-              <span>Blackout Dates</span>
+              <span>PIN</span>
             </button>
 
             <button
               onClick={loadOrders}
               disabled={isRefreshing}
-              className="inline-flex items-center gap-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer"
+              className="inline-flex items-center gap-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer min-h-[38px]"
               title="Refresh Orders"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
@@ -879,7 +879,7 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
 
             <button
               onClick={handleLock}
-              className="inline-flex items-center gap-1.5 border border-gray-300 hover:bg-gray-100 text-gray-600 px-3 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer"
+              className="inline-flex items-center gap-1.5 border border-gray-300 hover:bg-gray-100 text-gray-600 px-3 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer min-h-[38px]"
               title="Lock Screen"
             >
               <Lock className="w-3.5 h-3.5" />
@@ -890,17 +890,17 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
               <button
                 type="button"
                 onClick={onBackToOrder}
-                className="inline-flex items-center gap-1.5 bg-[#00346f] hover:bg-[#00224d] text-white px-3.5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-xs cursor-pointer"
+                className="inline-flex items-center gap-1.5 bg-[#00346f] hover:bg-[#00224d] text-white px-3.5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-xs cursor-pointer min-h-[38px]"
                 title="Return to Bluebonnet Whisk Website"
               >
                 <ArrowLeft className="w-3.5 h-3.5" />
-                <span>Exit to Website</span>
+                <span>Exit</span>
               </button>
             )}
           </div>
         </div>
 
-        {/* ── BROWSER NOTIFICATION & CHIME SETUP BANNER ── */}
+        {/* ── BROWSER NOTIFICATION BANNER ── */}
         {notificationPermission !== 'granted' && (
           <div className="bg-gradient-to-r from-blue-50 via-indigo-50 to-amber-50 border border-blue-200 rounded-2xl p-4 sm:p-5 shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-4 animate-fade-in">
             <div className="flex items-start gap-3">
@@ -929,7 +929,7 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
               <button
                 type="button"
                 onClick={handleEnableAlerts}
-                className="px-5 py-2.5 bg-[#00346f] hover:bg-[#00224d] text-white text-xs font-bold uppercase tracking-wider rounded-xl shadow-xs transition-all cursor-pointer flex items-center gap-2 hover:scale-101"
+                className="px-5 py-2.5 bg-[#00346f] hover:bg-[#00224d] text-white text-xs font-bold uppercase tracking-wider rounded-xl shadow-xs transition-all cursor-pointer flex items-center gap-2 hover:scale-101 min-h-[44px]"
               >
                 <BellRing className="w-4 h-4" />
                 <span>Enable Alerts &amp; Test Chime</span>
@@ -970,7 +970,7 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
                     setSelectedDate(newOrderAlert.fulfillment_date);
                     setNewOrderAlert(null);
                   }}
-                  className="bg-white hover:bg-amber-50 text-rose-700 px-3.5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-md cursor-pointer flex items-center gap-1.5"
+                  className="bg-white hover:bg-amber-50 text-rose-700 px-3.5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-md cursor-pointer flex items-center gap-1.5 min-h-[44px]"
                 >
                   <span>Switch to {newOrderAlert.fulfillment_date}</span>
                   <ArrowRight className="w-3.5 h-3.5" />
@@ -978,7 +978,7 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
               )}
               <button
                 onClick={() => setNewOrderAlert(null)}
-                className="bg-black/20 hover:bg-black/40 text-white p-2 rounded-xl text-xs font-semibold transition-all cursor-pointer"
+                className="bg-black/20 hover:bg-black/40 text-white p-2 rounded-xl text-xs font-semibold transition-all cursor-pointer min-h-[44px] min-w-[44px] flex items-center justify-center"
                 title="Dismiss Alert"
               >
                 <X className="w-4 h-4" />
@@ -988,10 +988,10 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
         )}
 
         {/* ── DATE PICKER & STATUS PIPELINE TABS ── */}
-        <div className="bg-white rounded-2xl border border-gray-200 p-4 shadow-xs space-y-3.5">
+        <div className="bg-white rounded-2xl border border-gray-200 p-3.5 sm:p-4 shadow-xs space-y-3">
           
-          {/* 1. Schedule Ribbon (Row 1) */}
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none w-full">
+          {/* 1. Schedule Ribbon (Row 1 with CSS Snap Scrolling) */}
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none snap-x snap-mandatory w-full">
             <span className="text-xs font-bold text-gray-500 mr-1.5 flex items-center gap-1 shrink-0">
               <CalendarIcon className="w-3.5 h-3.5" />
               <span>Schedule:</span>
@@ -1001,7 +1001,7 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
             <button
               type="button"
               onClick={() => setSelectedDate('all')}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5 shrink-0 ${
+              className={`px-3 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5 shrink-0 snap-start min-h-[38px] ${
                 selectedDate === 'all'
                   ? 'bg-[#00346f] text-white shadow-xs'
                   : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
@@ -1027,7 +1027,7 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
                   key={opt.dateStr}
                   type="button"
                   onClick={() => setSelectedDate(opt.dateStr)}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5 shrink-0 ${
+                  className={`px-3 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5 shrink-0 snap-start min-h-[38px] ${
                     isSelected
                       ? isToday
                         ? 'bg-amber-600 text-white shadow-xs ring-2 ring-amber-300'
@@ -1063,13 +1063,13 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
                 type="date"
                 value={selectedDate === 'all' ? todayDateStr : selectedDate}
                 onChange={(e) => setSelectedDate(e.target.value)}
-                className="px-2 py-1 bg-gray-50 border border-gray-300 rounded-lg text-xs text-gray-700 focus:outline-none shrink-0"
+                className="px-2.5 py-1.5 bg-gray-50 border border-gray-300 rounded-lg text-xs text-gray-700 focus:outline-none shrink-0 min-h-[38px]"
               />
             </div>
           </div>
 
-          {/* 2. Status Pipeline Filter Ribbon (Row 2 - Moved below the Schedule Ribbon) */}
-          <div className="pt-2.5 border-t border-gray-150 flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none w-full">
+          {/* 2. Status Pipeline Filter Ribbon (Row 2) */}
+          <div className="pt-2 border-t border-gray-150 flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none snap-x snap-mandatory w-full">
             <span className="text-xs font-bold text-gray-500 mr-1.5 flex items-center gap-1 shrink-0">
               <span>Status:</span>
             </span>
@@ -1088,9 +1088,9 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
                   key={tab.key}
                   type="button"
                   onClick={() => setStatusFilter(tab.key)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 ${
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 snap-start min-h-[36px] ${
                     statusFilter === tab.key
-                      ? 'bg-white text-[#00346f] shadow-xs ring-1 ring-black/5'
+                      ? 'bg-white text-[#00346f] shadow-xs ring-1 ring-black/5 font-extrabold'
                       : 'text-gray-600 hover:text-gray-900'
                   }`}
                 >
@@ -1116,8 +1116,8 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
         {/* ── LIVE ORDER CARDS GRID ── */}
         {isLoading ? (
           <div className="py-20 text-center text-gray-400">
-            <RefreshCw className="w-8 h-8 mx-auto animate-spin mb-2" />
-            <p className="text-xs">Loading live kitchen orders...</p>
+            <RefreshCw className="w-8 h-8 mx-auto animate-spin mb-2 text-[#00346f]" />
+            <p className="text-xs font-semibold">Loading live kitchen orders...</p>
           </div>
         ) : activeOrders.length === 0 ? (
           <div className="bg-white rounded-2xl border border-gray-200 p-8 sm:p-12 text-center shadow-xs space-y-4">
@@ -1142,7 +1142,7 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
                   <button
                     type="button"
                     onClick={() => setSelectedDate('all')}
-                    className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#00346f] hover:bg-[#00224d] text-white text-xs font-bold uppercase tracking-wider rounded-xl shadow-xs transition cursor-pointer"
+                    className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#00346f] hover:bg-[#00224d] text-white text-xs font-bold uppercase tracking-wider rounded-xl shadow-xs transition cursor-pointer min-h-[44px]"
                   >
                     <span>View All {totalActiveOrdersCount} Orders</span>
                     <ArrowRight className="w-4 h-4" />
@@ -1161,10 +1161,16 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
               const hasSatvik = order.dietary_notes?.toLowerCase().includes('satvik') || 
                                 order.dietary_notes?.toLowerCase().includes('jain');
 
+              // 4-step pipeline progress calculation
+              const stepIndex = order.status === 'new' ? 1 
+                              : order.status === 'accepted' ? 2 
+                              : order.status === 'preparing' ? 3 
+                              : order.status === 'ready' || order.status === 'completed' ? 4 : 0;
+
               return (
                 <div
                   key={order.id}
-                  className={`bg-white rounded-2xl border transition-all flex flex-col justify-between shadow-xs ${
+                  className={`bg-white rounded-2xl border transition-all flex flex-col justify-between shadow-xs hover:shadow-md ${
                     order.status === 'new'
                       ? 'border-blue-400 ring-2 ring-blue-100'
                       : order.status === 'accepted'
@@ -1178,24 +1184,56 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
                       : 'border-gray-200'
                   }`}
                 >
-                  {/* Card Header */}
-                  <div className="p-4 sm:p-5 border-b border-gray-150 space-y-2">
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="font-mono text-[10px] font-bold text-gray-400">
+                  {/* High-Visibility Saffron Satvik / Allergen Banner */}
+                  {hasSatvik && (
+                    <div className="bg-amber-500 text-black px-4 py-1.5 text-xs font-black uppercase tracking-wider rounded-t-2xl flex items-center justify-between border-b border-amber-600 shadow-2xs">
+                      <div className="flex items-center gap-1.5">
+                        <AlertTriangle className="w-4 h-4 text-black shrink-0 animate-pulse" />
+                        <span>SATVIK / NO ONION NO GARLIC</span>
+                      </div>
+                      <span className="text-[10px] bg-black text-amber-400 px-2 py-0.5 rounded font-mono font-bold">STRICT PREP</span>
+                    </div>
+                  )}
+
+                  {/* Card Header & 4-Step Pipeline Stepper */}
+                  <div className="p-4 sm:p-5 border-b border-gray-150 space-y-2.5">
+                    {/* Pipeline Visual Stepper Bar */}
+                    <div className="flex items-center gap-1 w-full pb-1">
+                      {['New', 'Accepted', 'Prep', 'Ready'].map((stepLabel, idx) => {
+                        const stepNum = idx + 1;
+                        const isCurrent = stepIndex === stepNum;
+                        const isPast = stepIndex > stepNum;
+                        return (
+                          <div key={stepLabel} className="flex-1 flex flex-col items-center gap-1">
+                            <div className={`h-1.5 w-full rounded-full transition-all ${
+                              isPast ? 'bg-emerald-500' : isCurrent ? 'bg-[#00346f] ring-2 ring-[#00346f]/30' : 'bg-gray-200'
+                            }`} />
+                            <span className={`text-[9px] font-bold uppercase tracking-widest ${
+                              isCurrent ? 'text-[#00346f]' : isPast ? 'text-emerald-700' : 'text-gray-400'
+                            }`}>
+                              {stepLabel}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    <div className="flex items-center justify-between gap-2 pt-1">
+                      <span className="font-mono text-xs font-extrabold text-gray-500">
                         #{order.id.slice(0, 8).toUpperCase()}
                       </span>
 
                       <div className="flex items-center gap-1.5">
                         {order.order_type === 'estimate' && (
-                          <span className="px-2 py-0.5 bg-purple-50 text-purple-700 rounded text-[10px] font-bold uppercase">
+                          <span className="px-2 py-0.5 bg-purple-100 text-purple-800 rounded text-[10px] font-extrabold uppercase">
                             Estimate
                           </span>
                         )}
-                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
+                        <span className={`px-2.5 py-0.5 rounded text-[10px] font-extrabold uppercase tracking-wider ${
                           order.status === 'new'
                             ? 'bg-blue-100 text-blue-900'
                             : order.status === 'accepted'
-                            ? 'bg-emerald-100 text-emerald-900 font-extrabold'
+                            ? 'bg-emerald-100 text-emerald-900'
                             : order.status === 'preparing'
                             ? 'bg-amber-100 text-amber-900'
                             : order.status === 'ready'
@@ -1211,27 +1249,30 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
 
                     <div>
                       <div className="flex items-start justify-between gap-2">
-                        <h3 className="font-serif font-bold text-base text-gray-900 leading-tight">
+                        <h3 className="font-serif font-bold text-base sm:text-lg text-gray-900 leading-tight">
                           {order.customer_name}
                         </h3>
-                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md border shrink-0 whitespace-nowrap ${
-                          order.fulfillment_date === todayDateStr
-                            ? 'bg-amber-100 text-amber-900 border-amber-300 font-extrabold'
-                            : 'bg-blue-50 text-[#00346f] border-blue-200'
-                        }`}>
-                          📅 {order.fulfillment_date} {order.fulfillment_date === todayDateStr ? '(Today)' : ''}
-                        </span>
+                        {/* Prominent Monospace Fulfillment Time Stamp */}
+                        <div className="text-right shrink-0">
+                          <span className="font-mono text-base sm:text-lg font-black text-[#00346f] bg-blue-50 px-2.5 py-1 rounded-xl border border-blue-200 block shadow-2xs">
+                            {order.fulfillment_time || 'TBD'}
+                          </span>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-3 text-xs text-gray-600 mt-1">
-                        <span className="inline-flex items-center gap-1">
-                          <Phone className="w-3 h-3 text-gray-400" />
-                          <a href={`tel:${order.phone_number}`} className="hover:underline">
+
+                      <div className="flex items-center justify-between text-xs text-gray-600 mt-1.5">
+                        <span className="inline-flex items-center gap-1 font-medium">
+                          <Phone className="w-3.5 h-3.5 text-gray-400" />
+                          <a href={`tel:${order.phone_number}`} className="hover:underline text-gray-800 font-semibold">
                             {order.phone_number}
                           </a>
                         </span>
-                        <span className="inline-flex items-center gap-1 font-bold text-[#00346f]">
-                          <Clock className="w-3 h-3 text-[#00346f]" />
-                          {order.fulfillment_time}
+                        <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-md border ${
+                          order.fulfillment_date === todayDateStr
+                            ? 'bg-amber-100 text-amber-900 border-amber-300'
+                            : 'bg-gray-100 text-gray-700 border-gray-200'
+                        }`}>
+                          📅 {order.fulfillment_date} {order.fulfillment_date === todayDateStr ? '(Today)' : ''}
                         </span>
                       </div>
                     </div>
@@ -1239,30 +1280,22 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
                     {/* Delivery / Pickup Badge */}
                     <div className="flex items-center gap-2 pt-1 text-xs">
                       {order.is_delivery ? (
-                        <div className="flex items-start gap-1 text-amber-900 bg-amber-50 px-2.5 py-1 rounded-lg border border-amber-200 w-full">
-                          <Truck className="w-3.5 h-3.5 shrink-0 mt-0.5" />
-                          <div className="text-[11px] leading-snug">
-                            <strong>Delivery:</strong> {order.delivery_address || 'Address provided on file'}
+                        <div className="flex items-start gap-1.5 text-amber-950 bg-amber-50 px-2.5 py-1.5 rounded-xl border border-amber-200 w-full">
+                          <Truck className="w-4 h-4 text-amber-700 shrink-0 mt-0.5" />
+                          <div className="text-[11px] leading-snug font-medium">
+                            <strong className="text-amber-900 font-bold">Delivery:</strong> {order.delivery_address || 'Address provided on file'}
                           </div>
                         </div>
                       ) : (
-                        <div className="flex items-center gap-1 text-gray-700 bg-gray-100 px-2.5 py-1 rounded-lg text-[11px]">
-                          <Store className="w-3.5 h-3.5 text-gray-500" />
+                        <div className="flex items-center gap-1.5 text-gray-700 bg-gray-100 px-2.5 py-1.5 rounded-xl text-[11px] w-full font-medium">
+                          <Store className="w-4 h-4 text-gray-500 shrink-0" />
                           <span>Self-Pickup (Home Kitchen - Deerwood Dr, Little Elm)</span>
                         </div>
                       )}
                     </div>
 
-                    {/* Satvik Alert */}
-                    {hasSatvik && (
-                      <div className="bg-amber-500/10 border border-amber-300 text-amber-900 px-2.5 py-1 rounded-lg text-[11px] font-bold flex items-center gap-1.5">
-                        <AlertTriangle className="w-3.5 h-3.5 text-amber-700 shrink-0" />
-                        <span>SATVIK / NO ONION NO GARLIC</span>
-                      </div>
-                    )}
-
                     {order.dietary_notes && !hasSatvik && (
-                      <div className="text-[11px] text-gray-600 bg-gray-50 p-2 rounded-lg italic">
+                      <div className="text-[11px] text-gray-700 bg-gray-50 p-2.5 rounded-xl border border-gray-200 italic">
                         &quot;{order.dietary_notes}&quot;
                       </div>
                     )}
@@ -1270,23 +1303,23 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
 
                   {/* Itemized Trays Breakdown */}
                   <div className="p-4 sm:p-5 flex-1 space-y-2">
-                    <div className="flex justify-between items-center text-[11px] font-bold text-gray-400 uppercase tracking-wider pb-1 border-b border-gray-100">
+                    <div className="flex justify-between items-center text-[11px] font-extrabold text-gray-500 uppercase tracking-wider pb-1 border-b border-gray-150">
                       <span>Items to Prepare</span>
-                      <span>{totalTraysInThisOrder} Trays</span>
+                      <span className="bg-gray-100 px-2 py-0.5 rounded text-gray-800 font-mono">{totalTraysInThisOrder} Trays</span>
                     </div>
 
                     <div className="space-y-1.5 text-xs max-h-48 overflow-y-auto pr-1">
                       {order.items.map((item, idx) => (
-                        <div key={idx} className="flex justify-between items-start gap-2 py-0.5">
+                        <div key={idx} className="flex justify-between items-start gap-2 py-1 border-b border-gray-100 last:border-0">
                           <div>
-                            <span className="font-semibold text-gray-900">
+                            <span className="font-bold text-gray-900">
                               {item.name}
                             </span>
-                            <div className="text-[10px] text-gray-500">
+                            <div className="text-[10px] text-gray-500 font-medium">
                               {item.selectionLabel} {item.tier ? `(${item.tier})` : ''}
                             </div>
                           </div>
-                          <span className="font-bold text-[#00346f] px-2 py-0.5 bg-blue-50 rounded text-xs shrink-0">
+                          <span className="font-mono font-extrabold text-[#00346f] px-2 py-0.5 bg-blue-50 border border-blue-100 rounded text-xs shrink-0">
                             &times; {item.quantity}
                           </span>
                         </div>
@@ -1294,41 +1327,59 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
                     </div>
                   </div>
 
-                  {/* Pipeline Status Buttons Footer */}
-                  <div className="p-3 sm:p-4 bg-gray-50 border-t border-gray-150 rounded-b-2xl flex items-center justify-between gap-2">
-                    <div>
-                      <span className="text-xs font-bold text-gray-900 block">${order.total_amount.toFixed(2)}</span>
-                      {Boolean((order.discount_amount && order.discount_amount > 0) || (order.rebate_amount && order.rebate_amount > 0)) && (
-                        <span className="text-[10px] text-purple-700 block font-semibold">
-                          {order.discount_amount ? `-${order.discount_amount.toFixed(2)} Disc` : ''}
-                          {order.rebate_amount ? ` -${order.rebate_amount.toFixed(2)} Reb` : ''}
-                        </span>
-                      )}
+                  {/* Order Footer: Price, QBO Status Pill, & Touch Action Controls */}
+                  <div className="p-3.5 sm:p-4 bg-gray-50 border-t border-gray-150 rounded-b-2xl space-y-2.5">
+                    <div className="flex items-center justify-between gap-2">
+                      <div>
+                        <span className="text-sm font-extrabold text-gray-900 block font-mono">${order.total_amount.toFixed(2)}</span>
+                        {Boolean((order.discount_amount && order.discount_amount > 0) || (order.rebate_amount && order.rebate_amount > 0)) && (
+                          <span className="text-[10px] text-purple-700 block font-bold">
+                            {order.discount_amount ? `-${order.discount_amount.toFixed(2)} Disc` : ''}
+                            {order.rebate_amount ? ` -${order.rebate_amount.toFixed(2)} Reb` : ''}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Per-Card QBO Status Pill */}
+                      <div>
+                        {order.reconciled_to_qbo ? (
+                          <span className="inline-flex items-center gap-1 bg-emerald-100 text-emerald-800 text-[10px] font-extrabold px-2 py-0.5 rounded-md border border-emerald-300">
+                            <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                            <span>QBO #{order.qbo_doc_id || 'OK'}</span>
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 bg-blue-50 text-[#00346f] text-[10px] font-semibold px-2 py-0.5 rounded-md border border-blue-200">
+                            <span>QBO Pending</span>
+                          </span>
+                        )}
+                      </div>
                     </div>
 
-                    <div className="flex items-center gap-1.5">
+                    {/* Touch Control Buttons Bar */}
+                    <div className="flex items-center justify-between gap-2 pt-1 border-t border-gray-200">
                       <button
                         type="button"
                         onClick={() => setEditingOrder(order)}
-                        className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-gray-300 hover:bg-gray-100 text-gray-700 text-xs font-semibold cursor-pointer transition-colors"
+                        className="inline-flex items-center gap-1 px-3 py-2 rounded-xl border border-gray-300 hover:bg-gray-100 text-gray-700 text-xs font-bold cursor-pointer transition-colors min-h-[42px]"
                         title="Edit items, quantities, discounts, and rebates"
                       >
                         <FileEdit className="w-3.5 h-3.5 text-[#00346f]" />
                         <span>Edit</span>
                       </button>
+
                       {/* Status: new -> Accept Order OR Deny Order */}
                       {order.status === 'new' && (
-                        <div className="flex items-center gap-1.5">
+                        <div className="flex items-center gap-1.5 flex-1 justify-end">
                           <button
                             type="button"
                             onClick={() => {
                               handleStatusChange(order.id, 'accepted');
                               openWhatsAppForOrder(order, 'accepted');
                             }}
-                            className="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-all shadow-xs cursor-pointer flex items-center gap-1.5"
+                            className="bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-2 rounded-xl text-xs font-extrabold transition-all shadow-xs cursor-pointer flex items-center justify-center gap-1.5 flex-1 min-h-[42px]"
                             title="Accept order and notify customer via WhatsApp"
                           >
-                            <Check className="w-3.5 h-3.5" />
+                            <Check className="w-4 h-4" />
                             <span>Accept Order</span>
                             <MessageCircle className="w-3.5 h-3.5 text-emerald-200" />
                           </button>
@@ -1336,22 +1387,22 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
                           <button
                             type="button"
                             onClick={() => handleDenyOrder(order)}
-                            className="bg-rose-600 hover:bg-rose-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-all shadow-xs cursor-pointer flex items-center gap-1.5"
+                            className="bg-rose-600 hover:bg-rose-700 text-white px-3 py-2 rounded-xl text-xs font-bold transition-all shadow-xs cursor-pointer flex items-center justify-center gap-1 min-h-[42px]"
                             title="Deny order, send WhatsApp rejection message to customer, and delete entry from Supabase"
                           >
                             <Ban className="w-3.5 h-3.5" />
-                            <span>Deny &amp; Delete</span>
+                            <span>Deny</span>
                           </button>
                         </div>
                       )}
 
                       {/* Status: accepted -> Start Prep */}
                       {order.status === 'accepted' && (
-                        <div className="flex items-center gap-1.5">
+                        <div className="flex items-center gap-1.5 flex-1 justify-end">
                           <button
                             type="button"
                             onClick={() => openWhatsAppForOrder(order, 'accepted')}
-                            className="bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 px-2 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1"
+                            className="bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 px-2.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1 min-h-[42px]"
                             title="Resend WhatsApp confirmation to customer"
                           >
                             <MessageCircle className="w-3.5 h-3.5 text-emerald-700" />
@@ -1360,10 +1411,10 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
                           <button
                             type="button"
                             onClick={() => handleStatusChange(order.id, 'preparing')}
-                            className="bg-amber-600 hover:bg-amber-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-all shadow-xs cursor-pointer flex items-center gap-1"
+                            className="bg-amber-600 hover:bg-amber-700 text-white px-3.5 py-2 rounded-xl text-xs font-extrabold transition-all shadow-xs cursor-pointer flex items-center justify-center gap-1 flex-1 min-h-[42px]"
                           >
                             <span>Start Prep</span>
-                            <ArrowRight className="w-3 h-3" />
+                            <ArrowRight className="w-4 h-4" />
                           </button>
                         </div>
                       )}
@@ -1376,10 +1427,10 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
                             handleStatusChange(order.id, 'ready');
                             openWhatsAppForOrder(order, 'ready');
                           }}
-                          className="bg-teal-600 hover:bg-teal-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-all shadow-xs cursor-pointer flex items-center gap-1.5"
+                          className="bg-teal-600 hover:bg-teal-700 text-white px-3.5 py-2 rounded-xl text-xs font-extrabold transition-all shadow-xs cursor-pointer flex items-center justify-center gap-1.5 flex-1 min-h-[42px]"
                           title="Mark order ready and notify customer via WhatsApp"
                         >
-                          <CheckCircle2 className="w-3.5 h-3.5" />
+                          <CheckCircle2 className="w-4 h-4" />
                           <span>Mark Ready</span>
                           <MessageCircle className="w-3.5 h-3.5 text-teal-200" />
                         </button>
@@ -1387,11 +1438,11 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
 
                       {/* Status: ready -> Complete & Archive */}
                       {order.status === 'ready' && (
-                        <div className="flex items-center gap-1.5">
+                        <div className="flex items-center gap-1.5 flex-1 justify-end">
                           <button
                             type="button"
                             onClick={() => openWhatsAppForOrder(order, 'ready')}
-                            className="bg-teal-50 hover:bg-teal-100 text-teal-800 border border-teal-300 px-2 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1"
+                            className="bg-teal-50 hover:bg-teal-100 text-teal-800 border border-teal-300 px-2.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1 min-h-[42px]"
                             title="Resend Ready WhatsApp message to customer"
                           >
                             <MessageCircle className="w-3.5 h-3.5 text-teal-700" />
@@ -1400,9 +1451,9 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
                           <button
                             type="button"
                             onClick={() => handleStatusChange(order.id, 'completed')}
-                            className="bg-[#00346f] hover:bg-[#00224d] text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-all shadow-xs cursor-pointer"
+                            className="bg-[#00346f] hover:bg-[#00224d] text-white px-3.5 py-2 rounded-xl text-xs font-extrabold transition-all shadow-xs cursor-pointer flex-1 min-h-[42px]"
                           >
-                            <span>Complete &amp; Archive</span>
+                            <span>Complete</span>
                           </button>
                         </div>
                       )}
@@ -1411,7 +1462,7 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
                         <button
                           type="button"
                           onClick={() => handleStatusChange(order.id, 'ready')}
-                          className="text-[10px] text-gray-500 hover:text-gray-800 underline cursor-pointer"
+                          className="text-[10px] text-gray-500 hover:text-gray-800 underline cursor-pointer p-1"
                         >
                           Reopen
                         </button>
@@ -1424,7 +1475,7 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
                           className="text-[10px] text-rose-500 hover:text-rose-700 font-semibold underline cursor-pointer p-1"
                           title="Deny order, notify customer via WhatsApp, and delete from Supabase"
                         >
-                          Deny &amp; Delete
+                          Deny
                         </button>
                       )}
                     </div>
