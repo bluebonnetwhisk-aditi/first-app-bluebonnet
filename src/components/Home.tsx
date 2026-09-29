@@ -395,7 +395,7 @@ export default function Home({ onOpenBaker: _onOpenBaker, onNavigate }: HomeProp
                 itemsOrdered: "Custom 2-Tier Theme Cake + Live Pani Puri Bar & Railway Cutlets",
                 quote: "Finding a baker in Frisco who can pull off a Pinterest-worthy theme cake AND a 100% eggless Rasmalai Biscoff flavor was a miracle! The cake was so soft, not overly sweet like American bakery cakes. The live Pani Puri counter was a massive hit!",
                 rating: 5,
-                date: "September 2026"
+                date: "September 24, 2026"
               },
               {
                 name: "Priya & Venkat M.",
@@ -403,15 +403,15 @@ export default function Home({ onOpenBaker: _onOpenBaker, onNavigate }: HomeProp
                 itemsOrdered: "Grand Catering: Paneer Lababdar, Dal Makhani & Cardamom Kheer",
                 quote: "We hosted 50+ relatives and friends in Plano. The Paneer Lababdar and Dal Makhani tasted like authentic Dilli-style dhaba food—rich, aromatic, but not heavy. My in-laws visiting from Bengaluru praised the cardamom Kheer!",
                 rating: 5,
-                date: "September 2026"
+                date: "September 15, 2026"
               },
               {
-                name: "Swati & Rajesh K.",
-                occasion: "Satvik Ganpati Pooja Catering • McKinney, TX",
-                itemsOrdered: "100% Satvik Meal: Bedmi Poori, Halwai Waale Aalu & Shahi Paneer",
-                quote: "We requested a 100% Satvik (strict No Onion & No Garlic) setup for our Ganpati Sthapana pooja in McKinney. Bedmi Poori with Halwai-style Aalu tasted out of this world! Pure ingredients gave us total peace of mind.",
+                name: "Siddharth P.",
+                occasion: "Weekly Executive Tiffin Service • Irving, TX",
+                itemsOrdered: "Daily Dabba: Aalu Paratha, Sattu Paratha, Homestyle Kadhi & Bharwa Baigan",
+                quote: "Living in Las Colinas and working long tech hours, finding clean ghar-ka-khana was my biggest priority. Bluebonnet Whisk's weekly dabbas feel like mom cooked them—soft phulkas, tangy homestyle Kadhi Pakora, and delicious Sattu parathas!",
                 rating: 5,
-                date: "August 2026"
+                date: "August 28, 2026"
               }
             ].map((t, idx) => (
               <div 
