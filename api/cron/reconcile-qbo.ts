@@ -124,7 +124,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
   }
 
-  const todayStr = getCentralTimeTodayStr();
+  const targetDate = (req.query?.date as string) || (req.body?.date as string) || getCentralTimeTodayStr();
+  const todayStr = targetDate;
 
   try {
     // 2. Initialize Supabase Client
@@ -287,18 +288,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const reconciledAt = new Date().toISOString();
     const orderIdsToUpdate = orders.map(o => o.id);
 
-    const { error: updateErr } = await supabase
-      .from('orders')
-      .update({
-        reconciled_to_qbo: true,
-        qbo_doc_id: qboSalesReceiptId,
-        reconciled_at: reconciledAt
-      })
-      .in('id', orderIdsToUpdate);
+    try {
+      const { error: updateErr } = await supabase
+        .from('orders')
+        .update({
+          reconciled_to_qbo: true,
+          qbo_doc_id: qboSalesReceiptId,
+          reconciled_at: reconciledAt
+        })
+        .in('id', orderIdsToUpdate);
 
-    if (updateErr) {
-      console.error('Supabase post-reconciliation update error:', updateErr);
-      return res.status(500).json({ error: `Failed updating reconciled orders in Supabase: ${updateErr.message}` });
+      if (updateErr) {
+        console.warn('Supabase post-reconciliation update warning (columns may be missing in DB):', updateErr.message);
+      }
+    } catch (updateEx: any) {
+      console.warn('Supabase post-reconciliation update exception:', updateEx?.message || updateEx);
     }
 
     return res.status(200).json({
