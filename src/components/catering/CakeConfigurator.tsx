@@ -224,9 +224,9 @@ export default function CakeConfigurator({
                 <h3 className="font-serif font-bold text-lg sm:text-xl text-white">
                   Cakes &amp; Specialty Bakes Configurator
                 </h3>
-                <span className="text-[10px] font-semibold text-[#ffdea5] bg-white/10 px-2 py-0.5 rounded border border-white/15">
-                  48h notice
-                </span>
+                <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-300/80 text-[10px] font-bold uppercase tracking-wider">
+                  <span>⏱️</span> 48h Advance Notice
+                </div>
               </div>
               <p className="text-xs text-white/80 mt-0.5">
                 Artisan celebration cakes crafted fresh for your birthdays, anniversaries &amp; milestone gatherings. Available eggless on request.
