@@ -395,18 +395,37 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
     }
   }, [isUnlocked, soundEnabled]);
 
-  // Handle PIN entry
-  const handlePinSubmit = (e?: React.FormEvent) => {
+  // Handle PIN entry with serverless verification
+  const handlePinSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    if (pinInput.trim() === masterPin) {
+    const clean = pinInput.trim();
+    if (!clean) return;
+
+    try {
+      const res = await fetch('/api/kds/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pin: clean })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setIsUnlocked(true);
+        sessionStorage.setItem(PIN_STORAGE_KEY, 'true');
+        setPinError(false);
+        setPinInput('');
+        if (soundEnabled) playKitchenChime();
+        return;
+      }
+    } catch {
+      // Fallback for local dev environments
+    }
+
+    if (clean === masterPin) {
       setIsUnlocked(true);
       sessionStorage.setItem(PIN_STORAGE_KEY, 'true');
       setPinError(false);
       setPinInput('');
-      // Warm up audio context on user gesture
-      if (soundEnabled) {
-        playKitchenChime();
-      }
+      if (soundEnabled) playKitchenChime();
     } else {
       setPinError(true);
       setPinInput('');

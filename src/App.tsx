@@ -9,16 +9,16 @@ import { submitToGoogleSheets } from "./services/googleSheets";
 // Assets
 import brandLogo from "./assets/images/brand_logo_transparent.png";
 
-// Components
-import Home from "./components/Home";
-import CakesPage from "./components/CakesPage";
-import CateringContainer from "./components/catering/CateringContainer";
-import KitchenKDS from "./components/catering/KitchenKDS";
-import LiveCountersPage from "./components/LiveCountersPage";
-import GiftingPage from "./components/GiftingPage";
-import AboutPage from "./components/AboutPage";
-import GalleryPage from "./components/GalleryPage";
-import ReviewsPage from "./components/ReviewsPage";
+// Dynamic Lazy-Loaded Page Components (Code-Splitting for Page Speed)
+const Home = React.lazy(() => import("./components/Home"));
+const CakesPage = React.lazy(() => import("./components/CakesPage"));
+const CateringContainer = React.lazy(() => import("./components/catering/CateringContainer"));
+const KitchenKDS = React.lazy(() => import("./components/catering/KitchenKDS"));
+const LiveCountersPage = React.lazy(() => import("./components/LiveCountersPage"));
+const GiftingPage = React.lazy(() => import("./components/GiftingPage"));
+const AboutPage = React.lazy(() => import("./components/AboutPage"));
+const GalleryPage = React.lazy(() => import("./components/GalleryPage"));
+const ReviewsPage = React.lazy(() => import("./components/ReviewsPage"));
 
 // Modals (InquiryWizard retired)
 
@@ -213,14 +213,21 @@ export default function App() {
   if (isKitchenMode) {
     return (
       <div className="min-h-screen bg-[#f7f8fa] font-sans antialiased text-gray-900">
-        <KitchenKDS
-          onBackToOrder={() => {
-            setIsKitchenMode(false);
-            setActiveTab("Catering");
-            window.history.pushState(null, "", "/catering/food");
-            window.scrollTo({ top: 0, behavior: "smooth" });
-          }}
-        />
+        <React.Suspense fallback={
+          <div className="min-h-screen flex flex-col items-center justify-center p-8 space-y-3 bg-[#f7f8fa]">
+            <div className="w-12 h-12 border-4 border-[#00346f] border-t-transparent rounded-full animate-spin" />
+            <span className="text-xs font-bold uppercase tracking-wider text-[#00346f]">Loading Kitchen Display System...</span>
+          </div>
+        }>
+          <KitchenKDS
+            onBackToOrder={() => {
+              setIsKitchenMode(false);
+              setActiveTab("Catering");
+              window.history.pushState(null, "", "/catering/food");
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }}
+          />
+        </React.Suspense>
       </div>
     );
   }
@@ -323,37 +330,44 @@ export default function App() {
 
       {/* RENDER ACTIVE TAB */}
       <main className="flex-1">
-        {activeTab === "Home" && (
-          <Home 
-            onOpenBaker={handleOpenBaker}
-            onNavigate={setActiveTab}
-          />
-        )}
-        {activeTab === "Cakes" && (
-          <CakesPage 
-            onOpenBaker={handleOpenBaker}
-            onOpenPriceList={() => setShowPriceList(true)}
-            onCreateQuote={handleNavigateToCakeCatering}
-          />
-        )}
-        {activeTab === "Catering" && (
-          <CateringContainer />
-        )}
-        {activeTab === "Live Counters" && (
-          <LiveCountersPage />
-        )}
-        {activeTab === "Gifting" && (
-          <GiftingPage />
-        )}
-        {activeTab === "Gallery" && (
-          <GalleryPage />
-        )}
-        {activeTab === "Reviews" && (
-          <ReviewsPage />
-        )}
-        {activeTab === "About" && (
-          <AboutPage />
-        )}
+        <React.Suspense fallback={
+          <div className="min-h-[50vh] flex flex-col items-center justify-center p-8 space-y-3">
+            <div className="w-10 h-10 border-4 border-[#00346f] border-t-transparent rounded-full animate-spin" />
+            <span className="text-xs font-bold uppercase tracking-wider text-[#00346f]">Loading Experience...</span>
+          </div>
+        }>
+          {activeTab === "Home" && (
+            <Home 
+              onOpenBaker={handleOpenBaker}
+              onNavigate={setActiveTab}
+            />
+          )}
+          {activeTab === "Cakes" && (
+            <CakesPage 
+              onOpenBaker={handleOpenBaker}
+              onOpenPriceList={() => setShowPriceList(true)}
+              onCreateQuote={handleNavigateToCakeCatering}
+            />
+          )}
+          {activeTab === "Catering" && (
+            <CateringContainer />
+          )}
+          {activeTab === "Live Counters" && (
+            <LiveCountersPage />
+          )}
+          {activeTab === "Gifting" && (
+            <GiftingPage />
+          )}
+          {activeTab === "Gallery" && (
+            <GalleryPage />
+          )}
+          {activeTab === "Reviews" && (
+            <ReviewsPage />
+          )}
+          {activeTab === "About" && (
+            <AboutPage />
+          )}
+        </React.Suspense>
       </main>
 
       {/* FOOTER */}

@@ -58,9 +58,17 @@ CREATE INDEX IF NOT EXISTS idx_orders_status ON public.orders(status);
 CREATE INDEX IF NOT EXISTS idx_orders_created_at ON public.orders(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_calendar_blackouts_date ON public.calendar_blackouts(closed_date);
 
--- 5. Row Level Security (RLS) Setup
+-- 5. Create Application Settings Table (Key-Value Store for System Config & Tokens)
+CREATE TABLE IF NOT EXISTS public.app_settings (
+    key TEXT PRIMARY KEY,
+    value JSONB NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT timezone('America/Chicago', now())
+);
+
+-- 6. Row Level Security (RLS) Setup
 ALTER TABLE public.orders ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.calendar_blackouts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.app_settings ENABLE ROW LEVEL SECURITY;
 
 -- Allow public anonymous/authenticated read & insert on orders
 CREATE POLICY "Allow public insert on orders"
@@ -108,13 +116,28 @@ CREATE POLICY "Allow public update on calendar_blackouts"
     USING (true)
     WITH CHECK (true);
 
--- 6. Enable Realtime Replication for Live Kitchen KDS Cards
+-- Settings RLS: Service Role full access, Anonymous read-only for public settings
+CREATE POLICY "Allow public select on app_settings"
+    ON public.app_settings
+    FOR SELECT
+    TO anon, authenticated
+    USING (true);
+
+CREATE POLICY "Allow authenticated upsert on app_settings"
+    ON public.app_settings
+    FOR ALL
+    TO authenticated, service_role
+    USING (true)
+    WITH CHECK (true);
+
+-- 7. Enable Realtime Replication for Live Kitchen KDS Cards
 ALTER PUBLICATION supabase_realtime ADD TABLE public.orders;
 
--- 7. Seed Sample Blackout Dates (e.g. Major Holidays)
+-- 8. Seed Sample Blackout Dates (e.g. Major Holidays)
 INSERT INTO public.calendar_blackouts (closed_date, reason)
 VALUES 
     ('2026-11-26', 'Thanksgiving Holiday Kitchen Close'),
     ('2026-12-25', 'Christmas Day Kitchen Maintenance'),
     ('2027-01-01', 'New Year Day Kitchen Reset')
 ON CONFLICT (closed_date) DO NOTHING;
+

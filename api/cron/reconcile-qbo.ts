@@ -20,10 +20,29 @@ function getCentralTimeTodayStr(): string {
 }
 
 /**
- * Refreshes QBO OAuth 2.0 Access Token using Refresh Token
+ * Refreshes QBO OAuth 2.0 Access Token using Refresh Token with auto-rotation persistence
  */
-async function getQBOAccessToken(): Promise<string> {
-  if (!QBO_CLIENT_ID || !QBO_CLIENT_SECRET || !QBO_REFRESH_TOKEN) {
+async function getQBOAccessToken(supabase?: any): Promise<string> {
+  let activeRefreshToken = QBO_REFRESH_TOKEN;
+
+  // 1. Check for dynamically rotated refresh token in Supabase DB first
+  if (supabase) {
+    try {
+      const { data: dbSetting } = await supabase
+        .from('app_settings')
+        .select('value')
+        .eq('key', 'qbo_refresh_token')
+        .maybeSingle();
+
+      if (dbSetting?.value?.refresh_token) {
+        activeRefreshToken = dbSetting.value.refresh_token;
+      }
+    } catch (dbErr) {
+      console.warn('Supabase QBO token lookup warning:', dbErr);
+    }
+  }
+
+  if (!QBO_CLIENT_ID || !QBO_CLIENT_SECRET || !activeRefreshToken) {
     throw new Error('QuickBooks Online credentials (QBO_CLIENT_ID, QBO_CLIENT_SECRET, QBO_REFRESH_TOKEN) are missing from environment.');
   }
 
@@ -32,7 +51,7 @@ async function getQBOAccessToken(): Promise<string> {
 
   const params = new URLSearchParams();
   params.append('grant_type', 'refresh_token');
-  params.append('refresh_token', QBO_REFRESH_TOKEN);
+  params.append('refresh_token', activeRefreshToken);
 
   const res = await fetch(tokenUrl, {
     method: 'POST',
@@ -52,6 +71,26 @@ async function getQBOAccessToken(): Promise<string> {
   const data = await res.json();
   if (!data.access_token) {
     throw new Error('No access_token returned by QBO OAuth.');
+  }
+
+  // 2. Automatically persist newly rotated Refresh Token back to Supabase
+  if (data.refresh_token && data.refresh_token !== activeRefreshToken && supabase) {
+    try {
+      await supabase.from('app_settings').upsert(
+        {
+          key: 'qbo_refresh_token',
+          value: {
+            refresh_token: data.refresh_token,
+            updated_at: new Date().toISOString()
+          },
+          updated_at: new Date().toISOString()
+        },
+        { onConflict: 'key' }
+      );
+      console.log('✓ Successfully rotated and persisted QBO Refresh Token to Supabase!');
+    } catch (persistErr) {
+      console.warn('Supabase QBO token auto-rotation save warning:', persistErr);
+    }
   }
 
   return data.access_token;
@@ -257,7 +296,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         ? 'sandbox-quickbooks.api.intuit.com'
         : 'quickbooks.api.intuit.com';
 
-      const accessToken = await getQBOAccessToken();
+      const accessToken = await getQBOAccessToken(supabase);
       const customerRef = await getOrCreateDailySalesCustomer(accessToken, qboHost, QBO_REALM_ID);
 
       const salesReceiptBody = {
