@@ -830,13 +830,29 @@ export default function TiffinOrderView({
                         );
                       })}
                     </div>
-                  ) : (
-                    <div className="p-6 bg-gray-50 rounded-2xl border border-dashed border-gray-300 text-center space-y-1">
-                      <AlertCircle className="w-7 h-7 mx-auto text-gray-400" />
-                      <h4 className="font-serif font-bold text-sm text-gray-700">Ordering Closed for Saturday ({activeDay.displayDate})</h4>
-                      <p className="text-xs text-gray-500">Saturday specials must be ordered at least 24 hours in advance.</p>
-                    </div>
-                  )}
+                  ) : (() => {
+                    const isBlackoutDate = blackoutDates.includes(activeDay.dateStr);
+                    return isBlackoutDate ? (
+                      <div className="p-8 bg-amber-50/80 rounded-3xl border-2 border-dashed border-amber-300 text-center space-y-3">
+                        <div className="text-4xl">🔥🍱</div>
+                        <h4 className="font-serif font-bold text-lg text-[#0B192C]">
+                          Order Capacity Full — We Are Oversold for {activeDay.displayDate}!
+                        </h4>
+                        <p className="text-xs sm:text-sm text-gray-700 max-w-md mx-auto leading-relaxed">
+                          We are currently oversold and at maximum kitchen capacity for {activeDay.displayDate}. Ordering is closed for this date. Please pick an open date!
+                        </p>
+                        <div className="inline-block bg-[#0B192C] text-[#D4AF37] px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider">
+                          Sold Out (Oversold) for {activeDay.displayDate}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="p-6 bg-gray-50 rounded-2xl border border-dashed border-gray-300 text-center space-y-1">
+                        <AlertCircle className="w-7 h-7 mx-auto text-gray-400" />
+                        <h4 className="font-serif font-bold text-sm text-gray-700">Ordering Closed for Saturday ({activeDay.displayDate})</h4>
+                        <p className="text-xs text-gray-500">Saturday specials must be ordered at least 24 hours in advance.</p>
+                      </div>
+                    );
+                  })()}
                 </div>
               ) : (
                 /* Weekdays Mon-Fri */
