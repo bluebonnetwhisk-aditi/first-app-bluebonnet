@@ -23,8 +23,16 @@ function getCentralTimeTodayStr(): string {
 /**
  * Refreshes QBO OAuth 2.0 Access Token using Refresh Token with auto-rotation persistence
  */
-async function getQBOAccessToken(supabase?: any): Promise<string> {
-  let activeRefreshToken = QBO_REFRESH_TOKEN;
+/**
+ * Refreshes QBO OAuth 2.0 Access Token using Refresh Token with auto-rotation persistence
+ */
+async function getQBOAccessToken(
+  supabase: any,
+  clientId: string,
+  clientSecret: string,
+  initialRefreshToken: string
+): Promise<string> {
+  let activeRefreshToken = initialRefreshToken;
 
   // 1. Check for dynamically rotated refresh token in Supabase DB first
   if (supabase) {
@@ -43,11 +51,11 @@ async function getQBOAccessToken(supabase?: any): Promise<string> {
     }
   }
 
-  if (!QBO_CLIENT_ID || !QBO_CLIENT_SECRET || !activeRefreshToken) {
-    throw new Error('QuickBooks Online credentials (QBO_CLIENT_ID, QBO_CLIENT_SECRET, QBO_REFRESH_TOKEN) are missing from environment.');
+  if (!clientId || !clientSecret || !activeRefreshToken) {
+    throw new Error('QuickBooks Online credentials (QBO_CLIENT_ID, QBO_CLIENT_SECRET, QBO_REFRESH_TOKEN) are missing.');
   }
 
-  const authHeader = Buffer.from(`${QBO_CLIENT_ID}:${QBO_CLIENT_SECRET}`).toString('base64');
+  const authHeader = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
   const tokenUrl = 'https://oauth.platform.intuit.com/oauth2/v1/tokens/bearer';
 
   const params = new URLSearchParams();
@@ -196,25 +204,72 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(500).json({ error: fetchErr.message });
     }
 
+    // 4. Filter remaining orders: MUST be either 'ready' or 'completed' and not yet reconciled to QBO
     const orders = (rawOrders || []).filter(o => {
       const statusLower = (o.status || '').toLowerCase();
       const isNotCancelled = !o.is_cancelled && statusLower !== 'cancelled';
       const isNotReconciled = !o.reconciled_to_qbo;
-      const isValidStatus = statusLower === 'new' || statusLower === 'accepted' || statusLower === 'preparing' || statusLower === 'ready' || statusLower === 'completed' || statusLower === 'complete';
-      return isValidStatus && isNotCancelled && isNotReconciled;
+      const isReadyOrCompleted = statusLower === 'ready' || statusLower === 'completed' || statusLower === 'complete';
+      return isReadyOrCompleted && isNotCancelled && isNotReconciled;
     });
 
-    // 4. Handle Days with Zero Eligible Orders Gracefully
+    // 5. Handle Days with Zero Eligible Unreconciled Orders Gracefully
     if (orders.length === 0) {
       return res.status(200).json({
         success: true,
-        message: `No unreconciled orders found for ${todayStr} (Central Time).`,
+        message: `No unreconciled ready or completed orders found for ${todayStr} (Central Time).`,
         date: todayStr,
         reconciledCount: 0
       });
     }
 
-    // 5. Consolidate financial metrics and payment method breakdowns
+    // 6. Resolve QuickBooks API Credentials (check process.env then Supabase app_settings)
+    let qboClientId = QBO_CLIENT_ID;
+    let qboClientSecret = QBO_CLIENT_SECRET;
+    let qboRefreshToken = QBO_REFRESH_TOKEN;
+    let qboRealmId = QBO_REALM_ID;
+    let qboEnvironment = QBO_ENVIRONMENT;
+
+    if (!qboClientId || !qboClientSecret || !qboRefreshToken || !qboRealmId) {
+      try {
+        const { data: dbSettings } = await supabase
+          .from('app_settings')
+          .select('key, value')
+          .in('key', ['qbo_config', 'qbo_credentials', 'qbo_refresh_token']);
+
+        if (dbSettings && Array.isArray(dbSettings)) {
+          for (const setting of dbSettings) {
+            const val = setting?.value || {};
+            if (val.client_id || val.QBO_CLIENT_ID) qboClientId = qboClientId || val.client_id || val.QBO_CLIENT_ID;
+            if (val.client_secret || val.QBO_CLIENT_SECRET) qboClientSecret = qboClientSecret || val.client_secret || val.QBO_CLIENT_SECRET;
+            if (val.refresh_token || val.QBO_REFRESH_TOKEN) qboRefreshToken = qboRefreshToken || val.refresh_token || val.QBO_REFRESH_TOKEN;
+            if (val.realm_id || val.QBO_REALM_ID) qboRealmId = qboRealmId || val.realm_id || val.QBO_REALM_ID;
+            if (val.environment || val.QBO_ENVIRONMENT) qboEnvironment = qboEnvironment || val.environment || val.QBO_ENVIRONMENT;
+          }
+        }
+      } catch (dbErr) {
+        console.warn('Supabase app_settings QBO lookup warning:', dbErr);
+      }
+    }
+
+    if (!qboClientId || !qboClientSecret || !qboRefreshToken || !qboRealmId) {
+      const missingKeys = [
+        !qboClientId && 'QBO_CLIENT_ID',
+        !qboClientSecret && 'QBO_CLIENT_SECRET',
+        !qboRefreshToken && 'QBO_REFRESH_TOKEN',
+        !qboRealmId && 'QBO_REALM_ID'
+      ].filter(Boolean);
+
+      return res.status(400).json({
+        success: false,
+        error: `QuickBooks Online API credentials (${missingKeys.join(', ')}) are missing from Vercel environment or Supabase app_settings. Please configure your QuickBooks App keys in Vercel to post Sales Receipts directly to QuickBooks.`,
+        date: todayStr,
+        eligibleOrdersCount: orders.length,
+        missingKeys
+      });
+    }
+
+    // 7. Consolidate financial metrics and payment method breakdowns
     let totalSales = 0;
     let totalTax = 0;
     let grandTotal = 0;
@@ -259,7 +314,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       lineItems.push({
         Amount: foodSubtotal,
         DetailType: 'SalesItemLineDetail',
-        Description: `[Order #${shortId}] Name: ${order.customer_name} | Phone: ${order.phone_number} | Paid: ${order.payment_method || 'zelle'}`,
+        Description: `[Order #${shortId}] Name: ${order.customer_name} | Phone: ${order.phone_number} | Status: ${order.status} | Paid: ${order.payment_method || 'zelle'}`,
         SalesItemLineDetail: {
           UnitPrice: foodSubtotal,
           Qty: 1
@@ -276,10 +331,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // Build Audit Memo / PrivateNote for QBO
     const privateNote = [
-      `EOD Reconciliation Summary (${todayStr} CT):`,
+      `EOD Consolidated Sales Receipt (${todayStr} CT):`,
       `Total Food Sales: $${totalSales.toFixed(2)}`,
       `Total Texas Tax: $${totalTax.toFixed(2)}`,
       `Grand Total: $${grandTotal.toFixed(2)}`,
+      `Consolidated Ready/Completed Orders: ${orders.length}`,
       ``,
       `--- PAYMENT METHOD BREAKDOWN ---`,
       `CASH: $${cashTotal.toFixed(2)} across ${cashCount} order(s) [IDs: ${cashOrderIds.length > 0 ? cashOrderIds.join(', ') : 'None'}]`,
@@ -289,52 +345,50 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       `Reconciled via Bluebonnet Whisk Automated Vercel Cron`
     ].join('\n');
 
-    let qboSalesReceiptId = `qbo-mock-${Date.now()}`;
+    let qboSalesReceiptId = '';
 
-    // 6. QuickBooks Online Integration (if credentials configured)
-    if (QBO_CLIENT_ID && QBO_CLIENT_SECRET && QBO_REFRESH_TOKEN && QBO_REALM_ID) {
-      const qboHost = QBO_ENVIRONMENT === 'sandbox'
-        ? 'sandbox-quickbooks.api.intuit.com'
-        : 'quickbooks.api.intuit.com';
+    // 8. Post Sales Receipt to QuickBooks Online API
+    const qboHost = qboEnvironment === 'sandbox'
+      ? 'sandbox-quickbooks.api.intuit.com'
+      : 'quickbooks.api.intuit.com';
 
-      const accessToken = await getQBOAccessToken(supabase);
-      const customerRef = await getOrCreateDailySalesCustomer(accessToken, qboHost, QBO_REALM_ID);
+    const accessToken = await getQBOAccessToken(supabase, qboClientId, qboClientSecret, qboRefreshToken);
+    const customerRef = await getOrCreateDailySalesCustomer(accessToken, qboHost, qboRealmId);
 
-      const salesReceiptBody = {
-        CustomerRef: customerRef,
-        TxnDate: todayStr,
-        PrivateNote: privateNote,
-        Line: lineItems,
-        TxnTaxDetail: {
-          TotalTax: totalTax
-        }
-      };
-
-      const qboRes = await fetch(`https://${qboHost}/v3/company/${QBO_REALM_ID}/salesreceipt`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${accessToken}`,
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
-        body: JSON.stringify(salesReceiptBody)
-      });
-
-      if (!qboRes.ok) {
-        const errText = await qboRes.text();
-        console.error('QBO Sales Receipt creation error:', errText);
-        return res.status(502).json({ error: `QuickBooks Online API Error: ${errText}` });
+    const salesReceiptBody = {
+      CustomerRef: customerRef,
+      TxnDate: todayStr,
+      PrivateNote: privateNote,
+      Line: lineItems,
+      TxnTaxDetail: {
+        TotalTax: totalTax
       }
+    };
 
-      const qboData = await qboRes.json();
-      if (qboData?.SalesReceipt?.Id) {
-        qboSalesReceiptId = qboData.SalesReceipt.Id;
-      }
-    } else {
-      console.warn('QBO credentials not fully set; proceeding with mock qbo_doc_id:', qboSalesReceiptId);
+    const qboRes = await fetch(`https://${qboHost}/v3/company/${qboRealmId}/salesreceipt`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify(salesReceiptBody)
+    });
+
+    if (!qboRes.ok) {
+      const errText = await qboRes.text();
+      console.error('QBO Sales Receipt creation error:', errText);
+      return res.status(502).json({ error: `QuickBooks Online API Error (${qboRes.status}): ${errText}` });
     }
 
-    // 7. Update reconciled orders in Supabase
+    const qboData = await qboRes.json();
+    if (qboData?.SalesReceipt?.Id) {
+      qboSalesReceiptId = qboData.SalesReceipt.Id;
+    } else {
+      throw new Error('QuickBooks Online did not return a SalesReceipt ID.');
+    }
+
+    // 9. Update reconciled orders in Supabase DB
     const reconciledAt = new Date().toISOString();
     const orderIdsToUpdate = orders.map(o => o.id);
 
@@ -349,7 +403,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         .in('id', orderIdsToUpdate);
 
       if (updateErr) {
-        console.warn('Supabase post-reconciliation update warning (columns may be missing in DB):', updateErr.message);
+        console.warn('Supabase post-reconciliation update warning:', updateErr.message);
       }
     } catch (updateEx: any) {
       console.warn('Supabase post-reconciliation update exception:', updateEx?.message || updateEx);
@@ -357,12 +411,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     return res.status(200).json({
       success: true,
-      message: `Successfully reconciled ${orders.length} order(s) for ${todayStr} to QuickBooks Online.`,
+      message: `Successfully posted consolidated Sales Receipt for ${orders.length} ready/completed order(s) to QuickBooks Online! (Receipt #${qboSalesReceiptId})`,
       date: todayStr,
       reconciledCount: orders.length,
       qboSalesReceiptId: qboSalesReceiptId,
       totalSales: totalSales,
       totalTax: totalTax,
+      grandTotal: grandTotal,
       cashTotal: cashTotal
     });
 
