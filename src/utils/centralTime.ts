@@ -127,16 +127,21 @@ export function isDateSelectable(
 
   // Check blackout
   if (blackouts.includes(dateStr)) {
-    return { selectable: false, reason: 'Kitchen closed (blackout date)' };
+    return { selectable: false, reason: 'Kitchen closed (blackout date / high volume)' };
   }
 
   const [y, m, d] = dateStr.split('-').map(Number);
   const targetDate = new Date(y, m - 1, d);
 
-  // Tiffin Sunday closure check
+  // Tiffin Sunday & Saturday closure check
   const hasTiffin = items.some(item => item.category === 'tiffin');
-  if (hasTiffin && targetDate.getDay() === 0) {
-    return { selectable: false, reason: 'Tiffin service is closed on Sundays' };
+  if (hasTiffin && (targetDate.getDay() === 0 || targetDate.getDay() === 6)) {
+    return { 
+      selectable: false, 
+      reason: targetDate.getDay() === 0 
+        ? 'Tiffin service is closed on Sundays' 
+        : 'Tiffin service is closed on Saturdays' 
+    };
   }
 
   const noticeHours = getRequiredNoticeHours(items);
@@ -175,7 +180,7 @@ export function findFirstValidFulfillmentSlot(
     const dateStr = `${y}-${m}-${day}`;
 
     if (blackouts.includes(dateStr)) continue;
-    if (hasTiffin && candidate.getDay() === 0) continue;
+    if (hasTiffin && (candidate.getDay() === 0 || candidate.getDay() === 6)) continue;
 
     for (const slot of TIME_SLOTS) {
       if (isTimeSlotValidForDate(dateStr, slot, items)) {

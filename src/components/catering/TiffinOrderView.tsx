@@ -320,12 +320,17 @@ export default function TiffinOrderView({
       const isSaturday = dayName === 'Saturday';
       const isBlackout = blackoutDates.includes(dateStr);
 
+      const hasSaturdaySpecialMenu = isSaturday && Boolean(settings.saturdaySpecialTitle || (settings.weekdayMenus && settings.weekdayMenus['Saturday']?.dal));
+      const isSaturdayClosed = isSaturday && !hasSaturdaySpecialMenu;
+
       const isNextDayOrLater = dateStr > todayStr;
-      const isSelectable = isNextDayOrLater && !isSunday && !isBlackout;
+      const isSelectable = isNextDayOrLater && !isSunday && !isSaturdayClosed && !isBlackout;
 
       let statusLabel = 'Available to Order';
       if (isSunday) {
-        statusLabel = 'Kitchen Closed';
+        statusLabel = 'Kitchen Closed (Sunday)';
+      } else if (isSaturdayClosed) {
+        statusLabel = 'Kitchen Closed (Saturday Tiffin Closed)';
       } else if (isBlackout) {
         statusLabel = 'Kitchen Closed (Blackout Date / High Volume)';
       } else if (dateStr < todayStr) {
@@ -335,15 +340,18 @@ export default function TiffinOrderView({
       }
 
       const activeMenus = settings.weekdayMenus || DEFAULT_WEEKDAY_MENUS;
-      const menu = activeMenus[dayName] || DEFAULT_WEEKDAY_MENUS[dayName] || { dal: 'Special Curry', sabzi: 'Seasonal Sabzi', description: '' };
+      const menu = activeMenus[dayName] || DEFAULT_WEEKDAY_MENUS[dayName] || { dal: '', sabzi: '', description: '' };
+
+      const dalOrCurry = isSaturday ? (settings.saturdaySpecialTitle || menu.dal || '') : (menu.dal || '');
+      const sabzi = isSaturday ? (settings.saturdaySpecialDescription || menu.sabzi || '') : (menu.sabzi || '');
 
       result.push({
         dayName,
         dateStr,
         displayDate,
-        dalOrCurry: isSaturday ? (settings.saturdaySpecialTitle || menu.dal) : menu.dal,
-        sabzi: isSaturday ? (settings.saturdaySpecialDescription || menu.sabzi) : menu.sabzi,
-        description: menu.description,
+        dalOrCurry,
+        sabzi,
+        description: menu.description || '',
         isSaturdaySpecial: isSaturday,
         isSundayClosed: isSunday,
         isSelectable,
@@ -1076,8 +1084,35 @@ export default function TiffinOrderView({
             </div>
 
             {(() => {
-              const curryName = activeDay?.dalOrCurry || 'Special Curry';
-              const sabziName = activeDay?.sabzi || 'Seasonal Sabzi';
+              // Check if tiffin/tub ordering is closed on this active day
+              const isClosed = !activeDay.isSelectable || blackoutDates.includes(activeDay.dateStr);
+              const hasFlyerMenu = Boolean(activeDay.dalOrCurry || activeDay.sabzi);
+
+              if (isClosed || !hasFlyerMenu) {
+                return (
+                  <div className="p-8 bg-amber-50/80 rounded-3xl border-2 border-dashed border-amber-300 text-center space-y-3">
+                    <div className="text-4xl">👨‍🍳😴</div>
+                    <h4 className="font-serif font-bold text-lg text-[#0B192C]">
+                      Chef Desi Dabba is Resting Today!
+                    </h4>
+                    <p className="text-xs sm:text-sm text-gray-700 max-w-md mx-auto leading-relaxed">
+                      {activeDay.dayName === 'Saturday' || activeDay.isSaturdaySpecial
+                        ? "No curry magic in the pots on Saturdays! Tiffin kitchen is closed today. Check out our Monday through Friday menu instead!"
+                        : activeDay.isSundayClosed
+                        ? "Our tiffin pots are taking a well-deserved nap on Sundays! Kitchen is closed for fresh market prep & sanitation."
+                        : blackoutDates.includes(activeDay.dateStr)
+                        ? `Kitchen is closed on ${activeDay.displayDate} due to a scheduled blackout / high-volume holiday.`
+                        : `Tiffin tub ordering is closed for ${activeDay.dayName} (${activeDay.displayDate}).`}
+                    </p>
+                    <div className="inline-block bg-[#0B192C] text-[#D4AF37] px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider">
+                      Ordering Disabled for {activeDay.dayName} ({activeDay.displayDate})
+                    </div>
+                  </div>
+                );
+              }
+
+              const curryName = activeDay.dalOrCurry || 'Special Curry';
+              const sabziName = activeDay.sabzi || 'Seasonal Sabzi';
 
               const isDalRajmaChole = /dal|rajma|chole|kadhi|chana/i.test(curryName);
               const curry8ozPrice = isDalRajmaChole ? 6.99 : 8.99;
