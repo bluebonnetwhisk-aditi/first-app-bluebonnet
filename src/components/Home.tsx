@@ -28,20 +28,24 @@ export default function Home({ onOpenBaker: _onOpenBaker, onNavigate }: HomeProp
   const [activeFaq, setActiveFaq] = useState<number | null>(null);
   const [activeStage, setActiveStage] = useState<number>(0);
 
-  // Robust programmatically triggered video autoplay for mobile & tablet (Android Chrome / Safari)
+  // Programmatically triggered video autoplay optimized for Samsung Internet, Chrome Android S25+, iOS Safari
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
 
-    // Force DOM properties & attributes required by Android Chrome
+    // Force HTML DOM attributes & properties required by Samsung Internet & Android Chrome
     video.muted = true;
     video.defaultMuted = true;
+    video.playsInline = true;
     video.setAttribute("muted", "");
     video.setAttribute("playsinline", "");
     video.setAttribute("webkit-playsinline", "");
+    video.setAttribute("x5-playsinline", "");
+    video.setAttribute("x5-video-player-type", "h5");
 
     const attemptPlay = () => {
-      if (video && video.paused) {
+      if (!video) return;
+      if (video.paused) {
         const playPromise = video.play();
         if (playPromise !== undefined) {
           playPromise.catch((err) => {
@@ -51,27 +55,42 @@ export default function Home({ onOpenBaker: _onOpenBaker, onNavigate }: HomeProp
       }
     };
 
-    // Attempt playback immediately
+    // Attempt playback immediately and on media readiness events
     attemptPlay();
-
-    // Attach event listeners to unlock playback on Android Chrome when video buffers or user scrolls/touches
+    video.addEventListener("loadedmetadata", attemptPlay);
     video.addEventListener("loadeddata", attemptPlay);
     video.addEventListener("canplay", attemptPlay);
+    video.addEventListener("canplaythrough", attemptPlay);
 
+    // Multi-event unlock for mobile battery saver / Samsung Internet data saver
     const handleUserInteraction = () => {
       attemptPlay();
       window.removeEventListener("touchstart", handleUserInteraction);
+      window.removeEventListener("pointerdown", handleUserInteraction);
       window.removeEventListener("scroll", handleUserInteraction);
     };
 
     window.addEventListener("touchstart", handleUserInteraction, { passive: true });
+    window.addEventListener("pointerdown", handleUserInteraction, { passive: true });
     window.addEventListener("scroll", handleUserInteraction, { passive: true });
 
+    // Handle tab visibility change
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        attemptPlay();
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
     return () => {
+      video.removeEventListener("loadedmetadata", attemptPlay);
       video.removeEventListener("loadeddata", attemptPlay);
       video.removeEventListener("canplay", attemptPlay);
+      video.removeEventListener("canplaythrough", attemptPlay);
       window.removeEventListener("touchstart", handleUserInteraction);
+      window.removeEventListener("pointerdown", handleUserInteraction);
       window.removeEventListener("scroll", handleUserInteraction);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
   }, []);
 
@@ -142,10 +161,13 @@ export default function Home({ onOpenBaker: _onOpenBaker, onNavigate }: HomeProp
             autoPlay={true}
             loop={true}
             playsInline={true}
+            disablePictureInPicture={true}
             preload="auto"
             style={{ scale: videoScale, opacity: videoOpacity }}
             className="absolute inset-0 w-full h-full object-cover select-none pointer-events-none filter brightness-90 saturate-105"
-          />
+          >
+            <source src={heroVideo} type="video/mp4" />
+          </motion.video>
           
           {/* Dark Glassmorphic Gradients */}
           <div className="absolute inset-0 bg-gradient-to-b from-[#050a1a]/85 via-transparent to-[#050a1a]" />
