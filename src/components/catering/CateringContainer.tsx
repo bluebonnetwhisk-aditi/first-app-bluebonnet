@@ -1,9 +1,4 @@
 import { useState, useEffect } from 'react';
-import { 
-  UtensilsCrossed, 
-  Cake as CakeIcon, 
-  Package
-} from 'lucide-react';
 import { TrayPricingHeader, CateringDifferentiators } from './BrandHeader';
 import CakeBrandHeader from './CakeBrandHeader';
 import MenuOrderGrid from './MenuOrderGrid';
@@ -223,72 +218,72 @@ export default function CateringContainer() {
   const tiffinCount = cart.filter(i => i.category === 'tiffin').reduce((s, i) => s + i.quantity, 0);
 
   return (
-    <div className="w-full bg-[#fbfbfa] min-h-screen font-sans selection:bg-[#775a19]/20 overflow-x-hidden">
+    <div className="w-full bg-[#FAF8F5] min-h-screen font-sans selection:bg-[#D4AF37]/20 overflow-x-hidden text-[#1E293B]">
       
-      {/* ── 1. SUB-NAVIGATION BAR (Catering Order, Cake Order, Tiffin Order) ── */}
-      <div className="relative w-full bg-white border-b border-gray-200/90 shadow-2xs">
+      {/* ── 1. SUB-NAVIGATION BAR (Top Experience Switcher: [ 🍱 Daily Tiffin | 🥘 Party Catering | 🎂 Custom Cakes ]) ── */}
+      <div className="sticky top-0 z-40 w-full bg-white/95 backdrop-blur-md border-b border-[#D4AF37]/30 shadow-xs">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between min-h-[52px] py-2">
+          <div className="flex items-center justify-between min-h-[56px] py-2">
             
             <div className="flex items-center gap-2 overflow-x-auto py-1 scrollbar-none w-full sm:w-auto">
-              <span className="font-serif font-bold text-xs uppercase tracking-widest text-[#00346f] hidden sm:inline mr-1">
-                PORTAL:
+              <span className="font-serif font-bold text-xs uppercase tracking-widest text-[#0B192C] hidden sm:inline mr-1">
+                EXPERIENCE:
               </span>
               
-              <div className="flex items-center gap-1.5 bg-gray-200/70 p-1 rounded-2xl border border-gray-250">
-                {/* 1. Catering */}
+              <div className="flex items-center gap-1.5 bg-[#FAF8F5] p-1.5 rounded-2xl border border-[#D4AF37]/40 shadow-inner">
+                {/* 1. Daily Tiffin */}
+                <button
+                  type="button"
+                  onClick={() => switchSubTab('tiffin')}
+                  className={`inline-flex items-center gap-2 min-h-[42px] px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer whitespace-nowrap ${
+                    subTab === 'tiffin'
+                      ? 'bg-[#0B192C] text-white shadow-md ring-1 ring-[#D4AF37]'
+                      : 'text-[#1E293B] hover:text-[#0B192C] hover:bg-white'
+                  }`}
+                >
+                  <span className="text-base leading-none">🍱</span>
+                  <span>Daily Tiffin</span>
+                  {tiffinCount > 0 && (
+                    <span className="w-4 h-4 rounded-full bg-[#D4AF37] text-[#0B192C] text-[10px] flex items-center justify-center font-black">
+                      {tiffinCount}
+                    </span>
+                  )}
+                </button>
+
+                {/* 2. Party Catering */}
                 <button
                   type="button"
                   onClick={() => switchSubTab('order')}
-                  className={`inline-flex items-center gap-1.5 min-h-[40px] px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer whitespace-nowrap ${
+                  className={`inline-flex items-center gap-2 min-h-[42px] px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer whitespace-nowrap ${
                     subTab === 'order'
-                      ? 'bg-[#00346f] text-white shadow-xs ring-1 ring-[#ffdea5]/40'
-                      : 'text-gray-700 hover:text-[#00346f] hover:bg-white/80'
+                      ? 'bg-[#0B192C] text-white shadow-md ring-1 ring-[#D4AF37]'
+                      : 'text-[#1E293B] hover:text-[#0B192C] hover:bg-white'
                   }`}
                 >
-                  <UtensilsCrossed className="w-3.5 h-3.5" />
-                  <span>Catering</span>
+                  <span className="text-base leading-none">🥘</span>
+                  <span>Party Catering</span>
                   {cateringDishCount > 0 && (
-                    <span className="w-4 h-4 rounded-full bg-[#ffdea5] text-[#00346f] text-[10px] flex items-center justify-center font-bold">
+                    <span className="w-4 h-4 rounded-full bg-[#D4AF37] text-[#0B192C] text-[10px] flex items-center justify-center font-black">
                       {cateringDishCount}
                     </span>
                   )}
                 </button>
 
-                {/* 2. Cake Order */}
+                {/* 3. Custom Cakes */}
                 <button
                   type="button"
                   onClick={() => switchSubTab('cake')}
-                  className={`inline-flex items-center gap-1.5 min-h-[40px] px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer whitespace-nowrap ${
+                  className={`inline-flex items-center gap-2 min-h-[42px] px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer whitespace-nowrap ${
                     subTab === 'cake'
-                      ? 'bg-[#00346f] text-white shadow-xs ring-1 ring-[#ffdea5]/40'
-                      : 'text-gray-700 hover:text-[#00346f] hover:bg-white/80'
+                      ? 'bg-[#0B192C] text-white shadow-md ring-1 ring-[#D4AF37]'
+                      : 'text-[#1E293B] hover:text-[#0B192C] hover:bg-white'
                   }`}
                 >
-                  <CakeIcon className="w-3.5 h-3.5" />
-                  <span>Cake Order</span>
+                  <span className="text-base leading-none">🎂</span>
+                  <span>Custom Cakes</span>
                   {cakeCount > 0 && (
-                    <span className="w-4 h-4 rounded-full bg-[#ffdea5] text-[#00346f] text-[10px] flex items-center justify-center font-bold">
+                    <span className="w-4 h-4 rounded-full bg-[#D4AF37] text-[#0B192C] text-[10px] flex items-center justify-center font-black">
                       {cakeCount}
-                    </span>
-                  )}
-                </button>
-
-                {/* 3. Tiffin Order */}
-                <button
-                  type="button"
-                  onClick={() => switchSubTab('tiffin')}
-                  className={`inline-flex items-center gap-1.5 min-h-[40px] px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer whitespace-nowrap ${
-                    subTab === 'tiffin'
-                      ? 'bg-[#00346f] text-white shadow-xs ring-1 ring-[#ffdea5]/40'
-                      : 'text-gray-700 hover:text-[#00346f] hover:bg-white/80'
-                  }`}
-                >
-                  <Package className="w-3.5 h-3.5" />
-                  <span>Tiffin Order</span>
-                  {tiffinCount > 0 && (
-                    <span className="w-4 h-4 rounded-full bg-[#ffdea5] text-[#00346f] text-[10px] flex items-center justify-center font-bold">
-                      {tiffinCount}
                     </span>
                   )}
                 </button>
@@ -297,8 +292,8 @@ export default function CateringContainer() {
             </div>
 
             <div className="hidden lg:flex items-center gap-2 shrink-0">
-              <span className="text-[11px] text-gray-500 font-medium">
-                Little Elm / Frisco, TX • Strict 24h/48h Advance Notice
+              <span className="text-[11px] text-gray-500 font-medium bg-[#D4AF37]/10 px-3 py-1.5 rounded-full border border-[#D4AF37]/20">
+                Frisco &amp; Little Elm, TX • Fresh Daily Cooking
               </span>
             </div>
 

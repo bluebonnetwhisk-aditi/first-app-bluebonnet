@@ -636,13 +636,13 @@ export default function MenuOrderGrid({
                             <div>
                               {/* Header info */}
                               <div className="flex items-start justify-between gap-3">
-                                <div>
-                                  <div className="flex items-center gap-2">
-                                    <h4 className="font-serif font-bold text-base text-gray-900">
+                                <div className="min-w-0 flex-1">
+                                  <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+                                    <h4 className="font-serif font-bold text-base text-gray-900 truncate min-w-0">
                                       {item.name}
                                     </h4>
                                     {item.tier && (
-                                      <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${
+                                      <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full shrink-0 ${
                                         item.tier === 'Maharaja' ? 'bg-amber-100 text-amber-900 border border-amber-200' :
                                         item.tier === 'Darbari' ? 'bg-purple-100 text-purple-900 border border-purple-200' :
                                         item.tier === 'Shahi' ? 'bg-blue-100 text-blue-900 border border-blue-200' :
@@ -652,7 +652,7 @@ export default function MenuOrderGrid({
                                       </span>
                                     )}
                                   </div>
-                                  <p className="text-xs text-gray-500 mt-1 leading-relaxed">
+                                  <p className="text-xs text-gray-500 mt-1 leading-relaxed line-clamp-2 overflow-hidden">
                                     {item.description}
                                   </p>
                                 </div>

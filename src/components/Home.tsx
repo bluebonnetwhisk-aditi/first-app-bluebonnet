@@ -138,11 +138,12 @@ export default function Home({ onOpenBaker: _onOpenBaker, onNavigate }: HomeProp
           <motion.video 
             ref={videoRef}
             src={heroVideo}
+            poster="/brand_logo_transparent.png"
             muted={true}
             autoPlay={true}
             loop={true}
             playsInline={true}
-            preload="auto"
+            preload="metadata"
             style={{ scale: videoScale, opacity: videoOpacity }}
             className="absolute inset-0 w-full h-full object-cover select-none pointer-events-none filter brightness-90 saturate-105"
           >
