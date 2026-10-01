@@ -306,7 +306,7 @@ export const FRESH_BREADS: MenuItem[] = [
     name: 'Tawa Roti',
     description: 'Traditional whole wheat griddle-cooked flatbread.',
     tag: 'VEGETARIAN',
-    prices: { single: 1.25, unitText: 'each' },
+    prices: { single: 0.75, unitText: 'each' },
     allergens: ['Gluten'],
     image: 'https://images.unsplash.com/photo-1505253716362-afaea1d3d1af?auto=format&fit=crop&q=80&w=200&h=200'
   },
