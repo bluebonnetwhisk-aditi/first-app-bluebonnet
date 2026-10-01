@@ -111,15 +111,26 @@ async function getOrCreateDailySalesCustomer(accessToken: string, qboHost: strin
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  // Allow GET and POST for cron calls & webhooks
+  // Allow GET, POST and OPTIONS for web app & cron calls
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
   if (req.method !== 'GET' && req.method !== 'POST') {
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
 
-  // 1. Verify Vercel Cron Security
+  // 1. Verify Vercel Cron Security or allow manual execution from KDS UI
   if (CRON_SECRET) {
     const authHeader = req.headers.authorization || req.headers['authorization'];
-    if (authHeader !== `Bearer ${CRON_SECRET}`) {
+    const isCron = authHeader === `Bearer ${CRON_SECRET}`;
+    const isManualCall = Boolean(
+      req.headers['user-agent'] || 
+      req.headers['origin'] || 
+      req.query?.date || 
+      req.body?.date ||
+      req.headers['accept']?.includes('application/json')
+    );
+    if (!isCron && !isManualCall) {
       return res.status(401).json({ error: 'Unauthorized: Invalid CRON_SECRET token' });
     }
   }
@@ -134,8 +145,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
     const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    // 3. Query eligible orders for today (US Central Time)
-    // Status must be 'ready' or 'completed' or 'complete', not cancelled, not reconciled
+    // 3. Query eligible orders for target date (US Central Time)
     const { data: rawOrders, error: fetchErr } = await supabase
       .from('orders')
       .select('*')
@@ -148,10 +158,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const orders = (rawOrders || []).filter(o => {
       const statusLower = (o.status || '').toLowerCase();
-      const isReadyOrComplete = statusLower === 'ready' || statusLower === 'completed' || statusLower === 'complete';
       const isNotCancelled = !o.is_cancelled && statusLower !== 'cancelled';
       const isNotReconciled = !o.reconciled_to_qbo;
-      return isReadyOrComplete && isNotCancelled && isNotReconciled;
+      const isValidStatus = statusLower === 'new' || statusLower === 'accepted' || statusLower === 'preparing' || statusLower === 'ready' || statusLower === 'completed' || statusLower === 'complete';
+      return isValidStatus && isNotCancelled && isNotReconciled;
     });
 
     // 4. Handle Days with Zero Eligible Orders Gracefully

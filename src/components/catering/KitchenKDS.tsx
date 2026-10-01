@@ -600,22 +600,27 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
     setIsSyncingQbo(true);
     setSyncResultMsg(null);
     try {
-      const res = await fetch('/api/cron/reconcile-qbo', {
+      const targetDateStr = selectedDate === 'all' ? todayDateStr : selectedDate;
+      const res = await fetch(`/api/cron/reconcile-qbo?date=${targetDateStr}`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
+        headers: { 
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify({ date: targetDateStr })
       });
       const data = await res.json();
       if (res.ok && data.success) {
-        setSyncResultMsg(data.message || 'QBO Reconciliation completed!');
+        setSyncResultMsg(data.message || `QBO Reconciliation completed for ${targetDateStr}!`);
         loadOrders();
       } else {
-        setSyncResultMsg(data.message || data.error || 'Triggered sync endpoint.');
+        setSyncResultMsg(data.error || data.message || `Sync returned status ${res.status}`);
       }
     } catch (err: any) {
-      setSyncResultMsg(`Triggered endpoint: ${err.message || 'Complete'}`);
+      setSyncResultMsg(`Sync error: ${err?.message || 'Connection failed'}`);
     } finally {
       setIsSyncingQbo(false);
-      setTimeout(() => setSyncResultMsg(null), 6000);
+      setTimeout(() => setSyncResultMsg(null), 8000);
     }
   };
 
