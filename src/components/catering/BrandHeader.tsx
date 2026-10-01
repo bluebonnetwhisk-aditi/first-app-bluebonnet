@@ -22,8 +22,13 @@ export function TrayPricingHeader() {
       <div className="bg-white rounded-2xl border border-[#775a19]/20 p-5 sm:p-6 shadow-sm">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 pb-4 border-b border-gray-100">
           <div>
-            <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full bg-[#00346f]/10 text-[#00346f] text-[10px] font-bold uppercase tracking-wider mb-1">
-              ✨ Homestyle Vegetarian Catering
+            <div className="flex items-center gap-2 mb-1 flex-wrap">
+              <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full bg-[#00346f]/10 text-[#00346f] text-[10px] font-bold uppercase tracking-wider">
+                ✨ Homestyle Vegetarian Catering
+              </div>
+              <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-300/80 text-[10px] font-bold uppercase tracking-wider">
+                <span>⏱️</span> 24h Advance Notice
+              </div>
             </div>
             <h2 className="font-serif font-bold text-lg sm:text-xl text-[#00346f] tracking-wide">
               TRAY SIZES & SIMPLE PRICING TIERS
