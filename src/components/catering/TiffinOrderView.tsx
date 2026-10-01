@@ -301,39 +301,46 @@ export default function TiffinOrderView({
     return upcomingWeeks.find(w => w.id === selectedWeekId) || upcomingWeeks[0];
   }, [upcomingWeeks, selectedWeekId]);
 
-  // Compute 5 open weekdays for Weekly Plan (spans current & upcoming week as applicable)
+  // Compute next 5 available open days for Weekly Plan (skipping blackout and closed dates)
   const weeklyPlanInfo = useMemo(() => {
     if (!activeWeeklyPlan) return null;
     const isCurrentWeek = upcomingWeeks[0]?.id === activeWeeklyPlan.id;
 
-    const allWeekdays = upcomingWeeks.flatMap(w => w.days.filter(d => d.dayName !== 'Saturday' && d.dayName !== 'Sunday'));
+    // Collect all days from all upcomingWeeks
+    const allDays = upcomingWeeks.flatMap(w => w.days);
 
-    let targetDays: { dayName: string; displayDate: string; dateStr: string }[] = [];
+    const startCutoffStr = isCurrentWeek 
+      ? todayStr 
+      : (activeWeeklyPlan.monDateStr < todayStr ? todayStr : activeWeeklyPlan.monDateStr);
 
-    if (isCurrentWeek) {
-      const openWeekdays = allWeekdays.filter(d => d.dateStr > todayStr);
-      targetDays = openWeekdays.slice(0, 5);
-      if (targetDays.length < 5) {
-        targetDays = activeWeeklyPlan.days.filter(d => d.dayName !== 'Saturday' && d.dayName !== 'Sunday').slice(0, 5);
-      }
-    } else {
-      targetDays = activeWeeklyPlan.days.filter(d => d.dayName !== 'Saturday' && d.dayName !== 'Sunday').slice(0, 5);
-    }
+    const availableDays = allDays.filter(d => {
+      // 1. Must be after cutoff
+      if (d.dateStr <= startCutoffStr && isCurrentWeek) return false;
+      if (!isCurrentWeek && d.dateStr < activeWeeklyPlan.monDateStr) return false;
+      // 2. Skip Sunday
+      if (d.dayName === 'Sunday') return false;
+      // 3. Skip Saturday if closed
+      const hasSatMenu = d.dayName === 'Saturday' && Boolean(settings.saturdaySpecialTitle || (settings.weekdayMenus && settings.weekdayMenus['Saturday']?.dal));
+      if (d.dayName === 'Saturday' && !hasSatMenu) return false;
+      // 4. Skip blackout dates!
+      if (blackoutDates.includes(d.dateStr)) return false;
 
+      return true;
+    });
+
+    const targetDays = availableDays.slice(0, 5);
     const firstDay = targetDays[0];
     const lastDay = targetDays[targetDays.length - 1];
     const shortRange = (firstDay && lastDay) ? `${firstDay.displayDate} – ${lastDay.displayDate}` : activeWeeklyPlan.shortRange;
 
-    const blackoutDaysInPlan = targetDays.filter(d => blackoutDates.includes(d.dateStr));
-    const isOversold = blackoutDaysInPlan.length > 0;
+    const isAvailable = targetDays.length >= 5;
 
     return {
       targetDays,
       shortRange,
-      isOversold,
-      blackoutDaysInPlan
+      isAvailable
     };
-  }, [activeWeeklyPlan, upcomingWeeks, todayStr, blackoutDates]);
+  }, [activeWeeklyPlan, upcomingWeeks, todayStr, blackoutDates, settings.saturdaySpecialTitle, settings.weekdayMenus]);
 
   // Compute days of the selected week in Central Time
   const schedule: DaySchedule[] = useMemo(() => {
@@ -1068,9 +1075,8 @@ export default function TiffinOrderView({
           {/* B) WEEKLY DABBA SUBSCRIPTION BANNER */}
           <div className="rounded-3xl bg-gradient-to-r from-emerald-50 via-teal-50 to-blue-50 border-2 border-emerald-200/80 p-6 sm:p-8 shadow-sm space-y-4">
             {(() => {
-              const isWeekOversold = weeklyPlanInfo?.isOversold || false;
+              const isAvailable = weeklyPlanInfo?.isAvailable ?? true;
               const rangeStr = weeklyPlanInfo?.shortRange || activeWeeklyPlan?.shortRange;
-              const blackoutLabels = (weeklyPlanInfo?.blackoutDaysInPlan || []).map(d => d.displayDate).join(', ');
 
               return (
                 <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
@@ -1082,8 +1088,8 @@ export default function TiffinOrderView({
                       Weekly Dabba Subscription — ${weeklyPrice.toFixed(2)}
                     </h2>
                     <p className="text-xs sm:text-sm text-gray-700 leading-relaxed">
-                      Enjoy 1 Single Dabba every day for <strong>5 open weekdays ({rangeStr})</strong>. 
-                      Zero preservatives, rotated daily menus, freshly packed for dinner pickup.
+                      Enjoy 1 Single Dabba every day for <strong>5 available open days ({rangeStr})</strong>. 
+                      Blackout dates and closed days are automatically skipped. Zero preservatives, rotated daily menus, freshly packed for dinner pickup.
                     </p>
                     <div className="flex flex-wrap items-center gap-4 text-xs font-medium text-emerald-900 pt-1">
                       <span>✓ 5 Hot Meals ({rangeStr})</span>
@@ -1122,15 +1128,15 @@ export default function TiffinOrderView({
                       <button
                         type="button"
                         onClick={handleAddWeeklyDabba}
-                        disabled={isWeekOversold}
+                        disabled={!isAvailable}
                         className={`flex-1 sm:flex-initial min-h-[44px] inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-sm ${
-                          isWeekOversold
+                          !isAvailable
                             ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
                             : 'bg-[#00346f] hover:bg-[#00224d] text-white cursor-pointer'
                         }`}
                       >
                         <ShoppingBag className="w-4 h-4 text-[#ffdea5]" />
-                        <span>{isWeekOversold ? `Sold Out (Oversold ${blackoutLabels})` : `Add Weekly Plan (${rangeStr})`}</span>
+                        <span>{!isAvailable ? 'Weekly Plan Temporarily Unavailable' : `Add Weekly Plan (${rangeStr})`}</span>
                       </button>
                     </div>
                   </div>
