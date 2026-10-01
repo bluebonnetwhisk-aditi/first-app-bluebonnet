@@ -619,18 +619,17 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
     setIsSyncingQbo(true);
     setSyncResultMsg(null);
     try {
-      const targetDateStr = selectedDate === 'all' ? todayDateStr : selectedDate;
-      const res = await fetch(`/api/cron/reconcile-qbo?date=${targetDateStr}`, {
+      const res = await fetch(`/api/cron/reconcile-qbo`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
           'Accept': 'application/json'
         },
-        body: JSON.stringify({ date: targetDateStr })
+        body: JSON.stringify({ action: 'manual_reconcile' })
       });
       const data = await res.json();
       if (res.ok && data.success) {
-        setSyncResultMsg(data.message || `QBO Reconciliation completed for ${targetDateStr}!`);
+        setSyncResultMsg(data.message || `QBO Reconciliation completed successfully!`);
         loadOrders();
       } else {
         setSyncResultMsg(data.error || data.message || `Sync returned status ${res.status}`);

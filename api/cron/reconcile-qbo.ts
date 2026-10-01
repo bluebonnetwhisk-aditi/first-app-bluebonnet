@@ -23,9 +23,6 @@ function getCentralTimeTodayStr(): string {
 /**
  * Refreshes QBO OAuth 2.0 Access Token using Refresh Token with auto-rotation persistence
  */
-/**
- * Refreshes QBO OAuth 2.0 Access Token using Refresh Token with auto-rotation persistence
- */
 async function getQBOAccessToken(
   supabase: any,
   clientId: string,
@@ -159,7 +156,11 @@ async function getOrCreateDailySalesCustomer(accessToken: string, qboHost: strin
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  // Allow GET, POST and OPTIONS for web app & cron calls
+  // CORS & Security headers
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
@@ -183,8 +184,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
   }
 
-  const targetDate = (req.query?.date as string) || (req.body?.date as string) || getCentralTimeTodayStr();
-  const todayStr = targetDate;
+  const todayStr = getCentralTimeTodayStr();
 
   try {
     // 2. Initialize Supabase Client
@@ -193,37 +193,66 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
     const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    // 3. Query eligible orders for target date (US Central Time)
-    const { data: rawOrders, error: fetchErr } = await supabase
+    // 3. Retrieve set of already reconciled order IDs from Supabase app_settings
+    let reconciledOrderIdsSet = new Set<string>();
+    try {
+      const { data: setting } = await supabase
+        .from('app_settings')
+        .select('value')
+        .eq('key', 'qbo_reconciled_orders')
+        .maybeSingle();
+
+      if (setting?.value?.reconciled_ids && Array.isArray(setting.value.reconciled_ids)) {
+        setting.value.reconciled_ids.forEach((id: string) => reconciledOrderIdsSet.add(id));
+      }
+    } catch (err) {
+      console.warn('Supabase qbo_reconciled_orders lookup warning:', err);
+    }
+
+    // 4. Query orders from Supabase (all orders or filtered by date if date_filter_only is requested)
+    let query = supabase
       .from('orders')
       .select('*')
-      .eq('fulfillment_date', todayStr);
+      .order('created_at', { ascending: true });
+
+    const targetDateParam = (req.query?.date as string) || (req.body?.date as string);
+    if (req.query?.date_filter_only === 'true' && targetDateParam) {
+      query = query.eq('fulfillment_date', targetDateParam);
+    }
+
+    const { data: rawOrders, error: fetchErr } = await query;
 
     if (fetchErr) {
       console.error('Supabase fetch error during reconciliation:', fetchErr);
       return res.status(500).json({ error: fetchErr.message });
     }
 
-    // 4. Filter remaining orders: MUST be either 'ready' or 'completed' and not yet reconciled to QBO
+    // 5. Filter remaining orders: MUST be either 'ready' or 'completed', not cancelled, and not yet reconciled
     const orders = (rawOrders || []).filter(o => {
       const statusLower = (o.status || '').toLowerCase();
-      const isNotCancelled = !o.is_cancelled && statusLower !== 'cancelled';
-      const isNotReconciled = !o.reconciled_to_qbo;
+      const isNotCancelled = statusLower !== 'cancelled' && statusLower !== 'canceled';
       const isReadyOrCompleted = statusLower === 'ready' || statusLower === 'completed' || statusLower === 'complete';
+      
+      const isReconciledInDB = Boolean(o.reconciled_to_qbo);
+      const isReconciledInAppSettings = reconciledOrderIdsSet.has(o.id);
+      const isReconciledInNotes = (o.order_description || '').includes('[QBO Reconciled') || (o.dietary_notes || '').includes('[QBO Reconciled');
+
+      const isNotReconciled = !isReconciledInDB && !isReconciledInAppSettings && !isReconciledInNotes;
+
       return isReadyOrCompleted && isNotCancelled && isNotReconciled;
     });
 
-    // 5. Handle Days with Zero Eligible Unreconciled Orders Gracefully
+    // 6. Handle Days with Zero Eligible Unreconciled Orders Gracefully
     if (orders.length === 0) {
       return res.status(200).json({
         success: true,
-        message: `No unreconciled ready or completed orders found for ${todayStr} (Central Time).`,
+        message: `No unreconciled ready or completed orders found to sync to QuickBooks. All eligible orders are reconciled!`,
         date: todayStr,
         reconciledCount: 0
       });
     }
 
-    // 6. Resolve QuickBooks API Credentials (check process.env then Supabase app_settings)
+    // 7. Resolve QuickBooks API Credentials (check process.env then Supabase app_settings)
     let qboClientId = QBO_CLIENT_ID;
     let qboClientSecret = QBO_CLIENT_SECRET;
     let qboRefreshToken = QBO_REFRESH_TOKEN;
@@ -269,7 +298,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       });
     }
 
-    // 7. Consolidate financial metrics and payment method breakdowns
+    // 8. Consolidate financial metrics and payment method breakdowns
     let totalSales = 0;
     let totalTax = 0;
     let grandTotal = 0;
@@ -302,7 +331,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         cashTotal += totalAmount;
         cashCount += 1;
         cashOrderIds.push(`#${shortId}`);
-      } else if (method === 'credit_card') {
+      } else if (method === 'credit_card' || method === 'card' || method === 'stripe') {
         cardTotal += totalAmount;
         cardCount += 1;
       } else {
@@ -314,7 +343,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       lineItems.push({
         Amount: foodSubtotal,
         DetailType: 'SalesItemLineDetail',
-        Description: `[Order #${shortId}] Name: ${order.customer_name} | Phone: ${order.phone_number} | Status: ${order.status} | Paid: ${order.payment_method || 'zelle'}`,
+        Description: `[Order #${shortId}] Date: ${order.fulfillment_date || todayStr} | Name: ${order.customer_name} | Phone: ${order.phone_number} | Status: ${order.status} | Paid: ${order.payment_method || 'zelle'}`,
         SalesItemLineDetail: {
           UnitPrice: foodSubtotal,
           Qty: 1
@@ -331,7 +360,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // Build Audit Memo / PrivateNote for QBO
     const privateNote = [
-      `EOD Consolidated Sales Receipt (${todayStr} CT):`,
+      `Consolidated Sales Receipt (${todayStr} CT):`,
       `Total Food Sales: $${totalSales.toFixed(2)}`,
       `Total Texas Tax: $${totalTax.toFixed(2)}`,
       `Grand Total: $${grandTotal.toFixed(2)}`,
@@ -342,12 +371,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       `ZELLE TRANSFERS: $${zelleTotal.toFixed(2)} across ${zelleCount} order(s)`,
       `CREDIT CARDS: $${cardTotal.toFixed(2)} across ${cardCount} order(s)`,
       ``,
-      `Reconciled via Bluebonnet Whisk Automated Vercel Cron`
+      `Reconciled via Bluebonnet Whisk Automated EOD Reconciliation`
     ].join('\n');
 
     let qboSalesReceiptId = '';
 
-    // 8. Post Sales Receipt to QuickBooks Online API
+    // 9. Post Sales Receipt to QuickBooks Online API
     const qboHost = qboEnvironment === 'sandbox'
       ? 'sandbox-quickbooks.api.intuit.com'
       : 'quickbooks.api.intuit.com';
@@ -388,30 +417,59 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       throw new Error('QuickBooks Online did not return a SalesReceipt ID.');
     }
 
-    // 9. Update reconciled orders in Supabase DB
+    // 10. Update reconciled orders in Supabase DB & app_settings
     const reconciledAt = new Date().toISOString();
-    const orderIdsToUpdate = orders.map(o => o.id);
+    const newReconciledIds = orders.map(o => o.id);
+    const allReconciledIds = Array.from(reconciledOrderIdsSet).concat(newReconciledIds);
 
+    // A) Persist in app_settings table
     try {
-      const { error: updateErr } = await supabase
-        .from('orders')
-        .update({
-          reconciled_to_qbo: true,
-          qbo_doc_id: qboSalesReceiptId,
-          reconciled_at: reconciledAt
-        })
-        .in('id', orderIdsToUpdate);
+      await supabase.from('app_settings').upsert(
+        {
+          key: 'qbo_reconciled_orders',
+          value: {
+            reconciled_ids: allReconciledIds,
+            last_reconciled_at: reconciledAt,
+            last_doc_id: qboSalesReceiptId,
+            last_reconciled_count: orders.length
+          },
+          updated_at: reconciledAt
+        },
+        { onConflict: 'key' }
+      );
+    } catch (appErr) {
+      console.warn('Supabase app_settings reconciliation save warning:', appErr);
+    }
 
-      if (updateErr) {
-        console.warn('Supabase post-reconciliation update warning:', updateErr.message);
+    // B) Update individual orders in Supabase DB
+    for (const order of orders) {
+      try {
+        const existingDesc = order.order_description || '';
+        const updatedDesc = existingDesc.includes('[QBO Reconciled')
+          ? existingDesc
+          : `${existingDesc} [QBO Reconciled #${qboSalesReceiptId}]`.trim();
+
+        const updatePayload: any = {
+          order_description: updatedDesc
+        };
+
+        // Try updating schema columns if present
+        try { updatePayload.reconciled_to_qbo = true; } catch (e) {}
+        try { updatePayload.qbo_doc_id = qboSalesReceiptId; } catch (e) {}
+        try { updatePayload.reconciled_at = reconciledAt; } catch (e) {}
+
+        await supabase
+          .from('orders')
+          .update(updatePayload)
+          .eq('id', order.id);
+      } catch (oErr) {
+        console.warn(`Order #${order.id} update notice:`, oErr);
       }
-    } catch (updateEx: any) {
-      console.warn('Supabase post-reconciliation update exception:', updateEx?.message || updateEx);
     }
 
     return res.status(200).json({
       success: true,
-      message: `Successfully posted consolidated Sales Receipt for ${orders.length} ready/completed order(s) to QuickBooks Online! (Receipt #${qboSalesReceiptId})`,
+      message: `Successfully posted consolidated Sales Receipt for ${orders.length} ready/completed order(s) to QuickBooks Online! (Sales Receipt #${qboSalesReceiptId})`,
       date: todayStr,
       reconciledCount: orders.length,
       qboSalesReceiptId: qboSalesReceiptId,
@@ -422,7 +480,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     });
 
   } catch (err: any) {
-    console.error('QBO Reconciliation Cron error:', err);
+    console.error('QBO Reconciliation error:', err);
     return res.status(500).json({ error: err instanceof Error ? err.message : String(err) });
   }
 }
