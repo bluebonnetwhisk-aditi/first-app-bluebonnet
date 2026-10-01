@@ -408,15 +408,20 @@ export default function CateringContainer() {
                       : 'bg-[#0B192C] text-white border-[#D4AF37]/40'
                   }`}>
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-[#D4AF37] text-[#0B192C] flex items-center justify-center font-bold text-lg shrink-0">
+                      <div className="w-9 h-9 rounded-xl bg-[#D4AF37]/20 text-[#D4AF37] border border-[#D4AF37]/30 flex items-center justify-center font-bold text-base shrink-0">
                         📅
                       </div>
                       <div>
-                        <span className="text-[10px] font-bold uppercase tracking-widest text-[#D4AF37] block">
-                          TARGET EVENT FULFILLMENT DATE
-                        </span>
-                        <h3 className="font-serif font-bold text-base">
-                          {selectedGlobalDate} {blackoutDates.includes(selectedGlobalDate) ? '(Sold Out / Oversold)' : '(Ordering Available)'}
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-[10px] font-bold uppercase tracking-widest text-[#D4AF37]">
+                            TARGET EVENT FULFILLMENT DATE
+                          </span>
+                          <span className="text-[10px] font-semibold bg-white/10 px-2 py-0.5 rounded border border-white/15 text-white/80">
+                            24h notice
+                          </span>
+                        </div>
+                        <h3 className="font-serif font-bold text-base mt-0.5">
+                          {selectedGlobalDate} {blackoutDates.includes(selectedGlobalDate) ? '(Oversold / Closed)' : '(Ordering Available)'}
                         </h3>
                         <p className="text-xs opacity-80 mt-0.5">
                           {blackoutDates.includes(selectedGlobalDate)
@@ -426,15 +431,13 @@ export default function CateringContainer() {
                       </div>
                     </div>
 
-                    <div className="text-right shrink-0">
-                      <span className={`text-xs font-bold px-3 py-1.5 rounded-full border ${
-                        blackoutDates.includes(selectedGlobalDate)
-                          ? 'bg-amber-200 text-amber-900 border-amber-400'
-                          : 'bg-white/10 text-[#D4AF37] border-white/20'
-                      }`}>
-                        {blackoutDates.includes(selectedGlobalDate) ? 'Capacity Full' : '24h Notice Valid'}
-                      </span>
-                    </div>
+                    {blackoutDates.includes(selectedGlobalDate) && (
+                      <div className="text-right shrink-0">
+                        <span className="text-xs font-bold px-3 py-1.5 rounded-full bg-amber-200 text-amber-900 border border-amber-400">
+                          Capacity Full
+                        </span>
+                      </div>
+                    )}
                   </div>
 
                   <TrayPricingHeader />
@@ -458,15 +461,20 @@ export default function CateringContainer() {
                       : 'bg-[#0B192C] text-white border-[#D4AF37]/40'
                   }`}>
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-[#D4AF37] text-[#0B192C] flex items-center justify-center font-bold text-lg shrink-0">
+                      <div className="w-9 h-9 rounded-xl bg-[#D4AF37]/20 text-[#D4AF37] border border-[#D4AF37]/30 flex items-center justify-center font-bold text-base shrink-0">
                         🎂
                       </div>
                       <div>
-                        <span className="text-[10px] font-bold uppercase tracking-widest text-[#D4AF37] block">
-                          TARGET CAKE CELEBRATION DATE
-                        </span>
-                        <h3 className="font-serif font-bold text-base">
-                          {selectedGlobalDate} {blackoutDates.includes(selectedGlobalDate) ? '(Sold Out / Oversold)' : '(Ordering Available)'}
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-[10px] font-bold uppercase tracking-widest text-[#D4AF37]">
+                            TARGET CAKE CELEBRATION DATE
+                          </span>
+                          <span className="text-[10px] font-semibold bg-white/10 px-2 py-0.5 rounded border border-white/15 text-white/80">
+                            48h notice
+                          </span>
+                        </div>
+                        <h3 className="font-serif font-bold text-base mt-0.5">
+                          {selectedGlobalDate} {blackoutDates.includes(selectedGlobalDate) ? '(Oversold / Closed)' : '(Ordering Available)'}
                         </h3>
                         <p className="text-xs opacity-80 mt-0.5">
                           {blackoutDates.includes(selectedGlobalDate)
@@ -476,15 +484,13 @@ export default function CateringContainer() {
                       </div>
                     </div>
 
-                    <div className="text-right shrink-0">
-                      <span className={`text-xs font-bold px-3 py-1.5 rounded-full border ${
-                        blackoutDates.includes(selectedGlobalDate)
-                          ? 'bg-amber-200 text-amber-900 border-amber-400'
-                          : 'bg-white/10 text-[#D4AF37] border-white/20'
-                      }`}>
-                        {blackoutDates.includes(selectedGlobalDate) ? 'Capacity Full' : '48h Cake Notice Valid'}
-                      </span>
-                    </div>
+                    {blackoutDates.includes(selectedGlobalDate) && (
+                      <div className="text-right shrink-0">
+                        <span className="text-xs font-bold px-3 py-1.5 rounded-full bg-amber-200 text-amber-900 border border-amber-400">
+                          Capacity Full
+                        </span>
+                      </div>
+                    )}
                   </div>
 
                   <CakeConfigurator

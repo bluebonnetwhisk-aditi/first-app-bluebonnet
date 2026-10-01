@@ -220,12 +220,12 @@ export default function CakeConfigurator({
               <CakeIcon className="w-6 h-6" />
             </div>
             <div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <h3 className="font-serif font-bold text-lg sm:text-xl text-white">
                   Cakes &amp; Specialty Bakes Configurator
                 </h3>
-                <span className="text-[10px] font-bold uppercase tracking-wider bg-rose-500/90 text-white px-2 py-0.5 rounded-full border border-rose-300/30">
-                  48h Notice
+                <span className="text-[10px] font-semibold text-[#ffdea5] bg-white/10 px-2 py-0.5 rounded border border-white/15">
+                  48h notice
                 </span>
               </div>
               <p className="text-xs text-white/80 mt-0.5">
