@@ -1014,75 +1014,77 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
         {/* ── DATE PICKER & STATUS PIPELINE TABS ── */}
         <div className="bg-white rounded-2xl border border-gray-200 p-3.5 sm:p-4 shadow-xs space-y-3">
           
-          {/* 1. Schedule Ribbon (Row 1 with CSS Snap Scrolling) */}
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none snap-x snap-mandatory w-full">
-            <span className="text-xs font-bold text-gray-500 mr-1.5 flex items-center gap-1 shrink-0">
-              <CalendarIcon className="w-3.5 h-3.5" />
-              <span>Schedule:</span>
-            </span>
+          {/* 1. Schedule Ribbon (Row 1 with Responsive Flex & Smooth Scroll) */}
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-2.5 pb-2.5 border-b border-gray-150">
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none snap-x snap-mandatory min-w-0 flex-1 pr-2">
+              <span className="text-xs font-bold text-gray-500 mr-1.5 flex items-center gap-1 shrink-0">
+                <CalendarIcon className="w-3.5 h-3.5 text-[#00346f]" />
+                <span>Schedule:</span>
+              </span>
 
-            {/* All Orders Button */}
-            <button
-              type="button"
-              onClick={() => setSelectedDate('all')}
-              className={`px-3 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5 shrink-0 snap-start min-h-[38px] ${
-                selectedDate === 'all'
-                  ? 'bg-[#00346f] text-white shadow-xs'
-                  : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
-              }`}
-            >
-              <span>All Orders</span>
-              {totalActiveOrdersCount > 0 && (
-                <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-black ${
-                  selectedDate === 'all' ? 'bg-[#ffdea5] text-[#00346f]' : 'bg-gray-200 text-gray-800'
-                }`}>
-                  {totalActiveOrdersCount}
-                </span>
-              )}
-            </button>
+              {/* All Orders Button */}
+              <button
+                type="button"
+                onClick={() => setSelectedDate('all')}
+                className={`px-3 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5 shrink-0 snap-start min-h-[38px] ${
+                  selectedDate === 'all'
+                    ? 'bg-[#00346f] text-white shadow-xs'
+                    : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+                }`}
+              >
+                <span>All Orders</span>
+                {totalActiveOrdersCount > 0 && (
+                  <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-black ${
+                    selectedDate === 'all' ? 'bg-[#ffdea5] text-[#00346f]' : 'bg-gray-200 text-gray-800'
+                  }`}>
+                    {totalActiveOrdersCount}
+                  </span>
+                )}
+              </button>
 
-            {upcomingDateOptions.map(opt => {
-              const isSelected = selectedDate === opt.dateStr;
-              const isToday = opt.dateStr === todayDateStr;
-              const count = orderCountsByDate.get(opt.dateStr) || 0;
+              {upcomingDateOptions.map(opt => {
+                const isSelected = selectedDate === opt.dateStr;
+                const isToday = opt.dateStr === todayDateStr;
+                const count = orderCountsByDate.get(opt.dateStr) || 0;
 
-              return (
-                <button
-                  key={opt.dateStr}
-                  type="button"
-                  onClick={() => setSelectedDate(opt.dateStr)}
-                  className={`px-3 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5 shrink-0 snap-start min-h-[38px] ${
-                    isSelected
-                      ? isToday
-                        ? 'bg-amber-600 text-white shadow-xs ring-2 ring-amber-300'
-                        : 'bg-[#00346f] text-white shadow-xs'
-                      : isToday
-                      ? count > 0
-                        ? 'bg-amber-100 text-amber-950 border border-amber-300 hover:bg-amber-200 font-extrabold shadow-2xs'
-                        : 'bg-amber-50 text-amber-900 border border-amber-200 hover:bg-amber-100 font-bold'
-                      : count > 0
-                      ? 'bg-blue-50 border border-blue-200 text-[#00346f] hover:bg-blue-100'
-                      : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
-                  }`}
-                >
-                  <span>{isToday ? 'Today' : `${opt.dayOfWeek} ${opt.label}`}</span>
-                  {count > 0 && (
-                    <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-black ${
+                return (
+                  <button
+                    key={opt.dateStr}
+                    type="button"
+                    onClick={() => setSelectedDate(opt.dateStr)}
+                    className={`px-3 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5 shrink-0 snap-start min-h-[38px] ${
                       isSelected
-                        ? 'bg-[#ffdea5] text-[#00346f]'
+                        ? isToday
+                          ? 'bg-amber-600 text-white shadow-xs ring-2 ring-amber-300'
+                          : 'bg-[#00346f] text-white shadow-xs'
                         : isToday
-                        ? 'bg-amber-700 text-white'
-                        : 'bg-[#00346f] text-white'
-                    }`}>
-                      {count}
-                    </span>
-                  )}
-                </button>
-              );
-            })}
+                        ? count > 0
+                          ? 'bg-amber-100 text-amber-950 border border-amber-300 hover:bg-amber-200 font-extrabold shadow-2xs'
+                          : 'bg-amber-50 text-amber-900 border border-amber-200 hover:bg-amber-100 font-bold'
+                        : count > 0
+                        ? 'bg-blue-50 border border-blue-200 text-[#00346f] hover:bg-blue-100'
+                        : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+                    }`}
+                  >
+                    <span>{isToday ? 'Today' : `${opt.dayOfWeek} ${opt.label}`}</span>
+                    {count > 0 && (
+                      <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-black ${
+                        isSelected
+                          ? 'bg-[#ffdea5] text-[#00346f]'
+                          : isToday
+                          ? 'bg-amber-700 text-white'
+                          : 'bg-[#00346f] text-white'
+                      }`}>
+                        {count}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
 
-            <div className="flex items-center gap-1.5 ml-auto pl-2 shrink-0">
-              <span className="text-[11px] font-medium text-gray-500 hidden sm:inline">Pick date:</span>
+            <div className="flex items-center gap-1.5 shrink-0 pt-1 md:pt-0 self-end md:self-auto">
+              <span className="text-[11px] font-medium text-gray-500 whitespace-nowrap">Pick date:</span>
               <input
                 type="date"
                 value={selectedDate === 'all' ? todayDateStr : selectedDate}
