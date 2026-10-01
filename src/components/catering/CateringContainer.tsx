@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { TrayPricingHeader, CateringDifferentiators } from './BrandHeader';
 import CakeBrandHeader from './CakeBrandHeader';
 import MenuOrderGrid from './MenuOrderGrid';
@@ -10,12 +10,40 @@ import EstimateReceiptModal from './EstimateReceiptModal';
 import OrderConfirmationModal from './OrderConfirmationModal';
 import ErrorBoundary from '../common/ErrorBoundary';
 import type { CartItem, CateringOrder, MenuItem, TraySize } from '../../types/catering';
+import { fetchCalendarBlackouts } from '../../services/supabase';
+import { getUpcomingDates, isDateSelectable, findFirstValidFulfillmentSlot } from '../../utils/centralTime';
 
 const CART_STORAGE_KEY = 'bbw_catering_cart_v1';
 
 type SubTab = 'order' | 'cake' | 'tiffin';
 
 export default function CateringContainer() {
+  // Blackout dates list from Supabase
+  const [blackoutDates, setBlackoutDates] = useState<string[]>([]);
+
+  // Load blackout dates on mount
+  useEffect(() => {
+    fetchCalendarBlackouts().then(dates => setBlackoutDates(dates));
+  }, []);
+
+  // Upcoming 21-day schedule options
+  const upcomingDates = useMemo(() => getUpcomingDates(21, false), []);
+
+  // Global selected fulfillment date across all ordering sub-sections
+  const [selectedGlobalDate, setSelectedGlobalDate] = useState<string>(() => {
+    return upcomingDates[0]?.dateStr || '';
+  });
+
+  // Auto-set earliest valid date once blackouts load if initial date is blacked out
+  useEffect(() => {
+    if (blackoutDates.length > 0 && selectedGlobalDate && blackoutDates.includes(selectedGlobalDate)) {
+      const firstValid = findFirstValidFulfillmentSlot(blackoutDates, []);
+      if (firstValid?.dateStr) {
+        setSelectedGlobalDate(firstValid.dateStr);
+      }
+    }
+  }, [blackoutDates, selectedGlobalDate]);
+
   // Sub-navigation: 'order' (/catering/food), 'cake' (/catering/cake), 'tiffin' (/catering/tiffin)
   const [subTab, setSubTab] = useState<SubTab>(() => {
     if (typeof window !== 'undefined') {
@@ -299,6 +327,68 @@ export default function CateringContainer() {
 
           </div>
         </div>
+
+        {/* ── UNIFIED DAY & SCHEDULE RAIL (Shared Across Tiffin, Party Catering & Custom Cakes) ── */}
+        <div className="w-full bg-[#FAF8F5] border-t border-b border-[#D4AF37]/30 py-2.5 px-4 shadow-2xs">
+          <div className="max-w-7xl mx-auto flex items-center gap-3">
+            <div className="hidden md:flex flex-col shrink-0 pr-3 border-r border-[#D4AF37]/30">
+              <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#0B192C]">
+                SCHEDULE RAIL
+              </span>
+              <span className="text-[11px] font-medium text-gray-600">
+                Target Fulfillment Date
+              </span>
+            </div>
+
+            <div className="flex gap-2 overflow-x-auto py-0.5 scrollbar-none w-full">
+              {upcomingDates.map(opt => {
+                const isSelected = selectedGlobalDate === opt.dateStr;
+                const isBlackout = blackoutDates.includes(opt.dateStr);
+                const check = isDateSelectable(opt.dateStr, blackoutDates, cart);
+
+                let badgeText = 'Open';
+                let badgeStyle = 'bg-emerald-100 text-emerald-800 border border-emerald-200';
+                if (isBlackout) {
+                  badgeText = 'Sold Out';
+                  badgeStyle = 'bg-amber-100 text-amber-900 border border-amber-300 font-bold';
+                } else if (!check.selectable) {
+                  badgeText = 'Closed';
+                  badgeStyle = 'bg-rose-100 text-rose-800 border border-rose-200';
+                }
+
+                return (
+                  <button
+                    key={opt.dateStr}
+                    type="button"
+                    onClick={() => setSelectedGlobalDate(opt.dateStr)}
+                    className={`flex flex-col items-center justify-center min-w-[76px] py-1.5 px-2 rounded-xl border text-center transition-all cursor-pointer shrink-0 ${
+                      isSelected
+                        ? 'bg-[#0B192C] text-white border-[#0B192C] shadow-md ring-2 ring-[#D4AF37]'
+                        : isBlackout
+                        ? 'bg-amber-50/80 border-amber-200 text-gray-800 hover:bg-amber-100'
+                        : !check.selectable
+                        ? 'bg-gray-100 border-gray-200 text-gray-400 opacity-60'
+                        : 'bg-white hover:bg-white/90 border-gray-250 text-gray-800 shadow-2xs'
+                    }`}
+                    title={!check.selectable ? check.reason : `Set target date to ${opt.label}`}
+                  >
+                    <span className={`text-[10px] uppercase font-bold tracking-wider ${isSelected ? 'text-[#D4AF37]' : 'text-gray-500'}`}>
+                      {opt.dayOfWeek}
+                    </span>
+                    <span className="text-xs font-black mt-0.5 whitespace-nowrap">
+                      {opt.label}
+                    </span>
+                    <span className={`text-[8px] uppercase tracking-tighter font-black px-1.5 py-0.5 rounded-full mt-1 ${
+                      isSelected ? 'bg-[#D4AF37] text-[#0B192C]' : badgeStyle
+                    }`}>
+                      {badgeText}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* ── 2. SUB-TAB VIEWPORT ── */}
@@ -311,6 +401,42 @@ export default function CateringContainer() {
               {/* SubTab 1: Catering (Starts with Tray Pricing Tiers, Menu Grid, 4 Differentiators at end) */}
               {subTab === 'order' && (
                 <div className="space-y-6">
+                  {/* Selected Global Target Date Alert Banner */}
+                  <div className={`p-4 rounded-2xl border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-2xs transition-all ${
+                    blackoutDates.includes(selectedGlobalDate)
+                      ? 'bg-amber-50 border-amber-300 text-amber-950'
+                      : 'bg-[#0B192C] text-white border-[#D4AF37]/40'
+                  }`}>
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-[#D4AF37] text-[#0B192C] flex items-center justify-center font-bold text-lg shrink-0">
+                        📅
+                      </div>
+                      <div>
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-[#D4AF37] block">
+                          TARGET EVENT FULFILLMENT DATE
+                        </span>
+                        <h3 className="font-serif font-bold text-base">
+                          {selectedGlobalDate} {blackoutDates.includes(selectedGlobalDate) ? '(Sold Out / Oversold)' : '(Ordering Available)'}
+                        </h3>
+                        <p className="text-xs opacity-80 mt-0.5">
+                          {blackoutDates.includes(selectedGlobalDate)
+                            ? 'Notice: This date is currently oversold. Please select an available open date on the schedule rail above.'
+                            : 'Selected catering dishes will be freshly prepared for pickup/delivery on this date.'}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="text-right shrink-0">
+                      <span className={`text-xs font-bold px-3 py-1.5 rounded-full border ${
+                        blackoutDates.includes(selectedGlobalDate)
+                          ? 'bg-amber-200 text-amber-900 border-amber-400'
+                          : 'bg-white/10 text-[#D4AF37] border-white/20'
+                      }`}>
+                        {blackoutDates.includes(selectedGlobalDate) ? 'Capacity Full' : '24h Notice Valid'}
+                      </span>
+                    </div>
+                  </div>
+
                   <TrayPricingHeader />
                   <MenuOrderGrid
                     cart={cart}
@@ -325,6 +451,42 @@ export default function CateringContainer() {
               {/* SubTab 2: Cake Order (Starts directly from CakeConfigurator, 4 Differentiators at end) */}
               {subTab === 'cake' && (
                 <div className="space-y-6">
+                  {/* Selected Global Target Date Alert Banner */}
+                  <div className={`p-4 rounded-2xl border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-2xs transition-all ${
+                    blackoutDates.includes(selectedGlobalDate)
+                      ? 'bg-amber-50 border-amber-300 text-amber-950'
+                      : 'bg-[#0B192C] text-white border-[#D4AF37]/40'
+                  }`}>
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-[#D4AF37] text-[#0B192C] flex items-center justify-center font-bold text-lg shrink-0">
+                        🎂
+                      </div>
+                      <div>
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-[#D4AF37] block">
+                          TARGET CAKE CELEBRATION DATE
+                        </span>
+                        <h3 className="font-serif font-bold text-base">
+                          {selectedGlobalDate} {blackoutDates.includes(selectedGlobalDate) ? '(Sold Out / Oversold)' : '(Ordering Available)'}
+                        </h3>
+                        <p className="text-xs opacity-80 mt-0.5">
+                          {blackoutDates.includes(selectedGlobalDate)
+                            ? 'Notice: Cake orders are closed for this date as kitchen capacity is oversold. Please select an open date on the schedule rail.'
+                            : 'Custom cakes are freshly baked and decorated for your selected date.'}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="text-right shrink-0">
+                      <span className={`text-xs font-bold px-3 py-1.5 rounded-full border ${
+                        blackoutDates.includes(selectedGlobalDate)
+                          ? 'bg-amber-200 text-amber-900 border-amber-400'
+                          : 'bg-white/10 text-[#D4AF37] border-white/20'
+                      }`}>
+                        {blackoutDates.includes(selectedGlobalDate) ? 'Capacity Full' : '48h Cake Notice Valid'}
+                      </span>
+                    </div>
+                  </div>
+
                   <CakeConfigurator
                     onAddCake={handleAddCakeFromConfigurator}
                     cartCakes={cart.filter(i => i.category === 'cakes')}
@@ -340,6 +502,7 @@ export default function CateringContainer() {
               {subTab === 'tiffin' && (
                 <TiffinOrderView
                   cart={cart}
+                  selectedGlobalDate={selectedGlobalDate}
                   onUpdateCartItem={handleUpdateCartItem}
                   onRemoveCartItem={handleRemoveCartItem}
                   onProceedToCheckout={() => setIsCheckoutOpen(true)}

@@ -30,6 +30,7 @@ import {
 
 interface TiffinOrderViewProps {
   cart: CartItem[];
+  selectedGlobalDate?: string;
   onUpdateCartItem: (
     menuItem: MenuItem,
     selectionType: any,
@@ -57,6 +58,7 @@ interface DaySchedule {
 
 export default function TiffinOrderView({
   cart,
+  selectedGlobalDate,
   onUpdateCartItem,
   onRemoveCartItem,
   onProceedToCheckout
@@ -360,6 +362,13 @@ export default function TiffinOrderView({
     }
     return result;
   }, [activeWeeklyPlan, todayStr, settings.weekdayMenus, settings.saturdaySpecialTitle, settings.saturdaySpecialDescription, blackoutDates]);
+
+  // Sync selectedGlobalDate from Unified Schedule Rail
+  useEffect(() => {
+    if (selectedGlobalDate && schedule.some(s => s.dateStr === selectedGlobalDate)) {
+      setSelectedDayTab(selectedGlobalDate);
+    }
+  }, [selectedGlobalDate, schedule]);
 
   // Auto-select first selectable day tab when schedule changes (e.g. week selected)
   useEffect(() => {
