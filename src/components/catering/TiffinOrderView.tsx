@@ -1038,23 +1038,6 @@ export default function TiffinOrderView({
 
               const isWeekOversold = weekBlackoutDates.length > 0;
 
-              if (isWeekOversold) {
-                return (
-                  <div className="p-8 bg-amber-50/80 rounded-3xl border-2 border-dashed border-amber-300 text-center space-y-3">
-                    <div className="text-4xl">🔥🍱</div>
-                    <h4 className="font-serif font-bold text-lg text-[#0B192C]">
-                      Order Capacity Full — We Are Oversold for {activeWeeklyPlan?.shortRange}!
-                    </h4>
-                    <p className="text-xs sm:text-sm text-gray-700 max-w-md mx-auto leading-relaxed">
-                      We are currently oversold and at maximum kitchen capacity for one or more dates during {activeWeeklyPlan?.shortRange}. Ordering is closed for this date. Please pick an open date!
-                    </p>
-                    <div className="inline-block bg-[#0B192C] text-[#D4AF37] px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider">
-                      Sold Out (Oversold) for {activeWeeklyPlan?.shortRange}
-                    </div>
-                  </div>
-                );
-              }
-
               return (
                 <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
                   <div className="space-y-2 max-w-2xl">
@@ -1105,10 +1088,15 @@ export default function TiffinOrderView({
                       <button
                         type="button"
                         onClick={handleAddWeeklyDabba}
-                        className="flex-1 sm:flex-initial min-h-[44px] inline-flex items-center justify-center gap-2 bg-[#00346f] hover:bg-[#00224d] text-white px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-sm cursor-pointer"
+                        disabled={isWeekOversold}
+                        className={`flex-1 sm:flex-initial min-h-[44px] inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-sm ${
+                          isWeekOversold
+                            ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                            : 'bg-[#00346f] hover:bg-[#00224d] text-white cursor-pointer'
+                        }`}
                       >
                         <ShoppingBag className="w-4 h-4 text-[#ffdea5]" />
-                        <span>Add Weekly Plan ({activeWeeklyPlan?.shortRange})</span>
+                        <span>{isWeekOversold ? 'Weekly Plan Unavailable (Oversold Date)' : `Add Weekly Plan (${activeWeeklyPlan?.shortRange})`}</span>
                       </button>
                     </div>
                   </div>
