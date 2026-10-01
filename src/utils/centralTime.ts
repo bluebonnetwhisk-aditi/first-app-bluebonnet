@@ -150,6 +150,21 @@ export function isDateSelectable(
     };
   }
 
+  // Party Catering 7:00 PM Daily Cutoff Rule for Next-Day Orders
+  const isCateringContext = subTab === 'order' || (items.length > 0 && items.some(item => item.category !== 'cakes' && item.category !== 'tiffin'));
+  const tomorrowObj = new Date(nowDate.getFullYear(), nowDate.getMonth(), nowDate.getDate() + 1);
+  const tomY = tomorrowObj.getFullYear();
+  const tomM = (tomorrowObj.getMonth() + 1).toString().padStart(2, '0');
+  const tomD = tomorrowObj.getDate().toString().padStart(2, '0');
+  const tomorrowDateStr = `${tomY}-${tomM}-${tomD}`;
+
+  if (isCateringContext && dateStr === tomorrowDateStr && nowDate.getHours() >= 19) {
+    return {
+      selectable: false,
+      reason: 'Party Catering 7:00 PM cutoff passed. Next-day catering orders close at 7:00 PM Central Time.'
+    };
+  }
+
   const noticeHours = getRequiredNoticeHours(items, subTab);
 
   // Target date checked against latest possible slot (9:00 PM = 21:00)

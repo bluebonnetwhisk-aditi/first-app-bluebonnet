@@ -138,18 +138,14 @@ export default function Home({ onOpenBaker: _onOpenBaker, onNavigate }: HomeProp
           <motion.video 
             ref={videoRef}
             src={heroVideo}
-            poster="/brand_logo_transparent.png"
             muted={true}
             autoPlay={true}
             loop={true}
             playsInline={true}
-            preload="metadata"
+            preload="auto"
             style={{ scale: videoScale, opacity: videoOpacity }}
             className="absolute inset-0 w-full h-full object-cover select-none pointer-events-none filter brightness-90 saturate-105"
-          >
-            <source src={heroVideo} type="video/mp4" />
-            <source src="/videos/hero.mp4" type="video/mp4" />
-          </motion.video>
+          />
           
           {/* Dark Glassmorphic Gradients */}
           <div className="absolute inset-0 bg-gradient-to-b from-[#050a1a]/85 via-transparent to-[#050a1a]" />
