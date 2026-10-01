@@ -1211,7 +1211,7 @@ export default function TiffinOrderView({
                 HOMESTYLE EXTRAS &amp; BREADS
               </span>
               <h3 className="font-serif text-xl sm:text-2xl font-bold text-[#00346f]">
-                $1.00 Everyday Add-Ons &amp; Sides
+                Everyday Add-Ons &amp; Sides (From $0.75)
               </h3>
               <p className="text-xs text-gray-500 mt-0.5">
                 Fresh hot rotis, puris, cooling raita, crisp papad, homestyle pickles &amp; salads to complement your meal.
@@ -1220,7 +1220,7 @@ export default function TiffinOrderView({
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-1">
               {[
-                { id: 'roti', name: 'Phulka Tawa Roti', portion: '1 Pc', price: 1.00, desc: 'Fresh whole wheat tawa roti' },
+                { id: 'roti', name: 'Phulka Tawa Roti', portion: '1 Pc', price: 0.75, desc: 'Fresh whole wheat tawa roti (tax incl.)' },
                 { id: 'puri', name: 'Puri (2 Pcs)', portion: '2 Pcs Pack', price: 1.00, desc: 'Golden fluffy fried puris' },
                 { id: 'missi-roti', name: 'Missi Roti', portion: '1 Pc', price: 1.00, desc: 'Spiced besan flatbread' },
                 { id: 'raita', name: 'Boondi / Veg Raita (8oz)', portion: '8 oz Container', price: 1.00, desc: 'Cooling spiced yogurt raita' },
