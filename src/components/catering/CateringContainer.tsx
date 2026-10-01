@@ -328,67 +328,69 @@ export default function CateringContainer() {
           </div>
         </div>
 
-        {/* ── UNIFIED DAY & SCHEDULE RAIL (Shared Across Tiffin, Party Catering & Custom Cakes) ── */}
-        <div className="w-full bg-[#FAF8F5] border-t border-b border-[#D4AF37]/30 py-2.5 px-4 shadow-2xs">
-          <div className="max-w-7xl mx-auto flex items-center gap-3">
-            <div className="hidden md:flex flex-col shrink-0 pr-3 border-r border-[#D4AF37]/30">
-              <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#0B192C]">
-                SCHEDULE RAIL
-              </span>
-              <span className="text-[11px] font-medium text-gray-600">
-                Target Fulfillment Date
-              </span>
-            </div>
+        {/* ── UNIFIED DAY & SCHEDULE RAIL (For Party Catering & Custom Cakes; Tiffin uses native Active Day Menu selector) ── */}
+        {subTab !== 'tiffin' && (
+          <div className="w-full bg-[#FAF8F5] border-t border-b border-[#D4AF37]/30 py-2.5 px-4 shadow-2xs">
+            <div className="max-w-7xl mx-auto flex items-center gap-3">
+              <div className="hidden md:flex flex-col shrink-0 pr-3 border-r border-[#D4AF37]/30">
+                <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#0B192C]">
+                  SCHEDULE RAIL
+                </span>
+                <span className="text-[11px] font-medium text-gray-600">
+                  Target Fulfillment Date
+                </span>
+              </div>
 
-            <div className="flex gap-2 overflow-x-auto py-0.5 scrollbar-none w-full">
-              {upcomingDates.map(opt => {
-                const isSelected = selectedGlobalDate === opt.dateStr;
-                const isBlackout = blackoutDates.includes(opt.dateStr);
-                const check = isDateSelectable(opt.dateStr, blackoutDates, cart, subTab);
+              <div className="flex gap-2 overflow-x-auto py-0.5 scrollbar-none w-full">
+                {upcomingDates.map(opt => {
+                  const isSelected = selectedGlobalDate === opt.dateStr;
+                  const isBlackout = blackoutDates.includes(opt.dateStr);
+                  const check = isDateSelectable(opt.dateStr, blackoutDates, cart, subTab);
 
-                let badgeText = 'Open';
-                let badgeStyle = 'bg-emerald-100 text-emerald-800 border border-emerald-200';
-                if (isBlackout) {
-                  badgeText = 'Sold Out';
-                  badgeStyle = 'bg-amber-100 text-amber-900 border border-amber-300 font-bold';
-                } else if (!check.selectable) {
-                  badgeText = 'Closed';
-                  badgeStyle = 'bg-rose-100 text-rose-800 border border-rose-200';
-                }
+                  let badgeText = 'Open';
+                  let badgeStyle = 'bg-emerald-100 text-emerald-800 border border-emerald-200';
+                  if (isBlackout) {
+                    badgeText = 'Sold Out';
+                    badgeStyle = 'bg-amber-100 text-amber-900 border border-amber-300 font-bold';
+                  } else if (!check.selectable) {
+                    badgeText = 'Closed';
+                    badgeStyle = 'bg-rose-100 text-rose-800 border border-rose-200';
+                  }
 
-                return (
-                  <button
-                    key={opt.dateStr}
-                    type="button"
-                    onClick={() => setSelectedGlobalDate(opt.dateStr)}
-                    className={`flex flex-col items-center justify-center min-w-[76px] py-1.5 px-2 rounded-xl border text-center transition-all cursor-pointer shrink-0 ${
-                      isSelected
-                        ? 'bg-[#0B192C] text-white border-[#0B192C] shadow-md ring-2 ring-[#D4AF37]'
-                        : isBlackout
-                        ? 'bg-amber-50/80 border-amber-200 text-gray-800 hover:bg-amber-100'
-                        : !check.selectable
-                        ? 'bg-gray-100 border-gray-200 text-gray-400 opacity-60'
-                        : 'bg-white hover:bg-white/90 border-gray-250 text-gray-800 shadow-2xs'
-                    }`}
-                    title={!check.selectable ? check.reason : `Set target date to ${opt.label}`}
-                  >
-                    <span className={`text-[10px] uppercase font-bold tracking-wider ${isSelected ? 'text-[#D4AF37]' : 'text-gray-500'}`}>
-                      {opt.dayOfWeek}
-                    </span>
-                    <span className="text-xs font-black mt-0.5 whitespace-nowrap">
-                      {opt.label}
-                    </span>
-                    <span className={`text-[8px] uppercase tracking-tighter font-black px-1.5 py-0.5 rounded-full mt-1 ${
-                      isSelected ? 'bg-[#D4AF37] text-[#0B192C]' : badgeStyle
-                    }`}>
-                      {badgeText}
-                    </span>
-                  </button>
-                );
-              })}
+                  return (
+                    <button
+                      key={opt.dateStr}
+                      type="button"
+                      onClick={() => setSelectedGlobalDate(opt.dateStr)}
+                      className={`flex flex-col items-center justify-center min-w-[76px] py-1.5 px-2 rounded-xl border text-center transition-all cursor-pointer shrink-0 ${
+                        isSelected
+                          ? 'bg-[#0B192C] text-white border-[#0B192C] shadow-md ring-2 ring-[#D4AF37]'
+                          : isBlackout
+                          ? 'bg-amber-50/80 border-amber-200 text-gray-800 hover:bg-amber-100'
+                          : !check.selectable
+                          ? 'bg-gray-100 border-gray-200 text-gray-400 opacity-60'
+                          : 'bg-white hover:bg-white/90 border-gray-250 text-gray-800 shadow-2xs'
+                      }`}
+                      title={!check.selectable ? check.reason : `Set target date to ${opt.label}`}
+                    >
+                      <span className={`text-[10px] uppercase font-bold tracking-wider ${isSelected ? 'text-[#D4AF37]' : 'text-gray-500'}`}>
+                        {opt.dayOfWeek}
+                      </span>
+                      <span className="text-xs font-black mt-0.5 whitespace-nowrap">
+                        {opt.label}
+                      </span>
+                      <span className={`text-[8px] uppercase tracking-tighter font-black px-1.5 py-0.5 rounded-full mt-1 ${
+                        isSelected ? 'bg-[#D4AF37] text-[#0B192C]' : badgeStyle
+                      }`}>
+                        {badgeText}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* ── 2. SUB-TAB VIEWPORT ── */}
