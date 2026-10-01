@@ -9,7 +9,7 @@ interface CakesPageProps {
 }
 
 export default function CakesPage({ onOpenBaker, onCreateQuote }: CakesPageProps) {
-  const [selectedTier, setSelectedTier] = useState<number>(2);
+  const [selectedSizeId, setSelectedSizeId] = useState<string>("6inch");
   const [selectedFlavor, setSelectedFlavor] = useState<string>("Rasmalai Fusion");
   const [isEggless, setIsEggless] = useState<boolean>(false);
   return (
@@ -597,38 +597,70 @@ export default function CakesPage({ onOpenBaker, onCreateQuote }: CakesPageProps
         <div className="max-w-7xl mx-auto px-4 lg:px-8">
           <div className="text-center mb-10">
             <span className="text-xs font-bold tracking-widest text-[#775a19] uppercase block mb-2">Interactive Customizer</span>
-            <h2 className="font-serif text-3xl lg:text-4xl font-bold text-[#00346f]">Cake Tier &amp; Serving Estimator</h2>
+            <h2 className="font-serif text-3xl lg:text-4xl font-bold text-[#00346f]">Cake Size, Tier &amp; Serving Estimator</h2>
             <p className="text-gray-600 text-xs sm:text-sm max-w-xl mx-auto mt-2 font-sans">
-              Select your event size to visualize tiers, estimated guest portions, and handcrafted options.
+              Select your celebration size to visualize 6″, 8″, 2-Tier (6″+8″), and multi-tier portions &amp; handcrafted options.
             </p>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center bg-white p-6 lg:p-10 rounded-3xl border border-[#c59b27]/20 shadow-xl">
             
             {/* Visual Cake Tier Representation */}
-            <div className="lg:col-span-6 flex flex-col items-center justify-center p-8 bg-gradient-to-b from-[#FAF7F2] to-[#F3EEE3] rounded-2xl border border-gray-150 relative min-h-[320px]">
+            <div className="lg:col-span-6 flex flex-col items-center justify-center p-8 bg-gradient-to-b from-[#FAF7F2] to-[#F3EEE3] rounded-2xl border border-gray-150 relative min-h-[340px]">
               
               {/* 3D Tier Silhouettes */}
               <div className="flex flex-col items-center justify-end h-64 gap-1.5 transition-all duration-500">
-                {selectedTier >= 3 && (
-                  <div className="w-24 h-12 bg-gradient-to-r from-[#c59b27] via-[#e0ab51] to-[#775a19] rounded-t-lg shadow-md flex items-center justify-center text-white text-[10px] font-bold font-sans animate-fade-in">
-                    6&quot; Top Tier
+                {/* 6" Single Tier */}
+                {selectedSizeId === '6inch' && (
+                  <div className="w-28 h-18 bg-gradient-to-r from-[#c59b27] via-[#e0ab51] to-[#775a19] rounded-xl shadow-lg flex items-center justify-center text-white text-xs font-bold font-sans animate-fade-in">
+                    6″ Single Tier
                   </div>
                 )}
-                {selectedTier >= 2 && (
-                  <div className="w-36 h-14 bg-gradient-to-r from-[#00346f] via-[#1a4a85] to-[#00224d] rounded-md shadow-md flex items-center justify-center text-brand-cream text-xs font-bold font-sans animate-fade-in">
-                    8&quot; Mid Tier
+
+                {/* 8" Single Tier */}
+                {selectedSizeId === '8inch' && (
+                  <div className="w-40 h-20 bg-gradient-to-r from-[#00346f] via-[#1a4a85] to-[#00224d] rounded-xl shadow-xl flex items-center justify-center text-brand-cream text-sm font-bold font-sans animate-fade-in">
+                    8″ Single Tier
                   </div>
                 )}
-                <div className="w-52 h-16 bg-gradient-to-r from-[#775a19] via-[#8b691e] to-[#5d4201] rounded-b-xl shadow-lg flex items-center justify-center text-white text-sm font-bold font-sans">
-                  10&quot; Base Tier
-                </div>
+
+                {/* 2-Tier (6" Top + 8" Base) */}
+                {selectedSizeId === '2tier' && (
+                  <>
+                    <div className="w-28 h-14 bg-gradient-to-r from-[#c59b27] via-[#e0ab51] to-[#775a19] rounded-t-lg shadow-md flex items-center justify-center text-white text-xs font-bold font-sans animate-fade-in">
+                      6″ Top Tier
+                    </div>
+                    <div className="w-40 h-18 bg-gradient-to-r from-[#00346f] via-[#1a4a85] to-[#00224d] rounded-b-xl shadow-xl flex items-center justify-center text-brand-cream text-sm font-bold font-sans animate-fade-in">
+                      8″ Base Tier
+                    </div>
+                  </>
+                )}
+
+                {/* 3-Tier (6" Top + 8" Mid + 10" Base) */}
+                {selectedSizeId === '3tier' && (
+                  <>
+                    <div className="w-24 h-12 bg-gradient-to-r from-[#c59b27] via-[#e0ab51] to-[#775a19] rounded-t-lg shadow-md flex items-center justify-center text-white text-[10px] font-bold font-sans animate-fade-in">
+                      6″ Top Tier
+                    </div>
+                    <div className="w-36 h-14 bg-gradient-to-r from-[#00346f] via-[#1a4a85] to-[#00224d] rounded-md shadow-md flex items-center justify-center text-brand-cream text-xs font-bold font-sans animate-fade-in">
+                      8″ Mid Tier
+                    </div>
+                    <div className="w-52 h-16 bg-gradient-to-r from-[#775a19] via-[#8b691e] to-[#5d4201] rounded-b-xl shadow-lg flex items-center justify-center text-white text-sm font-bold font-sans animate-fade-in">
+                      10″ Base Tier
+                    </div>
+                  </>
+                )}
               </div>
 
               <div className="mt-6 flex items-center gap-3 bg-white px-4 py-2 rounded-full border border-gray-200 shadow-xs">
                 <Users className="h-4 w-4 text-[#775a19]" />
                 <span className="text-xs font-bold font-sans text-[#00346f]">
-                  Serves {selectedTier === 1 ? "15 - 20" : selectedTier === 2 ? "35 - 50" : "80 - 120+"} Guests
+                  Serves {
+                    selectedSizeId === '6inch' ? '8 – 10' :
+                    selectedSizeId === '8inch' ? '16 – 20' :
+                    selectedSizeId === '2tier' ? '28 – 35 (6″ + 8″ Tiers)' :
+                    '60 – 80+ (3 Tiers)'
+                  } Guests
                 </span>
               </div>
             </div>
@@ -636,24 +668,27 @@ export default function CakesPage({ onOpenBaker, onCreateQuote }: CakesPageProps
             {/* Configurator Controls */}
             <div className="lg:col-span-6 space-y-6">
               <div>
-                <label className="text-xs font-bold text-gray-700 uppercase tracking-wider block mb-3 font-sans">Select Cake Tiers</label>
-                <div className="grid grid-cols-3 gap-3">
+                <label className="text-xs font-bold text-gray-700 uppercase tracking-wider block mb-3 font-sans">
+                  Select Cake Size / Tier Hierarchy
+                </label>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
                   {[
-                    { tier: 1, label: "1-Tier", desc: "15-20 Servings" },
-                    { tier: 2, label: "2-Tier", desc: "35-50 Servings" },
-                    { tier: 3, label: "3-Tier", desc: "80-120+ Servings" }
+                    { id: '6inch', label: '6″ Single Tier', desc: 'Serves 8–10' },
+                    { id: '8inch', label: '8″ Single Tier', desc: 'Serves 16–20' },
+                    { id: '2tier', label: '2-Tier (6″+8″)', desc: 'Serves 28–35' },
+                    { id: '3tier', label: '3-Tier (6″+8″+10″)', desc: 'Serves 60–80' }
                   ].map((item) => (
                     <button
-                      key={item.tier}
-                      onClick={() => setSelectedTier(item.tier)}
-                      className={`p-3.5 rounded-xl border text-center transition-all cursor-pointer font-sans min-h-[44px] ${
-                        selectedTier === item.tier
+                      key={item.id}
+                      onClick={() => setSelectedSizeId(item.id)}
+                      className={`p-3 rounded-xl border text-center transition-all cursor-pointer font-sans min-h-[44px] ${
+                        selectedSizeId === item.id
                           ? "bg-[#00346f] text-white border-[#00346f] shadow-md scale-102"
                           : "bg-gray-50 hover:bg-gray-100 text-gray-800 border-gray-200"
                       }`}
                     >
-                      <div className="text-xs font-bold">{item.label}</div>
-                      <div className="text-[10px] opacity-80 mt-0.5">{item.desc}</div>
+                      <div className="text-xs font-bold leading-tight">{item.label}</div>
+                      <div className="text-[10px] opacity-80 mt-1">{item.desc}</div>
                     </button>
                   ))}
                 </div>
@@ -671,7 +706,7 @@ export default function CakesPage({ onOpenBaker, onCreateQuote }: CakesPageProps
                     }`}
                   >
                     <span>🍃 100% Eggless</span>
-                    <span className="opacity-90 font-mono text-[10px]">{isEggless ? "(Checked: +$5 6″ / +$10 8″)" : "(+$5 for 6″ / +$10 for 8″)"}</span>
+                    <span className="opacity-90 font-mono text-[10px]">{isEggless ? "(Checked: +$5 6″ / +$10 8″ / +$15 2-Tier)" : "(+$5 for 6″ / +$10 for 8″ / +$15 for 2-Tier)"}</span>
                   </button>
                 </div>
                 <div className="flex flex-wrap gap-2">
@@ -696,7 +731,12 @@ export default function CakesPage({ onOpenBaker, onCreateQuote }: CakesPageProps
                 <div>
                   <span className="text-[10px] font-bold text-[#775a19] uppercase block tracking-wider font-sans">Selected Configuration</span>
                   <div className="text-xs font-serif font-bold text-[#00346f]">
-                    {selectedTier}-Tier Cake ({selectedFlavor}) {isEggless && <span className="text-emerald-700 font-sans text-[11px] font-bold">[Eggless: +${selectedTier === 1 ? 5 : 10}]</span>}
+                    {
+                      selectedSizeId === '6inch' ? '6″ Single Tier' :
+                      selectedSizeId === '8inch' ? '8″ Single Tier' :
+                      selectedSizeId === '2tier' ? '2-Tier (6″ + 8″ Tiers)' :
+                      '3-Tier (6″ + 8″ + 10″ Tiers)'
+                    } ({selectedFlavor}) {isEggless && <span className="text-emerald-700 font-sans text-[11px] font-bold">[Eggless Recipe]</span>}
                   </div>
                 </div>
                 <button

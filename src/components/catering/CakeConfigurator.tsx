@@ -13,7 +13,7 @@ import {
 } from 'lucide-react';
 import type { CartItem } from '../../types/catering';
 
-export type CakeSize = '6inch' | '8inch';
+export type CakeSize = '6inch' | '8inch' | '2tier' | '3tier';
 
 export interface CakeCategoryTier {
   id: string;
@@ -21,6 +21,8 @@ export interface CakeCategoryTier {
   tagline: string;
   price6: number;
   price8: number;
+  price2tier: number;
+  price3tier: number;
   flavors: string[];
 }
 
@@ -31,6 +33,8 @@ export const CAKE_CATEGORIES: CakeCategoryTier[] = [
     tagline: 'Timeless homestyle sponge cakes & signature whipped frostings',
     price6: 40,
     price8: 80,
+    price2tier: 120,
+    price3tier: 220,
     flavors: [
       'Vanilla',
       'Chocolate',
@@ -49,6 +53,8 @@ export const CAKE_CATEGORIES: CakeCategoryTier[] = [
     tagline: 'Aromatic mithai infusions, saffron cream & pistachio sponges',
     price6: 50,
     price8: 100,
+    price2tier: 150,
+    price3tier: 260,
     flavors: [
       'Rasmalai',
       'Gulab Jamun',
@@ -63,6 +69,8 @@ export const CAKE_CATEGORIES: CakeCategoryTier[] = [
     tagline: 'Zesty citrus curd & whole orchard berry fillings',
     price6: 60,
     price8: 120,
+    price2tier: 180,
+    price3tier: 300,
     flavors: [
       'Mixed Berry',
       'Blueberry',
@@ -77,6 +85,8 @@ export const CAKE_CATEGORIES: CakeCategoryTier[] = [
     tagline: 'European chocolate ganache, praline crunches & artisan spreads',
     price6: 70,
     price8: 140,
+    price2tier: 210,
+    price3tier: 350,
     flavors: [
       'Berry Chantilly',
       'Biscoff',
@@ -92,8 +102,10 @@ export const CAKE_CATEGORIES: CakeCategoryTier[] = [
 ];
 
 const CAKE_SIZES: { id: CakeSize; name: string; serves: string; weight: string }[] = [
-  { id: '6inch', name: '6″ Celebration', serves: 'Serves 8–10', weight: '~2 lb' },
-  { id: '8inch', name: '8″ Party', serves: 'Serves 16–20', weight: '~4 lb' }
+  { id: '6inch', name: '6″ Single Tier', serves: 'Serves 8–10', weight: '~2 lb' },
+  { id: '8inch', name: '8″ Single Tier', serves: 'Serves 16–20', weight: '~4 lb' },
+  { id: '2tier', name: '2-Tier (6″+8″)', serves: 'Serves 28–35', weight: '~6.5 lb' },
+  { id: '3tier', name: '3-Tier (6″+8″+10″)', serves: 'Serves 60–80+', weight: '~12 lb' }
 ];
 
 interface CakeConfiguratorProps {
@@ -139,9 +151,18 @@ export default function CakeConfigurator({
   // Active category definition
   const currentCategory = CAKE_CATEGORIES.find(c => c.id === selectedCategoryId) || CAKE_CATEGORIES[0];
 
-  // Base price and eggless fee (+$5 for 6inch, +$10 for 8inch)
-  const baseUnitPrice = selectedSize === '6inch' ? currentCategory.price6 : currentCategory.price8;
-  const egglessFee = isEggless ? (selectedSize === '6inch' ? 5 : 10) : 0;
+  // Base price and eggless fee (+$5 for 6inch, +$10 for 8inch, +$15 for 2tier, +$25 for 3tier)
+  const baseUnitPrice = selectedSize === '6inch' 
+    ? currentCategory.price6 
+    : selectedSize === '8inch' 
+    ? currentCategory.price8 
+    : selectedSize === '2tier' 
+    ? currentCategory.price2tier 
+    : currentCategory.price3tier;
+
+  const egglessFee = isEggless 
+    ? (selectedSize === '6inch' ? 5 : selectedSize === '8inch' ? 10 : selectedSize === '2tier' ? 15 : 25) 
+    : 0;
   const unitPrice = baseUnitPrice + egglessFee;
   const totalPrice = unitPrice * quantity;
 
@@ -227,10 +248,16 @@ export default function CakeConfigurator({
           <label className="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-2.5">
             1. Select Cake Size &amp; Gathering Portions
           </label>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
             {CAKE_SIZES.map(s => {
               const isSelected = selectedSize === s.id;
-              const price = s.id === '6inch' ? currentCategory.price6 : currentCategory.price8;
+              const price = s.id === '6inch' 
+                ? currentCategory.price6 
+                : s.id === '8inch' 
+                ? currentCategory.price8 
+                : s.id === '2tier' 
+                ? currentCategory.price2tier 
+                : currentCategory.price3tier;
               return (
                 <button
                   key={s.id}
@@ -279,7 +306,13 @@ export default function CakeConfigurator({
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
             {CAKE_CATEGORIES.map(cat => {
               const isCatSelected = selectedCategoryId === cat.id;
-              const catPrice = selectedSize === '6inch' ? cat.price6 : cat.price8;
+              const catPrice = selectedSize === '6inch' 
+                ? cat.price6 
+                : selectedSize === '8inch' 
+                ? cat.price8 
+                : selectedSize === '2tier' 
+                ? cat.price2tier 
+                : cat.price3tier;
               return (
                 <button
                   key={cat.id}
@@ -394,7 +427,7 @@ export default function CakeConfigurator({
 
         </div>
 
-        {/* Eggless Option Checkbox with $5 (6inch) & $10 (8inch) fee */}
+        {/* Eggless Option Checkbox with tier fees */}
         <div className="p-4 rounded-xl bg-emerald-50/80 border border-emerald-200">
           <label className="flex items-start gap-2.5 cursor-pointer">
             <input
@@ -410,11 +443,11 @@ export default function CakeConfigurator({
                   Bake as 100% Eggless / Pure Vegetarian
                 </span>
                 <span className="text-[10px] font-bold font-mono bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full border border-emerald-300">
-                  +$5 (6″) / +$10 (8″)
+                  +$5 (6″) / +$10 (8″) / +$15 (2-Tier) / +$25 (3-Tier)
                 </span>
               </div>
               <p className="text-[11px] text-emerald-800 mt-1 leading-snug">
-                Custom handcrafted eggless recipe (+$5 for 6″ cake, +$10 for 8″ cake). Delivers heavenly moisture, cloud-like crumb, and rich taste.
+                Custom handcrafted eggless recipe (+$5 for 6″, +$10 for 8″, +$15 for 2-Tier, +$25 for 3-Tier). Delivers heavenly moisture, cloud-like crumb, and rich taste.
               </p>
             </div>
           </label>
@@ -464,8 +497,13 @@ export default function CakeConfigurator({
         <div className="bg-gray-100 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row items-center justify-between gap-4 border border-gray-200">
           
           <div className="text-center sm:text-left">
-            <div className="text-xs text-gray-500 font-medium">
-              {selectedFlavor} • {selectedSize === '6inch' ? '6″ Celebration (Serves 8-10)' : '8″ Party (Serves 16-20)'}
+            <div className="text-xs text-gray-500 font-medium font-sans">
+              {selectedFlavor} • {
+                selectedSize === '6inch' ? '6″ Single Tier (Serves 8-10)' :
+                selectedSize === '8inch' ? '8″ Single Tier (Serves 16-20)' :
+                selectedSize === '2tier' ? '2-Tier 6″+8″ (Serves 28-35)' :
+                '3-Tier 6″+8″+10″ (Serves 60-80+)'
+              }
             </div>
             <div className="flex items-baseline gap-2 mt-0.5">
               <span className="font-serif font-black text-2xl text-[#00346f]">
