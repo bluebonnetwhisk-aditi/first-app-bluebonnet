@@ -127,7 +127,7 @@ export function isDateSelectable(
 
   // Check blackout
   if (blackouts.includes(dateStr)) {
-    return { selectable: false, reason: 'Kitchen closed (blackout date / high volume)' };
+    return { selectable: false, reason: 'Sold Out — We are oversold for this date (maximum capacity reached)' };
   }
 
   const [y, m, d] = dateStr.split('-').map(Number);
@@ -139,7 +139,7 @@ export function isDateSelectable(
     return { 
       selectable: false, 
       reason: targetDate.getDay() === 0 
-        ? 'Tiffin service is closed on Sundays' 
+        ? 'Kitchen closed on Sundays (prep & sanitation)' 
         : 'Tiffin service is closed on Saturdays' 
     };
   }
@@ -243,7 +243,7 @@ export function validateFulfillmentCutoff(
       earliestAllowedDate,
       earliestAllowedTime,
       requiredNoticeHours: noticeHours,
-      message: `The selected date (${fulfillmentDate}) is closed for orders.`,
+      message: `The selected date (${fulfillmentDate}) is fully booked — we are oversold for this date. Please pick an open date.`,
       isPassed: false
     };
   }

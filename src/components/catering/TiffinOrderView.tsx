@@ -330,9 +330,9 @@ export default function TiffinOrderView({
       if (isSunday) {
         statusLabel = 'Kitchen Closed (Sunday)';
       } else if (isSaturdayClosed) {
-        statusLabel = 'Kitchen Closed (Saturday Tiffin Closed)';
+        statusLabel = 'Tiffin Closed (Saturday)';
       } else if (isBlackout) {
-        statusLabel = 'Kitchen Closed (Blackout Date / High Volume)';
+        statusLabel = 'Sold Out — We are Oversold for this Date';
       } else if (dateStr < todayStr) {
         statusLabel = 'Past Date';
       } else if (dateStr === todayStr) {
@@ -978,14 +978,20 @@ export default function TiffinOrderView({
                       })()}
                     </div>
                   ) : (
-                    <div className="p-6 bg-gray-50 rounded-2xl border border-dashed border-gray-300 text-center space-y-1">
-                      <AlertCircle className="w-7 h-7 mx-auto text-gray-400" />
-                      <h4 className="font-serif font-bold text-sm text-gray-700">
-                        {activeDay.isSundayClosed ? 'Kitchen Closed on Sundays' : `Ordering is closed for ${activeDay.dayName} (${activeDay.displayDate})`}
+                    <div className="p-6 bg-amber-50/70 rounded-2xl border border-dashed border-amber-300 text-center space-y-1.5">
+                      <AlertCircle className="w-7 h-7 mx-auto text-amber-700" />
+                      <h4 className="font-serif font-bold text-sm text-[#0B192C]">
+                        {blackoutDates.includes(activeDay.dateStr) 
+                          ? `Sold Out — We are Oversold for ${activeDay.dayName} (${activeDay.displayDate})`
+                          : activeDay.isSundayClosed 
+                          ? 'Kitchen Closed on Sundays' 
+                          : `Ordering is closed for ${activeDay.dayName} (${activeDay.displayDate})`}
                       </h4>
-                      <p className="text-xs text-gray-500 max-w-md mx-auto">
-                        {activeDay.isSundayClosed
-                          ? 'Our kitchen is closed on Sundays for deep sanitation and fresh market prep.'
+                      <p className="text-xs text-gray-700 max-w-md mx-auto leading-relaxed">
+                        {blackoutDates.includes(activeDay.dateStr)
+                          ? `We have reached maximum kitchen order capacity for ${activeDay.displayDate}. Ordering is closed as we are oversold for this date. Please pick another open date!`
+                          : activeDay.isSundayClosed
+                          ? 'Our kitchen is closed on Sundays for deep sanitation, maintenance, and fresh market prep.'
                           : 'To ensure fresh preparation from scratch, orders must be placed at least 24 hours in advance.'}
                       </p>
                     </div>
@@ -1089,23 +1095,28 @@ export default function TiffinOrderView({
               const hasFlyerMenu = Boolean(activeDay.dalOrCurry || activeDay.sabzi);
 
               if (isClosed || !hasFlyerMenu) {
+                const isBlackoutDate = blackoutDates.includes(activeDay.dateStr);
                 return (
                   <div className="p-8 bg-amber-50/80 rounded-3xl border-2 border-dashed border-amber-300 text-center space-y-3">
-                    <div className="text-4xl">👨‍🍳😴</div>
+                    <div className="text-4xl">{isBlackoutDate ? '🔥🍱' : '👨‍🍳😴'}</div>
                     <h4 className="font-serif font-bold text-lg text-[#0B192C]">
-                      Chef Desi Dabba is Resting Today!
+                      {isBlackoutDate 
+                        ? `Order Capacity Full — We Are Oversold for ${activeDay.displayDate}!` 
+                        : activeDay.isSundayClosed 
+                        ? 'Kitchen Closed on Sundays' 
+                        : 'Chef Desi Dabba is Resting Today!'}
                     </h4>
                     <p className="text-xs sm:text-sm text-gray-700 max-w-md mx-auto leading-relaxed">
-                      {activeDay.dayName === 'Saturday' || activeDay.isSaturdaySpecial
-                        ? "No curry magic in the pots on Saturdays! Tiffin kitchen is closed today. Check out our Monday through Friday menu instead!"
+                      {isBlackoutDate
+                        ? `We are currently oversold and at maximum kitchen capacity for ${activeDay.displayDate}. Ordering is closed for this date. Please pick an open date!`
                         : activeDay.isSundayClosed
-                        ? "Our tiffin pots are taking a well-deserved nap on Sundays! Kitchen is closed for fresh market prep & sanitation."
-                        : blackoutDates.includes(activeDay.dateStr)
-                        ? `Kitchen is closed on ${activeDay.displayDate} due to a scheduled blackout / high-volume holiday.`
+                        ? "Our kitchen is closed on Sundays for deep sanitation, maintenance, and fresh market prep."
+                        : activeDay.dayName === 'Saturday' || activeDay.isSaturdaySpecial
+                        ? "No curry magic in the pots on Saturdays! Tiffin kitchen is closed today. Check out our Monday through Friday menu instead!"
                         : `Tiffin tub ordering is closed for ${activeDay.dayName} (${activeDay.displayDate}).`}
                     </p>
                     <div className="inline-block bg-[#0B192C] text-[#D4AF37] px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider">
-                      Ordering Disabled for {activeDay.dayName} ({activeDay.displayDate})
+                      {isBlackoutDate ? `Sold Out (Oversold) for ${activeDay.displayDate}` : `Ordering Disabled for ${activeDay.dayName} (${activeDay.displayDate})`}
                     </div>
                   </div>
                 );

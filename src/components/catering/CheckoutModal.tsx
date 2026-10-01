@@ -626,8 +626,10 @@ export default function CheckoutModal({
                           <span className="text-[10px] uppercase font-bold tracking-wider">{opt.dayOfWeek}</span>
                           <span className="text-xs font-black mt-0.5">{opt.label}</span>
                           {!check.selectable && (
-                            <span className="text-[8px] uppercase tracking-tighter text-rose-500 font-semibold mt-0.5">
-                              Closed
+                            <span className={`text-[8px] uppercase tracking-tighter font-bold mt-0.5 ${
+                              blackouts.includes(opt.dateStr) ? 'text-amber-700' : 'text-rose-500'
+                            }`}>
+                              {blackouts.includes(opt.dateStr) ? 'Sold Out' : 'Closed'}
                             </span>
                           )}
                         </button>
