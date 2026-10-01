@@ -301,6 +301,40 @@ export default function TiffinOrderView({
     return upcomingWeeks.find(w => w.id === selectedWeekId) || upcomingWeeks[0];
   }, [upcomingWeeks, selectedWeekId]);
 
+  // Compute 5 open weekdays for Weekly Plan (spans current & upcoming week as applicable)
+  const weeklyPlanInfo = useMemo(() => {
+    if (!activeWeeklyPlan) return null;
+    const isCurrentWeek = upcomingWeeks[0]?.id === activeWeeklyPlan.id;
+
+    const allWeekdays = upcomingWeeks.flatMap(w => w.days.filter(d => d.dayName !== 'Saturday' && d.dayName !== 'Sunday'));
+
+    let targetDays: { dayName: string; displayDate: string; dateStr: string }[] = [];
+
+    if (isCurrentWeek) {
+      const openWeekdays = allWeekdays.filter(d => d.dateStr > todayStr);
+      targetDays = openWeekdays.slice(0, 5);
+      if (targetDays.length < 5) {
+        targetDays = activeWeeklyPlan.days.filter(d => d.dayName !== 'Saturday' && d.dayName !== 'Sunday').slice(0, 5);
+      }
+    } else {
+      targetDays = activeWeeklyPlan.days.filter(d => d.dayName !== 'Saturday' && d.dayName !== 'Sunday').slice(0, 5);
+    }
+
+    const firstDay = targetDays[0];
+    const lastDay = targetDays[targetDays.length - 1];
+    const shortRange = (firstDay && lastDay) ? `${firstDay.displayDate} – ${lastDay.displayDate}` : activeWeeklyPlan.shortRange;
+
+    const blackoutDaysInPlan = targetDays.filter(d => blackoutDates.includes(d.dateStr));
+    const isOversold = blackoutDaysInPlan.length > 0;
+
+    return {
+      targetDays,
+      shortRange,
+      isOversold,
+      blackoutDaysInPlan
+    };
+  }, [activeWeeklyPlan, upcomingWeeks, todayStr, blackoutDates]);
+
   // Compute days of the selected week in Central Time
   const schedule: DaySchedule[] = useMemo(() => {
     if (!activeWeeklyPlan) return [];
@@ -456,34 +490,36 @@ export default function TiffinOrderView({
 
   // Add Weekly Dabba to Cart
   const handleAddWeeklyDabba = () => {
-    if (!activeWeeklyPlan) return;
+    if (!activeWeeklyPlan || !weeklyPlanInfo) return;
     const unitPrice = weeklyPrice;
-    const itemId = `tiffin-weekly-${activeWeeklyPlan.monDateStr}`;
+    const planRange = weeklyPlanInfo.shortRange;
+    const daysSummary = weeklyPlanInfo.targetDays.map(d => `${d.dayName} (${d.displayDate})`).join(', ');
+    const itemId = `tiffin-weekly-${weeklyPlanInfo.targetDays[0]?.dateStr || activeWeeklyPlan.monDateStr}`;
 
     const menuItem: MenuItem = {
       id: itemId,
-      name: `Weekly Dabba Plan (${activeWeeklyPlan.shortRange})`,
+      name: `Weekly Dabba Plan (${planRange})`,
       category: 'tiffin',
       categoryLabel: 'Desi Dabba Daily Tiffin',
-      description: `5 Daily Complete Meals: ${activeWeeklyPlan.rangeLabel} (Monday to Friday) with fresh roti, rice, dal & sabzi.`,
+      description: `5 Daily Complete Meals: ${planRange} (${daysSummary}) with fresh roti, rice, dal & sabzi.`,
       allergens: ['G', 'D'],
       pricingType: 'tiffin',
       leadTimeHours: 24,
       isSatvikAvailable: true
     };
 
-    const notes = `Weekly Subscription: ${activeWeeklyPlan.rangeLabel} (1 Single Dabba each day from Monday to Friday). Total: ${5 * weeklyQty} hot meals.`;
+    const notes = `Weekly Subscription (${planRange}): 1 Single Dabba on ${daysSummary}. Total: ${5 * weeklyQty} hot meals.`;
 
     onUpdateCartItem(
       menuItem,
       'tiffin_weekly',
       weeklyQty,
-      `Weekly Plan (${activeWeeklyPlan.shortRange})`,
+      `Weekly Plan (${planRange})`,
       unitPrice,
       notes
     );
 
-    triggerAddedAlert(`✓ Added ${weeklyQty} × Weekly Dabba Plan for ${activeWeeklyPlan.shortRange} ($${(unitPrice * weeklyQty).toFixed(2)})!`);
+    triggerAddedAlert(`✓ Added ${weeklyQty} × Weekly Dabba Plan for ${planRange} ($${(unitPrice * weeklyQty).toFixed(2)})!`);
   };
 
   // Add Dynamic 8oz/16oz Container to Cart
@@ -1032,11 +1068,9 @@ export default function TiffinOrderView({
           {/* B) WEEKLY DABBA SUBSCRIPTION BANNER */}
           <div className="rounded-3xl bg-gradient-to-r from-emerald-50 via-teal-50 to-blue-50 border-2 border-emerald-200/80 p-6 sm:p-8 shadow-sm space-y-4">
             {(() => {
-              const weekBlackoutDates = (activeWeeklyPlan?.days || [])
-                .map(d => d.dateStr)
-                .filter(dStr => blackoutDates.includes(dStr));
-
-              const isWeekOversold = weekBlackoutDates.length > 0;
+              const isWeekOversold = weeklyPlanInfo?.isOversold || false;
+              const rangeStr = weeklyPlanInfo?.shortRange || activeWeeklyPlan?.shortRange;
+              const blackoutLabels = (weeklyPlanInfo?.blackoutDaysInPlan || []).map(d => d.displayDate).join(', ');
 
               return (
                 <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
@@ -1048,11 +1082,11 @@ export default function TiffinOrderView({
                       Weekly Dabba Subscription — ${weeklyPrice.toFixed(2)}
                     </h2>
                     <p className="text-xs sm:text-sm text-gray-700 leading-relaxed">
-                      Enjoy 1 Single Dabba every day from <strong>Monday through Friday</strong> for <strong>{activeWeeklyPlan?.shortRange}</strong>. 
+                      Enjoy 1 Single Dabba every day for <strong>5 open weekdays ({rangeStr})</strong>. 
                       Zero preservatives, rotated daily menus, freshly packed for dinner pickup.
                     </p>
                     <div className="flex flex-wrap items-center gap-4 text-xs font-medium text-emerald-900 pt-1">
-                      <span>✓ 5 Hot Meals (Mon to Fri)</span>
+                      <span>✓ 5 Hot Meals ({rangeStr})</span>
                       <span>✓ 10 Fresh Tawa Rotis</span>
                       <span>✓ 5 Cups Fragrant Rice</span>
                       <span>✓ 5 Chef Curries &amp; Sabzis</span>
@@ -1096,7 +1130,7 @@ export default function TiffinOrderView({
                         }`}
                       >
                         <ShoppingBag className="w-4 h-4 text-[#ffdea5]" />
-                        <span>{isWeekOversold ? 'Weekly Plan Unavailable (Oversold Date)' : `Add Weekly Plan (${activeWeeklyPlan?.shortRange})`}</span>
+                        <span>{isWeekOversold ? `Sold Out (Oversold ${blackoutLabels})` : `Add Weekly Plan (${rangeStr})`}</span>
                       </button>
                     </div>
                   </div>
