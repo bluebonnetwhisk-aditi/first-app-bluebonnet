@@ -227,7 +227,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(500).json({ error: fetchErr.message });
     }
 
-    // 5. Filter remaining orders: MUST be either 'ready' or 'completed', not cancelled, and not yet reconciled
+    // 5. Filter remaining orders: MUST be either 'ready' or 'completed', not cancelled, not yet reconciled, and fulfillment_date <= todayStr
     const orders = (rawOrders || []).filter(o => {
       const statusLower = (o.status || '').toLowerCase();
       const isNotCancelled = statusLower !== 'cancelled' && statusLower !== 'canceled';
@@ -238,8 +238,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const isReconciledInNotes = (o.order_description || '').includes('[QBO Reconciled') || (o.dietary_notes || '').includes('[QBO Reconciled');
 
       const isNotReconciled = !isReconciledInDB && !isReconciledInAppSettings && !isReconciledInNotes;
+      const isFulfillmentDateDue = !o.fulfillment_date || o.fulfillment_date <= todayStr;
 
-      return isReadyOrCompleted && isNotCancelled && isNotReconciled;
+      return isReadyOrCompleted && isNotCancelled && isNotReconciled && isFulfillmentDateDue;
     });
 
     // 6. Handle Days with Zero Eligible Unreconciled Orders Gracefully
