@@ -982,23 +982,31 @@ export default function TiffinOrderView({
                       })()}
                     </div>
                   ) : (
-                    <div className="p-6 bg-amber-50/70 rounded-2xl border border-dashed border-amber-300 text-center space-y-1.5">
-                      <AlertCircle className="w-7 h-7 mx-auto text-amber-700" />
-                      <h4 className="font-serif font-bold text-sm text-[#0B192C]">
-                        {blackoutDates.includes(activeDay.dateStr) 
-                          ? `Sold Out — We are Oversold for ${activeDay.dayName} (${activeDay.displayDate})`
-                          : activeDay.isSundayClosed 
-                          ? 'Kitchen Closed on Sundays' 
-                          : `Ordering is closed for ${activeDay.dayName} (${activeDay.displayDate})`}
-                      </h4>
-                      <p className="text-xs text-gray-700 max-w-md mx-auto leading-relaxed">
-                        {blackoutDates.includes(activeDay.dateStr)
-                          ? `We have reached maximum kitchen order capacity for ${activeDay.displayDate}. Ordering is closed as we are oversold for this date. Please pick another open date!`
-                          : activeDay.isSundayClosed
-                          ? 'Our kitchen is closed on Sundays for deep sanitation, maintenance, and fresh market prep.'
-                          : 'To ensure fresh preparation from scratch, orders must be placed at least 24 hours in advance.'}
-                      </p>
-                    </div>
+                    (() => {
+                      const isBlackoutDate = blackoutDates.includes(activeDay.dateStr);
+                      return (
+                        <div className="p-8 bg-amber-50/80 rounded-3xl border-2 border-dashed border-amber-300 text-center space-y-3">
+                          <div className="text-4xl">{isBlackoutDate ? '🔥🍱' : '👨‍🍳😴'}</div>
+                          <h4 className="font-serif font-bold text-lg text-[#0B192C]">
+                            {isBlackoutDate 
+                              ? `Order Capacity Full — We Are Oversold for ${activeDay.displayDate}!` 
+                              : activeDay.isSundayClosed 
+                              ? 'Kitchen Closed on Sundays' 
+                              : 'Chef Desi Dabba is Resting Today!'}
+                          </h4>
+                          <p className="text-xs sm:text-sm text-gray-700 max-w-md mx-auto leading-relaxed">
+                            {isBlackoutDate
+                              ? `We are currently oversold and at maximum kitchen capacity for ${activeDay.displayDate}. Ordering is closed for this date. Please pick an open date!`
+                              : activeDay.isSundayClosed
+                              ? 'Our kitchen is closed on Sundays for deep sanitation, maintenance, and fresh market prep.'
+                              : 'To ensure fresh preparation from scratch, orders must be placed at least 24 hours in advance.'}
+                          </p>
+                          <div className="inline-block bg-[#0B192C] text-[#D4AF37] px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider">
+                            {isBlackoutDate ? `Sold Out (Oversold) for ${activeDay.displayDate}` : `Ordering Disabled for ${activeDay.dayName} (${activeDay.displayDate})`}
+                          </div>
+                        </div>
+                      );
+                    })()
                   )}
                 </>
               )}
@@ -1007,63 +1015,90 @@ export default function TiffinOrderView({
 
           {/* B) WEEKLY DABBA SUBSCRIPTION BANNER */}
           <div className="rounded-3xl bg-gradient-to-r from-emerald-50 via-teal-50 to-blue-50 border-2 border-emerald-200/80 p-6 sm:p-8 shadow-sm space-y-4">
-            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-              <div className="space-y-2 max-w-2xl">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-100 text-emerald-900 text-[10px] font-black uppercase tracking-widest">
-                  🌟 BEST VALUE • 5-DAY HOMEMADE PLAN
-                </div>
-                <h2 className="font-serif text-2xl sm:text-3xl font-bold text-[#00346f]">
-                  Weekly Dabba Subscription — ${weeklyPrice.toFixed(2)}
-                </h2>
-                <p className="text-xs sm:text-sm text-gray-700 leading-relaxed">
-                  Enjoy 1 Single Dabba every day from <strong>Monday through Friday</strong> for <strong>{activeWeeklyPlan?.shortRange}</strong>. 
-                  Zero preservatives, rotated daily menus, freshly packed for dinner pickup.
-                </p>
-                <div className="flex flex-wrap items-center gap-4 text-xs font-medium text-emerald-900 pt-1">
-                  <span>✓ 5 Hot Meals (Mon to Fri)</span>
-                  <span>✓ 10 Fresh Tawa Rotis</span>
-                  <span>✓ 5 Cups Fragrant Rice</span>
-                  <span>✓ 5 Chef Curries &amp; Sabzis</span>
-                </div>
-              </div>
+            {(() => {
+              const weekBlackoutDates = (activeWeeklyPlan?.days || [])
+                .map(d => d.dateStr)
+                .filter(dStr => blackoutDates.includes(dStr));
 
-              <div className="bg-white p-5 rounded-2xl border border-emerald-200 shadow-md flex flex-col items-center gap-3 shrink-0 w-full sm:w-auto">
-                <div className="text-center">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500 block">Weekly Package</span>
-                  <span className="font-serif text-3xl font-black text-emerald-800">${weeklyPrice.toFixed(2)}</span>
-                  <span className="text-[11px] text-gray-500 block">Just ~${(weeklyPrice / 5).toFixed(2)} / day</span>
-                </div>
+              const isWeekOversold = weekBlackoutDates.length > 0;
 
-                <div className="flex flex-wrap sm:flex-nowrap items-center gap-3 w-full sm:w-auto">
-                  <div className="flex items-center bg-gray-100 rounded-xl p-1 border border-gray-200">
-                    <button
-                      type="button"
-                      onClick={() => setWeeklyQty(Math.max(1, weeklyQty - 1))}
-                      className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-white text-gray-700 cursor-pointer"
-                    >
-                      <Minus className="w-4 h-4" />
-                    </button>
-                    <span className="w-8 text-center font-bold text-xs">{weeklyQty}</span>
-                    <button
-                      type="button"
-                      onClick={() => setWeeklyQty(weeklyQty + 1)}
-                      className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-white text-gray-700 cursor-pointer"
-                    >
-                      <Plus className="w-4 h-4" />
-                    </button>
+              if (isWeekOversold) {
+                return (
+                  <div className="p-8 bg-amber-50/80 rounded-3xl border-2 border-dashed border-amber-300 text-center space-y-3">
+                    <div className="text-4xl">🔥🍱</div>
+                    <h4 className="font-serif font-bold text-lg text-[#0B192C]">
+                      Order Capacity Full — We Are Oversold for {activeWeeklyPlan?.shortRange}!
+                    </h4>
+                    <p className="text-xs sm:text-sm text-gray-700 max-w-md mx-auto leading-relaxed">
+                      We are currently oversold and at maximum kitchen capacity for one or more dates during {activeWeeklyPlan?.shortRange}. Ordering is closed for this date. Please pick an open date!
+                    </p>
+                    <div className="inline-block bg-[#0B192C] text-[#D4AF37] px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider">
+                      Sold Out (Oversold) for {activeWeeklyPlan?.shortRange}
+                    </div>
+                  </div>
+                );
+              }
+
+              return (
+                <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+                  <div className="space-y-2 max-w-2xl">
+                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-100 text-emerald-900 text-[10px] font-black uppercase tracking-widest">
+                      🌟 BEST VALUE • 5-DAY HOMEMADE PLAN
+                    </div>
+                    <h2 className="font-serif text-2xl sm:text-3xl font-bold text-[#00346f]">
+                      Weekly Dabba Subscription — ${weeklyPrice.toFixed(2)}
+                    </h2>
+                    <p className="text-xs sm:text-sm text-gray-700 leading-relaxed">
+                      Enjoy 1 Single Dabba every day from <strong>Monday through Friday</strong> for <strong>{activeWeeklyPlan?.shortRange}</strong>. 
+                      Zero preservatives, rotated daily menus, freshly packed for dinner pickup.
+                    </p>
+                    <div className="flex flex-wrap items-center gap-4 text-xs font-medium text-emerald-900 pt-1">
+                      <span>✓ 5 Hot Meals (Mon to Fri)</span>
+                      <span>✓ 10 Fresh Tawa Rotis</span>
+                      <span>✓ 5 Cups Fragrant Rice</span>
+                      <span>✓ 5 Chef Curries &amp; Sabzis</span>
+                    </div>
                   </div>
 
-                  <button
-                    type="button"
-                    onClick={handleAddWeeklyDabba}
-                    className="flex-1 sm:flex-initial min-h-[44px] inline-flex items-center justify-center gap-2 bg-[#00346f] hover:bg-[#00224d] text-white px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-sm cursor-pointer"
-                  >
-                    <ShoppingBag className="w-4 h-4 text-[#ffdea5]" />
-                    <span>Add Weekly Plan ({activeWeeklyPlan?.shortRange})</span>
-                  </button>
+                  <div className="bg-white p-5 rounded-2xl border border-emerald-200 shadow-md flex flex-col items-center gap-3 shrink-0 w-full sm:w-auto">
+                    <div className="text-center">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500 block">Weekly Package</span>
+                      <span className="font-serif text-3xl font-black text-emerald-800">${weeklyPrice.toFixed(2)}</span>
+                      <span className="text-[11px] text-gray-500 block">Just ~${(weeklyPrice / 5).toFixed(2)} / day</span>
+                    </div>
+
+                    <div className="flex flex-wrap sm:flex-nowrap items-center gap-3 w-full sm:w-auto">
+                      <div className="flex items-center bg-gray-100 rounded-xl p-1 border border-gray-200">
+                        <button
+                          type="button"
+                          onClick={() => setWeeklyQty(Math.max(1, weeklyQty - 1))}
+                          className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-white text-gray-700 cursor-pointer"
+                        >
+                          <Minus className="w-4 h-4" />
+                        </button>
+                        <span className="w-8 text-center font-bold text-xs">{weeklyQty}</span>
+                        <button
+                          type="button"
+                          onClick={() => setWeeklyQty(weeklyQty + 1)}
+                          className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-white text-gray-700 cursor-pointer"
+                        >
+                          <Plus className="w-4 h-4" />
+                        </button>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={handleAddWeeklyDabba}
+                        className="flex-1 sm:flex-initial min-h-[44px] inline-flex items-center justify-center gap-2 bg-[#00346f] hover:bg-[#00224d] text-white px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-sm cursor-pointer"
+                      >
+                        <ShoppingBag className="w-4 h-4 text-[#ffdea5]" />
+                        <span>Add Weekly Plan ({activeWeeklyPlan?.shortRange})</span>
+                      </button>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
+              );
+            })()}
           </div>
 
         </div>
