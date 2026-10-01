@@ -49,16 +49,21 @@ export function getCentralTimeNow(): {
  * - Catering items (trays, breads, beverages): 24 hours notice.
  * - Default: 24 hours notice.
  */
-export function getRequiredNoticeHours(items: CartItem[]): number {
-  if (items.length === 0) return 24;
+export function getRequiredNoticeHours(items: CartItem[] = [], subTab?: 'order' | 'cake' | 'tiffin'): number {
+  if (subTab === 'tiffin' || items.some(item => item.category === 'tiffin' || (item.menuItemId && item.menuItemId.includes('tiffin')))) {
+    return 12;
+  }
   
-  const hasCakes = items.some(item => item.category === 'cakes' || item.leadTimeHours >= 48);
-  if (hasCakes) return 48;
+  if (subTab === 'cake' || items.some(item => item.category === 'cakes' || item.leadTimeHours >= 48)) {
+    return 48;
+  }
 
-  const hasTiffin = items.some(item => item.category === 'tiffin' || (item.menuItemId && item.menuItemId.includes('tiffin')));
-  if (hasTiffin) return 12;
-  
-  return 24;
+  if (items.length > 0) {
+    const maxLead = Math.max(...items.map(i => i.leadTimeHours || 24));
+    return maxLead;
+  }
+
+  return 12;
 }
 
 export const TIME_SLOTS = [
@@ -113,7 +118,8 @@ export function isTimeSlotValidForDate(
 export function isDateSelectable(
   dateStr: string,
   blackouts: string[],
-  items: CartItem[]
+  items: CartItem[] = [],
+  subTab?: 'order' | 'cake' | 'tiffin'
 ): { selectable: boolean; reason?: string } {
   const { nowDate, dateStr: todayDateStr } = getCentralTimeNow();
 
@@ -134,8 +140,8 @@ export function isDateSelectable(
   const targetDate = new Date(y, m - 1, d);
 
   // Tiffin Sunday & Saturday closure check
-  const hasTiffin = items.some(item => item.category === 'tiffin');
-  if (hasTiffin && (targetDate.getDay() === 0 || targetDate.getDay() === 6)) {
+  const isTiffinContext = subTab === 'tiffin' || items.some(item => item.category === 'tiffin');
+  if (isTiffinContext && (targetDate.getDay() === 0 || targetDate.getDay() === 6)) {
     return { 
       selectable: false, 
       reason: targetDate.getDay() === 0 
@@ -144,10 +150,10 @@ export function isDateSelectable(
     };
   }
 
-  const noticeHours = getRequiredNoticeHours(items);
+  const noticeHours = getRequiredNoticeHours(items, subTab);
 
-  // Target date checked against latest possible slot (7:00 PM = 19:00)
-  const latestPossibleSlotOnDate = new Date(y, m - 1, d, 19, 0, 0);
+  // Target date checked against latest possible slot (9:00 PM = 21:00)
+  const latestPossibleSlotOnDate = new Date(y, m - 1, d, 21, 0, 0);
   const diffHours = (latestPossibleSlotOnDate.getTime() - nowDate.getTime()) / (1000 * 60 * 60);
 
   if (diffHours < noticeHours) {
@@ -166,11 +172,12 @@ export function isDateSelectable(
  */
 export function findFirstValidFulfillmentSlot(
   blackouts: string[],
-  items: CartItem[]
+  items: CartItem[] = [],
+  subTab?: 'order' | 'cake' | 'tiffin'
 ): { dateStr: string; timeSlot: string } {
   const { nowDate } = getCentralTimeNow();
-  const noticeHours = getRequiredNoticeHours(items);
-  const hasTiffin = items.some(item => item.category === 'tiffin');
+  const noticeHours = getRequiredNoticeHours(items, subTab);
+  const isTiffinContext = subTab === 'tiffin' || items.some(item => item.category === 'tiffin');
 
   for (let offset = 1; offset <= 45; offset++) {
     const candidate = new Date(nowDate.getTime() + offset * 24 * 60 * 60 * 1000);
@@ -180,7 +187,7 @@ export function findFirstValidFulfillmentSlot(
     const dateStr = `${y}-${m}-${day}`;
 
     if (blackouts.includes(dateStr)) continue;
-    if (hasTiffin && (candidate.getDay() === 0 || candidate.getDay() === 6)) continue;
+    if (isTiffinContext && (candidate.getDay() === 0 || candidate.getDay() === 6)) continue;
 
     for (const slot of TIME_SLOTS) {
       if (isTimeSlotValidForDate(dateStr, slot, items)) {

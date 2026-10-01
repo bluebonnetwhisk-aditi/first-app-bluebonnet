@@ -344,7 +344,7 @@ export default function CateringContainer() {
               {upcomingDates.map(opt => {
                 const isSelected = selectedGlobalDate === opt.dateStr;
                 const isBlackout = blackoutDates.includes(opt.dateStr);
-                const check = isDateSelectable(opt.dateStr, blackoutDates, cart);
+                const check = isDateSelectable(opt.dateStr, blackoutDates, cart, subTab);
 
                 let badgeText = 'Open';
                 let badgeStyle = 'bg-emerald-100 text-emerald-800 border border-emerald-200';
