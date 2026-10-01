@@ -314,8 +314,8 @@ export default function TiffinOrderView({
       : (activeWeeklyPlan.monDateStr < todayStr ? todayStr : activeWeeklyPlan.monDateStr);
 
     const availableDays = allDays.filter(d => {
-      // 1. Must be after cutoff
-      if (d.dateStr <= startCutoffStr && isCurrentWeek) return false;
+      // 1. Must be today or future date
+      if (d.dateStr < startCutoffStr && isCurrentWeek) return false;
       if (!isCurrentWeek && d.dateStr < activeWeeklyPlan.monDateStr) return false;
       // 2. Skip Sunday
       if (d.dayName === 'Sunday') return false;
@@ -366,8 +366,8 @@ export default function TiffinOrderView({
       const hasSaturdaySpecialMenu = isSaturday && Boolean(settings.saturdaySpecialTitle || (settings.weekdayMenus && settings.weekdayMenus['Saturday']?.dal));
       const isSaturdayClosed = isSaturday && !hasSaturdaySpecialMenu;
 
-      const isNextDayOrLater = dateStr > todayStr;
-      const isSelectable = isNextDayOrLater && !isSunday && !isSaturdayClosed && !isBlackout;
+      const isTodayOrLater = dateStr >= todayStr;
+      const isSelectable = isTodayOrLater && !isSunday && !isSaturdayClosed && !isBlackout;
 
       let statusLabel = 'Available to Order';
       if (isSunday) {
@@ -378,8 +378,6 @@ export default function TiffinOrderView({
         statusLabel = 'Sold Out — We are Oversold for this Date';
       } else if (dateStr < todayStr) {
         statusLabel = 'Past Date';
-      } else if (dateStr === todayStr) {
-        statusLabel = 'Order Closed (Same-day unavailable)';
       }
 
       const activeMenus = settings.weekdayMenus || DEFAULT_WEEKDAY_MENUS;
@@ -445,7 +443,7 @@ export default function TiffinOrderView({
       description: `${day.dayName} (${day.displayDate}): ${day.dalOrCurry} & ${day.sabzi}`,
       allergens: ['G', 'D'],
       pricingType: 'tiffin',
-      leadTimeHours: 24,
+      leadTimeHours: 0,
       isSatvikAvailable: true
     };
 
@@ -479,7 +477,7 @@ export default function TiffinOrderView({
       description: dish.description || 'Special handcrafted weekend recipe',
       allergens: ['G', 'D'],
       pricingType: 'tiffin',
-      leadTimeHours: 24,
+      leadTimeHours: 0,
       isSatvikAvailable: true
     };
 
@@ -511,7 +509,7 @@ export default function TiffinOrderView({
       description: `5 Daily Complete Meals: ${planRange} (${daysSummary}) with fresh roti, rice, dal & sabzi.`,
       allergens: ['G', 'D'],
       pricingType: 'tiffin',
-      leadTimeHours: 24,
+      leadTimeHours: 0,
       isSatvikAvailable: true
     };
 
@@ -547,7 +545,7 @@ export default function TiffinOrderView({
       description: `${size} portion of ${containerName} for ${day.dayName} (${day.displayDate})`,
       allergens: ['D', 'G'],
       pricingType: 'tiffin',
-      leadTimeHours: 12,
+      leadTimeHours: 0,
       isSatvikAvailable: true
     };
 
@@ -580,7 +578,7 @@ export default function TiffinOrderView({
       description: `${portionLabel} of ${addonName}`,
       allergens: ['G', 'D'],
       pricingType: 'tiffin',
-      leadTimeHours: 12,
+      leadTimeHours: 0,
       isSatvikAvailable: true
     };
 
