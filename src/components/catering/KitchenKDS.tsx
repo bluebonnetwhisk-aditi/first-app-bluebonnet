@@ -186,22 +186,36 @@ Thank you for supporting a local woman owned small business.
 Desi Dabba | BlueBonnet Whisk`
     );
   } else {
+    // Super Crisp & Dynamic Order Ready message (auto-switches Delivery vs Pickup)
+    const statusHeader = order.is_delivery ? '🚗 Order Out for Delivery!' : '🍱 Order Ready for Pickup!';
+    const actionText = order.is_delivery
+      ? `your order #${shortId} is fresh & on its way for delivery!`
+      : `your order #${shortId} is fresh & ready for pickup!`;
+    const addressBlock = order.is_delivery
+      ? `📍 Delivery Destination:\n${order.delivery_address || 'Address on file'}`
+      : `📍 Pickup Location:\n2437 Deerwood Dr, Little Elm, TX`;
+
+    // Clean, crisp item summary without heavy price breakdown
+    const cleanItemsText = order.items && order.items.length > 0
+      ? order.items.map(i => {
+          const sizeStr = i.selectionLabel ? ` (${i.selectionLabel})` : '';
+          const notesStr = i.notes ? ` [${i.notes}]` : '';
+          return `• ${i.name}${sizeStr}${notesStr} (Qty: ${i.quantity})`;
+        }).join('\n')
+      : (order.order_description || 'Catering items');
+
     return (
-`─ ORDER READY ─
-Ref: #${shortId} | Customer: ${customerName}
+`${statusHeader}
 
-SCHEDULE
-Date: ${dateStr}
-Window: ${timeStr} (Central Time)
-${locationText}
+Hi ${customerName}, ${actionText}
 
-ITEMS READY FOR ${order.is_delivery ? 'DELIVERY' : 'PICKUP'}
-${itemsText}
+${addressBlock}
 
-${financialSummaryLines}
+🛍️ Items:
+${cleanItemsText}
 
-───────────────
-Thank you for your business.
+Thank you for your business! We hope you enjoy your meal. Please don't hesitate to share your feedback with us—we'd love to hear how everything was!
+
 Desi Dabba | BlueBonnet Whisk`
     );
   }
