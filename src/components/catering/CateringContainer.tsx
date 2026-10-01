@@ -401,44 +401,17 @@ export default function CateringContainer() {
               {/* SubTab 1: Catering (Starts with Tray Pricing Tiers, Menu Grid, 4 Differentiators at end) */}
               {subTab === 'order' && (
                 <div className="space-y-6">
-                  {/* Selected Global Target Date Alert Banner */}
-                  <div className={`p-4 rounded-2xl border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-2xs transition-all ${
-                    blackoutDates.includes(selectedGlobalDate)
-                      ? 'bg-amber-50 border-amber-300 text-amber-950'
-                      : 'bg-[#0B192C] text-white border-[#D4AF37]/40'
-                  }`}>
-                    <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-xl bg-[#D4AF37]/20 text-[#D4AF37] border border-[#D4AF37]/30 flex items-center justify-center font-bold text-base shrink-0">
-                        📅
+                  {blackoutDates.includes(selectedGlobalDate) && (
+                    <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-300 text-amber-950 text-xs font-medium flex items-center justify-between gap-3 shadow-2xs">
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-amber-900">⚠️ Date Oversold:</span>
+                        <span>Party catering is closed for {selectedGlobalDate}. Please select an open date on the schedule rail above.</span>
                       </div>
-                      <div>
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="text-[10px] font-bold uppercase tracking-widest text-[#D4AF37]">
-                            TARGET EVENT FULFILLMENT DATE
-                          </span>
-                          <span className="text-[10px] font-semibold bg-white/10 px-2 py-0.5 rounded border border-white/15 text-white/80">
-                            24h notice
-                          </span>
-                        </div>
-                        <h3 className="font-serif font-bold text-base mt-0.5">
-                          {selectedGlobalDate} {blackoutDates.includes(selectedGlobalDate) ? '(Oversold / Closed)' : '(Ordering Available)'}
-                        </h3>
-                        <p className="text-xs opacity-80 mt-0.5">
-                          {blackoutDates.includes(selectedGlobalDate)
-                            ? 'Notice: This date is currently oversold. Please select an available open date on the schedule rail above.'
-                            : 'Selected catering dishes will be freshly prepared for pickup/delivery on this date.'}
-                        </p>
-                      </div>
+                      <span className="text-[10px] font-bold uppercase tracking-wider bg-amber-200 text-amber-900 px-2.5 py-0.5 rounded-full border border-amber-400 shrink-0">
+                        Capacity Full
+                      </span>
                     </div>
-
-                    {blackoutDates.includes(selectedGlobalDate) && (
-                      <div className="text-right shrink-0">
-                        <span className="text-xs font-bold px-3 py-1.5 rounded-full bg-amber-200 text-amber-900 border border-amber-400">
-                          Capacity Full
-                        </span>
-                      </div>
-                    )}
-                  </div>
+                  )}
 
                   <TrayPricingHeader />
                   <MenuOrderGrid
@@ -454,44 +427,17 @@ export default function CateringContainer() {
               {/* SubTab 2: Cake Order (Starts directly from CakeConfigurator, 4 Differentiators at end) */}
               {subTab === 'cake' && (
                 <div className="space-y-6">
-                  {/* Selected Global Target Date Alert Banner */}
-                  <div className={`p-4 rounded-2xl border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-2xs transition-all ${
-                    blackoutDates.includes(selectedGlobalDate)
-                      ? 'bg-amber-50 border-amber-300 text-amber-950'
-                      : 'bg-[#0B192C] text-white border-[#D4AF37]/40'
-                  }`}>
-                    <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-xl bg-[#D4AF37]/20 text-[#D4AF37] border border-[#D4AF37]/30 flex items-center justify-center font-bold text-base shrink-0">
-                        🎂
+                  {blackoutDates.includes(selectedGlobalDate) && (
+                    <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-300 text-amber-950 text-xs font-medium flex items-center justify-between gap-3 shadow-2xs">
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-amber-900">⚠️ Date Oversold:</span>
+                        <span>Custom cake ordering is closed for {selectedGlobalDate}. Please select an open date on the schedule rail above.</span>
                       </div>
-                      <div>
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="text-[10px] font-bold uppercase tracking-widest text-[#D4AF37]">
-                            TARGET CAKE CELEBRATION DATE
-                          </span>
-                          <span className="text-[10px] font-semibold bg-white/10 px-2 py-0.5 rounded border border-white/15 text-white/80">
-                            48h notice
-                          </span>
-                        </div>
-                        <h3 className="font-serif font-bold text-base mt-0.5">
-                          {selectedGlobalDate} {blackoutDates.includes(selectedGlobalDate) ? '(Oversold / Closed)' : '(Ordering Available)'}
-                        </h3>
-                        <p className="text-xs opacity-80 mt-0.5">
-                          {blackoutDates.includes(selectedGlobalDate)
-                            ? 'Notice: Cake orders are closed for this date as kitchen capacity is oversold. Please select an open date on the schedule rail.'
-                            : 'Custom cakes are freshly baked and decorated for your selected date.'}
-                        </p>
-                      </div>
+                      <span className="text-[10px] font-bold uppercase tracking-wider bg-amber-200 text-amber-900 px-2.5 py-0.5 rounded-full border border-amber-400 shrink-0">
+                        Capacity Full
+                      </span>
                     </div>
-
-                    {blackoutDates.includes(selectedGlobalDate) && (
-                      <div className="text-right shrink-0">
-                        <span className="text-xs font-bold px-3 py-1.5 rounded-full bg-amber-200 text-amber-900 border border-amber-400">
-                          Capacity Full
-                        </span>
-                      </div>
-                    )}
-                  </div>
+                  )}
 
                   <CakeConfigurator
                     onAddCake={handleAddCakeFromConfigurator}
