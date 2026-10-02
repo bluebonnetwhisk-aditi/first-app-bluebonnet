@@ -11,9 +11,12 @@ import {
   FileEdit,
   Percent,
   Search,
-  UtensilsCrossed
+  UtensilsCrossed,
+  Calendar,
+  Clock,
+  CheckCircle2
 } from 'lucide-react';
-import type { CateringOrder, CartItem } from '../../types/catering';
+import type { CateringOrder, CartItem, OrderStatus } from '../../types/catering';
 import { DESI_DABBA_ITEMS } from '../../data/desiDabbaMenu';
 import { updateOrderDetails } from '../../services/supabase';
 
@@ -118,6 +121,11 @@ export default function KDSEditOrderModal({
   onOrderUpdated
 }: KDSEditOrderModalProps) {
   const [items, setItems] = useState<CartItem[]>(() => parseInitialOrderItems(order));
+
+  // Date, Time & Status state
+  const [fulfillmentDate, setFulfillmentDate] = useState<string>(order.fulfillment_date || '');
+  const [fulfillmentTime, setFulfillmentTime] = useState<string>(order.fulfillment_time || '');
+  const [orderStatus, setOrderStatus] = useState<OrderStatus>(order.status || 'new');
 
   // Two discount sections: Percent (%) discount and Fixed Amount ($) discount
   const [percentDiscountInput, setPercentDiscountInput] = useState<string>('');
@@ -280,7 +288,10 @@ export default function KDSEditOrderModal({
       rebate_amount: 0,
       rebate_reason: null,
       total_amount: grandTotal,
-      order_description: orderDescription
+      order_description: orderDescription,
+      fulfillment_date: fulfillmentDate,
+      fulfillment_time: fulfillmentTime,
+      status: orderStatus
     };
 
     try {
@@ -333,7 +344,7 @@ export default function KDSEditOrderModal({
           {saveSuccess && (
             <div className="p-3 bg-emerald-50 border border-emerald-300 text-emerald-900 rounded-xl text-xs font-bold flex items-center gap-2">
               <Check className="w-4 h-4 text-emerald-600 shrink-0" />
-              <span>✓ Order items &amp; totals successfully updated and synced!</span>
+              <span>✓ Order items, date, status &amp; totals successfully updated and synced!</span>
             </div>
           )}
 
@@ -343,6 +354,58 @@ export default function KDSEditOrderModal({
               <span>{errorMessage}</span>
             </div>
           )}
+
+          {/* ── 0. ORDER FULFILLMENT DATE, TIME & STATUS ── */}
+          <div className="p-4 rounded-xl bg-blue-50/70 border border-blue-200 grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+            {/* Fulfillment Date */}
+            <div className="space-y-1.5">
+              <label className="block text-xs font-bold text-[#00346f] flex items-center gap-1.5">
+                <Calendar className="w-3.5 h-3.5 text-[#00346f]" />
+                <span>Fulfillment Date</span>
+              </label>
+              <input
+                type="date"
+                value={fulfillmentDate}
+                onChange={(e) => setFulfillmentDate(e.target.value)}
+                className="w-full px-2.5 py-1.5 text-xs bg-white border border-blue-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 font-semibold text-gray-900"
+              />
+            </div>
+
+            {/* Fulfillment Time */}
+            <div className="space-y-1.5">
+              <label className="block text-xs font-bold text-[#00346f] flex items-center gap-1.5">
+                <Clock className="w-3.5 h-3.5 text-[#00346f]" />
+                <span>Fulfillment Time</span>
+              </label>
+              <input
+                type="text"
+                placeholder="e.g. 1:00 PM"
+                value={fulfillmentTime}
+                onChange={(e) => setFulfillmentTime(e.target.value)}
+                className="w-full px-2.5 py-1.5 text-xs bg-white border border-blue-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 font-semibold text-gray-900"
+              />
+            </div>
+
+            {/* Order Status */}
+            <div className="space-y-1.5">
+              <label className="block text-xs font-bold text-[#00346f] flex items-center gap-1.5">
+                <CheckCircle2 className="w-3.5 h-3.5 text-[#00346f]" />
+                <span>Order Status</span>
+              </label>
+              <select
+                value={orderStatus}
+                onChange={(e) => setOrderStatus(e.target.value as OrderStatus)}
+                className="w-full px-2.5 py-1.5 text-xs bg-white border border-blue-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 font-bold text-gray-900 cursor-pointer"
+              >
+                <option value="new">🆕 New Order</option>
+                <option value="accepted">✅ Accepted</option>
+                <option value="preparing">🍳 Preparing in Kitchen</option>
+                <option value="ready">📦 Ready for Pickup/Delivery</option>
+                <option value="completed">🎉 Completed</option>
+                <option value="cancelled">❌ Cancelled</option>
+              </select>
+            </div>
+          </div>
 
           {/* ── 1. ITEMIZED ORDER DISHES & QUANTITIES ── */}
           <div className="space-y-3">

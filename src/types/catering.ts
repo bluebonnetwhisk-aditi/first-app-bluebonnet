@@ -102,6 +102,7 @@ export interface TiffinSpecialDish {
   description: string;
   price: number;
   imageUrl?: string;
+  availableDays?: string[]; // e.g. ['Monday'], ['Wednesday', 'Friday'], or ['Saturday', 'Sunday']
 }
 
 export interface WeekdayMenuEntry {
@@ -125,10 +126,11 @@ export interface DabbaPricing {
 
 export interface TiffinMenuSettings {
   flyerImageUrl: string;
+  specialFlyerUrl?: string;
   weekTitle: string; // e.g., "September 21 - 26"
   weekStartDate?: string; // YYYY-MM-DD (Monday)
   weekEndDate?: string;   // YYYY-MM-DD (Sunday)
-  specialDishes?: TiffinSpecialDish[]; // max 3
+  specialDishes?: TiffinSpecialDish[];
   saturdaySpecialTitle?: string;
   saturdaySpecialDescription?: string;
   saturdaySpecialImageUrl?: string;

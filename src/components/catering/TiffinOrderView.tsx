@@ -6,7 +6,6 @@ import {
   ShoppingBag, 
   Sparkles, 
   Check, 
-  AlertCircle, 
   X, 
   Utensils, 
   Flame, 
@@ -139,7 +138,7 @@ export default function TiffinOrderView({
     setContainer16ozQty(prev => ({ ...prev, [id]: Math.max(1, (prev[id] || 1) + delta) }));
   };
 
-  // Saturday / Weekend Chef's Specials List
+  // Saturday / Weekend / Weekday Chef's Specials List
   const specialsList: TiffinSpecialDish[] = (settings.specialDishes && settings.specialDishes.length > 0)
     ? settings.specialDishes
     : [
@@ -148,9 +147,11 @@ export default function TiffinOrderView({
           title: settings.saturdaySpecialTitle || 'Chef’s Special Pav Bhaji Feast',
           description: settings.saturdaySpecialDescription || 'Slow-simmered spiced vegetable bhaji with extra butter, 2 toasted ladi pavs, onion salad & masala chili.',
           price: 13.99,
-          imageUrl: settings.saturdaySpecialImageUrl || ''
+          imageUrl: settings.saturdaySpecialImageUrl || '',
+          availableDays: ['Saturday', 'Sunday']
         }
       ];
+
 
   // Fetch flyer & blackout settings from Supabase / localStorage
   useEffect(() => {
@@ -309,20 +310,21 @@ export default function TiffinOrderView({
     // Collect all days from all upcomingWeeks
     const allDays = upcomingWeeks.flatMap(w => w.days);
 
-    const startCutoffStr = isCurrentWeek 
-      ? todayStr 
-      : (activeWeeklyPlan.monDateStr < todayStr ? todayStr : activeWeeklyPlan.monDateStr);
+    // If selected day tab or today is weekend, subscription starts from the next open weekday (Monday)
+    const selectedDayObj = activeWeeklyPlan.days.find(d => d.dateStr === selectedDayTab);
+    const isWeekendSelected = selectedDayObj?.dayName === 'Saturday' || selectedDayObj?.dayName === 'Sunday';
+
+    const startCutoffStr = isWeekendSelected
+      ? (selectedDayTab > todayStr ? selectedDayTab : todayStr)
+      : (isCurrentWeek ? todayStr : activeWeeklyPlan.monDateStr);
 
     const availableDays = allDays.filter(d => {
-      // 1. Must be today or future date
+      // 1. Must be start cutoff or future date
       if (d.dateStr < startCutoffStr && isCurrentWeek) return false;
       if (!isCurrentWeek && d.dateStr < activeWeeklyPlan.monDateStr) return false;
-      // 2. Skip Sunday
-      if (d.dayName === 'Sunday') return false;
-      // 3. Skip Saturday if closed
-      const hasSatMenu = d.dayName === 'Saturday' && Boolean(settings.saturdaySpecialTitle || (settings.weekdayMenus && settings.weekdayMenus['Saturday']?.dal));
-      if (d.dayName === 'Saturday' && !hasSatMenu) return false;
-      // 4. Skip blackout dates!
+      // 2. Skip Saturday & Sunday for 5-day Homestyle Weekly Plan
+      if (d.dayName === 'Sunday' || d.dayName === 'Saturday') return false;
+      // 3. Skip blackout dates!
       if (blackoutDates.includes(d.dateStr)) return false;
 
       return true;
@@ -340,7 +342,7 @@ export default function TiffinOrderView({
       shortRange,
       isAvailable
     };
-  }, [activeWeeklyPlan, upcomingWeeks, todayStr, blackoutDates, settings.saturdaySpecialTitle, settings.weekdayMenus]);
+  }, [activeWeeklyPlan, upcomingWeeks, todayStr, blackoutDates, selectedDayTab]);
 
   // Compute days of the selected week in Central Time
   const schedule: DaySchedule[] = useMemo(() => {
@@ -361,21 +363,28 @@ export default function TiffinOrderView({
 
       const isSunday = dayName === 'Sunday';
       const isSaturday = dayName === 'Saturday';
+      const isWeekend = isSaturday || isSunday;
       const isBlackout = blackoutDates.includes(dateStr);
 
-      const hasSaturdaySpecialMenu = isSaturday && Boolean(settings.saturdaySpecialTitle || (settings.weekdayMenus && settings.weekdayMenus['Saturday']?.dal));
-      const isSaturdayClosed = isSaturday && !hasSaturdaySpecialMenu;
+      const hasWeekendSpecialMenu = isWeekend && specialsList.some(s => {
+        const activeDays = (s.availableDays && s.availableDays.length > 0)
+          ? s.availableDays
+          : ['Saturday', 'Sunday'];
+        return activeDays.includes(dayName);
+      });
+
+      const isWeekendClosed = isWeekend && !hasWeekendSpecialMenu;
 
       const isTodayOrLater = dateStr >= todayStr;
-      const isSelectable = isTodayOrLater && !isSunday && !isSaturdayClosed && !isBlackout;
+      const isSelectable = isTodayOrLater && !isWeekendClosed && !isBlackout;
 
       let statusLabel = 'Available to Order';
-      if (isSunday) {
-        statusLabel = 'Kitchen Closed (Sunday)';
-      } else if (isSaturdayClosed) {
-        statusLabel = 'Tiffin Closed (Saturday)';
-      } else if (isBlackout) {
+      if (isBlackout) {
         statusLabel = 'Sold Out — We are Oversold for this Date';
+      } else if (isSunday && isWeekendClosed) {
+        statusLabel = 'Kitchen Closed (Sunday)';
+      } else if (isSaturday && isWeekendClosed) {
+        statusLabel = 'Tiffin Closed (Saturday)';
       } else if (dateStr < todayStr) {
         statusLabel = 'Past Date';
       }
@@ -393,8 +402,8 @@ export default function TiffinOrderView({
         dalOrCurry,
         sabzi,
         description: menu.description || '',
-        isSaturdaySpecial: isSaturday,
-        isSundayClosed: isSunday,
+        isSaturdaySpecial: isWeekend,
+        isSundayClosed: isSunday && isWeekendClosed,
         isSelectable,
         statusLabel
       });
@@ -420,6 +429,17 @@ export default function TiffinOrderView({
   }, [schedule, selectedDayTab]);
 
   const activeDay = schedule.find(s => s.dateStr === selectedDayTab) || schedule[0];
+
+  // Active specials specifically enabled for the currently selected activeDay
+  const activeSpecialsForDay = useMemo(() => {
+    if (!activeDay) return [];
+    return specialsList.filter(dish => {
+      const activeDays = dish.availableDays && dish.availableDays.length > 0
+        ? dish.availableDays
+        : ['Saturday', 'Sunday'];
+      return activeDays.includes(activeDay.dayName);
+    });
+  }, [activeDay, specialsList]);
 
   // Helper to trigger alert
   const triggerAddedAlert = (msg: string) => {
@@ -637,24 +657,33 @@ export default function TiffinOrderView({
         </div>
 
         {/* Mini Flyer Thumbnail matching Ribbon Height */}
-        <button
-          type="button"
-          onClick={() => setIsLightboxOpen(true)}
-          className="relative group cursor-pointer shrink-0 rounded-2xl overflow-hidden border-2 border-[#ffdea5]/40 shadow-lg hover:border-[#ffdea5] transition-all h-28 sm:h-32 w-44 sm:w-52 bg-gray-950 text-left focus:outline-none ring-offset-2 ring-offset-gray-900 focus:ring-2 focus:ring-[#ffdea5]"
-          title="Click to expand full menu flyer"
-        >
-          <img
-            src={settings.flyerImageUrl || "/tiffin-flyer.jpg"}
-            alt="Weekly Tiffin Menu Flyer Thumbnail"
-            className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-300 opacity-90 group-hover:opacity-100"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent flex items-end justify-center p-2 group-hover:bg-black/60 transition-colors">
-            <span className="text-[10px] font-extrabold uppercase tracking-wider text-white bg-black/60 px-2.5 py-1 rounded-lg border border-white/20 flex items-center gap-1.5 group-hover:bg-[#00346f] group-hover:text-[#ffdea5] group-hover:border-[#ffdea5]/50 transition-all shadow-xs">
-              <Maximize2 className="w-3 h-3 text-[#ffdea5]" />
-              <span>Expand Menu Flyer</span>
-            </span>
-          </div>
-        </button>
+        {(() => {
+          const isWeekendActive = activeDay?.isSaturdaySpecial || activeDay?.dayName === 'Sunday';
+          const activeFlyerImage = (isWeekendActive && settings.specialFlyerUrl)
+            ? settings.specialFlyerUrl
+            : (settings.flyerImageUrl || "/tiffin-flyer.jpg");
+
+          return (
+            <button
+              type="button"
+              onClick={() => setIsLightboxOpen(true)}
+              className="relative group cursor-pointer shrink-0 rounded-2xl overflow-hidden border-2 border-[#ffdea5]/40 shadow-lg hover:border-[#ffdea5] transition-all h-28 sm:h-32 w-44 sm:w-52 bg-gray-950 text-left focus:outline-none ring-offset-2 ring-offset-gray-900 focus:ring-2 focus:ring-[#ffdea5]"
+              title="Click to expand full menu flyer"
+            >
+              <img
+                src={activeFlyerImage}
+                alt="Tiffin Menu Flyer Thumbnail"
+                className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-300 opacity-90 group-hover:opacity-100"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent flex items-end justify-center p-2 group-hover:bg-black/60 transition-colors">
+                <span className="text-[10px] font-extrabold uppercase tracking-wider text-white bg-black/60 px-2.5 py-1 rounded-lg border border-white/20 flex items-center gap-1.5 group-hover:bg-[#00346f] group-hover:text-[#ffdea5] group-hover:border-[#ffdea5]/50 transition-all shadow-xs">
+                  <Maximize2 className="w-3 h-3 text-[#ffdea5]" />
+                  <span>{isWeekendActive ? 'Expand Weekend Flyer' : 'Expand Menu Flyer'}</span>
+                </span>
+              </div>
+            </button>
+          );
+        })()}
       </div>
 
       {/* ── 1. UNIFIED DATE & WEEK CONTROLLER (SINGLE SOURCE OF TRUTH) ── */}
@@ -745,37 +774,39 @@ export default function TiffinOrderView({
         </div>
       </div>
 
-      {/* ── 2. SEGMENTED MAIN TABS NAVIGATION ── */}
-      <div className="flex bg-gray-200/80 p-1.5 rounded-2xl border border-gray-300 max-w-xl mx-auto shadow-2xs">
-        <button
-          type="button"
-          onClick={() => setActiveTab('meals')}
-          className={`flex-1 py-3 px-4 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer flex items-center justify-center gap-2 ${
-            activeTab === 'meals'
-              ? 'bg-[#00346f] text-white shadow-sm font-extrabold'
-              : 'text-gray-700 hover:text-gray-900 hover:bg-white/50'
-          }`}
-        >
-          <Utensils className="w-4 h-4 text-[#ffdea5]" />
-          <span>🍱 Full Meals &amp; Weekly Plan</span>
-        </button>
+      {/* ── 2. SEGMENTED MAIN TABS NAVIGATION (WEEKDAYS ONLY) ── */}
+      {!(activeDay?.dayName === 'Saturday' || activeDay?.dayName === 'Sunday') && (
+        <div className="flex bg-gray-200/80 p-1.5 rounded-2xl border border-gray-300 max-w-xl mx-auto shadow-2xs">
+          <button
+            type="button"
+            onClick={() => setActiveTab('meals')}
+            className={`flex-1 py-3 px-4 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer flex items-center justify-center gap-2 ${
+              activeTab === 'meals'
+                ? 'bg-[#00346f] text-white shadow-sm font-extrabold'
+                : 'text-gray-700 hover:text-gray-900 hover:bg-white/50'
+            }`}
+          >
+            <Utensils className="w-4 h-4 text-[#ffdea5]" />
+            <span>🍱 Full Meals &amp; Weekly Plan</span>
+          </button>
 
-        <button
-          type="button"
-          onClick={() => setActiveTab('alacarte')}
-          className={`flex-1 py-3 px-4 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer flex items-center justify-center gap-2 ${
-            activeTab === 'alacarte'
-              ? 'bg-[#00346f] text-white shadow-sm font-extrabold'
-              : 'text-gray-700 hover:text-gray-900 hover:bg-white/50'
-          }`}
-        >
-          <Layers className="w-4 h-4 text-[#ffdea5]" />
-          <span>🍲 Tubs (8/16oz), Sides &amp; Breads</span>
-        </button>
-      </div>
+          <button
+            type="button"
+            onClick={() => setActiveTab('alacarte')}
+            className={`flex-1 py-3 px-4 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer flex items-center justify-center gap-2 ${
+              activeTab === 'alacarte'
+                ? 'bg-[#00346f] text-white shadow-sm font-extrabold'
+                : 'text-gray-700 hover:text-gray-900 hover:bg-white/50'
+            }`}
+          >
+            <Layers className="w-4 h-4 text-[#ffdea5]" />
+            <span>🍲 Tubs (8/16oz), Sides &amp; Breads</span>
+          </button>
+        </div>
+      )}
 
-      {/* ── 3. TAB CONTENT 1: FULL MEALS & WEEKLY PLAN ── */}
-      {activeTab === 'meals' && (
+      {/* ── 3. TAB CONTENT 1: FULL MEALS & WEEKLY PLAN (OR WEEKEND SPECIALS) ── */}
+      {(activeTab === 'meals' || activeDay?.dayName === 'Saturday' || activeDay?.dayName === 'Sunday') && (
         <div className="space-y-6 animate-fade-in">
 
           {/* A) ACTIVE DAY DABBA MEAL CARD */}
@@ -784,10 +815,14 @@ export default function TiffinOrderView({
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-gray-200">
                 <div>
                   <span className="text-[10px] font-bold uppercase tracking-widest text-[#775a19] block">
-                    DAILY HOMESTYLE DABBA
+                    {(activeDay.dayName === 'Saturday' || activeDay.dayName === 'Sunday')
+                      ? (activeDay.dayName === 'Saturday' ? 'SAT SPECIAL MENU' : 'SUN SPECIAL MENU')
+                      : 'DAILY HOMESTYLE DABBA'}
                   </span>
                   <h2 className="font-serif text-xl sm:text-2xl font-bold text-[#00346f]">
-                    {activeDay.dayName} — <span className="text-emerald-700">{activeDay.displayDate}</span>
+                    {(activeDay.dayName === 'Saturday' || activeDay.dayName === 'Sunday')
+                      ? `${activeDay.dayName} Special`
+                      : `${activeDay.dayName}`} — <span className="text-emerald-700">{activeDay.displayDate}</span>
                   </h2>
                 </div>
                 <div className="text-xs text-gray-500 font-medium">
@@ -804,14 +839,14 @@ export default function TiffinOrderView({
                         WEEKEND CHEF'S SPECIAL DISHES
                       </span>
                       <h4 className="font-serif font-bold text-lg text-[#00346f]">
-                        Saturday Specialties ({activeDay.displayDate})
+                        {activeDay.dayName} Specialties ({activeDay.displayDate})
                       </h4>
                     </div>
                   </div>
 
-                  {activeDay.isSelectable ? (
+                  {activeDay.isSelectable && activeSpecialsForDay.length > 0 ? (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {specialsList.map(dish => {
+                      {activeSpecialsForDay.map(dish => {
                         const dishQty = getSpecialQty(dish.id);
                         const dishPrice = dish.price > 0 ? dish.price : 13.99;
                         return (
@@ -887,13 +922,92 @@ export default function TiffinOrderView({
                         </div>
                       </div>
                     ) : (
-                      <div className="p-6 bg-gray-50 rounded-2xl border border-dashed border-gray-300 text-center space-y-1">
-                        <AlertCircle className="w-7 h-7 mx-auto text-gray-400" />
-                        <h4 className="font-serif font-bold text-sm text-gray-700">Ordering Closed for Saturday ({activeDay.displayDate})</h4>
-                        <p className="text-xs text-gray-500">Saturday specials must be ordered at least 24 hours in advance.</p>
+                      <div className="p-6 bg-purple-50/60 rounded-2xl border border-dashed border-purple-200 text-center space-y-1">
+                        <Utensils className="w-7 h-7 mx-auto text-purple-400" />
+                        <h4 className="font-serif font-bold text-sm text-purple-900">{activeDay.dayName} Specials Menu</h4>
+                        <p className="text-xs text-purple-700">Check back soon or view open weekday homestyle tiffin schedules!</p>
                       </div>
                     );
                   })()}
+
+                  {/* Everyday Add-Ons & Sides (From Weekly Menu) */}
+                  {activeDay.isSelectable && (
+                    <div className="mt-6 pt-6 border-t border-gray-200 space-y-4">
+                      <div>
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-[#775a19] block">
+                          EVERYDAY ADD-ONS &amp; SIDES
+                        </span>
+                        <h4 className="font-serif text-lg font-bold text-[#00346f]">
+                          Fresh Rotis, Puris &amp; Homestyle Sides
+                        </h4>
+                        <p className="text-xs text-gray-500 mt-0.5">
+                          Complement your {activeDay.dayName} Special with fresh tawa rotis, fluffy puris, raita, papad &amp; chutneys.
+                        </p>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-1">
+                        {[
+                          { id: 'roti', name: 'Phulka Tawa Roti', portion: '1 Pc', price: 0.75, desc: 'Fresh whole wheat tawa roti' },
+                          { id: 'puri', name: 'Puri (2 Pcs)', portion: '2 Pcs Pack', price: 1.00, desc: 'Golden fluffy fried puris' },
+                          { id: 'missi-roti', name: 'Missi Roti', portion: '1 Pc', price: 1.00, desc: 'Spiced besan flatbread' },
+                          { id: 'raita', name: 'Boondi / Veg Raita (8oz)', portion: '8 oz Container', price: 1.00, desc: 'Cooling spiced yogurt raita' },
+                          { id: 'papad', name: 'Roasted Papad', portion: '1 Pc', price: 1.00, desc: 'Crispy fire-roasted urad papad' },
+                          { id: 'pickle', name: 'Homestyle Pickle', portion: '2 oz Dip', price: 1.00, desc: 'Spiced mango / chili pickle' },
+                          { id: 'salad', name: 'Fresh Green Salad (8oz)', portion: '8 oz Container', price: 1.00, desc: 'Sliced cucumber, carrot & lemon' },
+                          { id: 'chutney', name: 'Mint & Tamarind Chutney', portion: '4 oz Dip', price: 1.00, desc: 'Tangy sweet & mint chutneys' }
+                        ].map(item => {
+                          const qty = getAddonQty(item.id);
+                          const totalPrice = item.price * qty;
+
+                          return (
+                            <div key={item.id} className="p-3.5 rounded-2xl border border-gray-200 bg-gray-50/70 hover:bg-white hover:border-[#00346f] transition-all flex flex-col justify-between gap-3 shadow-2xs">
+                              <div>
+                                <div className="flex items-center justify-between">
+                                  <h5 className="font-bold text-xs sm:text-sm text-gray-900">{item.name}</h5>
+                                  <span className="font-serif font-black text-xs text-[#00346f] bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
+                                    ${item.price.toFixed(2)}
+                                  </span>
+                                </div>
+                                <p className="text-[11px] text-gray-500 mt-1">{item.desc}</p>
+                              </div>
+
+                              <div className="space-y-2 pt-2 border-t border-gray-200">
+                                <div className="flex items-center justify-between">
+                                  <span className="text-[11px] font-semibold text-gray-600">Qty:</span>
+                                  <div className="flex items-center bg-gray-100 rounded-lg p-0.5 border border-gray-200">
+                                    <button
+                                      type="button"
+                                      onClick={() => updateAddonQty(item.id, -1)}
+                                      className="w-6 h-6 rounded-md flex items-center justify-center hover:bg-white text-gray-700 cursor-pointer"
+                                    >
+                                      <Minus className="w-3 h-3" />
+                                    </button>
+                                    <span className="w-6 text-center font-bold text-xs">{qty}</span>
+                                    <button
+                                      type="button"
+                                      onClick={() => updateAddonQty(item.id, 1)}
+                                      className="w-6 h-6 rounded-md flex items-center justify-center hover:bg-white text-gray-700 cursor-pointer"
+                                    >
+                                      <Plus className="w-3 h-3" />
+                                    </button>
+                                  </div>
+                                </div>
+
+                                <button
+                                  type="button"
+                                  onClick={() => handleAddAddonItem(item.name, item.portion, item.price, qty)}
+                                  className="w-full min-h-[36px] inline-flex items-center justify-center gap-1 py-1.5 px-2 rounded-xl border border-[#00346f] text-[#00346f] hover:bg-[#00346f] hover:text-white transition-colors text-[11px] font-bold uppercase tracking-wider cursor-pointer"
+                                >
+                                  <Plus className="w-3.5 h-3.5" />
+                                  <span>Add {qty} • ${totalPrice.toFixed(2)}</span>
+                                </button>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
                 </div>
               ) : (
                 /* Weekdays Mon-Fri */
@@ -1064,6 +1178,85 @@ export default function TiffinOrderView({
                         </div>
                       );
                     })()
+                  )}
+
+                  {/* Weekday Special Dish Card - ONLY renders if there are active specials for this weekday */}
+                  {activeSpecialsForDay.length > 0 && activeDay.isSelectable && (
+                    <div className="mt-6 pt-6 border-t border-purple-200 space-y-4">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-2 border-b border-purple-200 gap-2">
+                        <div>
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-purple-700 block flex items-center gap-1">
+                            <Sparkles className="w-3.5 h-3.5 text-purple-600" />
+                            <span>TODAY'S CHEF SPECIAL FOR {activeDay.dayName.toUpperCase()}</span>
+                          </span>
+                          <h4 className="font-serif font-bold text-lg text-[#00346f]">
+                            {activeDay.dayName} Chef Specials ({activeDay.displayDate})
+                          </h4>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {activeSpecialsForDay.map(dish => {
+                          const dishQty = getSpecialQty(dish.id);
+                          const dishPrice = dish.price > 0 ? dish.price : 13.99;
+                          return (
+                            <div 
+                              key={dish.id} 
+                              className="p-4 rounded-2xl bg-[#faf5ff] border border-purple-200 hover:border-purple-400 shadow-2xs flex flex-col justify-between space-y-3 transition-all"
+                            >
+                              <div>
+                                {dish.imageUrl ? (
+                                  <div className="rounded-xl overflow-hidden mb-2 max-h-32 bg-gray-100">
+                                    <img src={dish.imageUrl} alt={dish.title} className="w-full h-32 object-cover" />
+                                  </div>
+                                ) : null}
+                                <div className="flex items-start justify-between gap-2">
+                                  <h5 className="font-bold text-sm text-gray-900 leading-snug">{dish.title}</h5>
+                                  <span className="font-serif font-black text-sm text-purple-900 shrink-0">
+                                    ${dishPrice.toFixed(2)}
+                                  </span>
+                                </div>
+                                <p className="text-xs text-gray-500 mt-1 line-clamp-3 leading-relaxed">
+                                  {dish.description}
+                                </p>
+                              </div>
+
+                              <div className="space-y-2 pt-2 border-t border-purple-100">
+                                <div className="flex items-center justify-between">
+                                  <span className="text-[11px] font-semibold text-gray-600">Qty:</span>
+                                  <div className="flex items-center bg-white rounded-lg p-0.5 border border-purple-200">
+                                    <button
+                                      type="button"
+                                      onClick={() => updateSpecialQty(dish.id, -1)}
+                                      className="w-7 h-7 rounded-md flex items-center justify-center hover:bg-purple-100 text-gray-700 cursor-pointer"
+                                    >
+                                      <Minus className="w-3.5 h-3.5" />
+                                    </button>
+                                    <span className="w-6 text-center font-bold text-xs">{dishQty}</span>
+                                    <button
+                                      type="button"
+                                      onClick={() => updateSpecialQty(dish.id, 1)}
+                                      className="w-7 h-7 rounded-md flex items-center justify-center hover:bg-purple-100 text-gray-700 cursor-pointer"
+                                    >
+                                      <Plus className="w-3.5 h-3.5" />
+                                    </button>
+                                  </div>
+                                </div>
+
+                                <button
+                                  type="button"
+                                  onClick={() => handleAddSpecialDish(dish, activeDay)}
+                                  className="w-full min-h-[42px] inline-flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-purple-700 hover:bg-purple-800 text-white font-bold text-xs uppercase tracking-wider transition-colors shadow-2xs cursor-pointer"
+                                >
+                                  <Plus className="w-4 h-4 text-[#ffdea5]" />
+                                  <span>Add Special • ${(dishPrice * dishQty).toFixed(2)}</span>
+                                </button>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
                   )}
                 </>
               )}

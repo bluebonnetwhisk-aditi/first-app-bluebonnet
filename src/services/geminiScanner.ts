@@ -336,10 +336,13 @@ function sanitizeParsedTiffinData(data: any): ScannedTiffinData {
   if (Array.isArray(data.specialDishes) && data.specialDishes.length > 0) {
     result.specialDishes = data.specialDishes.map((item: any, idx: number) => ({
       id: `gemini-spec-${idx}-${Date.now().toString(36)}`,
-      title: (item.title || 'Chef’s Weekend Special').trim(),
+      title: (item.title || 'Chef’s Special Dish').trim(),
       price: Number(item.price) || 13.99,
-      description: (item.description || 'Handcrafted weekend delicacy').trim(),
-      imageUrl: ''
+      description: (item.description || 'Handcrafted delicacy').trim(),
+      imageUrl: '',
+      availableDays: Array.isArray(item.availableDays) && item.availableDays.length > 0
+        ? item.availableDays
+        : ['Saturday', 'Sunday']
     }));
   }
 
@@ -433,7 +436,8 @@ export function getBundledFlyerParsedData(): ScannedTiffinData {
         title: 'Chef’s Special Pav Bhaji Feast',
         price: 13.99,
         description: 'Slow-simmered spiced vegetable bhaji with extra butter, 2 toasted ladi pavs, onion salad & masala chili.',
-        imageUrl: ''
+        imageUrl: '',
+        availableDays: ['Saturday', 'Sunday']
       }
     ]
   };

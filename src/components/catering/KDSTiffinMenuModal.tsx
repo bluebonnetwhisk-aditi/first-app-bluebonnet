@@ -71,8 +71,9 @@ export default function KDSTiffinMenuModal({
 }: KDSTiffinMenuModalProps) {
   const [activeSection, setActiveSection] = useState<ModalSection>('flyer');
   
-  // Section 1: Flyer & Dates
+  // Section 1: Flyers & Dates
   const [flyerUrl, setFlyerUrl] = useState('');
+  const [specialFlyerUrl, setSpecialFlyerUrl] = useState('');
   const [weekTitle, setWeekTitle] = useState('');
   const [selectedWeekKey, setSelectedWeekKey] = useState('');
   const [weekOptions, setWeekOptions] = useState<WeekOption[]>([]);
@@ -111,6 +112,7 @@ export default function KDSTiffinMenuModal({
 
     Promise.all([fetchTiffinMenuSettings(), fetchCalendarBlackouts()]).then(([data, bDates]) => {
       setFlyerUrl(data.flyerImageUrl || DEFAULT_TIFFIN_SETTINGS.flyerImageUrl);
+      setSpecialFlyerUrl(data.specialFlyerUrl || '');
       setWeekTitle(data.weekTitle || DEFAULT_TIFFIN_SETTINGS.weekTitle);
 
       if (data.weekdayMenus) {
@@ -307,8 +309,65 @@ export default function KDSTiffinMenuModal({
     setScanError(null);
   };
 
-  // Trigger Google Gemini OCR Scan
-  const handleScanWithGemini = async () => {
+  // Handle local image file upload for Weekend Special Flyer
+  const handleSpecialFlyerFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 15 * 1024 * 1024) {
+      setErrorMsg('Image file size exceeds 15MB limit. Please choose a smaller image.');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === 'string') {
+        const rawResult = reader.result;
+        const img = new Image();
+        img.onload = () => {
+          try {
+            const canvas = document.createElement('canvas');
+            let width = img.width;
+            let height = img.height;
+            const maxDim = 1600;
+            if (width > maxDim || height > maxDim) {
+              if (width > height) {
+                height = Math.round((height * maxDim) / width);
+                width = maxDim;
+              } else {
+                width = Math.round((width * maxDim) / height);
+                height = maxDim;
+              }
+            }
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            if (ctx) {
+              ctx.drawImage(img, 0, 0, width, height);
+              const compressed = canvas.toDataURL('image/jpeg', 0.85);
+              setSpecialFlyerUrl(compressed);
+              setErrorMsg(null);
+            } else {
+              setSpecialFlyerUrl(rawResult);
+              setErrorMsg(null);
+            }
+          } catch {
+            setSpecialFlyerUrl(rawResult);
+            setErrorMsg(null);
+          }
+        };
+        img.onerror = () => {
+          setSpecialFlyerUrl(rawResult);
+          setErrorMsg(null);
+        };
+        img.src = rawResult;
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  // Trigger Gemini OCR for Weekly Flyer (Mon-Fri)
+  const handleScanWeeklyFlyerWithGemini = async () => {
     const key = geminiApiKey.trim();
     if (!key) {
       setTempApiKey('');
@@ -322,15 +381,49 @@ export default function KDSTiffinMenuModal({
 
     try {
       const data = await scanTiffinFlyerWithGemini(flyerUrl || '/tiffin-flyer.jpg', key);
-      applyScannedData(data, 'Google Gemini AI scanned your flyer');
+      if (data.weekTitle) setWeekTitle(data.weekTitle);
+      if (data.weekdayMenus) setWeekdayMenus(prev => ({ ...prev, ...data.weekdayMenus }));
+      if (data.containerAddons) setContainerAddons(data.containerAddons);
+      if (data.dabbaPricing) setDabbaPricing(prev => ({ ...prev, ...data.dabbaPricing }));
+
+      setAiUpdatedTabs(['daily', 'addons', 'pricing']);
+      setScanSuccess(`✓ Weekly Flyer scanned successfully! Auto-populated Weekday Menus (Mon–Sat), 16 oz Containers, and Dabba Pricing.`);
+      setActiveSection('daily');
     } catch (err: any) {
-      const msg = err?.message || 'Error scanning flyer with Gemini AI';
-      if (msg.includes('API Key is missing') || msg.includes('Invalid Gemini API Key')) {
-        setScanError(msg);
-        setShowApiKeyModal(true);
-      } else {
-        setScanError(msg);
+      setScanError(err?.message || 'Error scanning weekly flyer with Gemini AI');
+    } finally {
+      setIsScanning(false);
+    }
+  };
+
+  // Trigger Gemini OCR for Weekend Special Flyer (Sat & Sun)
+  const handleScanWeekendFlyerWithGemini = async () => {
+    const key = geminiApiKey.trim();
+    if (!key) {
+      setTempApiKey('');
+      setShowApiKeyModal(true);
+      return;
+    }
+
+    setIsScanning(true);
+    setScanError(null);
+    setScanSuccess(null);
+
+    try {
+      const targetImage = specialFlyerUrl || flyerUrl || '/tiffin-flyer.jpg';
+      const data = await scanTiffinFlyerWithGemini(targetImage, key);
+      if (data.specialDishes && data.specialDishes.length > 0) {
+        setSpecialDishes(data.specialDishes.map(d => ({
+          ...d,
+          availableDays: ['Saturday', 'Sunday']
+        })));
       }
+
+      setAiUpdatedTabs(['specials']);
+      setScanSuccess(`✓ Weekend Special Flyer scanned! Extracted special dishes & set availability to Saturday & Sunday.`);
+      setActiveSection('specials');
+    } catch (err: any) {
+      setScanError(err?.message || 'Error scanning weekend flyer with Gemini AI');
     } finally {
       setIsScanning(false);
     }
@@ -410,15 +503,16 @@ export default function KDSTiffinMenuModal({
     }));
   };
 
-  // Special Dish management (max 3)
+  // Special Dish management (max 5)
   const handleAddSpecial = () => {
-    if (specialDishes.length >= 3) return;
+    if (specialDishes.length >= 5) return;
     const newSpecial: TiffinSpecialDish = {
       id: `spec-${Date.now().toString(36)}`,
-      title: 'Chef’s Special Weekend Dish',
-      description: 'Handcrafted weekend delicacy with authentic spices & fresh garnish.',
+      title: 'Chef’s Special Dish',
+      description: 'Handcrafted authentic delicacy with premium spices & fresh garnish.',
       price: 13.99,
-      imageUrl: ''
+      imageUrl: '',
+      availableDays: ['Saturday', 'Sunday']
     };
     setSpecialDishes([...specialDishes, newSpecial]);
   };
@@ -435,6 +529,18 @@ export default function KDSTiffinMenuModal({
     });
   };
 
+  const handleToggleSpecialDay = (idx: number, day: string) => {
+    setSpecialDishes(prev => {
+      const copy = [...prev];
+      const curDays = copy[idx].availableDays || ['Saturday', 'Sunday'];
+      const updatedDays = curDays.includes(day)
+        ? curDays.filter(d => d !== day)
+        : [...curDays, day];
+      copy[idx] = { ...copy[idx], availableDays: updatedDays };
+      return copy;
+    });
+  };
+
   // Save Settings to Supabase and Local Storage
   const handleSave = async () => {
     setIsSaving(true);
@@ -444,6 +550,7 @@ export default function KDSTiffinMenuModal({
 
     const newSettings: TiffinMenuSettings = {
       flyerImageUrl: flyerUrl.trim() || DEFAULT_TIFFIN_SETTINGS.flyerImageUrl,
+      specialFlyerUrl: specialFlyerUrl.trim(),
       weekTitle: weekTitle.trim() || DEFAULT_TIFFIN_SETTINGS.weekTitle,
       weekStartDate: activeWeek?.startDate,
       weekEndDate: activeWeek?.endDate,
@@ -463,7 +570,8 @@ export default function KDSTiffinMenuModal({
         ...s,
         title: s.title.trim(),
         description: s.description.trim(),
-        price: Math.max(0, s.price)
+        price: Math.max(0, s.price),
+        availableDays: Array.isArray(s.availableDays) && s.availableDays.length > 0 ? s.availableDays : ['Saturday', 'Sunday']
       })),
       // Legacy fields for backward compatibility:
       saturdaySpecialTitle: specialDishes[0]?.title || DEFAULT_TIFFIN_SETTINGS.saturdaySpecialTitle,
@@ -614,21 +722,21 @@ export default function KDSTiffinMenuModal({
                 </div>
               </div>
 
-              {/* Weekly Flyer Image */}
+              {/* ── SEGMENT 1: WEEKLY TIFFIN FLYER (MON–FRI) ── */}
               <div className="space-y-3 p-4 bg-gray-50 border border-gray-250 rounded-2xl">
                 <div className="flex items-center justify-between">
                   <label className="block text-xs font-bold text-gray-900 uppercase tracking-wider flex items-center gap-1.5">
                     <ImageIcon className="w-4 h-4 text-[#00346f]" />
-                    <span>Weekly Tiffin Menu Flyer Image</span>
+                    <span>Weekly Tiffin Menu Flyer (Mon–Fri)</span>
                   </label>
-                  <span className="text-[10px] text-gray-500 font-semibold">Visible to customers in Tiffin tab</span>
+                  <span className="text-[10px] text-gray-500 font-semibold">Feeds into Weekday Menus, Tubs &amp; Pricing</span>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-start">
                   <div className="relative rounded-xl border border-gray-300 overflow-hidden bg-white max-h-48 flex items-center justify-center">
                     <img 
                       src={flyerUrl || '/tiffin-flyer.jpg'} 
-                      alt="Flyer Preview" 
+                      alt="Weekly Flyer Preview" 
                       className="w-full object-contain max-h-48"
                       onError={(e) => {
                         (e.target as HTMLImageElement).src = '/tiffin-flyer.jpg';
@@ -639,9 +747,9 @@ export default function KDSTiffinMenuModal({
                   <div className="sm:col-span-2 space-y-3">
                     <div>
                       <label className="block text-[11px] font-bold text-gray-700 mb-1">
-                        Upload Flyer Image File:
+                        Upload Weekly Flyer File:
                       </label>
-                      <label className="flex items-center justify-center gap-2 p-2.5 bg-white border border-dashed border-gray-300 rounded-xl hover:border-[#00346f] cursor-pointer text-xs font-bold text-gray-700 hover:text-[#00346f] transition-colors">
+                      <label className="flex items-center justify-center gap-2 p-2 bg-white border border-dashed border-gray-300 rounded-xl hover:border-[#00346f] cursor-pointer text-xs font-bold text-gray-700 hover:text-[#00346f] transition-colors">
                         <Upload className="w-4 h-4" />
                         <span>Choose Image File (PNG, JPG, WebP)</span>
                         <input 
@@ -655,7 +763,7 @@ export default function KDSTiffinMenuModal({
 
                     <div>
                       <label className="block text-[11px] font-bold text-gray-700 mb-1">
-                        Or Enter Image URL:
+                        Or Enter Weekly Flyer URL:
                       </label>
                       <input
                         type="text"
@@ -665,6 +773,99 @@ export default function KDSTiffinMenuModal({
                         className="w-full px-3 py-2 text-xs bg-white border border-gray-300 rounded-xl focus:outline-none focus:border-[#00346f]"
                       />
                     </div>
+
+                    <button
+                      type="button"
+                      disabled={isScanning}
+                      onClick={handleScanWeeklyFlyerWithGemini}
+                      className="w-full inline-flex items-center justify-center gap-2 px-3 py-2 bg-gradient-to-r from-indigo-600 to-[#00346f] text-white rounded-xl font-bold text-xs hover:opacity-95 transition-all shadow-xs cursor-pointer disabled:opacity-50"
+                    >
+                      {isScanning ? (
+                        <>
+                          <RefreshCw className="w-3.5 h-3.5 animate-spin text-[#ffdea5]" />
+                          <span>Scanning Weekly Flyer...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles className="w-3.5 h-3.5 text-[#ffdea5]" />
+                          <span>✨ AI Scan Weekly Flyer (Populates Weekdays, Tubs &amp; Pricing)</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* ── SEGMENT 2: WEEKEND SPECIAL FLYER (SAT & SUN) ── */}
+              <div className="space-y-3 p-4 bg-purple-50/70 border border-purple-200 rounded-2xl">
+                <div className="flex items-center justify-between">
+                  <label className="block text-xs font-bold text-purple-900 uppercase tracking-wider flex items-center gap-1.5">
+                    <Award className="w-4 h-4 text-purple-700" />
+                    <span>Weekend Special Flyer Image (Sat &amp; Sun)</span>
+                  </label>
+                  <span className="text-[10px] text-purple-700 font-semibold">Feeds directly into Saturday &amp; Sunday Specials</span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-start">
+                  <div className="relative rounded-xl border border-purple-200 overflow-hidden bg-white max-h-48 flex items-center justify-center">
+                    <img 
+                      src={specialFlyerUrl || flyerUrl || '/tiffin-flyer.jpg'} 
+                      alt="Weekend Special Flyer Preview" 
+                      className="w-full object-contain max-h-48"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = '/tiffin-flyer.jpg';
+                      }}
+                    />
+                  </div>
+
+                  <div className="sm:col-span-2 space-y-3">
+                    <div>
+                      <label className="block text-[11px] font-bold text-purple-900 mb-1">
+                        Upload Weekend Special Flyer File:
+                      </label>
+                      <label className="flex items-center justify-center gap-2 p-2 bg-white border border-dashed border-purple-300 rounded-xl hover:border-purple-600 cursor-pointer text-xs font-bold text-purple-900 hover:bg-purple-50 transition-colors">
+                        <Upload className="w-4 h-4 text-purple-600" />
+                        <span>Choose Weekend Image File</span>
+                        <input 
+                          type="file" 
+                          accept="image/*" 
+                          onChange={handleSpecialFlyerFileUpload}
+                          className="hidden" 
+                        />
+                      </label>
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-bold text-purple-900 mb-1">
+                        Or Enter Weekend Special Flyer URL:
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="https://example.com/weekend-special-flyer.jpg"
+                        value={specialFlyerUrl}
+                        onChange={(e) => setSpecialFlyerUrl(e.target.value)}
+                        className="w-full px-3 py-2 text-xs bg-white border border-purple-300 rounded-xl focus:outline-none focus:border-purple-600"
+                      />
+                    </div>
+
+                    <button
+                      type="button"
+                      disabled={isScanning}
+                      onClick={handleScanWeekendFlyerWithGemini}
+                      className="w-full inline-flex items-center justify-center gap-2 px-3 py-2 bg-gradient-to-r from-purple-700 to-indigo-700 text-white rounded-xl font-bold text-xs hover:opacity-95 transition-all shadow-xs cursor-pointer disabled:opacity-50"
+                    >
+                      {isScanning ? (
+                        <>
+                          <RefreshCw className="w-3.5 h-3.5 animate-spin text-[#ffdea5]" />
+                          <span>Scanning Weekend Flyer...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles className="w-3.5 h-3.5 text-[#ffdea5]" />
+                          <span>✨ AI Scan Weekend Flyer (Populates Sat &amp; Sun Specials)</span>
+                        </>
+                      )}
+                    </button>
                   </div>
                 </div>
               </div>
@@ -709,7 +910,7 @@ export default function KDSTiffinMenuModal({
                   <button
                     type="button"
                     disabled={isScanning}
-                    onClick={handleScanWithGemini}
+                    onClick={handleScanWeeklyFlyerWithGemini}
                     className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-indigo-600 via-purple-600 to-[#00346f] text-white rounded-xl font-bold text-xs hover:opacity-95 transition-all shadow-md cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-[1.01]"
                   >
                     {isScanning ? (
@@ -1195,6 +1396,34 @@ export default function KDSTiffinMenuModal({
                             onChange={(e) => handleUpdateSpecial(idx, 'imageUrl', e.target.value)}
                             className="w-full px-3 py-1.5 text-xs border border-gray-300 rounded-lg focus:border-purple-600"
                           />
+                        </div>
+                      </div>
+
+                      {/* Active Days Selection Checkboxes */}
+                      <div className="pt-2 border-t border-purple-100">
+                        <label className="block text-[10px] font-bold uppercase tracking-wider text-purple-900 mb-1.5">
+                          Active Days / Availability:
+                        </label>
+                        <div className="flex flex-wrap gap-1.5">
+                          {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map(day => {
+                            const activeDays = dish.availableDays || ['Saturday', 'Sunday'];
+                            const isChecked = activeDays.includes(day);
+                            return (
+                              <button
+                                key={day}
+                                type="button"
+                                onClick={() => handleToggleSpecialDay(idx, day)}
+                                className={`px-2.5 py-1 text-[11px] font-bold rounded-lg border transition-all cursor-pointer flex items-center gap-1 ${
+                                  isChecked
+                                    ? 'bg-purple-700 text-white border-purple-800 shadow-2xs'
+                                    : 'bg-gray-50 text-gray-500 border-gray-200 hover:bg-purple-50 hover:text-purple-700'
+                                }`}
+                              >
+                                <span>{isChecked ? '✓' : ''}</span>
+                                <span>{day.slice(0, 3)}</span>
+                              </button>
+                            );
+                          })}
                         </div>
                       </div>
                     </div>
