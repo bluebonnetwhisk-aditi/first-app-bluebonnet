@@ -385,6 +385,10 @@ export default function TiffinOrderView({
         statusLabel = 'Kitchen Closed (Sunday)';
       } else if (isSaturday && isWeekendClosed) {
         statusLabel = 'Tiffin Closed (Saturday)';
+      } else if (isSunday && !isWeekendClosed) {
+        statusLabel = 'Sunday Special Available';
+      } else if (isSaturday && !isWeekendClosed) {
+        statusLabel = 'Saturday Special Available';
       } else if (dateStr < todayStr) {
         statusLabel = 'Past Date';
       }
@@ -410,6 +414,30 @@ export default function TiffinOrderView({
     }
     return result;
   }, [activeWeeklyPlan, todayStr, settings.weekdayMenus, settings.saturdaySpecialTitle, settings.saturdaySpecialDescription, blackoutDates]);
+
+  // Dynamic header status line showing Central Time, Sunday status, and active week blackout info
+  const headerTimeAndStatusText = useMemo(() => {
+    if (!schedule || schedule.length === 0) return 'Central Time';
+
+    const sundayItem = schedule.find(s => s.dayName === 'Sunday');
+    const blackoutDaysInWeek = schedule.filter(s => blackoutDates.includes(s.dateStr));
+
+    let sundayStatus = 'Sunday Kitchen Closed';
+    if (sundayItem) {
+      if (sundayItem.isSelectable) {
+        sundayStatus = 'Sunday Special Open';
+      } else if (blackoutDates.includes(sundayItem.dateStr)) {
+        sundayStatus = 'Sunday Closed (Blackout Date)';
+      }
+    }
+
+    if (blackoutDaysInWeek.length > 0) {
+      const blackoutNames = blackoutDaysInWeek.map(d => d.dayName.slice(0, 3)).join(', ');
+      return `Central Time • ${sundayStatus} • Blackout: ${blackoutNames}`;
+    }
+
+    return `Central Time • ${sundayStatus}`;
+  }, [schedule, blackoutDates]);
 
   // Active Day Menu Selector manages date selection independently according to Tiffin scheduling, notice window, and blackout rules
 
@@ -725,7 +753,7 @@ export default function TiffinOrderView({
               Active Day Menu for {activeWeeklyPlan?.shortRange}:
             </span>
             <span className="text-[11px] text-gray-500 font-medium">
-              Central Time • Sunday Kitchen Closed
+              {headerTimeAndStatusText}
             </span>
           </div>
 
