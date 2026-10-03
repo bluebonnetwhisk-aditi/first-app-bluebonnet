@@ -48,7 +48,7 @@ export interface CartItem {
   name: string;
   category: Category;
   categoryLabel: string;
-  selectionType: TraySize | 'pack_30' | 'pieces' | 'gallon' | 'cake_custom' | 'tiffin_single' | 'tiffin_family' | 'tiffin_weekly' | 'container_16oz';
+  selectionType: TraySize | 'pack_30' | 'pieces' | 'gallon' | 'cake_custom' | 'tiffin_single' | 'tiffin_family' | 'tiffin_weekly' | 'container_16oz' | 'container_8oz';
   selectionLabel: string;
   quantity: number;
   unitPrice: number;
@@ -103,6 +103,9 @@ export interface TiffinSpecialDish {
   price: number;
   imageUrl?: string;
   availableDays?: string[]; // e.g. ['Monday'], ['Wednesday', 'Friday'], or ['Saturday', 'Sunday']
+  price8oz?: number;
+  price16oz?: number;
+  portionSize?: string; // e.g. '8oz', '16oz', '16oz / 8oz', 'plate'
 }
 
 export interface WeekdayMenuEntry {

@@ -40,6 +40,7 @@ import {
 } from '../../services/supabase';
 import { 
   scanTiffinFlyerWithGemini, 
+  scanWeekendSpecialFlyerWithGemini,
   getGeminiApiKey, 
   saveGeminiApiKey, 
   getBundledFlyerParsedData,
@@ -89,6 +90,8 @@ export default function KDSTiffinMenuModal({
 
   // Section 5: Chef's Specials
   const [specialDishes, setSpecialDishes] = useState<TiffinSpecialDish[]>([]);
+  type SpecialDayFilter = 'All' | 'Weekdays' | 'Weekend' | 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday' | 'Saturday' | 'Sunday';
+  const [specialDayFilter, setSpecialDayFilter] = useState<SpecialDayFilter>('All');
 
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
@@ -133,9 +136,9 @@ export default function KDSTiffinMenuModal({
         setDabbaPricing(DEFAULT_DABBA_PRICING);
       }
 
-      // Populate special dishes (convert legacy format if needed)
+      // Populate special dishes (keep all dishes for verification without truncating)
       if (Array.isArray(data.specialDishes) && data.specialDishes.length > 0) {
-        setSpecialDishes(data.specialDishes.slice(0, 3));
+        setSpecialDishes(data.specialDishes);
       } else if (data.saturdaySpecialTitle) {
         setSpecialDishes([
           {
@@ -386,8 +389,14 @@ export default function KDSTiffinMenuModal({
       if (data.containerAddons) setContainerAddons(data.containerAddons);
       if (data.dabbaPricing) setDabbaPricing(prev => ({ ...prev, ...data.dabbaPricing }));
 
-      setAiUpdatedTabs(['daily', 'addons', 'pricing']);
-      setScanSuccess(`✓ Weekly Flyer scanned successfully! Auto-populated Weekday Menus (Mon–Sat), 16 oz Containers, and Dabba Pricing.`);
+      if (data.specialDishes && data.specialDishes.length > 0) {
+        setSpecialDishes(data.specialDishes);
+        setAiUpdatedTabs(['daily', 'addons', 'pricing', 'specials']);
+        setScanSuccess(`✓ Weekly Flyer scanned successfully! Auto-populated Weekday Menus (Mon–Sat), 16 oz Containers, Dabba Pricing, and ${data.specialDishes.length} Specials.`);
+      } else {
+        setAiUpdatedTabs(['daily', 'addons', 'pricing']);
+        setScanSuccess(`✓ Weekly Flyer scanned successfully! Auto-populated Weekday Menus (Mon–Sat), 16 oz Containers, and Dabba Pricing.`);
+      }
       setActiveSection('daily');
     } catch (err: any) {
       setScanError(err?.message || 'Error scanning weekly flyer with Gemini AI');
@@ -411,16 +420,17 @@ export default function KDSTiffinMenuModal({
 
     try {
       const targetImage = specialFlyerUrl || flyerUrl || '/tiffin-flyer.jpg';
-      const data = await scanTiffinFlyerWithGemini(targetImage, key);
+      const data = await scanWeekendSpecialFlyerWithGemini(targetImage, key);
       if (data.specialDishes && data.specialDishes.length > 0) {
-        setSpecialDishes(data.specialDishes.map(d => ({
-          ...d,
-          availableDays: ['Saturday', 'Sunday']
-        })));
+        // Capture ALL scanned special dishes & tubs for verification without truncating or forcing days
+        setSpecialDishes(data.specialDishes);
       }
 
       setAiUpdatedTabs(['specials']);
-      setScanSuccess(`✓ Weekend Special Flyer scanned! Extracted special dishes & set availability to Saturday & Sunday.`);
+      const count = data.specialDishes?.length || 0;
+      const satCount = data.specialDishes?.filter(d => d.availableDays?.includes('Saturday')).length || 0;
+      const sunCount = data.specialDishes?.filter(d => d.availableDays?.includes('Sunday')).length || 0;
+      setScanSuccess(`✓ Weekend Special Flyer scanned successfully! Captured ${count} dishes & tubs (${satCount} for Saturday, ${sunCount} for Sunday). Review and verify each dish below before saving.`);
       setActiveSection('specials');
     } catch (err: any) {
       setScanError(err?.message || 'Error scanning weekend flyer with Gemini AI');
@@ -503,18 +513,46 @@ export default function KDSTiffinMenuModal({
     }));
   };
 
-  // Special Dish management (max 5)
-  const handleAddSpecial = () => {
-    if (specialDishes.length >= 5) return;
+  // Special Dish management (unlimited, supports weekdays and weekends)
+  const handleAddSpecial = (targetDay?: string) => {
+    let days = ['Saturday', 'Sunday'];
+    if (targetDay) {
+      days = [targetDay];
+    } else if (specialDayFilter === 'Weekdays') {
+      days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+    } else if (specialDayFilter === 'Weekend') {
+      days = ['Saturday', 'Sunday'];
+    } else if (specialDayFilter !== 'All') {
+      days = [specialDayFilter];
+    }
+
     const newSpecial: TiffinSpecialDish = {
-      id: `spec-${Date.now().toString(36)}`,
-      title: 'Chef’s Special Dish',
+      id: `spec-${Date.now().toString(36)}-${Math.random().toString(36).substring(2, 6)}`,
+      title: targetDay ? `${targetDay} Chef's Special` : 'Chef’s Special Dish',
       description: 'Handcrafted authentic delicacy with premium spices & fresh garnish.',
       price: 13.99,
       imageUrl: '',
-      availableDays: ['Saturday', 'Sunday']
+      availableDays: days
     };
-    setSpecialDishes([...specialDishes, newSpecial]);
+    setSpecialDishes(prev => [...prev, newSpecial]);
+    if (targetDay) {
+      setSpecialDayFilter(targetDay as any);
+      setActiveSection('specials');
+    }
+  };
+
+  const handleSetSpecialDaysPreset = (idx: number, preset: 'weekdays' | 'weekend' | 'all') => {
+    setSpecialDishes(prev => {
+      const copy = [...prev];
+      if (preset === 'weekdays') {
+        copy[idx] = { ...copy[idx], availableDays: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'] };
+      } else if (preset === 'weekend') {
+        copy[idx] = { ...copy[idx], availableDays: ['Saturday', 'Sunday'] };
+      } else {
+        copy[idx] = { ...copy[idx], availableDays: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] };
+      }
+      return copy;
+    });
   };
 
   const handleRemoveSpecial = (idx: number) => {
@@ -571,6 +609,9 @@ export default function KDSTiffinMenuModal({
         title: s.title.trim(),
         description: s.description.trim(),
         price: Math.max(0, s.price),
+        price16oz: s.price16oz !== undefined && !isNaN(Number(s.price16oz)) && Number(s.price16oz) > 0 ? Number(s.price16oz) : undefined,
+        price8oz: s.price8oz !== undefined && !isNaN(Number(s.price8oz)) && Number(s.price8oz) > 0 ? Number(s.price8oz) : undefined,
+        portionSize: s.portionSize ? s.portionSize.trim() : undefined,
         availableDays: Array.isArray(s.availableDays) && s.availableDays.length > 0 ? s.availableDays : ['Saturday', 'Sunday']
       })),
       // Legacy fields for backward compatibility:
@@ -1102,6 +1143,63 @@ export default function KDSTiffinMenuModal({
                           />
                         </div>
                       </div>
+
+                      {/* Weekday Special Dishes for this specific day */}
+                      <div className="pt-2 border-t border-gray-200/80 space-y-1.5">
+                        <div className="flex items-center justify-between">
+                          <label className="text-[10px] font-bold uppercase tracking-wider text-purple-900 flex items-center gap-1">
+                            <Sparkles className="w-3 h-3 text-purple-600" />
+                            <span>Special Dishes for {day}:</span>
+                          </label>
+                          <button
+                            type="button"
+                            onClick={() => handleAddSpecial(day)}
+                            className="text-[10px] font-bold text-purple-700 hover:text-purple-900 bg-purple-100/70 hover:bg-purple-200 px-2 py-0.5 rounded flex items-center gap-1 cursor-pointer transition-colors"
+                          >
+                            <Plus className="w-3 h-3" />
+                            <span>Add {day} Special</span>
+                          </button>
+                        </div>
+
+                        {(() => {
+                          const daySpecials = specialDishes.filter(d => (d.availableDays || ['Saturday', 'Sunday']).includes(day));
+                          if (daySpecials.length === 0) {
+                            return (
+                              <p className="text-[10px] text-gray-400 italic">
+                                No special dish configured for {day}.
+                              </p>
+                            );
+                          }
+                          return (
+                            <div className="space-y-1">
+                              {daySpecials.map(s => (
+                                <div key={s.id} className="flex items-center justify-between bg-purple-50/80 border border-purple-200 rounded-lg px-2.5 py-1 text-xs">
+                                  <div className="truncate mr-2">
+                                    <span className="font-bold text-purple-950">{s.title}</span>
+                                    {s.portionSize && <span className="text-[10px] text-purple-700 ml-1.5">({s.portionSize})</span>}
+                                  </div>
+                                  <div className="flex items-center gap-2 shrink-0">
+                                    <span className="font-mono font-bold text-purple-900">
+                                      ${s.price.toFixed(2)}
+                                      {s.price8oz && s.price16oz ? ` / 8oz: ${s.price8oz}` : ''}
+                                    </span>
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setSpecialDayFilter(day as any);
+                                        setActiveSection('specials');
+                                      }}
+                                      className="text-[10px] font-bold text-purple-700 hover:underline"
+                                    >
+                                      Edit →
+                                    </button>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          );
+                        })()}
+                      </div>
                     </div>
                   );
                 })}
@@ -1294,140 +1392,305 @@ export default function KDSTiffinMenuModal({
           {/* ── SECTION 5: SATURDAY / CHEF'S SPECIAL DISHES ── */}
           {activeSection === 'specials' && (
             <div className="space-y-4 animate-fade-in">
-              <div className="flex items-center justify-between p-4 bg-purple-50/70 border border-purple-200 rounded-2xl">
-                <div>
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-purple-950 flex items-center gap-1.5">
-                    <Award className="w-4 h-4 text-purple-700" />
-                    <span>Chef's Special Dishes (Max 3 Specials with Unit Pricing)</span>
-                  </h4>
-                  <p className="text-[11px] text-purple-800 mt-0.5">
-                    Handcrafted Saturday specialties with dynamic prices and customer quantity selectors.
-                  </p>
-                </div>
+              <div className="p-4 bg-purple-50/70 border border-purple-200 rounded-2xl space-y-3">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <div>
+                    <h4 className="text-xs font-bold uppercase tracking-wider text-purple-950 flex items-center gap-1.5">
+                      <Award className="w-4 h-4 text-purple-700" />
+                      <span>Chef's Special Dishes &amp; Tubs ({specialDishes.length} Total Configured)</span>
+                    </h4>
+                    <p className="text-[11px] text-purple-800 mt-0.5">
+                      Configure unlimited specials and 16oz / 8oz tubs for weekdays (Mon–Fri) or weekends (Sat/Sun). Any enabled specials will automatically appear on the main website for customers to order on that respective day.
+                    </p>
+                  </div>
 
-                <div className="flex items-center gap-2">
-                  {aiUpdatedTabs.includes('specials') && (
-                    <span className="text-[10px] font-bold px-2.5 py-0.5 bg-purple-600 text-white rounded-full flex items-center gap-1 shadow-2xs">
-                      <Sparkles className="w-3 h-3 text-[#ffdea5]" /> Scanned by Gemini
-                    </span>
-                  )}
-                  {specialDishes.length < 3 && (
+                  <div className="flex flex-wrap items-center gap-2">
+                    {aiUpdatedTabs.includes('specials') && (
+                      <span className="text-[10px] font-bold px-2.5 py-0.5 bg-purple-600 text-white rounded-full flex items-center gap-1 shadow-2xs">
+                        <Sparkles className="w-3 h-3 text-[#ffdea5]" /> Scanned by Gemini
+                      </span>
+                    )}
                     <button
                       type="button"
-                      onClick={handleAddSpecial}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-purple-700 hover:bg-purple-800 text-white text-xs font-bold shadow-2xs transition-colors cursor-pointer"
+                      onClick={() => handleAddSpecial('Monday')}
+                      className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-2xs transition-colors cursor-pointer"
+                      title="Add a special dish for weekdays (Mon-Fri)"
                     >
                       <Plus className="w-3.5 h-3.5" />
-                      <span>Add Special Dish ({specialDishes.length}/3)</span>
+                      <span>+ Weekday Special</span>
                     </button>
-                  )}
+                    <button
+                      type="button"
+                      onClick={() => handleAddSpecial('Saturday')}
+                      className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-purple-700 hover:bg-purple-800 text-white text-xs font-bold shadow-2xs transition-colors cursor-pointer"
+                      title="Add a weekend special dish or tub (Sat/Sun)"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>+ Weekend Special</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleAddSpecial()}
+                      className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-gray-900 hover:bg-black text-white text-xs font-bold shadow-2xs transition-colors cursor-pointer"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>+ Custom Special</span>
+                    </button>
+                  </div>
                 </div>
+
+                {/* Day Filter Tabs */}
+                {specialDishes.length > 0 && (
+                  <div className="space-y-2 pt-2 border-t border-purple-200/80">
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-purple-900 mr-1">
+                        Group Filter:
+                      </span>
+                      {[
+                        { key: 'All', label: 'All Specials', count: specialDishes.length },
+                        { 
+                          key: 'Weekdays', 
+                          label: 'Weekdays (Mon–Fri)', 
+                          count: specialDishes.filter(d => (d.availableDays || ['Saturday', 'Sunday']).some(day => ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'].includes(day))).length 
+                        },
+                        { 
+                          key: 'Weekend', 
+                          label: 'Weekend (Sat & Sun)', 
+                          count: specialDishes.filter(d => (d.availableDays || ['Saturday', 'Sunday']).some(day => ['Saturday', 'Sunday'].includes(day))).length 
+                        }
+                      ].map(tab => {
+                        const isSel = specialDayFilter === tab.key;
+                        return (
+                          <button
+                            key={tab.key}
+                            type="button"
+                            onClick={() => setSpecialDayFilter(tab.key as any)}
+                            className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                              isSel 
+                                ? 'bg-purple-800 text-white shadow-2xs' 
+                                : 'bg-white text-purple-900 border border-purple-200 hover:bg-purple-100'
+                            }`}
+                          >
+                            {tab.label} ({tab.count})
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-1">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-purple-900 mr-1">
+                        Individual Day:
+                      </span>
+                      {(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] as const).map(day => {
+                        const count = specialDishes.filter(d => (d.availableDays || ['Saturday', 'Sunday']).includes(day)).length;
+                        const isSel = specialDayFilter === day;
+                        return (
+                          <button
+                            key={day}
+                            type="button"
+                            onClick={() => setSpecialDayFilter(day as any)}
+                            className={`px-2 py-0.5 rounded-md text-[11px] font-bold transition-all cursor-pointer ${
+                              isSel 
+                                ? 'bg-purple-900 text-white shadow-2xs' 
+                                : 'bg-white/80 text-purple-800 border border-purple-200 hover:bg-purple-100'
+                            }`}
+                          >
+                            {day.slice(0, 3)} ({count})
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
 
               {specialDishes.length === 0 ? (
                 <div className="p-6 text-center bg-white rounded-xl border border-dashed border-purple-300 text-purple-700 text-xs">
-                  No special dishes configured. Click "+ Add Special Dish" above to add up to 3 weekend specials.
+                  No special dishes configured. Click "✨ AI Scan Weekend Flyer" in the Flyer tab or "+ Add Special Dish" above to add weekend specials.
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {specialDishes.map((dish, idx) => (
-                    <div key={dish.id || idx} className="p-4 bg-white rounded-xl border border-purple-200 shadow-2xs space-y-3">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-black uppercase text-purple-900 flex items-center gap-1">
-                          <span>Special Dish #{idx + 1}</span>
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveSpecial(idx)}
-                          className="text-rose-500 hover:text-rose-700 p-1 rounded hover:bg-rose-50 cursor-pointer"
-                          title="Delete special dish"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
+                  {specialDishes
+                    .map((dish, originalIdx) => ({ dish, originalIdx }))
+                    .filter(({ dish }) => {
+                      if (specialDayFilter === 'All') return true;
+                      const days = dish.availableDays || ['Saturday', 'Sunday'];
+                      if (specialDayFilter === 'Weekdays') {
+                        return days.some(d => ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'].includes(d));
+                      }
+                      if (specialDayFilter === 'Weekend') {
+                        return days.some(d => ['Saturday', 'Sunday'].includes(d));
+                      }
+                      return days.includes(specialDayFilter);
+                    })
+                    .map(({ dish, originalIdx: idx }) => {
+                      const isTubItem = /16\s*oz|8\s*oz|tub|container/i.test(dish.title) || 
+                        Boolean(dish.portionSize && /oz|tub/i.test(dish.portionSize)) || 
+                        Boolean(dish.price8oz && dish.price8oz > 0) || 
+                        Boolean(dish.price16oz && dish.price16oz > 0);
 
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                        <div className="sm:col-span-2">
-                          <label className="block text-[10px] font-bold text-gray-600 mb-0.5">Dish Name:</label>
-                          <input
-                            type="text"
-                            placeholder="e.g. Pav Bhaji Feast, Chole Bhature, Vegetable Biryani"
-                            value={dish.title}
-                            onChange={(e) => handleUpdateSpecial(idx, 'title', e.target.value)}
-                            className="w-full px-3 py-1.5 text-xs border border-gray-300 rounded-lg focus:border-purple-600"
-                          />
-                        </div>
+                      return (
+                        <div key={dish.id || idx} className="p-4 bg-white rounded-xl border border-purple-200 shadow-2xs space-y-3">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs font-black uppercase text-purple-900">
+                                Dish #{idx + 1}
+                              </span>
+                              {isTubItem && (
+                                <span className="px-2 py-0.5 rounded text-[10px] font-extrabold uppercase bg-amber-100 text-amber-800 border border-amber-300">
+                                  🍱 16oz / 8oz Tub Side
+                                </span>
+                              )}
+                              {dish.portionSize && (
+                                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-purple-100 text-purple-800">
+                                  {dish.portionSize}
+                                </span>
+                              )}
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveSpecial(idx)}
+                              className="text-rose-500 hover:text-rose-700 p-1.5 rounded-lg hover:bg-rose-50 cursor-pointer flex items-center gap-1 text-xs font-semibold"
+                              title="Delete special dish during validation"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                              <span>Remove</span>
+                            </button>
+                          </div>
 
-                        <div>
-                          <label className="block text-[10px] font-bold text-gray-600 mb-0.5">Unit Price ($):</label>
-                          <div className="flex items-center gap-1">
-                            <span className="text-xs text-gray-500 font-bold">$</span>
-                            <input
-                              type="number"
-                              step="0.01"
-                              min="0"
-                              placeholder="13.99"
-                              value={dish.price}
-                              onChange={(e) => handleUpdateSpecial(idx, 'price', parseFloat(e.target.value) || 0)}
-                              className="w-full px-2.5 py-1.5 text-xs border border-gray-300 rounded-lg focus:border-purple-600 font-mono font-bold"
-                            />
+                          <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+                            <div className="sm:col-span-2">
+                              <label className="block text-[10px] font-bold text-gray-600 mb-0.5">Dish / Tub Name:</label>
+                              <input
+                                type="text"
+                                placeholder="e.g. Pav Bhaji Feast, Paneer Makhani (16oz Tub)"
+                                value={dish.title}
+                                onChange={(e) => handleUpdateSpecial(idx, 'title', e.target.value)}
+                                className="w-full px-3 py-1.5 text-xs border border-gray-300 rounded-lg focus:border-purple-600 font-medium"
+                              />
+                            </div>
+
+                            <div>
+                              <label className="block text-[10px] font-bold text-gray-600 mb-0.5">Base / 16oz Price ($):</label>
+                              <div className="flex items-center gap-1">
+                                <span className="text-xs text-gray-500 font-bold">$</span>
+                                <input
+                                  type="number"
+                                  step="0.01"
+                                  min="0"
+                                  placeholder="13.99"
+                                  value={dish.price}
+                                  onChange={(e) => handleUpdateSpecial(idx, 'price', parseFloat(e.target.value) || 0)}
+                                  className="w-full px-2.5 py-1.5 text-xs border border-gray-300 rounded-lg focus:border-purple-600 font-mono font-bold"
+                                />
+                              </div>
+                            </div>
+
+                            <div>
+                              <label className="block text-[10px] font-bold text-gray-600 mb-0.5">8 oz Tub Price ($) (Optional):</label>
+                              <div className="flex items-center gap-1">
+                                <span className="text-xs text-gray-500 font-bold">$</span>
+                                <input
+                                  type="number"
+                                  step="0.01"
+                                  min="0"
+                                  placeholder="7.99"
+                                  value={dish.price8oz ?? ''}
+                                  onChange={(e) => handleUpdateSpecial(idx, 'price8oz', e.target.value ? parseFloat(e.target.value) : undefined)}
+                                  className="w-full px-2.5 py-1.5 text-xs border border-gray-300 rounded-lg focus:border-purple-600 font-mono font-bold"
+                                />
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <div className="sm:col-span-2">
+                              <label className="block text-[10px] font-bold text-gray-600 mb-0.5">Serving Description / Details:</label>
+                              <input
+                                type="text"
+                                placeholder="e.g. 16oz & 8oz tubs available. Handcrafted slow-simmered rich gravy."
+                                value={dish.description}
+                                onChange={(e) => handleUpdateSpecial(idx, 'description', e.target.value)}
+                                className="w-full px-3 py-1.5 text-xs border border-gray-300 rounded-lg focus:border-purple-600"
+                              />
+                            </div>
+
+                            <div>
+                              <label className="block text-[10px] font-bold text-gray-600 mb-0.5">Portion Size Label:</label>
+                              <input
+                                type="text"
+                                placeholder="e.g. 16oz / 8oz, Plate, Tub"
+                                value={dish.portionSize || ''}
+                                onChange={(e) => handleUpdateSpecial(idx, 'portionSize', e.target.value)}
+                                className="w-full px-3 py-1.5 text-xs border border-gray-300 rounded-lg focus:border-purple-600"
+                              />
+                            </div>
+                          </div>
+
+                          {/* Active Days Selection Checkboxes */}
+                          <div className="pt-2 border-t border-purple-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                            <div>
+                              <div className="flex items-center justify-between gap-2 mb-1">
+                                <label className="block text-[10px] font-bold uppercase tracking-wider text-purple-900">
+                                  Available On Respective Days:
+                                </label>
+                                <div className="flex items-center gap-1">
+                                  <button
+                                    type="button"
+                                    onClick={() => handleSetSpecialDaysPreset(idx, 'weekdays')}
+                                    className="text-[9px] font-bold px-1.5 py-0.5 bg-purple-100 hover:bg-purple-200 text-purple-800 rounded transition-colors"
+                                  >
+                                    All Weekdays
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleSetSpecialDaysPreset(idx, 'weekend')}
+                                    className="text-[9px] font-bold px-1.5 py-0.5 bg-purple-100 hover:bg-purple-200 text-purple-800 rounded transition-colors"
+                                  >
+                                    Weekend
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleSetSpecialDaysPreset(idx, 'all')}
+                                    className="text-[9px] font-bold px-1.5 py-0.5 bg-purple-100 hover:bg-purple-200 text-purple-800 rounded transition-colors"
+                                  >
+                                    All 7 Days
+                                  </button>
+                                </div>
+                              </div>
+                              <div className="flex flex-wrap gap-1.5">
+                                {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map(day => {
+                                  const activeDays = dish.availableDays || ['Saturday', 'Sunday'];
+                                  const isChecked = activeDays.includes(day);
+                                  const isWeekend = day === 'Saturday' || day === 'Sunday';
+                                  return (
+                                    <button
+                                      key={day}
+                                      type="button"
+                                      onClick={() => handleToggleSpecialDay(idx, day)}
+                                      className={`px-2.5 py-1 text-[11px] font-bold rounded-lg border transition-all cursor-pointer flex items-center gap-1 ${
+                                        isChecked
+                                          ? isWeekend 
+                                            ? 'bg-purple-700 text-white border-purple-800 shadow-2xs'
+                                            : 'bg-indigo-600 text-white border-indigo-700 shadow-2xs'
+                                          : 'bg-gray-50 text-gray-500 border-gray-200 hover:bg-purple-50 hover:text-purple-700'
+                                      }`}
+                                    >
+                                      <span>{isChecked ? '✓' : ''}</span>
+                                      <span>{day.slice(0, 3)}</span>
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </div>
+
+                            <div className="text-[11px] text-gray-500">
+                              Active: <strong className="text-purple-900">{(dish.availableDays || ['Saturday', 'Sunday']).join(', ')}</strong>
+                            </div>
                           </div>
                         </div>
-                      </div>
-
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <div>
-                          <label className="block text-[10px] font-bold text-gray-600 mb-0.5">Serving Description:</label>
-                          <input
-                            type="text"
-                            placeholder="e.g. 2 Buttered Pavs with rich vegetable bhaji, lemon & spiced onions"
-                            value={dish.description}
-                            onChange={(e) => handleUpdateSpecial(idx, 'description', e.target.value)}
-                            className="w-full px-3 py-1.5 text-xs border border-gray-300 rounded-lg focus:border-purple-600"
-                          />
-                        </div>
-
-                        <div>
-                          <label className="block text-[10px] font-bold text-gray-600 mb-0.5">Optional Image URL:</label>
-                          <input
-                            type="text"
-                            placeholder="https://example.com/special.jpg"
-                            value={dish.imageUrl || ''}
-                            onChange={(e) => handleUpdateSpecial(idx, 'imageUrl', e.target.value)}
-                            className="w-full px-3 py-1.5 text-xs border border-gray-300 rounded-lg focus:border-purple-600"
-                          />
-                        </div>
-                      </div>
-
-                      {/* Active Days Selection Checkboxes */}
-                      <div className="pt-2 border-t border-purple-100">
-                        <label className="block text-[10px] font-bold uppercase tracking-wider text-purple-900 mb-1.5">
-                          Active Days / Availability:
-                        </label>
-                        <div className="flex flex-wrap gap-1.5">
-                          {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map(day => {
-                            const activeDays = dish.availableDays || ['Saturday', 'Sunday'];
-                            const isChecked = activeDays.includes(day);
-                            return (
-                              <button
-                                key={day}
-                                type="button"
-                                onClick={() => handleToggleSpecialDay(idx, day)}
-                                className={`px-2.5 py-1 text-[11px] font-bold rounded-lg border transition-all cursor-pointer flex items-center gap-1 ${
-                                  isChecked
-                                    ? 'bg-purple-700 text-white border-purple-800 shadow-2xs'
-                                    : 'bg-gray-50 text-gray-500 border-gray-200 hover:bg-purple-50 hover:text-purple-700'
-                                }`}
-                              >
-                                <span>{isChecked ? '✓' : ''}</span>
-                                <span>{day.slice(0, 3)}</span>
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
+                      );
+                    })}
                 </div>
               )}
             </div>

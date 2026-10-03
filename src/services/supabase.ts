@@ -994,7 +994,7 @@ export async function fetchQBOReconciliationSummary(dateStr: string): Promise<QB
   };
 }
 
-const LOCAL_STORAGE_TIFFIN_KEY = 'bbw_tiffin_menu_settings_v1';
+const LOCAL_STORAGE_TIFFIN_KEY = 'bbw_tiffin_menu_settings_v2';
 
 export const DEFAULT_WEEKDAY_MENUS: Record<string, WeekdayMenuEntry> = {
   Monday: { dal: 'Palak Dal', sabzi: 'Cabbage Sabzi', description: 'Fresh spinach dal & tender cabbage sabzi' },

@@ -23,7 +23,8 @@ import {
   isDateSelectable,
   findFirstValidFulfillmentSlot,
   isTimeSlotValidForDate,
-  TIME_SLOTS
+  getTimeSlotsForDate,
+  getDefaultTimeSlotForDate
 } from '../../utils/centralTime';
 import { fetchCalendarBlackouts, createOrder } from '../../services/supabase';
 import { buildOrderWhatsAppUrl } from '../../utils/whatsapp';
@@ -36,6 +37,9 @@ interface CheckoutModalProps {
   isDelivery: boolean;
   setIsDelivery: (val: boolean) => void;
   onOrderSuccess: (order: CateringOrder, isEstimate: boolean) => void;
+  blackoutDates?: string[];
+  initialFulfillmentDate?: string;
+  subTab?: 'order' | 'cake' | 'tiffin';
 }
 
 type CheckoutStep = 'schedule' | 'details' | 'payment';
@@ -46,7 +50,10 @@ export default function CheckoutModal({
   cart,
   isDelivery,
   setIsDelivery,
-  onOrderSuccess
+  onOrderSuccess,
+  blackoutDates = [],
+  initialFulfillmentDate,
+  subTab
 }: CheckoutModalProps) {
   const modalBodyRef = useRef<HTMLDivElement>(null);
 
@@ -69,9 +76,27 @@ export default function CheckoutModal({
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('zelle');
 
   // Date & Time state
-  const [blackouts, setBlackouts] = useState<string[]>([]);
+  const [blackouts, setBlackouts] = useState<string[]>(blackoutDates);
+
+  // Synchronize blackouts when blackoutDates prop changes dynamically
+  useEffect(() => {
+    if (blackoutDates.length > 0) {
+      setBlackouts(prev => Array.from(new Set([...prev, ...blackoutDates])));
+    }
+  }, [blackoutDates]);
   const [fulfillmentDate, setFulfillmentDate] = useState('');
-  const [fulfillmentTime, setFulfillmentTime] = useState('12:30 PM');
+  const [fulfillmentTime, setFulfillmentTime] = useState('4:00 PM');
+  const [showAlternativeDatePicker, setShowAlternativeDatePicker] = useState(false);
+
+  const isTiffinOrder = (cart.length > 0 && cart.some(i => i.category === 'tiffin' || (i.menuItemId && i.menuItemId.includes('tiffin')))) || subTab === 'tiffin';
+  const effectiveSubTab: 'order' | 'cake' | 'tiffin' = isTiffinOrder ? 'tiffin' : (subTab || 'order');
+
+  const isWeekend = (dateStr: string) => {
+    if (!dateStr) return false;
+    const [y, m, d] = dateStr.split('-').map(Number);
+    const day = new Date(y, m - 1, d, 12, 0, 0).getDay();
+    return day === 0 || day === 6;
+  };
 
   // Multi-day order fulfillment time state
   const [sameTimeForAllDays, setSameTimeForAllDays] = useState(true);
@@ -84,13 +109,13 @@ export default function CheckoutModal({
     const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
     for (const item of cart) {
-      const match = item.id.match(/\d{4}-\d{2}-\d{2}/);
+      const match = item.id.match(/\d{4}-\d{2}-\d{2}/) || item.menuItemId?.match(/\d{4}-\d{2}-\d{2}/) || item.notes?.match(/\d{4}-\d{2}-\d{2}/);
       if (match) {
         const dStr = match[0];
         const parts = dStr.split('-').map(Number);
         let label = dStr;
         if (parts.length === 3) {
-          const dObj = new Date(parts[0], parts[1] - 1, parts[2]);
+          const dObj = new Date(parts[0], parts[1] - 1, parts[2], 12, 0, 0);
           label = `${dayNames[dObj.getDay()]}, ${monthNames[dObj.getMonth()]} ${dObj.getDate()}`;
         }
         if (!map.has(dStr)) {
@@ -112,19 +137,22 @@ export default function CheckoutModal({
   useEffect(() => {
     if (isOpen) {
       setStep('schedule');
+      setShowAlternativeDatePicker(false);
       setSubmissionError(null);
       setFormErrors({});
 
       fetchCalendarBlackouts().then(dates => {
-        setBlackouts(dates);
+        setBlackouts(prev => Array.from(new Set([...prev, ...dates, ...blackoutDates])));
 
         if (distinctCartDateGroups.length > 0) {
           const initialMap: Record<string, string> = {};
           distinctCartDateGroups.forEach(g => {
-            let validSlot = '12:30 PM';
-            if (!isTimeSlotValidForDate(g.dateStr, validSlot, cart)) {
-              for (const slot of TIME_SLOTS) {
-                if (isTimeSlotValidForDate(g.dateStr, slot, cart)) {
+            const defaultSlot = getDefaultTimeSlotForDate(g.dateStr, cart, effectiveSubTab);
+            let validSlot = defaultSlot;
+            if (!isTimeSlotValidForDate(g.dateStr, validSlot, cart, effectiveSubTab)) {
+              const availableSlots = getTimeSlotsForDate(g.dateStr, cart, effectiveSubTab);
+              for (const slot of availableSlots) {
+                if (isTimeSlotValidForDate(g.dateStr, slot, cart, effectiveSubTab)) {
                   validSlot = slot;
                   break;
                 }
@@ -133,28 +161,34 @@ export default function CheckoutModal({
             initialMap[g.dateStr] = validSlot;
           });
           setPerDayTimes(initialMap);
-          setFulfillmentDate(distinctCartDateGroups[0].dateStr);
-          setFulfillmentTime(initialMap[distinctCartDateGroups[0].dateStr] || '12:30 PM');
+          const firstDate = distinctCartDateGroups[0].dateStr;
+          setFulfillmentDate(firstDate);
+          setFulfillmentTime(initialMap[firstDate] || getDefaultTimeSlotForDate(firstDate, cart, effectiveSubTab));
         } else {
           // Check if cart contains tiffin items with a specific target YYYY-MM-DD date in ID
-          const tiffinItemWithDate = cart.find(i => i.category === 'tiffin' && /\d{4}-\d{2}-\d{2}/.test(i.id));
-          let preferredDate: string | undefined;
+          const tiffinItemWithDate = cart.find(i => (i.category === 'tiffin' || i.menuItemId?.includes('tiffin')) && /\d{4}-\d{2}-\d{2}/.test(i.id || i.menuItemId || i.notes || ''));
+          let preferredDate: string | undefined = initialFulfillmentDate;
           if (tiffinItemWithDate) {
-            const match = tiffinItemWithDate.id.match(/\d{4}-\d{2}-\d{2}/);
+            const match = (tiffinItemWithDate.id || tiffinItemWithDate.menuItemId || tiffinItemWithDate.notes || '').match(/\d{4}-\d{2}-\d{2}/);
             if (match) preferredDate = match[0];
           }
 
           if (preferredDate && !dates.includes(preferredDate)) {
             setFulfillmentDate(preferredDate);
-            for (const slot of TIME_SLOTS) {
-              if (isTimeSlotValidForDate(preferredDate, slot, cart)) {
-                setFulfillmentTime(slot);
-                break;
+            const slots = getTimeSlotsForDate(preferredDate, cart, effectiveSubTab);
+            let chosen = getDefaultTimeSlotForDate(preferredDate, cart, effectiveSubTab);
+            if (!isTimeSlotValidForDate(preferredDate, chosen, cart, effectiveSubTab)) {
+              for (const slot of slots) {
+                if (isTimeSlotValidForDate(preferredDate, slot, cart, effectiveSubTab)) {
+                  chosen = slot;
+                  break;
+                }
               }
             }
+            setFulfillmentTime(chosen);
           } else {
             // Compute guaranteed earliest valid date & time slot satisfying Central Time cutoff
-            const firstValid = findFirstValidFulfillmentSlot(dates, cart);
+            const firstValid = findFirstValidFulfillmentSlot(dates, cart, effectiveSubTab);
             setFulfillmentDate(firstValid.dateStr);
             setFulfillmentTime(firstValid.timeSlot);
           }
@@ -169,9 +203,10 @@ export default function CheckoutModal({
     setSubmissionError(null);
 
     // If currently chosen time is invalid on this date, auto-select first valid slot on this date
-    if (!isTimeSlotValidForDate(newDateStr, fulfillmentTime, cart)) {
-      for (const slot of TIME_SLOTS) {
-        if (isTimeSlotValidForDate(newDateStr, slot, cart)) {
+    if (!isTimeSlotValidForDate(newDateStr, fulfillmentTime, cart, effectiveSubTab)) {
+      const slots = getTimeSlotsForDate(newDateStr, cart, effectiveSubTab);
+      for (const slot of slots) {
+        if (isTimeSlotValidForDate(newDateStr, slot, cart, effectiveSubTab)) {
           setFulfillmentTime(slot);
           break;
         }
@@ -189,9 +224,9 @@ export default function CheckoutModal({
   }, [hasTiffin, isDelivery, setIsDelivery]);
 
   // Lead time calculations
-  const noticeHours = getRequiredNoticeHours(cart);
-  const cutoffValidation = validateFulfillmentCutoff(fulfillmentDate, fulfillmentTime, blackouts, cart);
-  const upcomingDateOptions = getUpcomingDates(21);
+  const noticeHours = getRequiredNoticeHours(cart, effectiveSubTab);
+  const cutoffValidation = validateFulfillmentCutoff(fulfillmentDate, fulfillmentTime, blackouts, cart, effectiveSubTab);
+  const upcomingDateOptions = getUpcomingDates(21, isTiffinOrder);
 
   // Cost & Tax Bifurcation calculations
   // 1. Tiffin Items (Prices are tax-INCLUSIVE @ 8.25% Texas sales tax)
@@ -245,7 +280,7 @@ export default function CheckoutModal({
   const handleProceedToDetails = () => {
     if (!cutoffValidation.isValid) {
       // Auto-correct to earliest valid slot if somehow invalid
-      const firstValid = findFirstValidFulfillmentSlot(blackouts, cart);
+      const firstValid = findFirstValidFulfillmentSlot(blackouts, cart, effectiveSubTab);
       setFulfillmentDate(firstValid.dateStr);
       setFulfillmentTime(firstValid.timeSlot);
       setSubmissionError(`Adjusted to earliest available window: ${firstValid.dateStr} at ${firstValid.timeSlot}. Click "Continue to Customer Details" to proceed.`);
@@ -598,97 +633,87 @@ export default function CheckoutModal({
                   </div>
                 </div>
 
-                {/* Quick Date Selector Horizontal Pills */}
-                <div>
-                  <label className="block text-[11px] font-bold uppercase tracking-wider text-gray-600 mb-2">
-                    Available Dates (Next 3 Weeks)
-                  </label>
-                  <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none">
-                    {upcomingDateOptions.map(opt => {
-                      const check = isDateSelectable(opt.dateStr, blackouts, cart);
-                      const isSelected = fulfillmentDate === opt.dateStr;
+                {/* ── Scheduled Date & Time Section ── */}
+                {isTiffinOrder && distinctCartDateGroups.length === 1 && !showAlternativeDatePicker ? (
+                  <div className="space-y-4">
+                    {/* Confirmed Scheduled Day Card */}
+                    <div className="p-4 bg-gradient-to-r from-amber-50 to-orange-50/50 rounded-2xl border border-amber-200 space-y-2.5">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                          <CalendarIcon className="w-4 h-4 text-amber-700 shrink-0" />
+                          <span className="text-xs font-bold uppercase tracking-wider text-amber-900">
+                            Scheduled Pickup Date
+                          </span>
+                        </div>
+                        <span className="px-3 py-1 bg-[#00346f] text-white rounded-xl text-xs font-black shadow-xs">
+                          {distinctCartDateGroups[0].displayLabel}
+                        </span>
+                      </div>
 
-                      return (
+                      <div className="text-xs text-gray-700">
+                        <span className="font-semibold text-[#00346f]">Dishes for this day: </span>
+                        <span>{distinctCartDateGroups[0].items.map(i => i.name).join(', ')}</span>
+                      </div>
+
+                      {isWeekend(distinctCartDateGroups[0].dateStr) ? (
+                        <div className="text-[11px] text-amber-900 bg-white/80 p-2.5 rounded-xl border border-amber-200/80 font-medium">
+                          🍱 <strong>Weekend Specials Rule:</strong> Prepared fresh &amp; available <strong>after 3:00 PM</strong> on Saturday &amp; Sunday (Pre-book only).
+                        </div>
+                      ) : (
+                        <div className="text-[11px] text-emerald-900 bg-white/80 p-2.5 rounded-xl border border-emerald-200/80 font-medium">
+                          🍱 <strong>Fresh Homestyle Tiffin:</strong> Packed fresh for afternoon/dinner pickup (4:00 PM – 7:30 PM) or lunch (12:00 PM – 1:30 PM).
+                        </div>
+                      )}
+
+                      <div className="pt-1 flex items-center justify-between text-[11px]">
+                        <span className="text-gray-500 italic">Pickup: Home Kitchen • Deerwood Dr, Little Elm</span>
                         <button
-                          key={opt.dateStr}
                           type="button"
-                          disabled={!check.selectable}
-                          onClick={() => handleSelectDate(opt.dateStr)}
-                          className={`flex flex-col items-center justify-center min-w-[72px] min-h-[54px] py-2 px-2.5 rounded-xl border text-center transition-all cursor-pointer shrink-0 ${
-                            !check.selectable
-                              ? 'bg-gray-100 border-gray-200 text-gray-300 cursor-not-allowed opacity-60'
-                              : isSelected
-                              ? 'bg-[#00346f] text-white border-[#00346f] shadow-sm ring-2 ring-[#00346f]/20'
-                              : 'bg-white hover:bg-gray-100 border-gray-200 text-gray-700'
-                          }`}
-                          title={!check.selectable ? check.reason : `Select ${opt.label}`}
+                          onClick={() => setShowAlternativeDatePicker(true)}
+                          className="text-[#00346f] hover:underline font-bold cursor-pointer"
                         >
-                          <span className="text-[10px] uppercase font-bold tracking-wider">{opt.dayOfWeek}</span>
-                          <span className="text-xs font-black mt-0.5">{opt.label}</span>
-                          {!check.selectable && (
-                            <span className={`text-[8px] uppercase tracking-tighter font-bold mt-0.5 ${
-                              blackouts.includes(opt.dateStr) ? 'text-amber-700' : 'text-rose-500'
-                            }`}>
-                              {blackouts.includes(opt.dateStr) ? 'Sold Out' : 'Closed'}
-                            </span>
-                          )}
+                          Change Date →
                         </button>
-                      );
-                    })}
-                  </div>
-                </div>
+                      </div>
+                    </div>
 
-                {/* Custom Date Input Fallback & Time Selector */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-                  <div>
-                    <label className="block text-xs font-semibold text-gray-700 mb-1">
-                      Or Pick Specific Date
-                    </label>
-                    <input
-                      type="date"
-                      value={fulfillmentDate}
-                      min={cutoffValidation.earliestAllowedDate}
-                      onChange={(e) => handleSelectDate(e.target.value)}
-                      className="w-full bg-white border border-gray-300 rounded-xl px-3 py-2.5 min-h-[44px] text-base sm:text-xs text-gray-800 focus:outline-none focus:border-[#00346f]"
-                    />
+                    {/* Single-Day Pickup Time Selector */}
+                    <div>
+                      <label className="block text-xs font-bold text-gray-700 mb-1">
+                        Select Pickup Time Window
+                      </label>
+                      <select
+                        value={fulfillmentTime}
+                        onChange={(e) => {
+                          const newTime = e.target.value;
+                          setFulfillmentTime(newTime);
+                          setPerDayTimes({ [fulfillmentDate]: newTime });
+                        }}
+                        className="w-full bg-white border border-gray-300 rounded-xl px-3 py-2.5 min-h-[44px] text-base sm:text-xs text-gray-800 font-bold focus:outline-none focus:border-[#00346f]"
+                      >
+                        {getTimeSlotsForDate(fulfillmentDate, cart, effectiveSubTab).map(slot => {
+                          const isSlotValid = isTimeSlotValidForDate(fulfillmentDate, slot, cart, effectiveSubTab);
+                          return (
+                            <option key={slot} value={slot} disabled={!isSlotValid}>
+                              {slot} {!isSlotValid ? '— Unavailable (cutoff notice)' : ''}
+                            </option>
+                          );
+                        })}
+                      </select>
+                      <p className="text-[11px] text-gray-500 mt-1">
+                        {isWeekend(fulfillmentDate) 
+                          ? 'Available slots: 3:00 PM – 7:30 PM (US Central Time)' 
+                          : 'Available slots: Lunch (12 PM – 1:30 PM) • Dinner (4 PM – 7:30 PM)'}
+                      </p>
+                    </div>
                   </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-gray-700 mb-1">
-                      {distinctCartDateGroups.length > 1 ? 'Primary / Default Time Window' : 'Fulfillment Window'}
-                    </label>
-                    <select
-                      value={fulfillmentTime}
-                      onChange={(e) => {
-                        const newTime = e.target.value;
-                        setFulfillmentTime(newTime);
-                        if (sameTimeForAllDays) {
-                          const updated: Record<string, string> = {};
-                          distinctCartDateGroups.forEach(g => updated[g.dateStr] = newTime);
-                          setPerDayTimes(updated);
-                        }
-                      }}
-                      className="w-full bg-white border border-gray-300 rounded-xl px-3 py-2.5 min-h-[44px] text-base sm:text-xs text-gray-800 focus:outline-none focus:border-[#00346f]"
-                    >
-                      {TIME_SLOTS.map(slot => {
-                        const isSlotValid = isTimeSlotValidForDate(fulfillmentDate, slot, cart);
-                        return (
-                          <option key={slot} value={slot} disabled={!isSlotValid}>
-                            {slot} {!isSlotValid ? '— Unavailable (cutoff)' : ''}
-                          </option>
-                        );
-                      })}
-                    </select>
-                  </div>
-                </div>
-
-                {/* Multi-Day Fulfillment Schedule Selector */}
-                {distinctCartDateGroups.length > 1 && (
-                  <div className="p-4 bg-blue-50/90 rounded-2xl border border-blue-200 space-y-3 pt-3 mt-3">
+                ) : isTiffinOrder && distinctCartDateGroups.length > 1 && !showAlternativeDatePicker ? (
+                  /* Multi-Day Scheduled Tiffin Order */
+                  <div className="p-4 bg-blue-50/90 rounded-2xl border border-blue-200 space-y-3">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-blue-200/70 pb-2.5">
                       <div>
                         <span className="text-[10px] font-bold uppercase tracking-widest text-[#775a19] block">
-                          MULTI-DAY ORDER SCHEDULE ({distinctCartDateGroups.length} DATES)
+                          MULTI-DAY TIFFIN SCHEDULE ({distinctCartDateGroups.length} DATES)
                         </span>
                         <h4 className="font-serif font-bold text-sm text-[#00346f] flex items-center gap-1.5">
                           <CalendarIcon className="w-4 h-4 text-[#00346f]" />
@@ -696,30 +721,55 @@ export default function CheckoutModal({
                         </h4>
                       </div>
 
-                      <label className="inline-flex items-center gap-2 text-xs font-bold text-[#00346f] cursor-pointer bg-white px-3 py-1.5 rounded-xl border border-blue-200 shadow-2xs self-start sm:self-auto">
-                        <input
-                          type="checkbox"
-                          checked={sameTimeForAllDays}
-                          onChange={(e) => {
-                            const checked = e.target.checked;
-                            setSameTimeForAllDays(checked);
-                            if (checked) {
-                              const updated: Record<string, string> = {};
-                              distinctCartDateGroups.forEach(g => updated[g.dateStr] = fulfillmentTime);
-                              setPerDayTimes(updated);
-                            }
-                          }}
-                          className="w-4 h-4 rounded text-[#00346f] focus:ring-[#00346f] cursor-pointer"
-                        />
-                        <span>Same time for all orders ({fulfillmentTime})</span>
-                      </label>
+                      <div className="flex items-center gap-3">
+                        <label className="inline-flex items-center gap-2 text-xs font-bold text-[#00346f] cursor-pointer bg-white px-3 py-1.5 rounded-xl border border-blue-200 shadow-2xs">
+                          <input
+                            type="checkbox"
+                            checked={sameTimeForAllDays}
+                            onChange={(e) => {
+                              const checked = e.target.checked;
+                              setSameTimeForAllDays(checked);
+                              if (checked) {
+                                const updated: Record<string, string> = {};
+                                distinctCartDateGroups.forEach(g => updated[g.dateStr] = fulfillmentTime);
+                                setPerDayTimes(updated);
+                              }
+                            }}
+                            className="w-4 h-4 rounded text-[#00346f] focus:ring-[#00346f] cursor-pointer"
+                          />
+                          <span>Same time for all ({fulfillmentTime})</span>
+                        </label>
+                      </div>
                     </div>
 
                     {sameTimeForAllDays ? (
-                      <div className="space-y-2">
-                        <p className="text-xs text-gray-600">
-                          All {distinctCartDateGroups.length} scheduled order days will use the pickup window <strong>{fulfillmentTime}</strong>. Uncheck the option above if you wish to select different pickup times for individual days.
-                        </p>
+                      <div className="space-y-3">
+                        <div>
+                          <label className="block text-xs font-semibold text-gray-700 mb-1">
+                            Common Pickup Time Window (Applied to All {distinctCartDateGroups.length} Days)
+                          </label>
+                          <select
+                            value={fulfillmentTime}
+                            onChange={(e) => {
+                              const newTime = e.target.value;
+                              setFulfillmentTime(newTime);
+                              const updated: Record<string, string> = {};
+                              distinctCartDateGroups.forEach(g => updated[g.dateStr] = newTime);
+                              setPerDayTimes(updated);
+                            }}
+                            className="w-full bg-white border border-gray-300 rounded-xl px-3 py-2.5 min-h-[44px] text-base sm:text-xs text-gray-800 font-bold focus:outline-none focus:border-[#00346f]"
+                          >
+                            {getTimeSlotsForDate(fulfillmentDate, cart, effectiveSubTab).map(slot => {
+                              const isSlotValid = isTimeSlotValidForDate(fulfillmentDate, slot, cart, effectiveSubTab);
+                              return (
+                                <option key={slot} value={slot} disabled={!isSlotValid}>
+                                  {slot} {!isSlotValid ? '— Unavailable (cutoff notice)' : ''}
+                                </option>
+                              );
+                            })}
+                          </select>
+                        </div>
+
                         <div className="flex flex-wrap items-center gap-2 pt-1">
                           {distinctCartDateGroups.map(g => (
                             <span key={g.dateStr} className="px-2.5 py-1 bg-white rounded-lg border border-gray-200 text-[11px] font-semibold text-gray-800 shadow-2xs">
@@ -735,7 +785,8 @@ export default function CheckoutModal({
                         </p>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                           {distinctCartDateGroups.map(g => {
-                            const currentTime = perDayTimes[g.dateStr] || fulfillmentTime;
+                            const currentTime = perDayTimes[g.dateStr] || getDefaultTimeSlotForDate(g.dateStr, cart, effectiveSubTab);
+                            const availableSlots = getTimeSlotsForDate(g.dateStr, cart, effectiveSubTab);
                             return (
                               <div key={g.dateStr} className="p-3 bg-white rounded-xl border border-gray-200 flex flex-col justify-between gap-2 shadow-2xs">
                                 <div>
@@ -743,9 +794,14 @@ export default function CheckoutModal({
                                   <span className="text-[11px] text-gray-500 block truncate">
                                     {g.items.map(i => i.name).join(', ')}
                                   </span>
+                                  {isWeekend(g.dateStr) && (
+                                    <span className="text-[10px] text-amber-700 font-bold block mt-0.5">
+                                      Weekend Specials: After 3 PM only
+                                    </span>
+                                  )}
                                 </div>
                                 <div className="flex items-center justify-between pt-2 border-t border-gray-150">
-                                  <span className="text-[11px] font-semibold text-gray-600">Pickup Time:</span>
+                                  <span className="text-[11px] font-semibold text-gray-600">Pickup:</span>
                                   <select
                                     value={currentTime}
                                     onChange={(e) => {
@@ -754,8 +810,8 @@ export default function CheckoutModal({
                                     }}
                                     className="px-2.5 py-1.5 bg-gray-50 border border-gray-300 rounded-lg text-xs font-bold text-[#00346f] focus:outline-none focus:border-[#00346f]"
                                   >
-                                    {TIME_SLOTS.map(slot => {
-                                      const isSlotValid = isTimeSlotValidForDate(g.dateStr, slot, cart);
+                                    {availableSlots.map(slot => {
+                                      const isSlotValid = isTimeSlotValidForDate(g.dateStr, slot, cart, effectiveSubTab);
                                       return (
                                         <option key={slot} value={slot} disabled={!isSlotValid}>
                                           {slot} {!isSlotValid ? '(cutoff)' : ''}
@@ -770,6 +826,124 @@ export default function CheckoutModal({
                         </div>
                       </div>
                     )}
+
+                    <div className="pt-2 text-right">
+                      <button
+                        type="button"
+                        onClick={() => setShowAlternativeDatePicker(true)}
+                        className="text-[11px] text-[#00346f] hover:underline font-bold cursor-pointer"
+                      >
+                        Reschedule / Select Custom Dates →
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  /* Standard / Alternative Date Picker Rail */
+                  <div className="space-y-4">
+                    {showAlternativeDatePicker && distinctCartDateGroups.length > 0 && (
+                      <div className="flex items-center justify-between p-2.5 bg-amber-50 rounded-xl border border-amber-200 text-xs">
+                        <span className="text-amber-900 font-semibold">
+                          Custom Date Picker Active (Cart items originally scheduled for: {distinctCartDateGroups.map(g => g.displayLabel).join(', ')})
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setShowAlternativeDatePicker(false);
+                            setFulfillmentDate(distinctCartDateGroups[0].dateStr);
+                          }}
+                          className="text-[#00346f] font-bold underline cursor-pointer shrink-0 ml-2"
+                        >
+                          Reset to Cart Dates
+                        </button>
+                      </div>
+                    )}
+
+                    <div>
+                      <label className="block text-[11px] font-bold uppercase tracking-wider text-gray-600 mb-2">
+                        Available Dates (Next 3 Weeks)
+                      </label>
+                      <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none">
+                        {upcomingDateOptions.map(opt => {
+                          const check = isDateSelectable(opt.dateStr, blackouts, cart, effectiveSubTab);
+                          const isSelected = fulfillmentDate === opt.dateStr;
+
+                          return (
+                            <button
+                              key={opt.dateStr}
+                              type="button"
+                              disabled={!check.selectable}
+                              onClick={() => handleSelectDate(opt.dateStr)}
+                              className={`flex flex-col items-center justify-center min-w-[72px] min-h-[54px] py-2 px-2.5 rounded-xl border text-center transition-all cursor-pointer shrink-0 ${
+                                !check.selectable
+                                  ? 'bg-gray-100 border-gray-200 text-gray-300 cursor-not-allowed opacity-60'
+                                  : isSelected
+                                  ? 'bg-[#00346f] text-white border-[#00346f] shadow-sm ring-2 ring-[#00346f]/20'
+                                  : 'bg-white hover:bg-gray-100 border-gray-200 text-gray-700'
+                              }`}
+                              title={!check.selectable ? check.reason : `Select ${opt.label}`}
+                            >
+                              <span className="text-[10px] uppercase font-bold tracking-wider">{opt.dayOfWeek}</span>
+                              <span className="text-xs font-black mt-0.5">{opt.label}</span>
+                              {!check.selectable && (
+                                <span className={`text-[8px] uppercase tracking-tighter font-bold mt-0.5 ${
+                                  blackouts.includes(opt.dateStr) ? 'text-amber-700' : 'text-rose-500'
+                                }`}>
+                                  {blackouts.includes(opt.dateStr) ? 'Sold Out' : 'Closed'}
+                                </span>
+                              )}
+                              {check.selectable && isTiffinOrder && (opt.dayOfWeek === 'Sat' || opt.dayOfWeek === 'Sun') && (
+                                <span className="text-[8px] uppercase tracking-tighter font-bold mt-0.5 text-amber-600">
+                                  3 PM+
+                                </span>
+                              )}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-700 mb-1">
+                          Or Pick Specific Date
+                        </label>
+                        <input
+                          type="date"
+                          value={fulfillmentDate}
+                          min={cutoffValidation.earliestAllowedDate}
+                          onChange={(e) => handleSelectDate(e.target.value)}
+                          className="w-full bg-white border border-gray-300 rounded-xl px-3 py-2.5 min-h-[44px] text-base sm:text-xs text-gray-800 focus:outline-none focus:border-[#00346f]"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-700 mb-1">
+                          Fulfillment Window
+                        </label>
+                        <select
+                          value={fulfillmentTime}
+                          onChange={(e) => {
+                            const newTime = e.target.value;
+                            setFulfillmentTime(newTime);
+                            if (sameTimeForAllDays) {
+                              const updated: Record<string, string> = {};
+                              distinctCartDateGroups.forEach(g => updated[g.dateStr] = newTime);
+                              setPerDayTimes(updated);
+                            }
+                          }}
+                          className="w-full bg-white border border-gray-300 rounded-xl px-3 py-2.5 min-h-[44px] text-base sm:text-xs text-gray-800 focus:outline-none focus:border-[#00346f]"
+                        >
+                          {getTimeSlotsForDate(fulfillmentDate, cart, effectiveSubTab).map(slot => {
+                            const isSlotValid = isTimeSlotValidForDate(fulfillmentDate, slot, cart, effectiveSubTab);
+                            return (
+                              <option key={slot} value={slot} disabled={!isSlotValid}>
+                                {slot} {!isSlotValid ? '— Unavailable (cutoff notice)' : ''}
+                              </option>
+                            );
+                          })}
+                        </select>
+                      </div>
+                    </div>
                   </div>
                 )}
 

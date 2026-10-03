@@ -183,9 +183,13 @@ Return JSON in this EXACT structure:
   ],
   "specialDishes": [
     {
-      "title": "string (e.g. 'Chef’s Special Pav Bhaji Feast')",
+      "title": "string (e.g. 'Chef’s Special Pav Bhaji Feast', 'Paneer Butter Masala (16oz Tub)')",
       "price": number (e.g. 13.99),
-      "description": "string"
+      "price16oz": number (optional, e.g. 13.99),
+      "price8oz": number (optional, e.g. 7.99),
+      "portionSize": "string (optional, e.g. '16oz', '8oz', '16oz / 8oz', 'Plate / Meal')",
+      "description": "string",
+      "availableDays": ["Saturday"] or ["Sunday"] or ["Saturday", "Sunday"]
     }
   ]
 }
@@ -195,14 +199,81 @@ Instructions:
 - If Saturday mentions 'You decide!', DM requests, or custom specials, extract dal as 'Chef's Choice / Customer Request', sabzi as 'Customized Homestyle Sabzi', and description as 'Fresh Saturday tiffin prepared to order or your requested dish'.
 - In dabbaPricing, extract Single Dabba price, Family Dabba price, and Weekly Dabba price as clean positive numbers.
 - In containerAddons, extract all 16 oz items listed under '16 oz Containers Also Available' or similar section, with their exact numerical prices.
-- In specialDishes, if there are weekend specials or chef specials, extract their title, price, and description.
+- In specialDishes, capture ALL weekend specials, chef specials, and 16oz/8oz tubs for Saturday and Sunday. Extract title, price, optional price16oz, price8oz, portionSize, description, and availableDays accurately. Do not omit or truncate any dish.
 - Return ONLY valid raw JSON with NO markdown code blocks, backticks, or other text.
 `;
 
+export const WEEKEND_SPECIAL_SCAN_PROMPT = `
+You are an expert OCR and menu extraction AI for an Indian homestyle tiffin catering service called "Desi Dabba" by BlueBonnet Whisk.
+Analyze the provided weekend special flyer image with extreme detail and accuracy.
+
+CRITICAL INSTRUCTIONS:
+1. CAPTURE ALL SPECIAL DISHES & TUBS (DO NOT OMIT OR TRUNCATE ANYTHING):
+   - Extract EVERY SINGLE item, dish, curry, sabzi, entree, snack, sweet, dessert, and side from the flyer.
+   - Capture all of them for kitchen verification so the chef can inspect every dish and remove unneeded items during validation if needed. Do not summarize or combine items.
+
+2. 16 OZ AND 8 OZ TUBS SCANNING (VERY IMPORTANT):
+   - Check carefully for any dishes available in 16 oz or 8 oz tubs (e.g. curries, dals, gravies, paneer specialties, sabzis, rice, raitas).
+   - If a dish offers dual sizing/pricing (e.g., "Paneer Butter Masala: 16oz $14 / 8oz $8", or "Dal Makhani 16 oz $12, 8 oz $7"):
+     * "price": 14.00 (the standard / 16oz price)
+     * "price16oz": 14.00
+     * "price8oz": 8.00
+     * "portionSize": "16oz / 8oz"
+     * "description": mention "16 oz & 8 oz tubs available" along with dish details
+   - If a dish is listed specifically as a 16 oz tub (e.g., "Dal Makhni • 16 oz — $9.99" or "Paneer Lababdar • 16 oz — $13.99"):
+     * "title": preserve the title including size if specified (e.g. "Dal Makhni (16 oz)", "Paneer Lababdar (16 oz)")
+     * "price": 9.99 or 13.99
+     * "price16oz": 9.99 or 13.99
+     * "portionSize": "16oz"
+   - If a dish is listed specifically as an 8 oz tub (e.g., "Boondi Raita (8oz Tub) - $4.99"):
+     * "title": preserve the title including size if specified (e.g. "Boondi Raita (8oz Tub)")
+     * "price": 4.99
+     * "price8oz": 4.99
+     * "portionSize": "8oz"
+   - If a combo or deal includes 8 oz / 16 oz items (e.g., "Bhayankar Tasty Deal! 8 oz Aaloo Bhaji + 3 Pooris + 8 oz Kheer — $20"):
+     * Capture it with full details and portion size!
+
+3. RESPECTIVE DAY (SATURDAY VS SUNDAY) DETECTION:
+   - Identify whether each dish is offered on Saturday, Sunday, or both:
+     * If listed under "Saturday", "Sat Special", "Saturday Only", or Saturday's date -> "availableDays": ["Saturday"]
+     * If listed under "Sunday", "Sun Special", "Sunday Only", or Sunday's date -> "availableDays": ["Sunday"]
+     * If listed under "Weekend", "Sat & Sun", "Saturday & Sunday", or if it applies to both days -> "availableDays": ["Saturday", "Sunday"]
+     * If day is not explicitly differentiated, default to "availableDays": ["Saturday", "Sunday"]
+
+4. NUMERICAL PRICING:
+   - Cleanly extract all prices as positive numbers (e.g. 13.99, 8.50). Do not include dollar signs or letters.
+
+Return JSON in this EXACT structure:
+{
+  "weekTitle": "string (e.g. 'Weekend Special October 3 - 4')",
+  "specialDishes": [
+    {
+      "title": "string (name of dish or tub)",
+      "price": number (e.g. 13.99),
+      "price16oz": number (optional, e.g. 13.99),
+      "price8oz": number (optional, e.g. 7.99),
+      "portionSize": "string (optional, e.g. '16oz', '8oz', '16oz / 8oz', 'Plate / Meal')",
+      "description": "string (serving description, ingredients, details)",
+      "availableDays": ["Saturday"] or ["Sunday"] or ["Saturday", "Sunday"]
+    }
+  ],
+  "containerAddons": [
+    {
+      "name": "string",
+      "price": number,
+      "description": "string"
+    }
+  ]
+}
+
+Return ONLY valid raw JSON with NO markdown code blocks, backticks, or other text.
+`;
+
 /**
- * Scans a tiffin flyer image using Google Gemini API and returns parsed structured data
+ * Shared Gemini multimodal runner for prompt and image
  */
-export async function scanTiffinFlyerWithGemini(
+async function executeGeminiScan(
+  promptText: string,
   imageUrlOrData: string,
   providedKey?: string
 ): Promise<ScannedTiffinData> {
@@ -225,7 +296,7 @@ export async function scanTiffinFlyerWithGemini(
         contents: [
           {
             parts: [
-              { text: SCAN_PROMPT },
+              { text: promptText },
               {
                 inlineData: {
                   mimeType: mimeType.includes('png') ? 'image/png' : 'image/jpeg',
@@ -290,6 +361,26 @@ export async function scanTiffinFlyerWithGemini(
 }
 
 /**
+ * Scans a tiffin flyer image using Google Gemini API and returns parsed structured data
+ */
+export async function scanTiffinFlyerWithGemini(
+  imageUrlOrData: string,
+  providedKey?: string
+): Promise<ScannedTiffinData> {
+  return executeGeminiScan(SCAN_PROMPT, imageUrlOrData, providedKey);
+}
+
+/**
+ * Scans a weekend special flyer specifically capturing all dishes, 16oz and 8oz tubs, and Sat/Sun days
+ */
+export async function scanWeekendSpecialFlyerWithGemini(
+  imageUrlOrData: string,
+  providedKey?: string
+): Promise<ScannedTiffinData> {
+  return executeGeminiScan(WEEKEND_SPECIAL_SCAN_PROMPT, imageUrlOrData, providedKey);
+}
+
+/**
  * Sanitizes and validates the parsed Gemini output to ensure safe state mapping
  */
 function sanitizeParsedTiffinData(data: any): ScannedTiffinData {
@@ -334,16 +425,38 @@ function sanitizeParsedTiffinData(data: any): ScannedTiffinData {
   }
 
   if (Array.isArray(data.specialDishes) && data.specialDishes.length > 0) {
-    result.specialDishes = data.specialDishes.map((item: any, idx: number) => ({
-      id: `gemini-spec-${idx}-${Date.now().toString(36)}`,
-      title: (item.title || 'Chef’s Special Dish').trim(),
-      price: Number(item.price) || 13.99,
-      description: (item.description || 'Handcrafted delicacy').trim(),
-      imageUrl: '',
-      availableDays: Array.isArray(item.availableDays) && item.availableDays.length > 0
-        ? item.availableDays
-        : ['Saturday', 'Sunday']
-    }));
+    result.specialDishes = data.specialDishes.map((item: any, idx: number) => {
+      const price16oz = item.price16oz !== undefined && !isNaN(Number(item.price16oz)) && Number(item.price16oz) > 0 ? Number(item.price16oz) : undefined;
+      const price8oz = item.price8oz !== undefined && !isNaN(Number(item.price8oz)) && Number(item.price8oz) > 0 ? Number(item.price8oz) : undefined;
+      const mainPrice = Number(item.price) || price16oz || price8oz || 13.99;
+
+      let days: string[] = ['Saturday', 'Sunday'];
+      if (Array.isArray(item.availableDays) && item.availableDays.length > 0) {
+        const validDays = item.availableDays
+          .map((d: any) => String(d).trim())
+          .filter((d: string) => ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].includes(d));
+        if (validDays.length > 0) {
+          days = validDays;
+        }
+      } else if (typeof item.availableDays === 'string' && item.availableDays.trim()) {
+        const str = item.availableDays.toLowerCase();
+        if (str.includes('sat') && !str.includes('sun')) days = ['Saturday'];
+        else if (str.includes('sun') && !str.includes('sat')) days = ['Sunday'];
+        else if (str.includes('sat') && str.includes('sun')) days = ['Saturday', 'Sunday'];
+      }
+
+      return {
+        id: `gemini-spec-${idx}-${Date.now().toString(36)}`,
+        title: (item.title || 'Chef’s Special Dish').trim(),
+        price: mainPrice,
+        price16oz,
+        price8oz,
+        portionSize: typeof item.portionSize === 'string' && item.portionSize.trim() ? item.portionSize.trim() : undefined,
+        description: (item.description || 'Handcrafted delicacy').trim(),
+        imageUrl: typeof item.imageUrl === 'string' ? item.imageUrl.trim() : '',
+        availableDays: days
+      };
+    });
   }
 
   return result;
@@ -437,7 +550,50 @@ export function getBundledFlyerParsedData(): ScannedTiffinData {
         price: 13.99,
         description: 'Slow-simmered spiced vegetable bhaji with extra butter, 2 toasted ladi pavs, onion salad & masala chili.',
         imageUrl: '',
-        availableDays: ['Saturday', 'Sunday']
+        availableDays: ['Saturday', 'Sunday'],
+        portionSize: 'Plate / Meal'
+      },
+      {
+        id: 'spec-paneer-butter-tub',
+        title: 'Paneer Butter Masala (16oz / 8oz Tub)',
+        price: 14.99,
+        price16oz: 14.99,
+        price8oz: 8.99,
+        description: 'Rich cottage cheese in creamy tomato gravy. 16oz and 8oz tubs available.',
+        imageUrl: '',
+        availableDays: ['Saturday'],
+        portionSize: '16oz / 8oz'
+      },
+      {
+        id: 'spec-dal-makhani-tub',
+        title: 'Dal Makhani (16oz / 8oz Tub)',
+        price: 11.99,
+        price16oz: 11.99,
+        price8oz: 6.99,
+        description: 'Slow-simmered black lentils and kidney beans with butter and cream. 16oz and 8oz tubs available.',
+        imageUrl: '',
+        availableDays: ['Sunday'],
+        portionSize: '16oz / 8oz'
+      },
+      {
+        id: 'spec-chole-bhature',
+        title: 'Amritsari Chole Bhature Platter',
+        price: 12.99,
+        description: '2 fluffy bhature served with spiced Punjabi chole, pickled onions & green chutney.',
+        imageUrl: '',
+        availableDays: ['Sunday'],
+        portionSize: 'Plate / Meal'
+      },
+      {
+        id: 'spec-veg-biryani',
+        title: 'Royal Vegetable Dum Biryani (16oz Tub)',
+        price: 13.49,
+        price16oz: 13.49,
+        price8oz: 7.99,
+        description: 'Fragrant basmati rice layered with spiced vegetables, saffron, mint and fried onions with raita.',
+        imageUrl: '',
+        availableDays: ['Saturday'],
+        portionSize: '16oz / 8oz'
       }
     ]
   };

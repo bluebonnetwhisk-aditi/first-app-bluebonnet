@@ -490,6 +490,9 @@ export default function CateringContainer() {
           isDelivery={isDelivery}
           setIsDelivery={setIsDelivery}
           onOrderSuccess={handleOrderSuccess}
+          blackoutDates={blackoutDates}
+          initialFulfillmentDate={selectedGlobalDate}
+          subTab={subTab}
         />
       </ErrorBoundary>
 

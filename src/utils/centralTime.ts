@@ -45,13 +45,13 @@ export function getCentralTimeNow(): {
 /**
  * Calculates the required lead time hours based on items in the cart.
  * - Cakes present: 48 hours notice.
- * - Tiffin items: 12 hours notice.
+ * - Tiffin items: 1 hour notice (person can checkout after 1hr from current time for all non-blackout days).
  * - Catering items (trays, breads, beverages): 24 hours notice.
  * - Default: 24 hours notice.
  */
 export function getRequiredNoticeHours(items: CartItem[] = [], subTab?: 'order' | 'cake' | 'tiffin'): number {
   if (subTab === 'tiffin' || items.some(item => item.category === 'tiffin' || (item.menuItemId && item.menuItemId.includes('tiffin')))) {
-    return 12;
+    return 1;
   }
   
   if (subTab === 'cake' || items.some(item => item.category === 'cakes' || item.leadTimeHours >= 48)) {
@@ -63,16 +63,85 @@ export function getRequiredNoticeHours(items: CartItem[] = [], subTab?: 'order' 
     return maxLead;
   }
 
-  return 12;
+  return 24;
 }
 
-export const TIME_SLOTS = [
+export const CATERING_TIME_SLOTS = [
   '10:00 AM', '10:30 AM', '11:00 AM', '11:30 AM',
   '12:00 PM', '12:30 PM', '1:00 PM', '1:30 PM',
   '2:00 PM', '2:30 PM', '3:00 PM', '3:30 PM',
   '4:00 PM', '4:30 PM', '5:00 PM', '5:30 PM',
   '6:00 PM', '6:30 PM', '7:00 PM'
 ];
+
+// Tiffin Weekend Pickup Slots (Saturday & Sunday - Flyer Rule: "Available after 3 PM")
+export const TIFFIN_WEEKEND_TIME_SLOTS = [
+  '3:00 PM', '3:30 PM', '4:00 PM', '4:30 PM',
+  '5:00 PM', '5:30 PM', '6:00 PM', '6:30 PM',
+  '7:00 PM', '7:30 PM', '8:00 PM', '8:30 PM', '9:00 PM'
+];
+
+// Tiffin Weekday Pickup Slots (Monday–Friday - Lunch & Dinner)
+export const TIFFIN_WEEKDAY_TIME_SLOTS = [
+  '12:00 PM', '12:30 PM', '1:00 PM', '1:30 PM',
+  '4:00 PM', '4:30 PM', '5:00 PM', '5:30 PM',
+  '6:00 PM', '6:30 PM', '7:00 PM', '7:30 PM', '8:00 PM', '8:30 PM', '9:00 PM'
+];
+
+export const TIME_SLOTS = CATERING_TIME_SLOTS;
+
+/**
+ * Returns available pickup time slots for the given date and order context.
+ * - Weekend (Sat/Sun) Tiffin: After 3 PM only ('3:00 PM' - '7:30 PM') per flyer rule.
+ * - Weekday Tiffin: Lunch & Dinner windows.
+ * - Catering/Cakes: Standard catering slots ('10:00 AM' - '7:00 PM').
+ */
+export function getTimeSlotsForDate(
+  dateStr: string,
+  items: CartItem[] = [],
+  subTab?: 'order' | 'cake' | 'tiffin'
+): string[] {
+  const isTiffin = (items.length > 0 && items.some(i => i.category === 'tiffin' || (i.menuItemId && i.menuItemId.includes('tiffin')))) || subTab === 'tiffin';
+  
+  if (!isTiffin) {
+    return CATERING_TIME_SLOTS;
+  }
+
+  if (dateStr) {
+    const [y, m, d] = dateStr.split('-').map(Number);
+    const dayOfWeek = new Date(y, m - 1, d, 12, 0, 0).getDay();
+    if (dayOfWeek === 0 || dayOfWeek === 6) {
+      return TIFFIN_WEEKEND_TIME_SLOTS;
+    }
+  }
+
+  return TIFFIN_WEEKDAY_TIME_SLOTS;
+}
+
+/**
+ * Returns a recommended default time slot for the given date and order context.
+ * Weekend Tiffin defaults to 4:00 PM (safely after 3 PM).
+ * Weekday Tiffin defaults to 5:00 PM (dinner pickup).
+ * Catering defaults to 12:30 PM.
+ */
+export function getDefaultTimeSlotForDate(
+  dateStr: string,
+  items: CartItem[] = [],
+  subTab?: 'order' | 'cake' | 'tiffin'
+): string {
+  const isTiffin = (items.length > 0 && items.some(i => i.category === 'tiffin' || (i.menuItemId && i.menuItemId.includes('tiffin')))) || subTab === 'tiffin';
+  if (!isTiffin) {
+    return '12:30 PM';
+  }
+  if (dateStr) {
+    const [y, m, d] = dateStr.split('-').map(Number);
+    const dayOfWeek = new Date(y, m - 1, d, 12, 0, 0).getDay();
+    if (dayOfWeek === 0 || dayOfWeek === 6) {
+      return '4:00 PM';
+    }
+  }
+  return '5:00 PM';
+}
 
 /**
  * Parses a 12-hour formatted time string into { hours, minutes } in 24-hour time.
@@ -98,20 +167,36 @@ export function parse12HourTime(timeStr: string): { hours: number; minutes: numb
 export function isTimeSlotValidForDate(
   dateStr: string,
   timeSlot: string,
-  items: CartItem[]
+  items: CartItem[] = [],
+  subTab?: 'order' | 'cake' | 'tiffin'
 ): boolean {
   if (!dateStr || !timeSlot) return false;
   const { nowDate } = getCentralTimeNow();
-  const noticeHours = getRequiredNoticeHours(items);
+  const noticeHours = getRequiredNoticeHours(items, subTab);
+  const isTiffin = (items.length > 0 && items.some(i => i.category === 'tiffin' || (i.menuItemId && i.menuItemId.includes('tiffin')))) || subTab === 'tiffin';
+
+  const [y, m, d] = dateStr.split('-').map(Number);
+  const targetDayOfWeek = new Date(y, m - 1, d, 12, 0, 0).getDay();
+
+  // Weekend Tiffin rule: available after 3 PM only per flyer
+  if (isTiffin && (targetDayOfWeek === 0 || targetDayOfWeek === 6)) {
+    const { hours } = parse12HourTime(timeSlot);
+    if (hours < 15) {
+      return false;
+    }
+  }
 
   const { hours, minutes } = parse12HourTime(timeSlot);
-  const [y, m, d] = dateStr.split('-').map(Number);
   const targetDate = new Date(y, m - 1, d, hours, minutes, 0);
 
   const diffHours = (targetDate.getTime() - nowDate.getTime()) / (1000 * 60 * 60);
-  return diffHours >= noticeHours;
+  const minNoticeHours = noticeHours === 1 ? 0.75 : noticeHours;
+  return diffHours >= minNoticeHours;
 }
 
+/**
+ * Determines whether a specific date (YYYY-MM-DD) is allowed given the lead time requirements.
+ */
 /**
  * Determines whether a specific date (YYYY-MM-DD) is allowed given the lead time requirements.
  */
@@ -123,11 +208,11 @@ export function isDateSelectable(
 ): { selectable: boolean; reason?: string } {
   const { nowDate, dateStr: todayDateStr } = getCentralTimeNow();
 
-  // Strictly disallow today and any past dates
-  if (dateStr <= todayDateStr) {
+  // Strictly disallow past dates
+  if (dateStr < todayDateStr) {
     return { 
       selectable: false, 
-      reason: 'Same-day or past date ordering is unavailable. Advance notice required.' 
+      reason: 'Past date ordering is unavailable.' 
     };
   }
 
@@ -136,22 +221,35 @@ export function isDateSelectable(
     return { selectable: false, reason: 'Sold Out — We are oversold for this date (maximum capacity reached)' };
   }
 
-  const [y, m, d] = dateStr.split('-').map(Number);
-  const targetDate = new Date(y, m - 1, d);
+  // Determine order category context
+  const isTiffinOrder = (items.length > 0 && items.some(i => i.category === 'tiffin' || (i.menuItemId && i.menuItemId.includes('tiffin')))) || subTab === 'tiffin';
+  const hasCateringDishes = items.length > 0 
+    ? items.some(item => item.category !== 'cakes' && item.category !== 'tiffin' && (!item.menuItemId || !item.menuItemId.includes('tiffin')))
+    : (subTab === 'order');
 
-  // Tiffin Sunday & Saturday closure check
-  const isTiffinContext = subTab === 'tiffin' || items.some(item => item.category === 'tiffin');
-  if (isTiffinContext && (targetDate.getDay() === 0 || targetDate.getDay() === 6)) {
-    return { 
-      selectable: false, 
-      reason: targetDate.getDay() === 0 
-        ? 'Kitchen closed on Sundays (prep & sanitation)' 
-        : 'Tiffin service is closed on Saturdays' 
-    };
+  const isCateringContext = hasCateringDishes && !isTiffinOrder;
+
+  // Same-day ordering logic
+  if (dateStr === todayDateStr) {
+    if (!isTiffinOrder) {
+      return { 
+        selectable: false, 
+        reason: 'Same-day party catering orders are not accepted. Advance notice required.' 
+      };
+    }
+    // For Tiffin, allow checkout after 1 hour from current time if at least one pickup slot remains valid today
+    const slots = getTimeSlotsForDate(dateStr, items, subTab);
+    const hasValidSlotToday = slots.some(slot => isTimeSlotValidForDate(dateStr, slot, items, subTab));
+    if (!hasValidSlotToday) {
+      return {
+        selectable: false,
+        reason: 'Same-day pickup passed: Orders require at least 1 hour advance notice within daily pickup hours.'
+      };
+    }
+    return { selectable: true };
   }
 
-  // Party Catering 7:00 PM Daily Cutoff Rule for Next-Day Orders
-  const isCateringContext = subTab === 'order' || (items.length > 0 && items.some(item => item.category !== 'cakes' && item.category !== 'tiffin'));
+  // Party Catering 7:00 PM Daily Cutoff Rule for Next-Day Orders (Only for Party Catering)
   const tomorrowObj = new Date(nowDate.getFullYear(), nowDate.getMonth(), nowDate.getDate() + 1);
   const tomY = tomorrowObj.getFullYear();
   const tomM = (tomorrowObj.getMonth() + 1).toString().padStart(2, '0');
@@ -168,6 +266,7 @@ export function isDateSelectable(
   const noticeHours = getRequiredNoticeHours(items, subTab);
 
   // Target date checked against latest possible slot (9:00 PM = 21:00)
+  const [y, m, d] = dateStr.split('-').map(Number);
   const latestPossibleSlotOnDate = new Date(y, m - 1, d, 21, 0, 0);
   const diffHours = (latestPossibleSlotOnDate.getTime() - nowDate.getTime()) / (1000 * 60 * 60);
 
@@ -192,9 +291,10 @@ export function findFirstValidFulfillmentSlot(
 ): { dateStr: string; timeSlot: string } {
   const { nowDate } = getCentralTimeNow();
   const noticeHours = getRequiredNoticeHours(items, subTab);
-  const isTiffinContext = subTab === 'tiffin' || items.some(item => item.category === 'tiffin');
+  const isTiffin = (items.length > 0 && items.some(i => i.category === 'tiffin' || (i.menuItemId && i.menuItemId.includes('tiffin')))) || subTab === 'tiffin';
+  const startOffset = isTiffin ? 0 : 1;
 
-  for (let offset = 1; offset <= 45; offset++) {
+  for (let offset = startOffset; offset <= 45; offset++) {
     const candidate = new Date(nowDate.getTime() + offset * 24 * 60 * 60 * 1000);
     const y = candidate.getFullYear();
     const m = (candidate.getMonth() + 1).toString().padStart(2, '0');
@@ -202,10 +302,13 @@ export function findFirstValidFulfillmentSlot(
     const dateStr = `${y}-${m}-${day}`;
 
     if (blackouts.includes(dateStr)) continue;
-    if (isTiffinContext && (candidate.getDay() === 0 || candidate.getDay() === 6)) continue;
 
-    for (const slot of TIME_SLOTS) {
-      if (isTimeSlotValidForDate(dateStr, slot, items)) {
+    const dateCheck = isDateSelectable(dateStr, blackouts, items, subTab);
+    if (!dateCheck.selectable) continue;
+
+    const slots = getTimeSlotsForDate(dateStr, items, subTab);
+    for (const slot of slots) {
+      if (isTimeSlotValidForDate(dateStr, slot, items, subTab)) {
         return { dateStr, timeSlot: slot };
       }
     }
@@ -216,7 +319,11 @@ export function findFirstValidFulfillmentSlot(
   const fY = fallback.getFullYear();
   const fM = (fallback.getMonth() + 1).toString().padStart(2, '0');
   const fD = fallback.getDate().toString().padStart(2, '0');
-  return { dateStr: `${fY}-${fM}-${fD}`, timeSlot: '12:30 PM' };
+  const fallbackDateStr = `${fY}-${fM}-${fD}`;
+  return { 
+    dateStr: fallbackDateStr, 
+    timeSlot: getDefaultTimeSlotForDate(fallbackDateStr, items, subTab) 
+  };
 }
 
 /**
@@ -227,12 +334,14 @@ export function validateFulfillmentCutoff(
   fulfillmentDate: string,
   fulfillmentTime: string,
   blackouts: string[],
-  items: CartItem[]
+  items: CartItem[] = [],
+  subTab?: 'order' | 'cake' | 'tiffin'
 ): CutoffCheckResult {
   const { nowDate, dateStr: todayDateStr } = getCentralTimeNow();
-  const noticeHours = getRequiredNoticeHours(items);
+  const noticeHours = getRequiredNoticeHours(items, subTab);
+  const isTiffin = (items.length > 0 && items.some(i => i.category === 'tiffin' || (i.menuItemId && i.menuItemId.includes('tiffin')))) || subTab === 'tiffin';
 
-  const firstValid = findFirstValidFulfillmentSlot(blackouts, items);
+  const firstValid = findFirstValidFulfillmentSlot(blackouts, items, subTab);
   const earliestAllowedDate = firstValid.dateStr;
   const earliestAllowedTime = firstValid.timeSlot;
 
@@ -242,19 +351,31 @@ export function validateFulfillmentCutoff(
       earliestAllowedDate,
       earliestAllowedTime,
       requiredNoticeHours: noticeHours,
-      message: `Please select a fulfillment date (${noticeHours}h notice required in US Central Time).`,
+      message: `Please select a fulfillment date (${noticeHours === 1 ? '1h notice' : `${noticeHours}h notice`} required in US Central Time).`,
       isPassed: false
     };
   }
 
-  // Disallow today or earlier dates
-  if (fulfillmentDate <= todayDateStr) {
+  // Disallow past dates
+  if (fulfillmentDate < todayDateStr) {
     return {
       isValid: false,
       earliestAllowedDate,
       earliestAllowedTime,
       requiredNoticeHours: noticeHours,
-      message: `Same-day orders are not accepted. Earliest available date is ${earliestAllowedDate} (${earliestAllowedTime}).`,
+      message: `Past date orders are not accepted. Earliest available slot is ${earliestAllowedDate} (${earliestAllowedTime}).`,
+      isPassed: true
+    };
+  }
+
+  // Disallow same-day for non-tiffin (party catering / cakes)
+  if (fulfillmentDate === todayDateStr && !isTiffin) {
+    return {
+      isValid: false,
+      earliestAllowedDate,
+      earliestAllowedTime,
+      requiredNoticeHours: noticeHours,
+      message: `Same-day party catering orders are not accepted. Earliest available date is ${earliestAllowedDate} (${earliestAllowedTime}).`,
       isPassed: true
     };
   }
@@ -271,43 +392,51 @@ export function validateFulfillmentCutoff(
   }
 
   const [y, m, d] = fulfillmentDate.split('-').map(Number);
-  const targetDate = new Date(y, m - 1, d);
+  const targetDayOfWeek = new Date(y, m - 1, d, 12, 0, 0).getDay();
 
-  // Tiffin Sunday closure check
-  const hasTiffin = items.some(item => item.category === 'tiffin');
-  if (hasTiffin && targetDate.getDay() === 0) {
-    return {
-      isValid: false,
-      earliestAllowedDate,
-      earliestAllowedTime,
-      requiredNoticeHours: noticeHours,
-      message: `Desi Dabba Tiffin service is closed on Sundays. Please select a delivery/pickup date between Monday and Saturday.`,
-      isPassed: false
-    };
+  // Weekend Tiffin rule: available after 3 PM only per flyer
+  if (isTiffin && (targetDayOfWeek === 0 || targetDayOfWeek === 6)) {
+    const { hours } = parse12HourTime(fulfillmentTime);
+    if (hours < 15) {
+      return {
+        isValid: false,
+        earliestAllowedDate,
+        earliestAllowedTime,
+        requiredNoticeHours: noticeHours,
+        message: `Weekend Specials are available after 3:00 PM only (Saturday & Sunday). Please select a pickup window at or after 3:00 PM.`,
+        isPassed: false
+      };
+    }
   }
 
   // Parse time
   const { hours, minutes } = parse12HourTime(fulfillmentTime);
   const targetDateTime = new Date(y, m - 1, d, hours, minutes, 0);
   const diffHours = (targetDateTime.getTime() - nowDate.getTime()) / (1000 * 60 * 60);
+  const minNoticeHours = noticeHours === 1 ? 0.75 : noticeHours;
 
-  if (diffHours < noticeHours) {
+  if (diffHours < minNoticeHours) {
+    const orderKind = isTiffin 
+      ? 'Desi Dabba Tiffin' 
+      : (noticeHours === 48 ? 'Celebration Cakes' : 'Catering Dishes');
+    const noticeDesc = noticeHours === 1 ? 'at least 1 hour' : `at least ${noticeHours} hours`;
     return {
       isValid: false,
       earliestAllowedDate,
       earliestAllowedTime,
       requiredNoticeHours: noticeHours,
-      message: `Orders with ${noticeHours === 48 ? 'Celebration Cakes' : 'Catering Dishes'} require at least ${noticeHours} hours notice in US Central Time. Earliest available slot: ${earliestAllowedDate} at ${earliestAllowedTime}.`,
+      message: `Orders with ${orderKind} require ${noticeDesc} advance notice in US Central Time. Earliest available slot: ${earliestAllowedDate} at ${earliestAllowedTime}.`,
       isPassed: true
     };
   }
 
+  const noticeDesc = noticeHours === 1 ? '1h notice satisfied' : `${noticeHours}h cutoff satisfied`;
   return {
     isValid: true,
     earliestAllowedDate,
     earliestAllowedTime,
     requiredNoticeHours: noticeHours,
-    message: `Fulfillment slot confirmed (${noticeHours}h cutoff satisfied in US Central Time).`,
+    message: `Fulfillment slot confirmed (${noticeDesc} in US Central Time).`,
     isPassed: false
   };
 }

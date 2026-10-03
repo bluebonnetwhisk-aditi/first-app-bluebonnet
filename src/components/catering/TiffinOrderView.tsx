@@ -138,6 +138,13 @@ export default function TiffinOrderView({
     setContainer16ozQty(prev => ({ ...prev, [id]: Math.max(1, (prev[id] || 1) + delta) }));
   };
 
+  // Special dish tub size selection state (8oz vs 16oz)
+  const [specialSizeSelection, setSpecialSizeSelection] = useState<Record<string, '8oz' | '16oz'>>({});
+  const getSpecialSize = (dishId: string) => specialSizeSelection[dishId] || '16oz';
+  const setSpecialSize = (dishId: string, size: '8oz' | '16oz') => {
+    setSpecialSizeSelection(prev => ({ ...prev, [dishId]: size }));
+  };
+
   // Saturday / Weekend / Weekday Chef's Specials List
   const specialsList: TiffinSpecialDish[] = (settings.specialDishes && settings.specialDishes.length > 0)
     ? settings.specialDishes
@@ -511,17 +518,27 @@ export default function TiffinOrderView({
     triggerAddedAlert(`✓ Added ${qty} × ${sizeName} for ${day.dayName} (${day.displayDate}) ($${(unitPrice * qty).toFixed(2)})!`);
   };
 
-  // Add Chef's Special Dish to Cart
-  const handleAddSpecialDish = (dish: TiffinSpecialDish, day: DaySchedule) => {
+  // Add Chef's Special Dish / Tub to Cart
+  const handleAddSpecialDish = (dish: TiffinSpecialDish, day: DaySchedule, explicitSize?: '8oz' | '16oz') => {
     const qty = getSpecialQty(dish.id);
-    const unitPrice = dish.price > 0 ? dish.price : 13.99;
-    const itemId = `tiffin-special-${dish.id}-${day.dateStr}`;
+    const hasDualPricing = Boolean(dish.price8oz && dish.price8oz > 0 && dish.price16oz && dish.price16oz > 0);
+    const size = explicitSize || (hasDualPricing ? getSpecialSize(dish.id) : (dish.portionSize?.includes('8oz') ? '8oz' : '16oz'));
+
+    let unitPrice = dish.price > 0 ? dish.price : 13.99;
+    if (size === '8oz' && dish.price8oz && dish.price8oz > 0) {
+      unitPrice = dish.price8oz;
+    } else if (size === '16oz' && dish.price16oz && dish.price16oz > 0) {
+      unitPrice = dish.price16oz;
+    }
+
+    const sizeSuffix = hasDualPricing ? ` (${size} Tub)` : '';
+    const itemId = `tiffin-special-${dish.id}-${size}-${day.dateStr}`;
 
     const menuItem: MenuItem = {
       id: itemId,
-      name: dish.title,
+      name: `${dish.title}${sizeSuffix}`,
       category: 'tiffin',
-      categoryLabel: "Chef's Weekend Special",
+      categoryLabel: `${day.dayName} Special`,
       description: dish.description || 'Special handcrafted weekend recipe',
       allergens: ['G', 'D'],
       pricingType: 'tiffin',
@@ -531,14 +548,14 @@ export default function TiffinOrderView({
 
     onUpdateCartItem(
       menuItem,
-      'container_16oz',
+      size === '8oz' ? 'container_8oz' : 'container_16oz',
       qty,
-      `${dish.title} - Saturday Special (${day.displayDate})`,
+      `${dish.title}${sizeSuffix} - ${day.dayName} Special (${day.displayDate})`,
       unitPrice,
-      `${day.dayName}, ${day.displayDate}: ${dish.title} (Qty: ${qty})`
+      `${day.dayName}, ${day.displayDate}: ${dish.title}${sizeSuffix} (Qty: ${qty})`
     );
 
-    triggerAddedAlert(`✓ Added ${qty} × ${dish.title} ($${(unitPrice * qty).toFixed(2)})!`);
+    triggerAddedAlert(`✓ Added ${qty} × ${dish.title}${sizeSuffix} ($${(unitPrice * qty).toFixed(2)})!`);
   };
 
   // Add Weekly Dabba to Cart
@@ -876,7 +893,16 @@ export default function TiffinOrderView({
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                       {activeSpecialsForDay.map(dish => {
                         const dishQty = getSpecialQty(dish.id);
-                        const dishPrice = dish.price > 0 ? dish.price : 13.99;
+                        const hasDualTubPricing = Boolean(dish.price8oz && dish.price8oz > 0 && dish.price16oz && dish.price16oz > 0);
+                        const selectedSize = getSpecialSize(dish.id);
+                        const activeUnitPrice = hasDualTubPricing
+                          ? (selectedSize === '8oz' ? dish.price8oz! : dish.price16oz!)
+                          : (dish.price > 0 ? dish.price : 13.99);
+                        const totalPrice = activeUnitPrice * dishQty;
+                        const isTubItem = /16\s*oz|8\s*oz|tub|container/i.test(dish.title) || 
+                          Boolean(dish.portionSize && /oz|tub/i.test(dish.portionSize)) || 
+                          hasDualTubPricing;
+
                         return (
                           <div 
                             key={dish.id} 
@@ -889,9 +915,16 @@ export default function TiffinOrderView({
                                 </div>
                               ) : null}
                               <div className="flex items-start justify-between gap-2">
-                                <h5 className="font-bold text-sm text-gray-900 leading-snug">{dish.title}</h5>
+                                <div>
+                                  <h5 className="font-bold text-sm text-gray-900 leading-snug">{dish.title}</h5>
+                                  {isTubItem && (
+                                    <span className="inline-block mt-1 px-2 py-0.5 rounded text-[9px] font-extrabold uppercase bg-amber-100 text-amber-900 border border-amber-300">
+                                      {hasDualTubPricing ? '8oz & 16oz Tubs Available' : (dish.portionSize || '16oz / 8oz Tub')}
+                                    </span>
+                                  )}
+                                </div>
                                 <span className="font-serif font-black text-sm text-purple-900 shrink-0">
-                                  ${dishPrice.toFixed(2)}
+                                  ${activeUnitPrice.toFixed(2)}
                                 </span>
                               </div>
                               <p className="text-xs text-gray-500 mt-1 line-clamp-3 leading-relaxed">
@@ -900,6 +933,34 @@ export default function TiffinOrderView({
                             </div>
 
                             <div className="space-y-2 pt-2 border-t border-purple-100">
+                              {/* 8oz vs 16oz Size Selector Tabs (when both prices available) */}
+                              {hasDualTubPricing && (
+                                <div className="flex items-center gap-1 bg-purple-100/70 p-1 rounded-xl">
+                                  <button
+                                    type="button"
+                                    onClick={() => setSpecialSize(dish.id, '8oz')}
+                                    className={`flex-1 py-1 text-center text-xs font-bold rounded-lg transition-all cursor-pointer ${
+                                      selectedSize === '8oz'
+                                        ? 'bg-purple-800 text-white shadow-xs font-extrabold'
+                                        : 'text-purple-900 hover:text-purple-950'
+                                    }`}
+                                  >
+                                    8 oz (${dish.price8oz!.toFixed(2)})
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => setSpecialSize(dish.id, '16oz')}
+                                    className={`flex-1 py-1 text-center text-xs font-bold rounded-lg transition-all cursor-pointer ${
+                                      selectedSize === '16oz'
+                                        ? 'bg-purple-800 text-white shadow-xs font-extrabold'
+                                        : 'text-purple-900 hover:text-purple-950'
+                                    }`}
+                                  >
+                                    16 oz (${dish.price16oz!.toFixed(2)})
+                                  </button>
+                                </div>
+                              )}
+
                               <div className="flex items-center justify-between">
                                 <span className="text-[11px] font-semibold text-gray-600">Qty:</span>
                                 <div className="flex items-center bg-white rounded-lg p-0.5 border border-purple-200">
@@ -923,11 +984,11 @@ export default function TiffinOrderView({
 
                               <button
                                 type="button"
-                                onClick={() => handleAddSpecialDish(dish, activeDay)}
+                                onClick={() => handleAddSpecialDish(dish, activeDay, selectedSize)}
                                 className="w-full min-h-[42px] inline-flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-purple-700 hover:bg-purple-800 text-white font-bold text-xs uppercase tracking-wider transition-colors shadow-2xs cursor-pointer"
                               >
                                 <Plus className="w-4 h-4 text-[#ffdea5]" />
-                                <span>Add Special • ${(dishPrice * dishQty).toFixed(2)}</span>
+                                <span>Add {hasDualTubPricing ? `${selectedSize} Tub` : 'Special'} • ${totalPrice.toFixed(2)}</span>
                               </button>
                             </div>
                           </div>
@@ -1226,7 +1287,16 @@ export default function TiffinOrderView({
                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                         {activeSpecialsForDay.map(dish => {
                           const dishQty = getSpecialQty(dish.id);
-                          const dishPrice = dish.price > 0 ? dish.price : 13.99;
+                          const hasDualTubPricing = Boolean(dish.price8oz && dish.price8oz > 0 && dish.price16oz && dish.price16oz > 0);
+                          const selectedSize = getSpecialSize(dish.id);
+                          const activeUnitPrice = hasDualTubPricing
+                            ? (selectedSize === '8oz' ? dish.price8oz! : dish.price16oz!)
+                            : (dish.price > 0 ? dish.price : 13.99);
+                          const totalPrice = activeUnitPrice * dishQty;
+                          const isTubItem = /16\s*oz|8\s*oz|tub|container/i.test(dish.title) || 
+                            Boolean(dish.portionSize && /oz|tub/i.test(dish.portionSize)) || 
+                            hasDualTubPricing;
+
                           return (
                             <div 
                               key={dish.id} 
@@ -1239,9 +1309,16 @@ export default function TiffinOrderView({
                                   </div>
                                 ) : null}
                                 <div className="flex items-start justify-between gap-2">
-                                  <h5 className="font-bold text-sm text-gray-900 leading-snug">{dish.title}</h5>
+                                  <div>
+                                    <h5 className="font-bold text-sm text-gray-900 leading-snug">{dish.title}</h5>
+                                    {isTubItem && (
+                                      <span className="inline-block mt-1 px-2 py-0.5 rounded text-[9px] font-extrabold uppercase bg-amber-100 text-amber-900 border border-amber-300">
+                                        {hasDualTubPricing ? '8oz & 16oz Tubs Available' : (dish.portionSize || '16oz / 8oz Tub')}
+                                      </span>
+                                    )}
+                                  </div>
                                   <span className="font-serif font-black text-sm text-purple-900 shrink-0">
-                                    ${dishPrice.toFixed(2)}
+                                    ${activeUnitPrice.toFixed(2)}
                                   </span>
                                 </div>
                                 <p className="text-xs text-gray-500 mt-1 line-clamp-3 leading-relaxed">
@@ -1250,6 +1327,34 @@ export default function TiffinOrderView({
                               </div>
 
                               <div className="space-y-2 pt-2 border-t border-purple-100">
+                                {/* 8oz vs 16oz Size Selector Tabs (when both prices available) */}
+                                {hasDualTubPricing && (
+                                  <div className="flex items-center gap-1 bg-purple-100/70 p-1 rounded-xl">
+                                    <button
+                                      type="button"
+                                      onClick={() => setSpecialSize(dish.id, '8oz')}
+                                      className={`flex-1 py-1 text-center text-xs font-bold rounded-lg transition-all cursor-pointer ${
+                                        selectedSize === '8oz'
+                                          ? 'bg-purple-800 text-white shadow-xs font-extrabold'
+                                          : 'text-purple-900 hover:text-purple-950'
+                                      }`}
+                                    >
+                                      8 oz (${dish.price8oz!.toFixed(2)})
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => setSpecialSize(dish.id, '16oz')}
+                                      className={`flex-1 py-1 text-center text-xs font-bold rounded-lg transition-all cursor-pointer ${
+                                        selectedSize === '16oz'
+                                          ? 'bg-purple-800 text-white shadow-xs font-extrabold'
+                                          : 'text-purple-900 hover:text-purple-950'
+                                      }`}
+                                    >
+                                      16 oz (${dish.price16oz!.toFixed(2)})
+                                    </button>
+                                  </div>
+                                )}
+
                                 <div className="flex items-center justify-between">
                                   <span className="text-[11px] font-semibold text-gray-600">Qty:</span>
                                   <div className="flex items-center bg-white rounded-lg p-0.5 border border-purple-200">
@@ -1273,11 +1378,11 @@ export default function TiffinOrderView({
 
                                 <button
                                   type="button"
-                                  onClick={() => handleAddSpecialDish(dish, activeDay)}
+                                  onClick={() => handleAddSpecialDish(dish, activeDay, selectedSize)}
                                   className="w-full min-h-[42px] inline-flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-purple-700 hover:bg-purple-800 text-white font-bold text-xs uppercase tracking-wider transition-colors shadow-2xs cursor-pointer"
                                 >
                                   <Plus className="w-4 h-4 text-[#ffdea5]" />
-                                  <span>Add Special • ${(dishPrice * dishQty).toFixed(2)}</span>
+                                  <span>Add {hasDualTubPricing ? `${selectedSize} Tub` : 'Special'} • ${totalPrice.toFixed(2)}</span>
                                 </button>
                               </div>
                             </div>
@@ -1392,6 +1497,113 @@ export default function TiffinOrderView({
             </div>
 
             {(() => {
+              // If there are active specials for this day (weekday or weekend), show the special tubs & dishes in A La Carte tab
+              if (activeDay.isSelectable && activeSpecialsForDay.length > 0) {
+                return (
+                  <div className="space-y-4">
+                    <div className="p-3 bg-purple-50 rounded-xl border border-purple-200 text-xs font-semibold text-purple-900 flex items-center justify-between">
+                      <span>✨ Chef Specials &amp; Tubs for {activeDay.dayName} ({activeDay.displayDate})</span>
+                      <span className="text-[10px] uppercase font-bold bg-purple-200 text-purple-950 px-2 py-0.5 rounded">
+                        {activeSpecialsForDay.length} Items Available
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                      {activeSpecialsForDay.map(dish => {
+                        const dishQty = getSpecialQty(dish.id);
+                        const hasDualTubPricing = Boolean(dish.price8oz && dish.price8oz > 0 && dish.price16oz && dish.price16oz > 0);
+                        const selectedSize = getSpecialSize(dish.id);
+                        const activeUnitPrice = hasDualTubPricing
+                          ? (selectedSize === '8oz' ? dish.price8oz! : dish.price16oz!)
+                          : (dish.price > 0 ? dish.price : 13.99);
+                        const totalPrice = activeUnitPrice * dishQty;
+
+                        return (
+                          <div 
+                            key={`alacarte-${dish.id}`} 
+                            className="p-5 rounded-2xl border border-gray-200 bg-gray-50/60 hover:bg-white hover:border-[#00346f] transition-all flex flex-col justify-between gap-4 shadow-2xs"
+                          >
+                            <div>
+                              <div className="flex items-center justify-between">
+                                <span className="text-[10px] font-bold uppercase tracking-wider text-[#775a19] bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200">
+                                  {hasDualTubPricing ? '8oz & 16oz Tub' : (dish.portionSize || 'Specialty Dish / Tub')}
+                                </span>
+                                <span className="font-serif font-extrabold text-base text-[#00346f]">
+                                  ${activeUnitPrice.toFixed(2)}
+                                </span>
+                              </div>
+                              <h4 className="font-bold text-sm text-gray-900 mt-2">{dish.title}</h4>
+                              <p className="text-[11px] text-gray-500 mt-1">{dish.description || `Special for ${activeDay.displayDate}`}</p>
+                            </div>
+
+                            <div className="space-y-3 pt-3 border-t border-gray-200">
+                              {hasDualTubPricing && (
+                                <div className="flex items-center gap-1 bg-gray-200/70 p-1 rounded-xl">
+                                  <button
+                                    type="button"
+                                    onClick={() => setSpecialSize(dish.id, '8oz')}
+                                    className={`flex-1 py-1.5 text-center text-xs font-bold rounded-lg transition-all cursor-pointer ${
+                                      selectedSize === '8oz'
+                                        ? 'bg-white text-[#00346f] shadow-xs font-extrabold'
+                                        : 'text-gray-600 hover:text-gray-900'
+                                    }`}
+                                  >
+                                    8 oz (${dish.price8oz!.toFixed(2)})
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => setSpecialSize(dish.id, '16oz')}
+                                    className={`flex-1 py-1.5 text-center text-xs font-bold rounded-lg transition-all cursor-pointer ${
+                                      selectedSize === '16oz'
+                                        ? 'bg-white text-[#00346f] shadow-xs font-extrabold'
+                                        : 'text-gray-600 hover:text-gray-900'
+                                    }`}
+                                  >
+                                    16 oz (${dish.price16oz!.toFixed(2)})
+                                  </button>
+                                </div>
+                              )}
+
+                              <div className="flex items-center justify-between">
+                                <span className="text-[11px] font-semibold text-gray-600">Quantity:</span>
+                                <div className="flex items-center bg-gray-100 rounded-lg p-0.5 border border-gray-200">
+                                  <button
+                                    type="button"
+                                    onClick={() => updateSpecialQty(dish.id, -1)}
+                                    className="w-7 h-7 rounded-md flex items-center justify-center hover:bg-white text-gray-700 cursor-pointer"
+                                    aria-label="Decrease quantity"
+                                  >
+                                    <Minus className="w-3.5 h-3.5" />
+                                  </button>
+                                  <span className="w-7 text-center font-bold text-xs">{dishQty}</span>
+                                  <button
+                                    type="button"
+                                    onClick={() => updateSpecialQty(dish.id, 1)}
+                                    className="w-7 h-7 rounded-md flex items-center justify-center hover:bg-white text-gray-700 cursor-pointer"
+                                    aria-label="Increase quantity"
+                                  >
+                                    <Plus className="w-3.5 h-3.5" />
+                                  </button>
+                                </div>
+                              </div>
+
+                              <button
+                                type="button"
+                                onClick={() => handleAddSpecialDish(dish, activeDay, selectedSize)}
+                                className="w-full min-h-[42px] inline-flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-[#00346f] hover:bg-[#00224d] text-white transition-colors text-xs font-bold uppercase tracking-wider cursor-pointer shadow-xs"
+                              >
+                                <Plus className="w-4 h-4 text-[#ffdea5]" />
+                                <span>Add {dishQty} × {hasDualTubPricing ? `${selectedSize} Tub` : 'Special'} • ${totalPrice.toFixed(2)}</span>
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              }
+
               // Check if tiffin/tub ordering is closed on this active day
               const isClosed = !activeDay.isSelectable || blackoutDates.includes(activeDay.dateStr);
               const hasFlyerMenu = Boolean(activeDay.dalOrCurry || activeDay.sabzi);
