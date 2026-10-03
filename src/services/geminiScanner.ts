@@ -545,55 +545,71 @@ export function getBundledFlyerParsedData(): ScannedTiffinData {
     ],
     specialDishes: [
       {
-        id: 'spec-pavbhaji',
-        title: 'Chef’s Special Pav Bhaji Feast',
+        id: 'spec-dal-makhni-16oz',
+        title: 'Dal Makhni (16 oz)',
+        price: 9.99,
+        price16oz: 9.99,
+        portionSize: '16oz',
+        description: 'Special prices for this Saturday only! 16 oz freshly simmered black lentils and kidney beans with butter and cream.',
+        imageUrl: '',
+        availableDays: ['Saturday']
+      },
+      {
+        id: 'spec-paneer-lababdar-16oz',
+        title: 'Paneer Lababdar (16 oz)',
         price: 13.99,
-        description: 'Slow-simmered spiced vegetable bhaji with extra butter, 2 toasted ladi pavs, onion salad & masala chili.',
+        price16oz: 13.99,
+        portionSize: '16oz',
+        description: 'Special prices for this Saturday only! 16 oz soft paneer cubes in luscious Mughlai tomato-cashew gravy.',
         imageUrl: '',
-        availableDays: ['Saturday', 'Sunday'],
-        portionSize: 'Plate / Meal'
+        availableDays: ['Saturday']
       },
       {
-        id: 'spec-paneer-butter-tub',
-        title: 'Paneer Butter Masala (16oz / 8oz Tub)',
-        price: 14.99,
-        price16oz: 14.99,
-        price8oz: 8.99,
-        description: 'Rich cottage cheese in creamy tomato gravy. 16oz and 8oz tubs available.',
+        id: 'spec-samosa-chaat',
+        title: 'Samosa Chaat',
+        price: 6.00,
+        portionSize: '2 samosas per box',
+        description: '2 crisp samosas per box layered with spiced chole, cooling yogurt, tangy tamarind & mint chutneys.',
         imageUrl: '',
-        availableDays: ['Saturday'],
-        portionSize: '16oz / 8oz'
+        availableDays: ['Saturday']
       },
       {
-        id: 'spec-dal-makhani-tub',
-        title: 'Dal Makhani (16oz / 8oz Tub)',
-        price: 11.99,
-        price16oz: 11.99,
-        price8oz: 6.99,
-        description: 'Slow-simmered black lentils and kidney beans with butter and cream. 16oz and 8oz tubs available.',
+        id: 'spec-paani-puri',
+        title: 'Paani Puri for Two',
+        price: 9.99,
+        portionSize: '10 puris total (5 each)',
+        description: 'Crisp puris (10 total • 5 each) served with spiced potato-sprout filling, zesty teekha paani & meetha paani.',
         imageUrl: '',
-        availableDays: ['Sunday'],
-        portionSize: '16oz / 8oz'
+        availableDays: ['Saturday', 'Sunday']
       },
       {
-        id: 'spec-chole-bhature',
-        title: 'Amritsari Chole Bhature Platter',
-        price: 12.99,
-        description: '2 fluffy bhature served with spiced Punjabi chole, pickled onions & green chutney.',
+        id: 'spec-aaloo-bhaji-puri',
+        title: 'Halwai-Style Aaloo Bhaji + Puri',
+        price: 9.99,
+        portionSize: 'Plate / Meal',
+        description: 'Traditional Halwai-style spiced potato curry served with freshly fried fluffy puris.',
         imageUrl: '',
-        availableDays: ['Sunday'],
-        portionSize: 'Plate / Meal'
+        availableDays: ['Sunday']
       },
       {
-        id: 'spec-veg-biryani',
-        title: 'Royal Vegetable Dum Biryani (16oz Tub)',
-        price: 13.49,
-        price16oz: 13.49,
-        price8oz: 7.99,
-        description: 'Fragrant basmati rice layered with spiced vegetables, saffron, mint and fried onions with raita.',
+        id: 'spec-kheer',
+        title: 'Slow-Cooked Kheer',
+        price: 20.00,
+        price16oz: 20.00,
+        price8oz: 13.00,
+        portionSize: '16oz / 8oz',
+        description: 'Traditional slow-cooked fragrant rice and milk pudding flavored with cardamom, saffron and dry fruits. Available in 16 oz ($20) and 8 oz ($13) tubs.',
         imageUrl: '',
-        availableDays: ['Saturday'],
-        portionSize: '16oz / 8oz'
+        availableDays: ['Sunday']
+      },
+      {
+        id: 'spec-bhayankar-deal',
+        title: 'Bhayankar Tasty Deal!',
+        price: 20.00,
+        portionSize: '8 oz Aaloo Bhaji + 3 Pooris + 8 oz Kheer',
+        description: 'Special Sunday Feast Combo: 8 oz Aaloo Bhaji + 3 Pooris + 8 oz Slow-Cooked Kheer.',
+        imageUrl: '',
+        availableDays: ['Sunday']
       }
     ]
   };

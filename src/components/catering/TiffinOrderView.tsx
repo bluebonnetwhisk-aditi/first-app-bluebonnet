@@ -24,7 +24,8 @@ import {
   getCurrentMondayTitle,
   DEFAULT_TIFFIN_SETTINGS, 
   DEFAULT_WEEKDAY_MENUS, 
-  DEFAULT_DABBA_PRICING 
+  DEFAULT_DABBA_PRICING,
+  DEFAULT_WEEKEND_FLYER_SPECIALS
 } from '../../services/supabase';
 
 interface TiffinOrderViewProps {
@@ -148,16 +149,7 @@ export default function TiffinOrderView({
   // Saturday / Weekend / Weekday Chef's Specials List
   const specialsList: TiffinSpecialDish[] = (settings.specialDishes && settings.specialDishes.length > 0)
     ? settings.specialDishes
-    : [
-        {
-          id: 'spec-default',
-          title: settings.saturdaySpecialTitle || 'Chef’s Special Pav Bhaji Feast',
-          description: settings.saturdaySpecialDescription || 'Slow-simmered spiced vegetable bhaji with extra butter, 2 toasted ladi pavs, onion salad & masala chili.',
-          price: 13.99,
-          imageUrl: settings.saturdaySpecialImageUrl || '',
-          availableDays: ['Saturday', 'Sunday']
-        }
-      ];
+    : DEFAULT_WEEKEND_FLYER_SPECIALS;
 
 
   // Fetch flyer & blackout settings from Supabase / localStorage

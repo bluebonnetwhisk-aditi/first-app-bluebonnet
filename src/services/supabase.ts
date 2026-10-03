@@ -1,5 +1,5 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
-import type { CateringOrder, CalendarBlackout, OrderStatus, TiffinMenuSettings, WeekdayMenuEntry, ContainerAddonItem, DabbaPricing } from '../types/catering';
+import type { CateringOrder, CalendarBlackout, OrderStatus, TiffinMenuSettings, TiffinSpecialDish, WeekdayMenuEntry, ContainerAddonItem, DabbaPricing } from '../types/catering';
 import { getCentralTimeNow } from '../utils/centralTime';
 
 // Production Supabase Database Configuration
@@ -994,7 +994,7 @@ export async function fetchQBOReconciliationSummary(dateStr: string): Promise<QB
   };
 }
 
-const LOCAL_STORAGE_TIFFIN_KEY = 'bbw_tiffin_menu_settings_v2';
+const LOCAL_STORAGE_TIFFIN_KEY = 'bbw_tiffin_menu_settings_v3';
 
 export const DEFAULT_WEEKDAY_MENUS: Record<string, WeekdayMenuEntry> = {
   Monday: { dal: 'Palak Dal', sabzi: 'Cabbage Sabzi', description: 'Fresh spinach dal & tender cabbage sabzi' },
@@ -1020,6 +1020,76 @@ export const DEFAULT_DABBA_PRICING: DabbaPricing = {
   familyPrice: 34.99,
   weeklyPrice: 54.99
 };
+
+export const DEFAULT_WEEKEND_FLYER_SPECIALS: TiffinSpecialDish[] = [
+  {
+    id: 'flyer-spec-dal-makhni-16oz',
+    title: 'Dal Makhni (16 oz)',
+    price: 9.99,
+    price16oz: 9.99,
+    portionSize: '16oz',
+    description: 'Special prices for this Saturday only! 16 oz freshly simmered black lentils and kidney beans with butter and cream.',
+    imageUrl: '',
+    availableDays: ['Saturday']
+  },
+  {
+    id: 'flyer-spec-paneer-lababdar-16oz',
+    title: 'Paneer Lababdar (16 oz)',
+    price: 13.99,
+    price16oz: 13.99,
+    portionSize: '16oz',
+    description: 'Special prices for this Saturday only! 16 oz soft paneer cubes in luscious Mughlai tomato-cashew gravy.',
+    imageUrl: '',
+    availableDays: ['Saturday']
+  },
+  {
+    id: 'flyer-spec-samosa-chaat',
+    title: 'Samosa Chaat',
+    price: 6.00,
+    portionSize: '2 samosas per box',
+    description: '2 crisp samosas per box layered with spiced chole, cooling yogurt, tangy tamarind & mint chutneys.',
+    imageUrl: '',
+    availableDays: ['Saturday']
+  },
+  {
+    id: 'flyer-spec-paani-puri',
+    title: 'Paani Puri for Two',
+    price: 9.99,
+    portionSize: '10 puris total (5 each)',
+    description: 'Crisp puris (10 total • 5 each) served with spiced potato-sprout filling, zesty teekha paani & meetha paani.',
+    imageUrl: '',
+    availableDays: ['Saturday', 'Sunday']
+  },
+  {
+    id: 'flyer-spec-aaloo-bhaji-puri',
+    title: 'Halwai-Style Aaloo Bhaji + Puri',
+    price: 9.99,
+    portionSize: 'Plate / Meal',
+    description: 'Traditional Halwai-style spiced potato curry served with freshly fried fluffy puris.',
+    imageUrl: '',
+    availableDays: ['Sunday']
+  },
+  {
+    id: 'flyer-spec-kheer',
+    title: 'Slow-Cooked Kheer',
+    price: 20.00,
+    price16oz: 20.00,
+    price8oz: 13.00,
+    portionSize: '16oz / 8oz',
+    description: 'Traditional slow-cooked fragrant rice and milk pudding flavored with cardamom, saffron and dry fruits. Available in 16 oz ($20) and 8 oz ($13) tubs.',
+    imageUrl: '',
+    availableDays: ['Sunday']
+  },
+  {
+    id: 'flyer-spec-bhayankar-deal',
+    title: 'Bhayankar Tasty Deal!',
+    price: 20.00,
+    portionSize: '8 oz Aaloo Bhaji + 3 Pooris + 8 oz Kheer',
+    description: 'Special Sunday Feast Combo: 8 oz Aaloo Bhaji + 3 Pooris + 8 oz Slow-Cooked Kheer.',
+    imageUrl: '',
+    availableDays: ['Sunday']
+  }
+];
 
 export function getCurrentMondayStr(): string {
   const { nowDate } = getCentralTimeNow();
@@ -1048,6 +1118,7 @@ export function getCurrentMondayTitle(monStr?: string): string {
 
 export const DEFAULT_TIFFIN_SETTINGS: TiffinMenuSettings = {
   flyerImageUrl: '/tiffin-flyer.jpg',
+  specialFlyerUrl: '/weekend-special-flyer.jpg',
   get weekTitle() {
     return getCurrentMondayTitle();
   },
@@ -1057,17 +1128,9 @@ export const DEFAULT_TIFFIN_SETTINGS: TiffinMenuSettings = {
   weekdayMenus: DEFAULT_WEEKDAY_MENUS,
   containerAddons: DEFAULT_CONTAINER_ADDONS,
   dabbaPricing: DEFAULT_DABBA_PRICING,
-  specialDishes: [
-    {
-      id: 'spec-1',
-      title: 'Chef’s Special Pav Bhaji Feast',
-      description: 'Slow-simmered spiced vegetable bhaji with extra butter, 2 toasted ladi pavs, onion salad & masala chili.',
-      price: 13.99,
-      imageUrl: ''
-    }
-  ],
-  saturdaySpecialTitle: 'Chef’s Special Pav Bhaji Feast',
-  saturdaySpecialDescription: 'Slow-simmered spiced vegetable bhaji with extra butter, 2 toasted ladi pavs, onion salad & masala chili.',
+  specialDishes: DEFAULT_WEEKEND_FLYER_SPECIALS,
+  saturdaySpecialTitle: 'Dal Makhni (16 oz)',
+  saturdaySpecialDescription: 'Special prices for this Saturday only! 16 oz freshly simmered black lentils and kidney beans with butter and cream.',
   saturdaySpecialImageUrl: ''
 };
 
@@ -1078,15 +1141,33 @@ export async function fetchTiffinMenuSettings(): Promise<TiffinMenuSettings> {
   const currentMondayStr = getCurrentMondayStr();
   const currentMondayTitle = getCurrentMondayTitle(currentMondayStr);
 
-  // Purge any legacy localStorage cache containing 2026-09-21
+  // Purge any legacy localStorage cache
   if (typeof localStorage !== 'undefined') {
     try {
+      localStorage.removeItem('bbw_tiffin_menu_settings_v1');
+      localStorage.removeItem('bbw_tiffin_menu_settings_v2');
       const raw = localStorage.getItem(LOCAL_STORAGE_TIFFIN_KEY);
       if (raw && (raw.includes('2026-09-21') || raw.includes('September 21'))) {
         localStorage.removeItem(LOCAL_STORAGE_TIFFIN_KEY);
       }
     } catch {}
   }
+
+  const sanitizeSpecials = (rawSpecials?: TiffinSpecialDish[]): TiffinSpecialDish[] => {
+    if (!Array.isArray(rawSpecials) || rawSpecials.length === 0) {
+      return DEFAULT_WEEKEND_FLYER_SPECIALS;
+    }
+    // Check if key flyer dishes (like Dal Makhni / Paneer Lababdar) are missing
+    const hasDalMakhni = rawSpecials.some(s => s.title.toLowerCase().includes('dal makhn'));
+    const hasPaneerLababdar = rawSpecials.some(s => s.title.toLowerCase().includes('paneer lababdar'));
+    if (!hasDalMakhni || !hasPaneerLababdar || rawSpecials.length < 7) {
+      const missingDefaults = DEFAULT_WEEKEND_FLYER_SPECIALS.filter(
+        def => !rawSpecials.some(s => s.title.toLowerCase().includes(def.title.toLowerCase().slice(0, 10)))
+      );
+      return [...rawSpecials, ...missingDefaults];
+    }
+    return rawSpecials;
+  };
 
   if (supabase) {
     try {
@@ -1102,13 +1183,18 @@ export async function fetchTiffinMenuSettings(): Promise<TiffinMenuSettings> {
           val.weekStartDate = currentMondayStr;
           val.weekTitle = currentMondayTitle;
         }
+        if (!val.specialFlyerUrl) {
+          val.specialFlyerUrl = '/weekend-special-flyer.jpg';
+        }
+        const resolvedSpecials = sanitizeSpecials(val.specialDishes);
         const merged: TiffinMenuSettings = {
           ...DEFAULT_TIFFIN_SETTINGS,
           ...val,
+          specialFlyerUrl: val.specialFlyerUrl || '/weekend-special-flyer.jpg',
           weekdayMenus: { ...DEFAULT_WEEKDAY_MENUS, ...(val.weekdayMenus || {}) },
           containerAddons: val.containerAddons?.length ? val.containerAddons : DEFAULT_CONTAINER_ADDONS,
           dabbaPricing: { ...DEFAULT_DABBA_PRICING, ...(val.dabbaPricing || {}) },
-          specialDishes: val.specialDishes?.length ? val.specialDishes : DEFAULT_TIFFIN_SETTINGS.specialDishes
+          specialDishes: resolvedSpecials
         };
         if (typeof localStorage !== 'undefined') {
           localStorage.setItem(LOCAL_STORAGE_TIFFIN_KEY, JSON.stringify(merged));
@@ -1129,13 +1215,15 @@ export async function fetchTiffinMenuSettings(): Promise<TiffinMenuSettings> {
           parsed.weekStartDate = currentMondayStr;
           parsed.weekTitle = currentMondayTitle;
         }
+        const resolvedSpecials = sanitizeSpecials(parsed.specialDishes);
         return {
           ...DEFAULT_TIFFIN_SETTINGS,
           ...parsed,
+          specialFlyerUrl: parsed.specialFlyerUrl || '/weekend-special-flyer.jpg',
           weekdayMenus: { ...DEFAULT_WEEKDAY_MENUS, ...(parsed.weekdayMenus || {}) },
           containerAddons: parsed.containerAddons?.length ? parsed.containerAddons : DEFAULT_CONTAINER_ADDONS,
           dabbaPricing: { ...DEFAULT_DABBA_PRICING, ...(parsed.dabbaPricing || {}) },
-          specialDishes: parsed.specialDishes?.length ? parsed.specialDishes : DEFAULT_TIFFIN_SETTINGS.specialDishes
+          specialDishes: resolvedSpecials
         };
       }
     }

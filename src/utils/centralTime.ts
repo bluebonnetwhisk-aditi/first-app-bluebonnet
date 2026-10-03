@@ -74,30 +74,27 @@ export const CATERING_TIME_SLOTS = [
   '6:00 PM', '6:30 PM', '7:00 PM'
 ];
 
-// Tiffin Weekend Pickup Slots (Saturday & Sunday - Flyer Rule: "Available after 3 PM")
-export const TIFFIN_WEEKEND_TIME_SLOTS = [
-  '3:00 PM', '3:30 PM', '4:00 PM', '4:30 PM',
-  '5:00 PM', '5:30 PM', '6:00 PM', '6:30 PM',
-  '7:00 PM', '7:30 PM', '8:00 PM', '8:30 PM', '9:00 PM'
+// Tiffin Pickup Slots (Monday–Sunday: 10:30 AM to 6:00 PM only)
+export const TIFFIN_TIME_SLOTS = [
+  '10:30 AM', '11:00 AM', '11:30 AM',
+  '12:00 PM', '12:30 PM', '1:00 PM', '1:30 PM',
+  '2:00 PM', '2:30 PM', '3:00 PM', '3:30 PM',
+  '4:00 PM', '4:30 PM', '5:00 PM', '5:30 PM',
+  '6:00 PM'
 ];
 
-// Tiffin Weekday Pickup Slots (Monday–Friday - Lunch & Dinner)
-export const TIFFIN_WEEKDAY_TIME_SLOTS = [
-  '12:00 PM', '12:30 PM', '1:00 PM', '1:30 PM',
-  '4:00 PM', '4:30 PM', '5:00 PM', '5:30 PM',
-  '6:00 PM', '6:30 PM', '7:00 PM', '7:30 PM', '8:00 PM', '8:30 PM', '9:00 PM'
-];
+export const TIFFIN_WEEKEND_TIME_SLOTS = TIFFIN_TIME_SLOTS;
+export const TIFFIN_WEEKDAY_TIME_SLOTS = TIFFIN_TIME_SLOTS;
 
 export const TIME_SLOTS = CATERING_TIME_SLOTS;
 
 /**
  * Returns available pickup time slots for the given date and order context.
- * - Weekend (Sat/Sun) Tiffin: After 3 PM only ('3:00 PM' - '7:30 PM') per flyer rule.
- * - Weekday Tiffin: Lunch & Dinner windows.
+ * - Tiffin: 10:30 AM to 6:00 PM only (weekdays and weekends).
  * - Catering/Cakes: Standard catering slots ('10:00 AM' - '7:00 PM').
  */
 export function getTimeSlotsForDate(
-  dateStr: string,
+  _dateStr: string,
   items: CartItem[] = [],
   subTab?: 'order' | 'cake' | 'tiffin'
 ): string[] {
@@ -107,25 +104,16 @@ export function getTimeSlotsForDate(
     return CATERING_TIME_SLOTS;
   }
 
-  if (dateStr) {
-    const [y, m, d] = dateStr.split('-').map(Number);
-    const dayOfWeek = new Date(y, m - 1, d, 12, 0, 0).getDay();
-    if (dayOfWeek === 0 || dayOfWeek === 6) {
-      return TIFFIN_WEEKEND_TIME_SLOTS;
-    }
-  }
-
-  return TIFFIN_WEEKDAY_TIME_SLOTS;
+  return TIFFIN_TIME_SLOTS;
 }
 
 /**
  * Returns a recommended default time slot for the given date and order context.
- * Weekend Tiffin defaults to 4:00 PM (safely after 3 PM).
- * Weekday Tiffin defaults to 5:00 PM (dinner pickup).
+ * Tiffin defaults to 12:00 PM (lunch window within 10:30 AM - 6:00 PM).
  * Catering defaults to 12:30 PM.
  */
 export function getDefaultTimeSlotForDate(
-  dateStr: string,
+  _dateStr: string,
   items: CartItem[] = [],
   subTab?: 'order' | 'cake' | 'tiffin'
 ): string {
@@ -133,14 +121,7 @@ export function getDefaultTimeSlotForDate(
   if (!isTiffin) {
     return '12:30 PM';
   }
-  if (dateStr) {
-    const [y, m, d] = dateStr.split('-').map(Number);
-    const dayOfWeek = new Date(y, m - 1, d, 12, 0, 0).getDay();
-    if (dayOfWeek === 0 || dayOfWeek === 6) {
-      return '4:00 PM';
-    }
-  }
-  return '5:00 PM';
+  return '12:00 PM';
 }
 
 /**
@@ -392,18 +373,18 @@ export function validateFulfillmentCutoff(
   }
 
   const [y, m, d] = fulfillmentDate.split('-').map(Number);
-  const targetDayOfWeek = new Date(y, m - 1, d, 12, 0, 0).getDay();
 
-  // Weekend Tiffin rule: available after 3 PM only per flyer
-  if (isTiffin && (targetDayOfWeek === 0 || targetDayOfWeek === 6)) {
-    const { hours } = parse12HourTime(fulfillmentTime);
-    if (hours < 15) {
+  // Tiffin 10:30 AM to 6:00 PM window validation
+  if (isTiffin) {
+    const { hours, minutes } = parse12HourTime(fulfillmentTime);
+    const slotDecimal = hours + minutes / 60;
+    if (slotDecimal < 10.5 || slotDecimal > 18.0) {
       return {
         isValid: false,
         earliestAllowedDate,
         earliestAllowedTime,
         requiredNoticeHours: noticeHours,
-        message: `Weekend Specials are available after 3:00 PM only (Saturday & Sunday). Please select a pickup window at or after 3:00 PM.`,
+        message: `Tiffin pickup is available between 10:30 AM and 6:00 PM only. Please select a time window within 10:30 AM – 6:00 PM.`,
         isPassed: false
       };
     }

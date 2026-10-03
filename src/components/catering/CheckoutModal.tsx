@@ -701,9 +701,9 @@ export default function CheckoutModal({
                         })}
                       </select>
                       <p className="text-[11px] text-gray-500 mt-1">
-                        {isWeekend(fulfillmentDate) 
-                          ? 'Available slots: 3:00 PM – 7:30 PM (US Central Time)' 
-                          : 'Available slots: Lunch (12 PM – 1:30 PM) • Dinner (4 PM – 7:30 PM)'}
+                        {isTiffinOrder 
+                          ? 'Available Tiffin pickup slots: 10:30 AM – 6:00 PM (US Central Time • 1hr notice)' 
+                          : 'Available Catering slots: 10:00 AM – 7:00 PM (US Central Time)'}
                       </p>
                     </div>
                   </div>
@@ -794,9 +794,9 @@ export default function CheckoutModal({
                                   <span className="text-[11px] text-gray-500 block truncate">
                                     {g.items.map(i => i.name).join(', ')}
                                   </span>
-                                  {isWeekend(g.dateStr) && (
+                                  {isTiffinOrder && (
                                     <span className="text-[10px] text-amber-700 font-bold block mt-0.5">
-                                      Weekend Specials: After 3 PM only
+                                      Pickup: 10:30 AM – 6:00 PM
                                     </span>
                                   )}
                                 </div>
@@ -891,9 +891,9 @@ export default function CheckoutModal({
                                   {blackouts.includes(opt.dateStr) ? 'Sold Out' : 'Closed'}
                                 </span>
                               )}
-                              {check.selectable && isTiffinOrder && (opt.dayOfWeek === 'Sat' || opt.dayOfWeek === 'Sun') && (
+                              {check.selectable && isTiffinOrder && (
                                 <span className="text-[8px] uppercase tracking-tighter font-bold mt-0.5 text-amber-600">
-                                  3 PM+
+                                  10:30-6 PM
                                 </span>
                               )}
                             </button>

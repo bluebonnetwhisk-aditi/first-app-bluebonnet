@@ -36,7 +36,8 @@ import {
   DEFAULT_TIFFIN_SETTINGS,
   DEFAULT_WEEKDAY_MENUS,
   DEFAULT_CONTAINER_ADDONS,
-  DEFAULT_DABBA_PRICING
+  DEFAULT_DABBA_PRICING,
+  DEFAULT_WEEKEND_FLYER_SPECIALS
 } from '../../services/supabase';
 import { 
   scanTiffinFlyerWithGemini, 
@@ -73,8 +74,8 @@ export default function KDSTiffinMenuModal({
   const [activeSection, setActiveSection] = useState<ModalSection>('flyer');
   
   // Section 1: Flyers & Dates
-  const [flyerUrl, setFlyerUrl] = useState('');
-  const [specialFlyerUrl, setSpecialFlyerUrl] = useState('');
+  const [flyerUrl, setFlyerUrl] = useState('/tiffin-flyer.jpg');
+  const [specialFlyerUrl, setSpecialFlyerUrl] = useState('/weekend-special-flyer.jpg');
   const [weekTitle, setWeekTitle] = useState('');
   const [selectedWeekKey, setSelectedWeekKey] = useState('');
   const [weekOptions, setWeekOptions] = useState<WeekOption[]>([]);
@@ -89,7 +90,7 @@ export default function KDSTiffinMenuModal({
   const [dabbaPricing, setDabbaPricing] = useState<DabbaPricing>(DEFAULT_DABBA_PRICING);
 
   // Section 5: Chef's Specials
-  const [specialDishes, setSpecialDishes] = useState<TiffinSpecialDish[]>([]);
+  const [specialDishes, setSpecialDishes] = useState<TiffinSpecialDish[]>(DEFAULT_WEEKEND_FLYER_SPECIALS);
   type SpecialDayFilter = 'All' | 'Weekdays' | 'Weekend' | 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday' | 'Saturday' | 'Sunday';
   const [specialDayFilter, setSpecialDayFilter] = useState<SpecialDayFilter>('All');
 
@@ -115,7 +116,7 @@ export default function KDSTiffinMenuModal({
 
     Promise.all([fetchTiffinMenuSettings(), fetchCalendarBlackouts()]).then(([data, bDates]) => {
       setFlyerUrl(data.flyerImageUrl || DEFAULT_TIFFIN_SETTINGS.flyerImageUrl);
-      setSpecialFlyerUrl(data.specialFlyerUrl || '');
+      setSpecialFlyerUrl(data.specialFlyerUrl || '/weekend-special-flyer.jpg');
       setWeekTitle(data.weekTitle || DEFAULT_TIFFIN_SETTINGS.weekTitle);
 
       if (data.weekdayMenus) {
@@ -139,18 +140,8 @@ export default function KDSTiffinMenuModal({
       // Populate special dishes (keep all dishes for verification without truncating)
       if (Array.isArray(data.specialDishes) && data.specialDishes.length > 0) {
         setSpecialDishes(data.specialDishes);
-      } else if (data.saturdaySpecialTitle) {
-        setSpecialDishes([
-          {
-            id: 'spec-legacy',
-            title: data.saturdaySpecialTitle,
-            description: data.saturdaySpecialDescription || 'Special weekend dish',
-            price: 13.99,
-            imageUrl: data.saturdaySpecialImageUrl || ''
-          }
-        ]);
       } else {
-        setSpecialDishes(DEFAULT_TIFFIN_SETTINGS.specialDishes || []);
+        setSpecialDishes(DEFAULT_WEEKEND_FLYER_SPECIALS);
       }
 
       // Generate upcoming 8 weeks
@@ -390,9 +381,18 @@ export default function KDSTiffinMenuModal({
       if (data.dabbaPricing) setDabbaPricing(prev => ({ ...prev, ...data.dabbaPricing }));
 
       if (data.specialDishes && data.specialDishes.length > 0) {
-        setSpecialDishes(data.specialDishes);
+        // Merge weekday specials without overwriting existing weekend flyer specials!
+        setSpecialDishes(prev => {
+          const weekendDishes = prev.filter(d => 
+            d.availableDays?.includes('Saturday') || d.availableDays?.includes('Sunday')
+          );
+          const scannedWeekday = data.specialDishes!.filter(d =>
+            d.availableDays?.some(day => ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'].includes(day))
+          );
+          return scannedWeekday.length > 0 ? [...scannedWeekday, ...weekendDishes] : (weekendDishes.length > 0 ? weekendDishes : data.specialDishes!);
+        });
         setAiUpdatedTabs(['daily', 'addons', 'pricing', 'specials']);
-        setScanSuccess(`✓ Weekly Flyer scanned successfully! Auto-populated Weekday Menus (Mon–Sat), 16 oz Containers, Dabba Pricing, and ${data.specialDishes.length} Specials.`);
+        setScanSuccess(`✓ Weekly Flyer scanned successfully! Auto-populated Weekday Menus (Mon–Sat), 16 oz Containers, Dabba Pricing, and merged specials.`);
       } else {
         setAiUpdatedTabs(['daily', 'addons', 'pricing']);
         setScanSuccess(`✓ Weekly Flyer scanned successfully! Auto-populated Weekday Menus (Mon–Sat), 16 oz Containers, and Dabba Pricing.`);
@@ -419,14 +419,23 @@ export default function KDSTiffinMenuModal({
     setScanSuccess(null);
 
     try {
-      const targetImage = specialFlyerUrl || flyerUrl || '/tiffin-flyer.jpg';
+      const targetImage = (specialFlyerUrl && specialFlyerUrl.trim()) ? specialFlyerUrl.trim() : '/weekend-special-flyer.jpg';
       const data = await scanWeekendSpecialFlyerWithGemini(targetImage, key);
       if (data.specialDishes && data.specialDishes.length > 0) {
         // Capture ALL scanned special dishes & tubs for verification without truncating or forcing days
-        setSpecialDishes(data.specialDishes);
+        // Merge with any weekday-only specials already configured
+        setSpecialDishes(prev => {
+          const weekdayOnly = prev.filter(d => 
+            d.availableDays && 
+            d.availableDays.length > 0 && 
+            !d.availableDays.includes('Saturday') && 
+            !d.availableDays.includes('Sunday')
+          );
+          return [...weekdayOnly, ...data.specialDishes!];
+        });
       }
 
-      setAiUpdatedTabs(['specials']);
+      setAiUpdatedTabs(prev => Array.from(new Set([...prev, 'specials'])));
       const count = data.specialDishes?.length || 0;
       const satCount = data.specialDishes?.filter(d => d.availableDays?.includes('Saturday')).length || 0;
       const sunCount = data.specialDishes?.filter(d => d.availableDays?.includes('Sunday')).length || 0;
@@ -442,7 +451,7 @@ export default function KDSTiffinMenuModal({
   // Quick-fill from bundled flyer demo data
   const handleLoadDemoData = () => {
     const data = getBundledFlyerParsedData();
-    applyScannedData(data, 'Bundled September flyer loaded');
+    applyScannedData(data, 'Bundled flyer loaded');
   };
 
   // Save API Key and optionally scan
@@ -850,11 +859,11 @@ export default function KDSTiffinMenuModal({
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-start">
                   <div className="relative rounded-xl border border-purple-200 overflow-hidden bg-white max-h-48 flex items-center justify-center">
                     <img 
-                      src={specialFlyerUrl || flyerUrl || '/tiffin-flyer.jpg'} 
+                      src={specialFlyerUrl || '/weekend-special-flyer.jpg'} 
                       alt="Weekend Special Flyer Preview" 
                       className="w-full object-contain max-h-48"
                       onError={(e) => {
-                        (e.target as HTMLImageElement).src = '/tiffin-flyer.jpg';
+                        (e.target as HTMLImageElement).src = '/weekend-special-flyer.jpg';
                       }}
                     />
                   </div>
@@ -882,7 +891,7 @@ export default function KDSTiffinMenuModal({
                       </label>
                       <input
                         type="text"
-                        placeholder="https://example.com/weekend-special-flyer.jpg"
+                        placeholder="/weekend-special-flyer.jpg"
                         value={specialFlyerUrl}
                         onChange={(e) => setSpecialFlyerUrl(e.target.value)}
                         className="w-full px-3 py-2 text-xs bg-white border border-purple-300 rounded-xl focus:outline-none focus:border-purple-600"
@@ -1402,6 +1411,14 @@ export default function KDSTiffinMenuModal({
                     <p className="text-[11px] text-purple-800 mt-0.5">
                       Configure unlimited specials and 16oz / 8oz tubs for weekdays (Mon–Fri) or weekends (Sat/Sun). Any enabled specials will automatically appear on the main website for customers to order on that respective day.
                     </p>
+                    <div className="flex flex-wrap items-center gap-2 mt-1">
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-purple-200/70 text-purple-900 text-[10px] font-bold">
+                        📅 <strong>Saturday (4):</strong> Dal Makhni 16oz ($9.99), Paneer Lababdar 16oz ($13.99), Samosa Chaat ($6), Paani Puri ($9.99)
+                      </span>
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-purple-200/70 text-purple-900 text-[10px] font-bold">
+                        📅 <strong>Sunday (4):</strong> Halwai Aaloo Bhaji + Puri ($9.99), Slow-Cooked Kheer ($20/$13), Bhayankar Deal ($20), Paani Puri ($9.99)
+                      </span>
+                    </div>
                   </div>
 
                   <div className="flex flex-wrap items-center gap-2">
@@ -1410,6 +1427,19 @@ export default function KDSTiffinMenuModal({
                         <Sparkles className="w-3 h-3 text-[#ffdea5]" /> Scanned by Gemini
                       </span>
                     )}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSpecialDishes(DEFAULT_WEEKEND_FLYER_SPECIALS);
+                        setScanSuccess('✓ Successfully reset to all 7 dishes & tubs from the Weekend Special Flyer.');
+                        setSpecialDayFilter('All');
+                      }}
+                      className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-purple-100 hover:bg-purple-200 text-purple-950 text-xs font-bold border border-purple-300 shadow-2xs transition-colors cursor-pointer"
+                      title="Instantly restore all 7 dishes & tubs from the weekend special flyer"
+                    >
+                      <Sparkles className="w-3.5 h-3.5 text-purple-700" />
+                      <span>✨ Reset to 7 Flyer Dishes</span>
+                    </button>
                     <button
                       type="button"
                       onClick={() => handleAddSpecial('Monday')}
