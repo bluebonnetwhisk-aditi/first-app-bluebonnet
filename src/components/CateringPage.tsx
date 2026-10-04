@@ -157,7 +157,7 @@ export default function CateringPage({ onOpenWizard }: CateringPageProps) {
                 {[
                   "Cocktail Samosas", "Spring Rolls",
                   "Hara Bhara Kebabs", "Beetroot Tikki",
-                  "Veg/Paneer Pakora", "Pav Bhaji",
+                  "Veg/Paneer Pakora", "Dahi Ke Kebab",
                   "Soya Keema Sliders", "Paneer Bhurji Sliders"
                 ].map((item) => (
                   <div key={item} className="flex items-center gap-2 text-xs text-gray-700 font-sans font-medium">
@@ -245,9 +245,9 @@ export default function CateringPage({ onOpenWizard }: CateringPageProps) {
               <div className="bg-white border border-gray-150 p-6 rounded-lg shadow-2xs flex flex-col justify-between">
                 <div className="space-y-4">
                   <div className="h-8 w-8 rounded-full bg-[#775a19]/10 text-[#775a19] flex items-center justify-center font-bold font-serif text-xs">P</div>
-                  <h3 className="font-serif text-lg font-bold text-[#00346f] border-b border-gray-100 pb-2">Paneer Specials</h3>
+                  <h3 className="font-serif text-lg font-bold text-[#00346f] border-b border-gray-100 pb-2">Paneer &amp; Premium Mains</h3>
                   <ul className="space-y-2">
-                    {["Paneer Lababdar", "Karahi Paneer", "Matar Paneer", "Palak Paneer", "Paneer Bhurji", "Kesar Malai Kofta"].map((item) => (
+                    {["Paneer Lababdar", "Karahi Paneer", "Matar Paneer", "Palak Paneer", "Paneer Bhurji", "Kesar Malai Kofta", "Pav Bhaji"].map((item) => (
                       <li key={item} className="text-xs font-sans text-gray-600 font-medium flex gap-2">
                         <span className="text-secondary-brand">•</span>
                         <span>{item}</span>

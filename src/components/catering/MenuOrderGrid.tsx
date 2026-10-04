@@ -88,7 +88,7 @@ const MENU_SECTIONS: SectionDef[] = [
     key: 'breads',
     category: 'breads',
     title: 'Breads (Min. 30 pieces)',
-    subtitle: 'Poori, Methi Poori ($0.90/pc) • Naan, Garlic Naan, Dal Kachori, Bedmi Poori ($1.40/pc)',
+    subtitle: 'Poori, Methi Poori, Pav ($0.90/pc) • Naan, Garlic Naan, Dal Kachori, Bedmi Poori ($1.40/pc)',
     icon: Utensils
   },
   {

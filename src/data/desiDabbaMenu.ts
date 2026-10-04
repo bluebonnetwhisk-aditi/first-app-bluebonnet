@@ -130,6 +130,19 @@ export const DESI_DABBA_ITEMS: MenuItem[] = [
     leadTimeHours: 24,
     isSatvikAvailable: true
   },
+  {
+    id: 'pav-bhaji',
+    name: 'Pav Bhaji',
+    category: 'mains',
+    categoryLabel: 'Paneer & Premium Mains',
+    tier: 'Maharaja',
+    description: 'Mumbai-style spiced mashed vegetable bhaji simmered in butter, served with soft toasted pav.',
+    allergens: ['D', 'G'],
+    pricingType: 'tray',
+    trayPricing: TIER_PRICING.Maharaja,
+    leadTimeHours: 24,
+    isSatvikAvailable: true
+  },
 
   // B. DRY SABZI
   {
@@ -704,6 +717,20 @@ export const DESI_DABBA_ITEMS: MenuItem[] = [
     unitPricePiece: 1.40,
     minPieces: 30,
     pricePer30Pcs: 42,
+    leadTimeHours: 24,
+    isSatvikAvailable: true
+  },
+  {
+    id: 'bread-pav',
+    name: 'Pav (Dinner Rolls)',
+    category: 'breads',
+    categoryLabel: 'Breads (Min. 30 pieces)',
+    description: 'Soft, buttery toasted dinner pav rolls — perfect accompaniment for Pav Bhaji.',
+    allergens: ['G', 'D'],
+    pricingType: 'bread',
+    unitPricePiece: 0.90,
+    minPieces: 30,
+    pricePer30Pcs: 27,
     leadTimeHours: 24,
     isSatvikAvailable: true
   },
