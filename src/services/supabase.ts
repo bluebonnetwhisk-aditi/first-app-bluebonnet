@@ -1094,7 +1094,8 @@ export const DEFAULT_WEEKEND_FLYER_SPECIALS: TiffinSpecialDish[] = [
 export function getCurrentMondayStr(): string {
   const { nowDate } = getCentralTimeNow();
   const curDayOfWeek = nowDate.getDay();
-  const daysToMonday = curDayOfWeek === 0 ? 1 : (1 - curDayOfWeek);
+  // Sunday (0) belongs to the week starting 6 days earlier (Monday)
+  const daysToMonday = curDayOfWeek === 0 ? -6 : (1 - curDayOfWeek);
   const mon = new Date(nowDate.getFullYear(), nowDate.getMonth(), nowDate.getDate() + daysToMonday);
   const y = mon.getFullYear();
   const m = (mon.getMonth() + 1).toString().padStart(2, '0');

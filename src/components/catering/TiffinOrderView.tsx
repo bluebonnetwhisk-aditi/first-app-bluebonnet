@@ -13,7 +13,8 @@ import {
   FileText,
   Calendar,
   Layers,
-  Maximize2
+  Maximize2,
+  Clock
 } from 'lucide-react';
 import type { CartItem, MenuItem, TiffinSpecialDish, TiffinMenuSettings } from '../../types/catering';
 import { getCentralTimeNow } from '../../utils/centralTime';
@@ -309,6 +310,12 @@ export default function TiffinOrderView({
     return upcomingWeeks.find(w => w.id === selectedWeekId) || upcomingWeeks[0];
   }, [upcomingWeeks, selectedWeekId]);
 
+  // Check if the currently selected week matches the active flyer uploaded via KDS
+  const isWeekMenuUploaded = useMemo(() => {
+    if (!settings?.weekStartDate || !activeWeeklyPlan) return false;
+    return activeWeeklyPlan.monDateStr === settings.weekStartDate;
+  }, [settings?.weekStartDate, activeWeeklyPlan]);
+
   // Compute next 5 available open days for Weekly Plan (skipping blackout and closed dates)
   const weeklyPlanInfo = useMemo(() => {
     if (!activeWeeklyPlan) return null;
@@ -358,6 +365,8 @@ export default function TiffinOrderView({
     const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
     const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
+    const isWeekUploaded = Boolean(settings?.weekStartDate && activeWeeklyPlan.monDateStr === settings.weekStartDate);
+
     const result: DaySchedule[] = [];
     for (let i = 0; i < 7; i++) {
       const dayDate = new Date(mon.getFullYear(), mon.getMonth(), mon.getDate() + i);
@@ -373,7 +382,7 @@ export default function TiffinOrderView({
       const isWeekend = isSaturday || isSunday;
       const isBlackout = blackoutDates.includes(dateStr);
 
-      const hasWeekendSpecialMenu = isWeekend && specialsList.some(s => {
+      const hasWeekendSpecialMenu = isWeekUploaded && isWeekend && specialsList.some(s => {
         const activeDays = (s.availableDays && s.availableDays.length > 0)
           ? s.availableDays
           : ['Saturday', 'Sunday'];
@@ -383,11 +392,14 @@ export default function TiffinOrderView({
       const isWeekendClosed = isWeekend && !hasWeekendSpecialMenu;
 
       const isTodayOrLater = dateStr >= todayStr;
-      const isSelectable = isTodayOrLater && !isWeekendClosed && !isBlackout;
+      // If week menu has not been uploaded via KDS, ordering individual dishes is disabled
+      const isSelectable = isWeekUploaded && isTodayOrLater && !isWeekendClosed && !isBlackout;
 
       let statusLabel = 'Available to Order';
       if (isBlackout) {
         statusLabel = 'Sold Out — We are Oversold for this Date';
+      } else if (!isWeekUploaded) {
+        statusLabel = 'Chef Deciding Delicacies • Dropping Soon';
       } else if (isSunday && isWeekendClosed) {
         statusLabel = 'Kitchen Closed (Sunday)';
       } else if (isSaturday && isWeekendClosed) {
@@ -400,11 +412,15 @@ export default function TiffinOrderView({
         statusLabel = 'Past Date';
       }
 
-      const activeMenus = settings.weekdayMenus || DEFAULT_WEEKDAY_MENUS;
-      const menu = activeMenus[dayName] || DEFAULT_WEEKDAY_MENUS[dayName] || { dal: '', sabzi: '', description: '' };
+      const activeMenus = isWeekUploaded ? (settings.weekdayMenus || DEFAULT_WEEKDAY_MENUS) : {};
+      const menu = activeMenus[dayName] || { dal: '', sabzi: '', description: '' };
 
-      const dalOrCurry = isSaturday ? (settings.saturdaySpecialTitle || menu.dal || '') : (menu.dal || '');
-      const sabzi = isSaturday ? (settings.saturdaySpecialDescription || menu.sabzi || '') : (menu.sabzi || '');
+      const dalOrCurry = isWeekUploaded
+        ? (isSaturday ? (settings.saturdaySpecialTitle || menu.dal || '') : (menu.dal || ''))
+        : '';
+      const sabzi = isWeekUploaded
+        ? (isSaturday ? (settings.saturdaySpecialDescription || menu.sabzi || '') : (menu.sabzi || ''))
+        : '';
 
       result.push({
         dayName,
@@ -412,19 +428,23 @@ export default function TiffinOrderView({
         displayDate,
         dalOrCurry,
         sabzi,
-        description: menu.description || '',
-        isSaturdaySpecial: isWeekend,
+        description: isWeekUploaded ? (menu.description || '') : '',
+        isSaturdaySpecial: isWeekend && isWeekUploaded && Boolean(hasWeekendSpecialMenu),
         isSundayClosed: isSunday && isWeekendClosed,
         isSelectable,
         statusLabel
       });
     }
     return result;
-  }, [activeWeeklyPlan, todayStr, settings.weekdayMenus, settings.saturdaySpecialTitle, settings.saturdaySpecialDescription, settings.specialDishes, blackoutDates]);
+  }, [activeWeeklyPlan, todayStr, settings.weekStartDate, settings.weekdayMenus, settings.saturdaySpecialTitle, settings.saturdaySpecialDescription, settings.specialDishes, blackoutDates]);
 
   // Dynamic header status line showing Central Time, Sunday status, and active week blackout info
   const headerTimeAndStatusText = useMemo(() => {
     if (!schedule || schedule.length === 0) return 'Central Time';
+
+    if (!isWeekMenuUploaded) {
+      return 'Central Time • 👨‍🍳 Chef Curating Delicacies (Menu Dropping Soon)';
+    }
 
     const sundayItem = schedule.find(s => s.dayName === 'Sunday');
     const blackoutDaysInWeek = schedule.filter(s => blackoutDates.includes(s.dateStr));
@@ -444,7 +464,7 @@ export default function TiffinOrderView({
     }
 
     return `Central Time • ${sundayStatus}`;
-  }, [schedule, blackoutDates]);
+  }, [schedule, blackoutDates, isWeekMenuUploaded]);
 
   // Active Day Menu Selector manages date selection independently according to Tiffin scheduling, notice window, and blackout rules
 
@@ -467,14 +487,14 @@ export default function TiffinOrderView({
 
   // Active specials specifically enabled for the currently selected activeDay
   const activeSpecialsForDay = useMemo(() => {
-    if (!activeDay) return [];
+    if (!activeDay || !isWeekMenuUploaded) return [];
     return specialsList.filter(dish => {
       const activeDays = dish.availableDays && dish.availableDays.length > 0
         ? dish.availableDays
         : ['Saturday', 'Sunday'];
       return activeDays.includes(activeDay.dayName);
     });
-  }, [activeDay, specialsList]);
+  }, [activeDay, specialsList, isWeekMenuUploaded]);
 
   // Helper to trigger alert
   const triggerAddedAlert = (msg: string) => {
@@ -703,6 +723,25 @@ export default function TiffinOrderView({
 
         {/* Mini Flyer Thumbnail matching Ribbon Height */}
         {(() => {
+          if (!isWeekMenuUploaded) {
+            return (
+              <div className="relative shrink-0 rounded-2xl border-2 border-dashed border-[#ffdea5]/40 h-28 sm:h-32 w-44 sm:w-52 bg-gradient-to-br from-black/60 to-[#001e40]/80 p-3 flex flex-col justify-between text-center shadow-lg">
+                <div className="flex items-center justify-center gap-1.5 text-[#ffdea5]">
+                  <Sparkles className="w-3.5 h-3.5 animate-pulse" />
+                  <span className="text-[10px] font-black uppercase tracking-widest">Secret Vault</span>
+                </div>
+                <div className="space-y-0.5">
+                  <div className="text-xl">👨‍🍳✨</div>
+                  <p className="text-[11px] font-bold text-white leading-tight">Flyer Dropping Soon</p>
+                  <p className="text-[9px] text-[#ffdea5]/80 font-light">Chef curating delicacies</p>
+                </div>
+                <div className="text-[9px] font-semibold text-amber-300 bg-amber-950/60 rounded-md py-0.5 px-1.5 border border-amber-500/30">
+                  KDS Sync Pending
+                </div>
+              </div>
+            );
+          }
+
           const isWeekendActive = activeDay?.isSaturdaySpecial || activeDay?.dayName === 'Sunday';
           const activeFlyerImage = (isWeekendActive && settings.specialFlyerUrl)
             ? settings.specialFlyerUrl
@@ -745,18 +784,26 @@ export default function TiffinOrderView({
           <div className="flex items-center gap-2 overflow-x-auto pb-1 md:pb-0 scrollbar-none">
             {upcomingWeeks.map((week) => {
               const isSelected = activeWeeklyPlan?.id === week.id;
+              const isThisWeekUploaded = Boolean(settings?.weekStartDate && week.monDateStr === settings.weekStartDate);
               return (
                 <button
                   key={week.id}
                   type="button"
                   onClick={() => setSelectedWeekId(week.id)}
-                  className={`px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
+                  className={`px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer inline-flex items-center gap-1.5 ${
                     isSelected
                       ? 'bg-[#00346f] text-white shadow-xs ring-2 ring-[#ffdea5]/40'
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200'
                   }`}
                 >
-                  {week.label} ({week.shortRange})
+                  <span>{week.label} ({week.shortRange})</span>
+                  {!isThisWeekUploaded && (
+                    <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-bold ${
+                      isSelected ? 'bg-[#ffdea5] text-[#00346f]' : 'bg-amber-100 text-amber-800'
+                    }`}>
+                      Chef Deciding
+                    </span>
+                  )}
                 </button>
               );
             })}
@@ -796,17 +843,27 @@ export default function TiffinOrderView({
                     <span className={`text-xs font-bold ${isSelected ? 'text-white' : 'text-gray-900'}`}>
                       {day.dayName.slice(0, 3)}
                     </span>
-                    {day.isSaturdaySpecial && (
-                      <span className={`text-[9px] font-black uppercase px-1 rounded ${
-                        isSelected ? 'bg-[#ffdea5] text-[#00346f]' : 'bg-purple-100 text-purple-800'
+                    {!isWeekMenuUploaded ? (
+                      <span className={`text-[9px] font-bold px-1 rounded ${
+                        isSelected ? 'bg-[#ffdea5] text-[#00346f]' : 'bg-gray-200 text-gray-600'
                       }`}>
-                        Spec
+                        Soon
                       </span>
-                    )}
-                    {day.isSundayClosed && (
-                      <span className="text-[9px] font-bold text-amber-800">
-                        Off
-                      </span>
+                    ) : (
+                      <>
+                        {day.isSaturdaySpecial && (
+                          <span className={`text-[9px] font-black uppercase px-1 rounded ${
+                            isSelected ? 'bg-[#ffdea5] text-[#00346f]' : 'bg-purple-100 text-purple-800'
+                          }`}>
+                            Spec
+                          </span>
+                        )}
+                        {day.isSundayClosed && (
+                          <span className="text-[9px] font-bold text-amber-800">
+                            Off
+                          </span>
+                        )}
+                      </>
                     )}
                   </div>
                   <span className={`text-[11px] block mt-0.5 font-semibold ${isSelected ? 'text-gray-200' : 'text-gray-600'}`}>
@@ -855,7 +912,64 @@ export default function TiffinOrderView({
         <div className="space-y-6 animate-fade-in">
 
           {/* A) ACTIVE DAY DABBA MEAL CARD */}
-          {activeDay && (
+          {!isWeekMenuUploaded ? (
+            <div className="bg-gradient-to-br from-[#fffdf7] via-[#fff8eb] to-[#fef3c7] rounded-3xl border-2 border-[#e5b95f]/70 p-7 sm:p-10 shadow-sm relative overflow-hidden text-center space-y-6">
+              {/* Playful Floating Culinary Elements */}
+              <div className="absolute top-4 left-6 text-2xl opacity-40 select-none animate-bounce">✨</div>
+              <div className="absolute top-5 right-8 text-2xl opacity-40 select-none">🌶️</div>
+              <div className="absolute bottom-4 left-8 text-xl opacity-35 select-none">🥘</div>
+              <div className="absolute bottom-5 right-10 text-2xl opacity-40 select-none">🧆</div>
+
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#775a19]/10 border border-[#775a19]/30 text-[#775a19] text-[11px] font-black uppercase tracking-widest shadow-2xs">
+                <Sparkles className="w-3.5 h-3.5 text-[#b47a16]" />
+                <span>TOP SECRET CULINARY LAB • {activeWeeklyPlan?.rangeLabel || activeWeeklyPlan?.shortRange}</span>
+              </div>
+
+              <div className="max-w-xl mx-auto space-y-3">
+                <div className="text-5xl sm:text-6xl select-none animate-pulse">👨‍🍳✨🍲</div>
+
+                <h3 className="font-serif text-2xl sm:text-3xl md:text-4xl font-extrabold text-[#00346f] tracking-tight">
+                  Hold Your Cravings! <br className="hidden sm:inline" />
+                  <span className="text-[#b47a16] italic font-normal">The Chef is Deciding on the Delicacies...</span>
+                </h3>
+
+                <p className="text-xs sm:text-sm text-gray-700 font-normal leading-relaxed">
+                  Intense philosophical debates are currently underway over the tadka pan. 
+                  Will it be slow-simmered, velvety <span className="font-semibold text-gray-900">Dal Makhani</span> or royal <span className="font-semibold text-gray-900">Paneer Lababdar</span>? 
+                  A smoky fire-roasted <span className="font-semibold text-gray-900">Baingan Bharta</span> or grandma’s secret <span className="font-semibold text-gray-900">Methi Malai Matar</span>? 
+                  Our head chef is taste-testing, spice-balancing, and putting the final gold leaf on next week’s rotating menu.
+                </p>
+
+                <div className="p-3.5 bg-white/90 rounded-2xl border border-[#e5b95f]/40 max-w-md mx-auto text-xs text-[#775a19] font-medium shadow-2xs flex items-center justify-center gap-2">
+                  <Clock className="w-4 h-4 text-[#b47a16] shrink-0" />
+                  <span>The official KDS flyer drops very soon. Check back shortly!</span>
+                </div>
+              </div>
+
+              {/* Chic CTAs */}
+              <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedWeekId(upcomingWeeks[0].id);
+                    const firstOpen = upcomingWeeks[0].days.find(d => !blackoutDates.includes(d.dateStr));
+                    if (firstOpen) setSelectedDayTab(firstOpen.dateStr);
+                  }}
+                  className="inline-flex items-center gap-2 bg-[#00346f] hover:bg-[#00224d] text-white px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-xs cursor-pointer"
+                >
+                  <Utensils className="w-4 h-4 text-[#ffdea5]" />
+                  <span>Order from This Week's Active Menu ({upcomingWeeks[0].shortRange})</span>
+                </button>
+
+                <a
+                  href="tel:9452830004"
+                  className="inline-flex items-center gap-2 bg-white hover:bg-gray-50 text-[#775a19] border border-[#e5b95f] px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-2xs"
+                >
+                  <span>💬 Whisper Your Cravings to the Chef</span>
+                </a>
+              </div>
+            </div>
+          ) : activeDay ? (
             <div className="bg-white rounded-3xl border border-gray-200 p-6 sm:p-8 shadow-xs space-y-6">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-gray-200">
                 <div>
@@ -1394,7 +1508,7 @@ export default function TiffinOrderView({
                 </>
               )}
             </div>
-          )}
+          ) : null}
 
           {/* B) WEEKLY DABBA SUBSCRIPTION BANNER */}
           <div className="rounded-3xl bg-gradient-to-r from-emerald-50 via-teal-50 to-blue-50 border-2 border-emerald-200/80 p-6 sm:p-8 shadow-sm space-y-4">
@@ -1413,7 +1527,13 @@ export default function TiffinOrderView({
                     </h2>
                     <p className="text-xs sm:text-sm text-gray-700 leading-relaxed">
                       Enjoy 1 Single Dabba every day for <strong>5 available open days ({rangeStr})</strong>. 
-                      Blackout dates and closed days are automatically skipped. Zero preservatives, rotated daily menus, freshly packed for dinner pickup.
+                      {!isWeekMenuUploaded ? (
+                        <span className="block mt-1 text-emerald-800 font-semibold">
+                          ✨ Next week's specific dishes are currently being curated by the chef, but you can secure your 5-day spot now for fresh daily homestyle rotation!
+                        </span>
+                      ) : (
+                        ' Blackout dates and closed days are automatically skipped. Zero preservatives, rotated daily menus, freshly packed for dinner pickup.'
+                      )}
                     </p>
                     <div className="flex flex-wrap items-center gap-4 text-xs font-medium text-emerald-900 pt-1">
                       <span>✓ 5 Hot Meals ({rangeStr})</span>
@@ -1492,7 +1612,9 @@ export default function TiffinOrderView({
               </div>
 
               <div className="px-3 py-1.5 bg-blue-50 border border-blue-200 rounded-xl text-xs font-semibold text-[#00346f] self-start sm:self-auto">
-                Menu: {activeDay?.dalOrCurry} • {activeDay?.sabzi}
+                {isWeekMenuUploaded
+                  ? `Menu: ${activeDay?.dalOrCurry} • ${activeDay?.sabzi}`
+                  : 'Menu: Chef Finalizing Delicacies'}
               </div>
             </div>
 
@@ -1610,6 +1732,36 @@ export default function TiffinOrderView({
 
               if (isClosed || !hasFlyerMenu) {
                 const isBlackoutDate = blackoutDates.includes(activeDay.dateStr);
+
+                if (!isWeekMenuUploaded && !isBlackoutDate) {
+                  return (
+                    <div className="p-8 bg-gradient-to-br from-[#fffdf7] via-[#fff8eb] to-[#fef3c7] rounded-3xl border-2 border-dashed border-[#e5b95f]/70 text-center space-y-4">
+                      <div className="text-4xl select-none">🍲✨👨‍🍳</div>
+                      <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#775a19]/10 border border-[#775a19]/30 text-[#775a19] text-[10px] font-black uppercase tracking-widest">
+                        <span>TUBS &amp; SIDES ON STANDBY</span>
+                      </div>
+                      <h4 className="font-serif font-bold text-lg text-[#00346f]">
+                        No Mystery Tubs Here!
+                      </h4>
+                      <p className="text-xs sm:text-sm text-gray-700 max-w-lg mx-auto leading-relaxed">
+                        Extra 8oz &amp; 16oz curry and sabzi tubs will unlock the instant the chef announces next week's flyer dishes. Until then, the spices remain top secret!
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedWeekId(upcomingWeeks[0].id);
+                          const firstOpen = upcomingWeeks[0].days.find(d => !blackoutDates.includes(d.dateStr));
+                          if (firstOpen) setSelectedDayTab(firstOpen.dateStr);
+                        }}
+                        className="inline-flex items-center gap-2 bg-[#00346f] hover:bg-[#00224d] text-white px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-xs cursor-pointer"
+                      >
+                        <Utensils className="w-4 h-4 text-[#ffdea5]" />
+                        <span>Order Tubs from This Week's Active Menu ({upcomingWeeks[0].shortRange})</span>
+                      </button>
+                    </div>
+                  );
+                }
+
                 return (
                   <div className="p-8 bg-amber-50/80 rounded-3xl border-2 border-dashed border-amber-300 text-center space-y-3">
                     <div className="text-4xl">{isBlackoutDate ? '🔥🍱' : '👨‍🍳😴'}</div>
