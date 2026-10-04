@@ -212,7 +212,9 @@ export default function TiffinOrderView({
 
   const upcomingWeeks = useMemo(() => {
     const curDayOfWeek = nowDate.getDay(); // 0 is Sunday, 1 is Monday... 6 is Saturday
-    const daysToMonday = curDayOfWeek === 0 ? 1 : (1 - curDayOfWeek);
+    // Monday of the week that CONTAINS today (Sunday belongs to the week that started 6 days earlier),
+    // so today's Saturday/Sunday specials are always reachable.
+    const daysToMonday = curDayOfWeek === 0 ? -6 : (1 - curDayOfWeek);
     const baseMonday = new Date(nowDate.getFullYear(), nowDate.getMonth(), nowDate.getDate() + daysToMonday);
 
     const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -227,17 +229,7 @@ export default function TiffinOrderView({
 
     const fmtDisplay = (d: Date) => `${monthNames[d.getMonth()]} ${d.getDate()}`;
 
-    let startMonday = baseMonday;
-    const baseMonStr = fmtStr(baseMonday);
-    if (settings?.weekStartDate) {
-      const parts = settings.weekStartDate.split('-').map(Number);
-      if (parts.length === 3 && !isNaN(parts[0]) && !isNaN(parts[1]) && !isNaN(parts[2])) {
-        const kdsMon = new Date(parts[0], parts[1] - 1, parts[2]);
-        if (settings.weekStartDate >= baseMonStr) {
-          startMonday = kdsMon;
-        }
-      }
-    }
+    const startMonday = baseMonday;
 
     const weeks = [];
     for (let w = 0; w < 4; w++) {
@@ -281,10 +273,27 @@ export default function TiffinOrderView({
       });
     }
     return weeks;
-  }, [nowDate, settings?.weekStartDate, settings?.weekTitle]);
+  }, [todayStr, settings?.weekStartDate, settings?.weekTitle]);
 
   // Set default selectedWeekId on load or when flyer settings update from KDS
   useEffect(() => {
+    if (upcomingWeeks.length === 0) return;
+
+    // Weekend: if today has an open (non-blackout) special, land on the current week so it can be ordered
+    const todayDow = new Date(`${todayStr}T12:00:00`).getDay();
+    if (todayDow === 0 || todayDow === 6) {
+      const todayName = todayDow === 0 ? 'Sunday' : 'Saturday';
+      const hasTodaySpecial = specialsList.some(s => {
+        const days = s.availableDays && s.availableDays.length > 0 ? s.availableDays : ['Saturday', 'Sunday'];
+        return days.includes(todayName);
+      });
+      if (hasTodaySpecial && !blackoutDates.includes(todayStr)) {
+        setSelectedWeekId(upcomingWeeks[0].id);
+        setSelectedDayTab(todayStr);
+        return;
+      }
+    }
+
     if (settings?.weekStartDate) {
       const matching = upcomingWeeks.find(w => w.monDateStr === settings.weekStartDate);
       if (matching) {
@@ -292,10 +301,9 @@ export default function TiffinOrderView({
         return;
       }
     }
-    if (upcomingWeeks.length > 0) {
-      setSelectedWeekId(upcomingWeeks[0].id);
-    }
-  }, [settings?.weekStartDate, upcomingWeeks]);
+    setSelectedWeekId(upcomingWeeks[0].id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [settings?.weekStartDate, settings?.specialDishes, todayStr, blackoutDates]);
 
   const activeWeeklyPlan = useMemo(() => {
     return upcomingWeeks.find(w => w.id === selectedWeekId) || upcomingWeeks[0];
@@ -412,7 +420,7 @@ export default function TiffinOrderView({
       });
     }
     return result;
-  }, [activeWeeklyPlan, todayStr, settings.weekdayMenus, settings.saturdaySpecialTitle, settings.saturdaySpecialDescription, blackoutDates]);
+  }, [activeWeeklyPlan, todayStr, settings.weekdayMenus, settings.saturdaySpecialTitle, settings.saturdaySpecialDescription, settings.specialDishes, blackoutDates]);
 
   // Dynamic header status line showing Central Time, Sunday status, and active week blackout info
   const headerTimeAndStatusText = useMemo(() => {
