@@ -87,8 +87,8 @@ const MENU_SECTIONS: SectionDef[] = [
   {
     key: 'breads',
     category: 'breads',
-    title: 'Breads (Min. 30 pieces)',
-    subtitle: 'Poori, Methi Poori, Pav ($0.90/pc) • Naan, Garlic Naan, Dal Kachori, Bedmi Poori ($1.40/pc)',
+    title: 'Breads & Pav',
+    subtitle: 'Pav ($1.00/pc • Min. 8 pack) • Poori, Methi Poori ($0.90/pc • Min. 30) • Naan & Kachori ($1.40/pc • Min. 30)',
     icon: Utensils
   },
   {
@@ -423,6 +423,8 @@ export default function MenuOrderGrid({
                       {dishes.map(item => {
                         const unitPrice = item.unitPricePiece || (item.pricePer30Pcs ? item.pricePer30Pcs / 30 : 0.90);
                         const minPieces = item.minPieces || 30;
+                        const step = minPieces === 8 ? 8 : 5;
+                        const presets = minPieces === 8 ? [8, 16, 24, 32, 48] : [minPieces, minPieces + 15, minPieces + 30, minPieces + 45, 100];
 
                         // Find if this bread is in the cart
                         const cartBread = cart.find(
@@ -528,7 +530,7 @@ export default function MenuOrderGrid({
                                         if (pieceQty <= minPieces) {
                                           onUpdateCartItem(item, 'pieces', 0, '', unitPrice);
                                         } else {
-                                          const next = pieceQty - 5;
+                                          const next = pieceQty - step;
                                           onUpdateCartItem(item, 'pieces', next, `${next} pieces ($${unitPrice.toFixed(2)}/pc)`, unitPrice);
                                         }
                                       }}
@@ -546,7 +548,7 @@ export default function MenuOrderGrid({
                                     <input
                                       type="number"
                                       min={minPieces}
-                                      step={5}
+                                      step={step}
                                       value={pieceQty === 0 ? '' : pieceQty}
                                       placeholder={minPieces.toString()}
                                       onChange={(e) => {
@@ -567,7 +569,7 @@ export default function MenuOrderGrid({
                                     <button
                                       type="button"
                                       onClick={() => {
-                                        const next = pieceQty === 0 ? minPieces : pieceQty + 5;
+                                        const next = pieceQty === 0 ? minPieces : pieceQty + step;
                                         onUpdateCartItem(item, 'pieces', next, `${next} pieces ($${unitPrice.toFixed(2)}/pc)`, unitPrice);
                                       }}
                                       className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors cursor-pointer shrink-0 ${
@@ -587,7 +589,7 @@ export default function MenuOrderGrid({
                                   <span className={`text-[10px] ${hasSelection ? 'text-white/70' : 'text-gray-400'}`}>
                                     Presets:
                                   </span>
-                                  {[minPieces, minPieces + 15, minPieces + 30, minPieces + 45, 100].map(qty => (
+                                  {presets.map(qty => (
                                     <button
                                       key={qty}
                                       type="button"
@@ -600,7 +602,7 @@ export default function MenuOrderGrid({
                                           : 'bg-white hover:bg-gray-100 text-gray-700 border border-gray-200'
                                       }`}
                                     >
-                                      {qty} pcs
+                                      {qty} pcs{minPieces === 8 ? ` (${qty / 8} pk)` : ''}
                                     </button>
                                   ))}
                                 </div>
