@@ -248,31 +248,31 @@ export default function AddressValidationInput({
   };
 
   return (
-    <div className="space-y-3 font-sans">
+    <div className="space-y-2.5 font-sans">
       <div className="flex items-center justify-between">
         <label className="block text-xs font-bold text-gray-800 flex items-center gap-1.5">
           <Navigation className="w-3.5 h-3.5 text-[#00346f]" />
-          <span>Interactive Delivery Address Search</span>
+          <span>Street Address <span className="text-rose-500">*</span></span>
         </label>
         
         {isValidating ? (
           <span className="text-[10px] text-gray-400 animate-pulse font-medium">
-            Validating address...
+            Validating...
           </span>
         ) : uspsVerified ? (
           <span className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-full text-[10px] font-bold">
             <CheckCircle2 className="w-3 h-3 text-emerald-600" />
-            <span>USPS Format Verified</span>
+            <span>Verified</span>
           </span>
         ) : validationErrors.length > 0 && street.trim() ? (
           <span className="inline-flex items-center gap-1 bg-amber-50 text-amber-700 border border-amber-200 px-2 py-0.5 rounded-full text-[10px] font-bold">
             <AlertCircle className="w-3 h-3 text-amber-600" />
-            <span>Incomplete Address</span>
+            <span>Check Address</span>
           </span>
         ) : null}
       </div>
 
-      {/* ── Interactive Suggestion Search Box ── */}
+      {/* ── Single Unified Street Input with Live Autocomplete ── */}
       <div ref={dropdownRef} className="relative">
         <div className="relative">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
@@ -285,56 +285,55 @@ export default function AddressValidationInput({
           
           <input
             type="text"
-            value={searchQuery}
+            value={street}
             onChange={(e) => {
+              setStreet(e.target.value);
               setSearchQuery(e.target.value);
-              // Also sync with street if typing directly
-              if (!street || searchQuery === street) {
-                setStreet(e.target.value);
-              }
             }}
             onFocus={() => {
               if (suggestions.length > 0) setShowDropdown(true);
             }}
-            placeholder="Search address (e.g. 4821 Legacy Dr, Frisco)..."
-            className="w-full pl-9 pr-11 py-2.5 min-h-[44px] rounded-xl border border-gray-300 text-base sm:text-xs text-gray-900 bg-white placeholder-gray-400 focus:border-[#00346f] focus:ring-2 focus:ring-[#00346f]/15 shadow-2xs"
+            placeholder="Street address (e.g. 4821 Legacy Dr)..."
+            className={`w-full pl-9 pr-9 py-2 min-h-[42px] rounded-xl border text-sm sm:text-xs text-gray-900 bg-white placeholder-gray-400 transition-colors ${
+              uspsVerified 
+                ? 'border-emerald-300 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-200' 
+                : 'border-gray-300 focus:border-[#00346f] focus:ring-1 focus:ring-[#00346f]/20'
+            }`}
           />
 
-          {searchQuery && (
+          {street && (
             <button
               type="button"
               onClick={() => {
+                setStreet('');
                 setSearchQuery('');
                 setSuggestions([]);
                 setShowDropdown(false);
               }}
-              className="absolute inset-y-0 right-0 w-11 h-full flex items-center justify-center text-gray-400 hover:text-gray-600 cursor-pointer"
-              aria-label="Clear address search"
+              className="absolute inset-y-0 right-0 w-9 h-full flex items-center justify-center text-gray-400 hover:text-gray-600 cursor-pointer"
+              aria-label="Clear address"
             >
-              <X className="w-4 h-4" />
+              <X className="w-3.5 h-3.5" />
             </button>
           )}
         </div>
 
         {/* Suggestion Dropdown */}
         {showDropdown && suggestions.length > 0 && (
-          <div className="absolute left-0 right-0 top-full mt-1 bg-white border border-gray-200 rounded-xl shadow-xl z-50 overflow-hidden divide-y divide-gray-100 max-h-56 overflow-y-auto">
-            <div className="px-3 py-1.5 bg-gray-50 text-[10px] uppercase font-bold tracking-wider text-gray-500">
-              Matching Delivery Addresses (Click to Select)
-            </div>
+          <div className="absolute left-0 right-0 top-full mt-1 bg-white border border-gray-200 rounded-xl shadow-xl z-50 overflow-hidden divide-y divide-gray-100 max-h-52 overflow-y-auto">
             {suggestions.map((sug, idx) => (
               <button
                 key={idx}
                 type="button"
                 onClick={() => handleSelectSuggestion(sug)}
-                className="w-full text-left px-3.5 py-2.5 min-h-[44px] hover:bg-blue-50 transition-colors flex items-start gap-2.5 cursor-pointer group"
+                className="w-full text-left px-3 py-2 min-h-[40px] hover:bg-blue-50 transition-colors flex items-start gap-2 cursor-pointer group"
               >
-                <MapPin className="w-4 h-4 text-gray-400 group-hover:text-[#00346f] shrink-0 mt-0.5" />
+                <MapPin className="w-3.5 h-3.5 text-gray-400 group-hover:text-[#00346f] shrink-0 mt-0.5" />
                 <div className="min-w-0 flex-1">
-                  <div className="text-xs sm:text-xs font-bold text-gray-900 group-hover:text-[#00346f]">
+                  <div className="text-xs font-bold text-gray-900 group-hover:text-[#00346f]">
                     {sug.street}
                   </div>
-                  <div className="text-[11px] text-gray-500 truncate">
+                  <div className="text-[10px] text-gray-500 truncate">
                     {sug.city}, TX {sug.zip}
                   </div>
                 </div>
@@ -344,107 +343,71 @@ export default function AddressValidationInput({
         )}
       </div>
 
-      {/* ── Granular Verified Address Fields ── */}
-      <div className="pt-1 space-y-2">
-        <div className="text-[10px] uppercase font-bold tracking-wider text-gray-500">
-          Delivery Address Breakdown
-        </div>
-
-        {/* Street Address Input */}
-        <div className="relative">
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
-            <MapPin className="w-4 h-4" />
+      {/* ── Single-Row Apt, City, TX, ZIP ── */}
+      <div className="grid grid-cols-12 gap-2">
+        {/* Apt / Suite */}
+        <div className="col-span-4 relative">
+          <div className="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-gray-400">
+            <Building className="w-3.5 h-3.5" />
           </div>
           <input
+            ref={aptInputRef}
             type="text"
-            value={street}
-            onChange={e => {
-              setStreet(e.target.value);
-              setSearchQuery(e.target.value);
-            }}
-            placeholder="Street Address (e.g., 4821 Legacy Dr)"
-            className={`w-full pl-9 pr-3 py-2 min-h-[44px] rounded-xl border text-base sm:text-xs text-gray-900 bg-white placeholder-gray-400 transition-colors ${
-              uspsVerified 
-                ? 'border-emerald-300 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-200' 
-                : 'border-gray-300 focus:border-[#00346f] focus:ring-1 focus:ring-[#00346f]/20'
-            }`}
+            value={apt}
+            onChange={e => setApt(e.target.value)}
+            placeholder="Apt/Ste"
+            className="w-full pl-7 pr-2 py-2 min-h-[42px] rounded-xl border border-gray-300 text-sm sm:text-xs text-gray-900 bg-white placeholder-gray-400 focus:border-[#00346f]"
           />
         </div>
 
-        {/* Apt / Unit & City & Zip */}
-        <div className="grid grid-cols-12 gap-2">
-          
-          {/* Apt / Suite */}
-          <div className="col-span-12 sm:col-span-4 relative">
-            <div className="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-gray-400">
-              <Building className="w-3.5 h-3.5" />
-            </div>
-            <input
-              ref={aptInputRef}
-              type="text"
-              value={apt}
-              onChange={e => setApt(e.target.value)}
-              placeholder="Apt / Ste / Unit (opt)"
-              className="w-full pl-8 pr-2.5 py-2 min-h-[44px] rounded-xl border border-gray-300 text-base sm:text-xs text-gray-900 bg-white placeholder-gray-400 focus:border-[#00346f]"
-            />
-          </div>
+        {/* City with DFW quick selector */}
+        <div className="col-span-5">
+          <input
+            type="text"
+            list="dfw-cities-list"
+            value={city}
+            onChange={e => setCity(e.target.value)}
+            placeholder="City (Frisco)"
+            className="w-full px-2.5 py-2 min-h-[42px] rounded-xl border border-gray-300 text-sm sm:text-xs text-gray-900 bg-white placeholder-gray-400 focus:border-[#00346f]"
+          />
+          <datalist id="dfw-cities-list">
+            {DFW_PRIMARY_CITIES.map(c => (
+              <option key={c} value={c} />
+            ))}
+          </datalist>
+        </div>
 
-          {/* City with DFW quick selector */}
-          <div className="col-span-12 sm:col-span-4">
-            <input
-              type="text"
-              list="dfw-cities-list"
-              value={city}
-              onChange={e => setCity(e.target.value)}
-              placeholder="City (e.g., Frisco)"
-              className="w-full px-3 py-2 min-h-[44px] rounded-xl border border-gray-300 text-base sm:text-xs text-gray-900 bg-white placeholder-gray-400 focus:border-[#00346f]"
-            />
-            <datalist id="dfw-cities-list">
-              {DFW_PRIMARY_CITIES.map(c => (
-                <option key={c} value={c} />
-              ))}
-            </datalist>
-          </div>
-
-          {/* State (Fixed TX) */}
-          <div className="col-span-4 sm:col-span-1">
-            <div className="w-full min-h-[44px] py-2 rounded-xl border border-gray-200 bg-gray-100 text-xs font-bold text-gray-600 flex items-center justify-center select-none">
-              TX
-            </div>
-          </div>
-
-          {/* ZIP Code */}
-          <div className="col-span-8 sm:col-span-3">
-            <input
-              type="text"
-              maxLength={5}
-              value={zip}
-              onChange={e => setZip(e.target.value.replace(/\D/g, ''))}
-              placeholder="ZIP (75034)"
-              className={`w-full px-3 py-2 min-h-[44px] rounded-xl border text-base sm:text-xs text-gray-900 bg-white placeholder-gray-400 ${
-                /^\d{5}$/.test(zip.trim()) ? 'border-emerald-300' : 'border-gray-300 focus:border-[#00346f]'
-              }`}
-            />
-          </div>
-
+        {/* ZIP Code */}
+        <div className="col-span-3">
+          <input
+            type="text"
+            inputMode="numeric"
+            maxLength={5}
+            value={zip}
+            onChange={e => setZip(e.target.value.replace(/\D/g, ''))}
+            placeholder="ZIP *"
+            className={`w-full px-2.5 py-2 min-h-[42px] rounded-xl border text-sm sm:text-xs text-gray-900 bg-white placeholder-gray-400 text-center font-mono ${
+              /^\d{5}$/.test(zip.trim()) ? 'border-emerald-300' : 'border-gray-300 focus:border-[#00346f]'
+            }`}
+          />
         </div>
       </div>
 
       {/* USPS Standardized Suggestion Banner */}
       {standardizedSuggestion && uspsVerified && (
-        <div className="p-2.5 bg-emerald-50/80 border border-emerald-200 rounded-xl text-xs flex items-center justify-between gap-2">
-          <div className="flex items-center gap-1.5 text-emerald-900">
+        <div className="p-2 bg-emerald-50/80 border border-emerald-200 rounded-xl text-xs flex items-center justify-between gap-2">
+          <div className="flex items-center gap-1.5 text-emerald-900 min-w-0">
             <Sparkles className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-            <span className="text-[11px]">
-              USPS Standardized: <strong>{standardizedSuggestion}</strong>
+            <span className="text-[11px] truncate">
+              Standardized: <strong>{standardizedSuggestion}</strong>
             </span>
           </div>
           <button
             type="button"
             onClick={handleApplyStandardized}
-            className="min-h-[36px] inline-flex items-center text-[10px] font-bold uppercase tracking-wider text-emerald-700 bg-emerald-100 hover:bg-emerald-200 px-2.5 py-1.5 rounded-lg transition-colors cursor-pointer shrink-0"
+            className="text-[10px] font-bold uppercase tracking-wider text-emerald-700 bg-emerald-100 hover:bg-emerald-200 px-2 py-1 rounded-lg transition-colors cursor-pointer shrink-0"
           >
-            Apply Standard
+            Apply
           </button>
         </div>
       )}
@@ -453,17 +416,10 @@ export default function AddressValidationInput({
       {validationErrors.length > 0 && street.trim() && (
         <div className="text-[11px] text-amber-700 space-y-0.5 pl-1">
           {validationErrors.map((err, i) => (
-            <div key={i} className="flex items-center gap-1">
-              <span>• {err}</span>
-            </div>
+            <div key={i}>• {err}</div>
           ))}
         </div>
       )}
-
-      {/* Local DFW Service Notice */}
-      <div className="text-[10px] text-gray-400 pl-1">
-        📍 Bluebonnet Whisk delivers across Frisco, Plano, McKinney, Allen, Prosper, Little Elm, Dallas, and surrounding DFW areas ($50 flat delivery).
-      </div>
     </div>
   );
 }

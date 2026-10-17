@@ -2,7 +2,6 @@ import { useState, useEffect, useRef, useMemo } from 'react';
 import { 
   X, 
   Calendar as CalendarIcon, 
-  CheckCircle, 
   AlertCircle, 
   FileText, 
   Send, 
@@ -11,13 +10,12 @@ import {
   CreditCard,
   Banknote,
   QrCode,
-  ArrowRight,
-  ArrowLeft,
-  User
+  User,
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react';
 import type { CartItem, CateringOrder, OrderType, PaymentMethod } from '../../types/catering';
 import { 
-  getRequiredNoticeHours, 
   validateFulfillmentCutoff,
   getUpcomingDates,
   isDateSelectable,
@@ -42,7 +40,7 @@ interface CheckoutModalProps {
   subTab?: 'order' | 'cake' | 'tiffin';
 }
 
-type CheckoutStep = 'schedule' | 'details' | 'payment';
+const SAVED_CUSTOMER_KEY = 'bbw_customer_checkout_profile_v1';
 
 export default function CheckoutModal({
   isOpen,
@@ -57,10 +55,7 @@ export default function CheckoutModal({
 }: CheckoutModalProps) {
   const modalBodyRef = useRef<HTMLDivElement>(null);
 
-  // Stepped Checkout Navigation
-  const [step, setStep] = useState<CheckoutStep>('schedule');
-
-  // Customer Form state
+  // Customer Form state (pre-populated from localStorage for repeat customers)
   const [customerName, setCustomerName] = useState('');
   const [countryCode, setCountryCode] = useState('+1');
   const [phoneNumber, setPhoneNumber] = useState('');
@@ -71,6 +66,28 @@ export default function CheckoutModal({
   const [deliveryZip, setDeliveryZip] = useState('');
   const [isSatvikRequested, setIsSatvikRequested] = useState(false);
   const [dietaryNotes, setDietaryNotes] = useState('');
+  const [showOptionalNotes, setShowOptionalNotes] = useState(false);
+  const [showItemizedBreakdown, setShowItemizedBreakdown] = useState(false);
+
+  // Load saved customer profile once on mount
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(SAVED_CUSTOMER_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed.customerName) setCustomerName(parsed.customerName);
+        if (parsed.countryCode) setCountryCode(parsed.countryCode);
+        if (parsed.phoneNumber) setPhoneNumber(parsed.phoneNumber);
+        if (parsed.email) setEmail(parsed.email);
+        if (parsed.deliveryStreet) setDeliveryStreet(parsed.deliveryStreet);
+        if (parsed.deliveryApt) setDeliveryApt(parsed.deliveryApt);
+        if (parsed.deliveryCity) setDeliveryCity(parsed.deliveryCity);
+        if (parsed.deliveryZip) setDeliveryZip(parsed.deliveryZip);
+      }
+    } catch {
+      // Ignore storage read errors
+    }
+  }, []);
 
   // Payment Method: 'cash' | 'zelle' | 'credit_card'
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('zelle');
@@ -84,19 +101,13 @@ export default function CheckoutModal({
       setBlackouts(prev => Array.from(new Set([...prev, ...blackoutDates])));
     }
   }, [blackoutDates]);
+
   const [fulfillmentDate, setFulfillmentDate] = useState('');
   const [fulfillmentTime, setFulfillmentTime] = useState('4:00 PM');
   const [showAlternativeDatePicker, setShowAlternativeDatePicker] = useState(false);
 
   const isTiffinOrder = (cart.length > 0 && cart.some(i => i.category === 'tiffin' || (i.menuItemId && i.menuItemId.includes('tiffin')))) || subTab === 'tiffin';
   const effectiveSubTab: 'order' | 'cake' | 'tiffin' = isTiffinOrder ? 'tiffin' : (subTab || 'order');
-
-  const isWeekend = (dateStr: string) => {
-    if (!dateStr) return false;
-    const [y, m, d] = dateStr.split('-').map(Number);
-    const day = new Date(y, m - 1, d, 12, 0, 0).getDay();
-    return day === 0 || day === 6;
-  };
 
   // Multi-day order fulfillment time state
   const [sameTimeForAllDays, setSameTimeForAllDays] = useState(true);
@@ -136,7 +147,6 @@ export default function CheckoutModal({
   // Fetch blackouts on open & set guaranteed valid initial dates
   useEffect(() => {
     if (isOpen) {
-      setStep('schedule');
       setShowAlternativeDatePicker(false);
       setSubmissionError(null);
       setFormErrors({});
@@ -165,7 +175,6 @@ export default function CheckoutModal({
           setFulfillmentDate(firstDate);
           setFulfillmentTime(initialMap[firstDate] || getDefaultTimeSlotForDate(firstDate, cart, effectiveSubTab));
         } else {
-          // Check if cart contains tiffin items with a specific target YYYY-MM-DD date in ID
           const tiffinItemWithDate = cart.find(i => (i.category === 'tiffin' || i.menuItemId?.includes('tiffin')) && /\d{4}-\d{2}-\d{2}/.test(i.id || i.menuItemId || i.notes || ''));
           let preferredDate: string | undefined = initialFulfillmentDate;
           if (tiffinItemWithDate) {
@@ -173,7 +182,7 @@ export default function CheckoutModal({
             if (match) preferredDate = match[0];
           }
 
-          if (preferredDate && !dates.includes(preferredDate)) {
+          if (preferredDate && !dates.includes(preferredDate) && isDateSelectable(preferredDate, dates, cart, effectiveSubTab).selectable) {
             setFulfillmentDate(preferredDate);
             const slots = getTimeSlotsForDate(preferredDate, cart, effectiveSubTab);
             let chosen = getDefaultTimeSlotForDate(preferredDate, cart, effectiveSubTab);
@@ -187,7 +196,6 @@ export default function CheckoutModal({
             }
             setFulfillmentTime(chosen);
           } else {
-            // Compute guaranteed earliest valid date & time slot satisfying Central Time cutoff
             const firstValid = findFirstValidFulfillmentSlot(dates, cart, effectiveSubTab);
             setFulfillmentDate(firstValid.dateStr);
             setFulfillmentTime(firstValid.timeSlot);
@@ -202,7 +210,6 @@ export default function CheckoutModal({
     setFulfillmentDate(newDateStr);
     setSubmissionError(null);
 
-    // If currently chosen time is invalid on this date, auto-select first valid slot on this date
     if (!isTimeSlotValidForDate(newDateStr, fulfillmentTime, cart, effectiveSubTab)) {
       const slots = getTimeSlotsForDate(newDateStr, cart, effectiveSubTab);
       for (const slot of slots) {
@@ -216,7 +223,7 @@ export default function CheckoutModal({
 
   const hasTiffin = cart.some(item => item.category === 'tiffin');
 
-  // Enforce pickup if cart has tiffin items (hook called unconditionally at top level)
+  // Enforce pickup if cart has tiffin items
   useEffect(() => {
     if (hasTiffin && isDelivery) {
       setIsDelivery(false);
@@ -224,24 +231,20 @@ export default function CheckoutModal({
   }, [hasTiffin, isDelivery, setIsDelivery]);
 
   // Lead time calculations
-  const noticeHours = getRequiredNoticeHours(cart, effectiveSubTab);
   const cutoffValidation = validateFulfillmentCutoff(fulfillmentDate, fulfillmentTime, blackouts, cart, effectiveSubTab);
-  const upcomingDateOptions = getUpcomingDates(21, isTiffinOrder);
+  const upcomingDateOptions = getUpcomingDates(14, isTiffinOrder);
 
   // Cost & Tax Bifurcation calculations
-  // 1. Tiffin Items (Prices are tax-INCLUSIVE @ 8.25% Texas sales tax)
   const tiffinTotal = cart
     .filter(item => item.category === 'tiffin' || (item.menuItemId && item.menuItemId.includes('tiffin')))
     .reduce((sum, item) => sum + item.totalPrice, 0);
   const tiffinBase = Math.round((tiffinTotal / 1.0825) * 100) / 100;
   const tiffinTax = Math.round((tiffinTotal - tiffinBase) * 100) / 100;
 
-  // 2. Cake Items (Tax Exempt @ 0%)
   const cakeSubtotal = cart
     .filter(item => item.category === 'cakes')
     .reduce((sum, item) => sum + item.totalPrice, 0);
 
-  // 3. Catering Food Items (Tax EXCLUSIVE @ 8.25%)
   const cateringSubtotal = cart
     .filter(item => item.category !== 'cakes' && item.category !== 'tiffin' && (!item.menuItemId || !item.menuItemId.includes('tiffin')))
     .reduce((sum, item) => sum + item.totalPrice, 0);
@@ -252,15 +255,14 @@ export default function CheckoutModal({
 
   const taxAmount = Math.round((tiffinTax + cateringTax) * 100) / 100;
   const foodSubtotal = Math.round((tiffinBase + cateringSubtotal + cakeSubtotal) * 100) / 100;
-
   const preCardTotal = Math.round((foodSubtotal + deliveryFee + taxAmount) * 100) / 100;
 
-  // Credit Card 3.5% Processing Fee
   const processingFee = paymentMethod === 'credit_card'
     ? Math.round(preCardTotal * 0.035 * 100) / 100
     : 0.00;
 
   const totalAmount = Math.round((preCardTotal + processingFee) * 100) / 100;
+  const totalItemQty = cart.reduce((s, i) => s + i.quantity, 0);
 
   // Format phone helper
   const handlePhoneChange = (val: string) => {
@@ -276,44 +278,33 @@ export default function CheckoutModal({
     }
   };
 
-  // Step 1 -> Step 2 Validation
-  const handleProceedToDetails = () => {
+  // Validate & Submit Express Checkout
+  const handleSubmit = async (orderType: OrderType) => {
+    // 1. Validate Date & Time Cutoff
     if (!cutoffValidation.isValid) {
-      // Auto-correct to earliest valid slot if somehow invalid
       const firstValid = findFirstValidFulfillmentSlot(blackouts, cart, effectiveSubTab);
       setFulfillmentDate(firstValid.dateStr);
       setFulfillmentTime(firstValid.timeSlot);
-      setSubmissionError(`Adjusted to earliest available window: ${firstValid.dateStr} at ${firstValid.timeSlot}. Click "Continue to Customer Details" to proceed.`);
+      setSubmissionError(`Adjusted to earliest available slot: ${firstValid.dateStr} at ${firstValid.timeSlot}. Tap Submit again to confirm.`);
       modalBodyRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }
-    setSubmissionError(null);
-    setStep('details');
-    setTimeout(() => {
-      modalBodyRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
-    }, 50);
-  };
 
-  // Step 2 -> Step 3 Validation
-  const handleProceedToPayment = () => {
+    // 2. Validate Contact & Address Fields
     const errors: Record<string, string> = {};
-
     if (!customerName.trim()) {
       errors.customerName = 'Full name is required.';
     }
-
     const cleanPhone = phoneNumber.replace(/\D/g, '');
     if (cleanPhone.length < 7) {
-      errors.phoneNumber = 'Valid contact number is required.';
+      errors.phoneNumber = 'Valid phone number is required.';
     }
-
     if (email.trim() && (!email.includes('@') || !email.includes('.'))) {
-      errors.email = 'Please enter a valid email format if provided.';
+      errors.email = 'Please enter a valid email address.';
     }
-
     if (isDelivery) {
       if (!deliveryStreet.trim()) {
-        errors.deliveryStreet = 'Delivery street address is required.';
+        errors.deliveryStreet = 'Street address is required.';
       }
       if (!deliveryZip.trim() || !/^\d{5}$/.test(deliveryZip.trim())) {
         errors.deliveryZip = 'Valid 5-digit ZIP code is required.';
@@ -321,25 +312,31 @@ export default function CheckoutModal({
     }
 
     setFormErrors(errors);
-
     if (Object.keys(errors).length > 0) {
-      setSubmissionError('Please complete all required fields: ' + Object.values(errors).join(' • '));
+      setSubmissionError(Object.values(errors).join(' • '));
       modalBodyRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }
 
-    setSubmissionError(null);
-    setStep('payment');
-    setTimeout(() => {
-      modalBodyRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
-    }, 50);
-  };
-
-  // Final Order Submission
-  const handleSubmit = async (orderType: OrderType) => {
     setIsSubmitting(true);
     setSubmissionError(null);
     try {
+      // Save customer details in localStorage for 1-click repeat orders
+      try {
+        localStorage.setItem(SAVED_CUSTOMER_KEY, JSON.stringify({
+          customerName: customerName.trim(),
+          countryCode,
+          phoneNumber: phoneNumber.trim(),
+          email: email.trim(),
+          deliveryStreet: deliveryStreet.trim(),
+          deliveryApt: deliveryApt.trim(),
+          deliveryCity: deliveryCity.trim(),
+          deliveryZip: deliveryZip.trim()
+        }));
+      } catch {
+        // Ignore storage write errors
+      }
+
       const fullDeliveryAddress = isDelivery
         ? `${deliveryStreet.trim()}${deliveryApt.trim() ? `, Apt/Ste ${deliveryApt.trim()}` : ''}, ${deliveryCity.trim()}, TX ${deliveryZip.trim()}`
         : null;
@@ -347,11 +344,11 @@ export default function CheckoutModal({
       let effectiveFulfillmentDate = fulfillmentDate;
       let effectiveFulfillmentTime = fulfillmentTime;
 
-      if (distinctCartDateGroups.length > 0) {
+      if (distinctCartDateGroups.length > 0 && !showAlternativeDatePicker) {
         effectiveFulfillmentDate = distinctCartDateGroups[0].dateStr;
       }
 
-      if (distinctCartDateGroups.length > 1) {
+      if (distinctCartDateGroups.length > 1 && !showAlternativeDatePicker) {
         if (!sameTimeForAllDays) {
           effectiveFulfillmentTime = distinctCartDateGroups
             .map(g => `${g.displayLabel.split(',')[0]}: ${perDayTimes[g.dateStr] || fulfillmentTime}`)
@@ -361,7 +358,7 @@ export default function CheckoutModal({
         }
       }
 
-      const multiDayBreakdown = distinctCartDateGroups.length > 1
+      const multiDayBreakdown = distinctCartDateGroups.length > 1 && !showAlternativeDatePicker
         ? `[MULTI-DAY SCHEDULE] ${distinctCartDateGroups.map(g => `${g.displayLabel}: ${sameTimeForAllDays ? fulfillmentTime : (perDayTimes[g.dateStr] || fulfillmentTime)}`).join(' • ')}`
         : '';
 
@@ -390,13 +387,12 @@ export default function CheckoutModal({
         fulfillment_time: effectiveFulfillmentTime,
         dietary_notes: fullDietaryNotes || null,
         order_type: orderType,
-        status: (orderType === 'estimate' ? 'new' : 'new') as any,
+        status: 'new' as any,
         items: cart
       };
 
       const result = await createOrder(payload);
       if (result.data) {
-        // Automatically attempt sending notification to Desi Dabba via WhatsApp or SMS
         try {
           const waUrl = buildOrderWhatsAppUrl(result.data);
           window.open(waUrl, '_blank');
@@ -406,10 +402,10 @@ export default function CheckoutModal({
         onOrderSuccess(result.data, orderType === 'estimate');
         onClose();
       } else {
-        throw new Error(result.error?.message || 'Failed to record catering submission');
+        throw new Error(result.error?.message || 'Failed to record order submission');
       }
     } catch (err: any) {
-      setSubmissionError(err?.message || 'An error occurred while saving your catering submission.');
+      setSubmissionError(err?.message || 'An error occurred while saving your order.');
     } finally {
       setIsSubmitting(false);
     }
@@ -418,977 +414,591 @@ export default function CheckoutModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-xs p-3 sm:p-4 overflow-y-auto animate-fade-in font-sans">
-      <div className="relative w-full max-w-3xl bg-white rounded-2xl shadow-2xl border border-gray-200 overflow-hidden my-6 max-h-[92vh] flex flex-col">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-xs p-0 sm:p-4 animate-fade-in font-sans">
+      <div className="relative w-full max-w-2xl bg-white rounded-t-3xl sm:rounded-2xl shadow-2xl border border-gray-200 overflow-hidden max-h-[94vh] sm:max-h-[90vh] flex flex-col">
         
-        {/* ── Modal Header with Stepper ── */}
-        <div className="bg-[#00346f] text-white p-4 sm:p-5 shrink-0">
-          <div className="flex items-center justify-between pb-3 border-b border-white/10">
-            <div>
-              <span className="text-[10px] font-bold uppercase tracking-widest text-[#ffdea5] block">
-                BLUEBONNET WHISK • DESI DABBA CATERING
-              </span>
-              <h2 className="font-serif text-lg sm:text-xl font-bold">
-                {step === 'schedule' && 'Step 1: Fulfillment & Schedule'}
-                {step === 'details' && 'Step 2: Customer Details & Address'}
-                {step === 'payment' && 'Step 3: Payment & Confirm Order'}
-              </h2>
-            </div>
-            <button
-              onClick={onClose}
-              className="p-1.5 rounded-full text-white/80 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
-              aria-label="Close"
-            >
-              <X className="w-5 h-5" />
-            </button>
+        {/* ── Lean Express Header ── */}
+        <div className="bg-[#00346f] text-white px-4 py-3 sm:px-5 sm:py-4 shrink-0 flex items-center justify-between gap-3">
+          <div className="min-w-0">
+            <span className="text-[10px] font-bold uppercase tracking-widest text-[#ffdea5] block">
+              EXPRESS CHECKOUT • {totalItemQty} {totalItemQty === 1 ? 'ITEM' : 'ITEMS'}
+            </span>
+            <h2 className="font-serif text-base sm:text-xl font-bold truncate">
+              Complete Your Order (${totalAmount.toFixed(2)})
+            </h2>
           </div>
-
-          {/* Stepper Navigation Progress Bar */}
-          <div className="grid grid-cols-3 gap-2 pt-3">
-            {/* Step 1 */}
-            <button
-              type="button"
-              onClick={() => setStep('schedule')}
-              className={`min-h-[44px] min-w-[44px] flex items-center justify-center sm:justify-start gap-2 py-1.5 px-2.5 rounded-xl text-left transition-all cursor-pointer ${
-                step === 'schedule'
-                  ? 'bg-white/20 text-[#ffdea5] font-bold'
-                  : 'text-white/60 hover:text-white'
-              }`}
-            >
-              <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${
-                step === 'schedule' ? 'bg-[#ffdea5] text-[#00346f]' : 'bg-white/20 text-white'
-              }`}>
-                1
-              </div>
-              <span className="text-xs truncate hidden sm:inline">Schedule</span>
-            </button>
-
-            {/* Step 2 */}
-            <button
-              type="button"
-              onClick={() => {
-                if (cutoffValidation.isValid) setStep('details');
-              }}
-              className={`min-h-[44px] min-w-[44px] flex items-center justify-center sm:justify-start gap-2 py-1.5 px-2.5 rounded-xl text-left transition-all ${
-                step === 'details'
-                  ? 'bg-white/20 text-[#ffdea5] font-bold'
-                  : cutoffValidation.isValid
-                  ? 'text-white/60 hover:text-white cursor-pointer'
-                  : 'text-white/30 cursor-not-allowed'
-              }`}
-            >
-              <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${
-                step === 'details' ? 'bg-[#ffdea5] text-[#00346f]' : 'bg-white/20 text-white'
-              }`}>
-                2
-              </div>
-              <span className="text-xs truncate hidden sm:inline">Customer Details</span>
-            </button>
-
-            {/* Step 3 */}
-            <button
-              type="button"
-              onClick={() => {
-                if (customerName.trim() && phoneNumber.length >= 10) {
-                  setStep('payment');
-                }
-              }}
-              className={`min-h-[44px] min-w-[44px] flex items-center justify-center sm:justify-start gap-2 py-1.5 px-2.5 rounded-xl text-left transition-all ${
-                step === 'payment'
-                  ? 'bg-white/20 text-[#ffdea5] font-bold'
-                  : customerName.trim()
-                  ? 'text-white/60 hover:text-white cursor-pointer'
-                  : 'text-white/30 cursor-not-allowed'
-              }`}
-            >
-              <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${
-                step === 'payment' ? 'bg-[#ffdea5] text-[#00346f]' : 'bg-white/20 text-white'
-              }`}>
-                3
-              </div>
-              <span className="text-xs truncate hidden sm:inline">Payment &amp; Submit</span>
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="p-1.5 rounded-full text-white/80 hover:text-white hover:bg-white/10 transition-colors cursor-pointer shrink-0"
+            aria-label="Close"
+          >
+            <X className="w-5 h-5" />
+          </button>
         </div>
 
-        {/* ── Modal Scrollable Body ── */}
-        <div ref={modalBodyRef} className="p-5 sm:p-6 overflow-y-auto space-y-6 flex-1">
+        {/* ── Scrollable Express Body ── */}
+        <div ref={modalBodyRef} className="p-4 sm:p-5 overflow-y-auto space-y-4 flex-1">
           
           {submissionError && (
-            <div className="p-3 bg-rose-50 border border-rose-200 text-rose-800 rounded-xl text-xs flex items-center gap-2">
+            <div className="p-3 bg-rose-50 border border-rose-200 text-rose-800 rounded-xl text-xs flex items-center gap-2 font-medium">
               <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
               <span>{submissionError}</span>
             </div>
           )}
 
-          {/* ═════════════════════════════════════════════════════════════════════ */}
-          {/* ── STEP 1: FULFILLMENT & SCHEDULE ── */}
-          {/* ═════════════════════════════════════════════════════════════════════ */}
-          {step === 'schedule' && (
-            <div className="space-y-5">
-              
-              {/* Items Summary Pill */}
-              <div className="p-3.5 bg-blue-50/70 border border-blue-200 rounded-xl flex items-center justify-between text-xs">
-                <span className="text-[#00346f] font-semibold">
-                  Selected Items ({cart.length} item kinds):
-                </span>
-                <span className="font-bold text-[#00346f] font-serif text-sm">
-                  Subtotal: ${foodSubtotal.toFixed(2)}
+          {/* ── 1. FULFILLMENT METHOD & SCHEDULE ── */}
+          <div className="bg-gray-50/90 rounded-2xl p-3.5 sm:p-4 border border-gray-200 space-y-3">
+            {/* Fulfillment Toggle: Pickup vs Delivery */}
+            {hasTiffin ? (
+              <div className="flex items-center justify-between gap-2 text-xs bg-amber-50/90 border border-amber-200 px-3 py-2 rounded-xl text-amber-950">
+                <div className="flex items-center gap-2 font-bold min-w-0">
+                  <Store className="w-4 h-4 text-amber-700 shrink-0" />
+                  <span className="truncate">Self-Pickup: Deerwood Dr, Little Elm</span>
+                </div>
+                <span className="text-[11px] font-black text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-md shrink-0">
+                  FREE
                 </span>
               </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsDelivery(false)}
+                  className={`p-2.5 rounded-xl border flex items-center gap-2.5 transition-all cursor-pointer ${
+                    !isDelivery
+                      ? 'border-[#00346f] bg-blue-50/80 text-[#00346f] ring-1 ring-[#00346f] font-bold shadow-2xs'
+                      : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50'
+                  }`}
+                >
+                  <Store className="w-4 h-4 shrink-0" />
+                  <div className="text-left min-w-0">
+                    <div className="text-xs font-bold leading-tight">Self-Pickup</div>
+                    <div className="text-[10px] text-gray-500 font-normal truncate">Little Elm ($0)</div>
+                  </div>
+                </button>
 
-              {/* 1. Fulfillment Method (Pickup vs Delivery) */}
-              <div className="space-y-2">
-                <label className="block text-xs font-bold uppercase tracking-wider text-gray-700">
-                  Choose Fulfillment Method
-                </label>
+                <button
+                  type="button"
+                  onClick={() => setIsDelivery(true)}
+                  className={`p-2.5 rounded-xl border flex items-center gap-2.5 transition-all cursor-pointer ${
+                    isDelivery
+                      ? 'border-[#00346f] bg-blue-50/80 text-[#00346f] ring-1 ring-[#00346f] font-bold shadow-2xs'
+                      : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50'
+                  }`}
+                >
+                  <Truck className="w-4 h-4 shrink-0" />
+                  <div className="text-left min-w-0">
+                    <div className="text-xs font-bold leading-tight">Venue Delivery</div>
+                    <div className="text-[10px] text-[#775a19] font-bold">+$50 Flat Fee</div>
+                  </div>
+                </button>
+              </div>
+            )}
 
-                {hasTiffin ? (
-                  <div className="p-3.5 bg-amber-50/90 rounded-xl border border-amber-200 text-xs space-y-1">
-                    <div className="flex items-center gap-2 text-amber-900 font-bold">
-                      <Store className="w-5 h-5 text-amber-700 shrink-0" />
-                      <span>Self-Pickup Only (Home Kitchen - Deerwood Dr, Little Elm) ($0.00)</span>
-                    </div>
-                    <p className="text-[11px] text-amber-800">
-                      Your order contains daily homestyle tiffin meals, which are prepared fresh for direct pickup. Delivery is not available for tiffins.
-                    </p>
+            {/* Cutoff Warning Only When Needed */}
+            {!cutoffValidation.isValid && (
+              <div className="p-2.5 rounded-xl border bg-amber-50 border-amber-200 text-amber-900 text-xs flex items-start gap-2">
+                <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                <div className="leading-snug">{cutoffValidation.message}</div>
+              </div>
+            )}
+
+            {/* Date & Time Selection */}
+            {isTiffinOrder && distinctCartDateGroups.length === 1 && !showAlternativeDatePicker ? (
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pt-1">
+                <div className="flex items-center justify-between sm:justify-start gap-2">
+                  <span className="text-xs font-bold text-gray-700 flex items-center gap-1.5">
+                    <CalendarIcon className="w-3.5 h-3.5 text-[#00346f]" />
+                    <span>Date:</span>
+                  </span>
+                  <span className="px-2.5 py-1 bg-[#00346f] text-white rounded-lg text-xs font-bold">
+                    {distinctCartDateGroups[0].displayLabel}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setShowAlternativeDatePicker(true)}
+                    className="text-[11px] text-[#00346f] underline font-semibold cursor-pointer ml-1"
+                  >
+                    Change
+                  </button>
+                </div>
+
+                <div className="flex items-center gap-2 flex-1 sm:max-w-[230px]">
+                  <span className="text-xs font-bold text-gray-700 shrink-0">Time:</span>
+                  <select
+                    value={fulfillmentTime}
+                    onChange={(e) => {
+                      const newTime = e.target.value;
+                      setFulfillmentTime(newTime);
+                      setPerDayTimes({ [fulfillmentDate]: newTime });
+                    }}
+                    className="w-full bg-white border border-gray-300 rounded-xl px-2.5 py-2 min-h-[40px] text-xs text-gray-900 font-bold focus:outline-none focus:border-[#00346f]"
+                  >
+                    {getTimeSlotsForDate(fulfillmentDate, cart, effectiveSubTab).map(slot => {
+                      const isSlotValid = isTimeSlotValidForDate(fulfillmentDate, slot, cart, effectiveSubTab);
+                      return (
+                        <option key={slot} value={slot} disabled={!isSlotValid}>
+                          {slot} {!isSlotValid ? '(Past cutoff)' : ''}
+                        </option>
+                      );
+                    })}
+                  </select>
+                </div>
+              </div>
+            ) : isTiffinOrder && distinctCartDateGroups.length > 1 && !showAlternativeDatePicker ? (
+              <div className="space-y-2.5 pt-1">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <span className="text-xs font-bold text-[#00346f] flex items-center gap-1.5">
+                    <CalendarIcon className="w-3.5 h-3.5" />
+                    <span>{distinctCartDateGroups.length} Scheduled Tiffin Days</span>
+                  </span>
+                  <label className="inline-flex items-center gap-1.5 text-[11px] font-bold text-[#00346f] cursor-pointer bg-white px-2.5 py-1 rounded-lg border border-gray-200">
+                    <input
+                      type="checkbox"
+                      checked={sameTimeForAllDays}
+                      onChange={(e) => {
+                        const checked = e.target.checked;
+                        setSameTimeForAllDays(checked);
+                        if (checked) {
+                          const updated: Record<string, string> = {};
+                          distinctCartDateGroups.forEach(g => updated[g.dateStr] = fulfillmentTime);
+                          setPerDayTimes(updated);
+                        }
+                      }}
+                      className="w-3.5 h-3.5 rounded text-[#00346f]"
+                    />
+                    <span>Same pickup time ({fulfillmentTime})</span>
+                  </label>
+                </div>
+
+                {sameTimeForAllDays ? (
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-semibold text-gray-700 shrink-0">Pickup Time:</span>
+                    <select
+                      value={fulfillmentTime}
+                      onChange={(e) => {
+                        const newTime = e.target.value;
+                        setFulfillmentTime(newTime);
+                        const updated: Record<string, string> = {};
+                        distinctCartDateGroups.forEach(g => updated[g.dateStr] = newTime);
+                        setPerDayTimes(updated);
+                      }}
+                      className="flex-1 bg-white border border-gray-300 rounded-xl px-2.5 py-2 min-h-[40px] text-xs text-gray-900 font-bold focus:outline-none focus:border-[#00346f]"
+                    >
+                      {getTimeSlotsForDate(fulfillmentDate, cart, effectiveSubTab).map(slot => {
+                        const isSlotValid = isTimeSlotValidForDate(fulfillmentDate, slot, cart, effectiveSubTab);
+                        return (
+                          <option key={slot} value={slot} disabled={!isSlotValid}>
+                            {slot} {!isSlotValid ? '(Past cutoff)' : ''}
+                          </option>
+                        );
+                      })}
+                    </select>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-2 gap-3">
-                    <button
-                      type="button"
-                      onClick={() => setIsDelivery(false)}
-                      className={`p-3.5 rounded-xl border flex items-center gap-3 transition-all cursor-pointer ${
-                        !isDelivery
-                          ? 'border-[#00346f] bg-blue-50/60 text-[#00346f] ring-2 ring-[#00346f]/20 font-bold shadow-xs'
-                          : 'border-gray-200 text-gray-600 hover:bg-gray-50'
-                      }`}
-                    >
-                      <Store className="w-5 h-5 shrink-0" />
-                      <div className="text-left">
-                        <div className="text-xs font-bold">Self-Pickup</div>
-                        <div className="text-[11px] text-gray-500 font-normal">Little Elm ($0.00)</div>
-                      </div>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => setIsDelivery(true)}
-                      className={`p-3.5 rounded-xl border flex items-center gap-3 transition-all cursor-pointer ${
-                        isDelivery
-                          ? 'border-[#00346f] bg-blue-50/60 text-[#00346f] ring-2 ring-[#00346f]/20 font-bold shadow-xs'
-                          : 'border-gray-200 text-gray-600 hover:bg-gray-50'
-                      }`}
-                    >
-                      <Truck className="w-5 h-5 shrink-0" />
-                      <div className="text-left">
-                        <div className="text-xs font-bold">Venue Delivery</div>
-                        <div className="text-[11px] text-[#775a19] font-bold">+$50 Flat Fee</div>
-                      </div>
-                    </button>
-                  </div>
-                )}
-
-                {!hasTiffin && isDelivery && (
-                  <p className="text-xs text-amber-800 bg-amber-50 p-2.5 rounded-xl border border-amber-200 leading-snug">
-                    📍 <em>Delivery available based on location throughout Frisco, Plano, McKinney, Allen, Prosper, Little Elm &amp; greater DFW.</em>
-                  </p>
-                )}
-              </div>
-
-              {/* 2. Date & Time Engine */}
-              <div className="bg-gray-50 rounded-2xl p-4 sm:p-5 border border-gray-200 space-y-4">
-                <div className="flex items-start justify-between gap-2">
-                  <div>
-                    <h3 className="font-serif font-bold text-sm sm:text-base text-[#00346f] flex items-center gap-2">
-                      <CalendarIcon className="w-4 h-4 text-[#775a19]" />
-                      <span>Select Fulfillment Date &amp; Time (US Central Time)</span>
-                    </h3>
-                    <p className="text-xs text-gray-500 mt-0.5">
-                      Strict cutoff rules enforced in US Central Time (`America/Chicago`).
-                    </p>
-                  </div>
-
-                  <div className="bg-[#00346f]/10 text-[#00346f] px-3 py-1 rounded-full text-[10px] font-bold tracking-wider uppercase shrink-0">
-                    {noticeHours}h Notice Required
-                  </div>
-                </div>
-
-                {/* Cutoff Status Badge */}
-                <div className={`p-3 rounded-xl border text-xs flex items-start gap-2.5 ${
-                  cutoffValidation.isValid
-                    ? 'bg-emerald-50 border-emerald-200 text-emerald-900'
-                    : 'bg-amber-50 border-amber-200 text-amber-900'
-                }`}>
-                  {cutoffValidation.isValid ? (
-                    <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                  ) : (
-                    <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
-                  )}
-                  <div className="leading-snug">
-                    <span className="font-bold">
-                      {cutoffValidation.isValid ? 'Cutoff Validated' : 'Cutoff Deadline Notice'}:
-                    </span>{' '}
-                    {cutoffValidation.message}
-                  </div>
-                </div>
-
-                {/* ── Scheduled Date & Time Section ── */}
-                {isTiffinOrder && distinctCartDateGroups.length === 1 && !showAlternativeDatePicker ? (
-                  <div className="space-y-4">
-                    {/* Confirmed Scheduled Day Card */}
-                    <div className="p-4 bg-gradient-to-r from-amber-50 to-orange-50/50 rounded-2xl border border-amber-200 space-y-2.5">
-                      <div className="flex flex-wrap items-center justify-between gap-2">
-                        <div className="flex items-center gap-2">
-                          <CalendarIcon className="w-4 h-4 text-amber-700 shrink-0" />
-                          <span className="text-xs font-bold uppercase tracking-wider text-amber-900">
-                            Scheduled Pickup Date
-                          </span>
-                        </div>
-                        <span className="px-3 py-1 bg-[#00346f] text-white rounded-xl text-xs font-black shadow-xs">
-                          {distinctCartDateGroups[0].displayLabel}
-                        </span>
-                      </div>
-
-                      <div className="text-xs text-gray-700">
-                        <span className="font-semibold text-[#00346f]">Dishes for this day: </span>
-                        <span>{distinctCartDateGroups[0].items.map(i => i.name).join(', ')}</span>
-                      </div>
-
-                      {isWeekend(distinctCartDateGroups[0].dateStr) ? (
-                        <div className="text-[11px] text-amber-900 bg-white/80 p-2.5 rounded-xl border border-amber-200/80 font-medium">
-                          🍱 <strong>Weekend Specials Rule:</strong> Prepared fresh &amp; available <strong>after 3:00 PM</strong> on Saturday &amp; Sunday (Pre-book only).
-                        </div>
-                      ) : (
-                        <div className="text-[11px] text-emerald-900 bg-white/80 p-2.5 rounded-xl border border-emerald-200/80 font-medium">
-                          🍱 <strong>Fresh Homestyle Tiffin:</strong> Packed fresh for afternoon/dinner pickup (4:00 PM – 7:30 PM) or lunch (12:00 PM – 1:30 PM).
-                        </div>
-                      )}
-
-                      <div className="pt-1 flex items-center justify-between text-[11px]">
-                        <span className="text-gray-500 italic">Pickup: Home Kitchen • Deerwood Dr, Little Elm</span>
-                        <button
-                          type="button"
-                          onClick={() => setShowAlternativeDatePicker(true)}
-                          className="text-[#00346f] hover:underline font-bold cursor-pointer"
-                        >
-                          Change Date →
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Single-Day Pickup Time Selector */}
-                    <div>
-                      <label className="block text-xs font-bold text-gray-700 mb-1">
-                        Select Pickup Time Window
-                      </label>
-                      <select
-                        value={fulfillmentTime}
-                        onChange={(e) => {
-                          const newTime = e.target.value;
-                          setFulfillmentTime(newTime);
-                          setPerDayTimes({ [fulfillmentDate]: newTime });
-                        }}
-                        className="w-full bg-white border border-gray-300 rounded-xl px-3 py-2.5 min-h-[44px] text-base sm:text-xs text-gray-800 font-bold focus:outline-none focus:border-[#00346f]"
-                      >
-                        {getTimeSlotsForDate(fulfillmentDate, cart, effectiveSubTab).map(slot => {
-                          const isSlotValid = isTimeSlotValidForDate(fulfillmentDate, slot, cart, effectiveSubTab);
-                          return (
-                            <option key={slot} value={slot} disabled={!isSlotValid}>
-                              {slot} {!isSlotValid ? '— Unavailable (cutoff notice)' : ''}
-                            </option>
-                          );
-                        })}
-                      </select>
-                      <p className="text-[11px] text-gray-500 mt-1">
-                        {isTiffinOrder 
-                          ? 'Available Tiffin pickup slots: 10:30 AM – 6:00 PM (US Central Time • 1hr notice)' 
-                          : 'Available Catering slots: 10:00 AM – 7:00 PM (US Central Time)'}
-                      </p>
-                    </div>
-                  </div>
-                ) : isTiffinOrder && distinctCartDateGroups.length > 1 && !showAlternativeDatePicker ? (
-                  /* Multi-Day Scheduled Tiffin Order */
-                  <div className="p-4 bg-blue-50/90 rounded-2xl border border-blue-200 space-y-3">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-blue-200/70 pb-2.5">
-                      <div>
-                        <span className="text-[10px] font-bold uppercase tracking-widest text-[#775a19] block">
-                          MULTI-DAY TIFFIN SCHEDULE ({distinctCartDateGroups.length} DATES)
-                        </span>
-                        <h4 className="font-serif font-bold text-sm text-[#00346f] flex items-center gap-1.5">
-                          <CalendarIcon className="w-4 h-4 text-[#00346f]" />
-                          <span>Pickup Time per Scheduled Date</span>
-                        </h4>
-                      </div>
-
-                      <div className="flex items-center gap-3">
-                        <label className="inline-flex items-center gap-2 text-xs font-bold text-[#00346f] cursor-pointer bg-white px-3 py-1.5 rounded-xl border border-blue-200 shadow-2xs">
-                          <input
-                            type="checkbox"
-                            checked={sameTimeForAllDays}
-                            onChange={(e) => {
-                              const checked = e.target.checked;
-                              setSameTimeForAllDays(checked);
-                              if (checked) {
-                                const updated: Record<string, string> = {};
-                                distinctCartDateGroups.forEach(g => updated[g.dateStr] = fulfillmentTime);
-                                setPerDayTimes(updated);
-                              }
-                            }}
-                            className="w-4 h-4 rounded text-[#00346f] focus:ring-[#00346f] cursor-pointer"
-                          />
-                          <span>Same time for all ({fulfillmentTime})</span>
-                        </label>
-                      </div>
-                    </div>
-
-                    {sameTimeForAllDays ? (
-                      <div className="space-y-3">
-                        <div>
-                          <label className="block text-xs font-semibold text-gray-700 mb-1">
-                            Common Pickup Time Window (Applied to All {distinctCartDateGroups.length} Days)
-                          </label>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {distinctCartDateGroups.map(g => {
+                      const currentTime = perDayTimes[g.dateStr] || getDefaultTimeSlotForDate(g.dateStr, cart, effectiveSubTab);
+                      const availableSlots = getTimeSlotsForDate(g.dateStr, cart, effectiveSubTab);
+                      return (
+                        <div key={g.dateStr} className="p-2 bg-white rounded-xl border border-gray-200 flex items-center justify-between gap-2">
+                          <span className="font-bold text-xs text-[#00346f] truncate">{g.displayLabel}</span>
                           <select
-                            value={fulfillmentTime}
+                            value={currentTime}
                             onChange={(e) => {
                               const newTime = e.target.value;
-                              setFulfillmentTime(newTime);
-                              const updated: Record<string, string> = {};
-                              distinctCartDateGroups.forEach(g => updated[g.dateStr] = newTime);
-                              setPerDayTimes(updated);
+                              setPerDayTimes(prev => ({ ...prev, [g.dateStr]: newTime }));
                             }}
-                            className="w-full bg-white border border-gray-300 rounded-xl px-3 py-2.5 min-h-[44px] text-base sm:text-xs text-gray-800 font-bold focus:outline-none focus:border-[#00346f]"
+                            className="px-2 py-1 bg-gray-50 border border-gray-300 rounded-lg text-xs font-bold text-[#00346f]"
                           >
-                            {getTimeSlotsForDate(fulfillmentDate, cart, effectiveSubTab).map(slot => {
-                              const isSlotValid = isTimeSlotValidForDate(fulfillmentDate, slot, cart, effectiveSubTab);
+                            {availableSlots.map(slot => {
+                              const isSlotValid = isTimeSlotValidForDate(g.dateStr, slot, cart, effectiveSubTab);
                               return (
                                 <option key={slot} value={slot} disabled={!isSlotValid}>
-                                  {slot} {!isSlotValid ? '— Unavailable (cutoff notice)' : ''}
+                                  {slot}
                                 </option>
                               );
                             })}
                           </select>
                         </div>
-
-                        <div className="flex flex-wrap items-center gap-2 pt-1">
-                          {distinctCartDateGroups.map(g => (
-                            <span key={g.dateStr} className="px-2.5 py-1 bg-white rounded-lg border border-gray-200 text-[11px] font-semibold text-gray-800 shadow-2xs">
-                              {g.displayLabel}: <strong className="text-[#00346f]">{fulfillmentTime}</strong>
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="space-y-2.5 pt-1">
-                        <p className="text-xs text-gray-600 font-medium">
-                          Select the exact pickup time window for each scheduled day:
-                        </p>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                          {distinctCartDateGroups.map(g => {
-                            const currentTime = perDayTimes[g.dateStr] || getDefaultTimeSlotForDate(g.dateStr, cart, effectiveSubTab);
-                            const availableSlots = getTimeSlotsForDate(g.dateStr, cart, effectiveSubTab);
-                            return (
-                              <div key={g.dateStr} className="p-3 bg-white rounded-xl border border-gray-200 flex flex-col justify-between gap-2 shadow-2xs">
-                                <div>
-                                  <span className="font-bold text-xs text-[#00346f] block">{g.displayLabel}</span>
-                                  <span className="text-[11px] text-gray-500 block truncate">
-                                    {g.items.map(i => i.name).join(', ')}
-                                  </span>
-                                  {isTiffinOrder && (
-                                    <span className="text-[10px] text-amber-700 font-bold block mt-0.5">
-                                      Pickup: 10:30 AM – 6:00 PM
-                                    </span>
-                                  )}
-                                </div>
-                                <div className="flex items-center justify-between pt-2 border-t border-gray-150">
-                                  <span className="text-[11px] font-semibold text-gray-600">Pickup:</span>
-                                  <select
-                                    value={currentTime}
-                                    onChange={(e) => {
-                                      const newTime = e.target.value;
-                                      setPerDayTimes(prev => ({ ...prev, [g.dateStr]: newTime }));
-                                    }}
-                                    className="px-2.5 py-1.5 bg-gray-50 border border-gray-300 rounded-lg text-xs font-bold text-[#00346f] focus:outline-none focus:border-[#00346f]"
-                                  >
-                                    {availableSlots.map(slot => {
-                                      const isSlotValid = isTimeSlotValidForDate(g.dateStr, slot, cart, effectiveSubTab);
-                                      return (
-                                        <option key={slot} value={slot} disabled={!isSlotValid}>
-                                          {slot} {!isSlotValid ? '(cutoff)' : ''}
-                                        </option>
-                                      );
-                                    })}
-                                  </select>
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    )}
-
-                    <div className="pt-2 text-right">
-                      <button
-                        type="button"
-                        onClick={() => setShowAlternativeDatePicker(true)}
-                        className="text-[11px] text-[#00346f] hover:underline font-bold cursor-pointer"
-                      >
-                        Reschedule / Select Custom Dates →
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  /* Standard / Alternative Date Picker Rail */
-                  <div className="space-y-4">
-                    {showAlternativeDatePicker && distinctCartDateGroups.length > 0 && (
-                      <div className="flex items-center justify-between p-2.5 bg-amber-50 rounded-xl border border-amber-200 text-xs">
-                        <span className="text-amber-900 font-semibold">
-                          Custom Date Picker Active (Cart items originally scheduled for: {distinctCartDateGroups.map(g => g.displayLabel).join(', ')})
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setShowAlternativeDatePicker(false);
-                            setFulfillmentDate(distinctCartDateGroups[0].dateStr);
-                          }}
-                          className="text-[#00346f] font-bold underline cursor-pointer shrink-0 ml-2"
-                        >
-                          Reset to Cart Dates
-                        </button>
-                      </div>
-                    )}
-
-                    <div>
-                      <label className="block text-[11px] font-bold uppercase tracking-wider text-gray-600 mb-2">
-                        Available Dates (Next 3 Weeks)
-                      </label>
-                      <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none">
-                        {upcomingDateOptions.map(opt => {
-                          const check = isDateSelectable(opt.dateStr, blackouts, cart, effectiveSubTab);
-                          const isSelected = fulfillmentDate === opt.dateStr;
-
-                          return (
-                            <button
-                              key={opt.dateStr}
-                              type="button"
-                              disabled={!check.selectable}
-                              onClick={() => handleSelectDate(opt.dateStr)}
-                              className={`flex flex-col items-center justify-center min-w-[72px] min-h-[54px] py-2 px-2.5 rounded-xl border text-center transition-all cursor-pointer shrink-0 ${
-                                !check.selectable
-                                  ? 'bg-gray-100 border-gray-200 text-gray-300 cursor-not-allowed opacity-60'
-                                  : isSelected
-                                  ? 'bg-[#00346f] text-white border-[#00346f] shadow-sm ring-2 ring-[#00346f]/20'
-                                  : 'bg-white hover:bg-gray-100 border-gray-200 text-gray-700'
-                              }`}
-                              title={!check.selectable ? check.reason : `Select ${opt.label}`}
-                            >
-                              <span className="text-[10px] uppercase font-bold tracking-wider">{opt.dayOfWeek}</span>
-                              <span className="text-xs font-black mt-0.5">{opt.label}</span>
-                              {!check.selectable && (
-                                <span className={`text-[8px] uppercase tracking-tighter font-bold mt-0.5 ${
-                                  blackouts.includes(opt.dateStr) ? 'text-amber-700' : 'text-rose-500'
-                                }`}>
-                                  {blackouts.includes(opt.dateStr) ? 'Sold Out' : 'Closed'}
-                                </span>
-                              )}
-                              {check.selectable && isTiffinOrder && (
-                                <span className="text-[8px] uppercase tracking-tighter font-bold mt-0.5 text-amber-600">
-                                  10:30-6 PM
-                                </span>
-                              )}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-                      <div>
-                        <label className="block text-xs font-semibold text-gray-700 mb-1">
-                          Or Pick Specific Date
-                        </label>
-                        <input
-                          type="date"
-                          value={fulfillmentDate}
-                          min={cutoffValidation.earliestAllowedDate}
-                          onChange={(e) => handleSelectDate(e.target.value)}
-                          className="w-full bg-white border border-gray-300 rounded-xl px-3 py-2.5 min-h-[44px] text-base sm:text-xs text-gray-800 focus:outline-none focus:border-[#00346f]"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-xs font-semibold text-gray-700 mb-1">
-                          Fulfillment Window
-                        </label>
-                        <select
-                          value={fulfillmentTime}
-                          onChange={(e) => {
-                            const newTime = e.target.value;
-                            setFulfillmentTime(newTime);
-                            if (sameTimeForAllDays) {
-                              const updated: Record<string, string> = {};
-                              distinctCartDateGroups.forEach(g => updated[g.dateStr] = newTime);
-                              setPerDayTimes(updated);
-                            }
-                          }}
-                          className="w-full bg-white border border-gray-300 rounded-xl px-3 py-2.5 min-h-[44px] text-base sm:text-xs text-gray-800 focus:outline-none focus:border-[#00346f]"
-                        >
-                          {getTimeSlotsForDate(fulfillmentDate, cart, effectiveSubTab).map(slot => {
-                            const isSlotValid = isTimeSlotValidForDate(fulfillmentDate, slot, cart, effectiveSubTab);
-                            return (
-                              <option key={slot} value={slot} disabled={!isSlotValid}>
-                                {slot} {!isSlotValid ? '— Unavailable (cutoff notice)' : ''}
-                              </option>
-                            );
-                          })}
-                        </select>
-                      </div>
-                    </div>
+                      );
+                    })}
                   </div>
                 )}
-
               </div>
+            ) : (
+              /* Compact Date Rail + Time Window for Catering, Cakes, or Custom Reschedule */
+              <div className="space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-gray-600 flex items-center gap-1">
+                    <CalendarIcon className="w-3.5 h-3.5 text-[#00346f]" />
+                    <span>Select Date &amp; Time</span>
+                  </span>
+                  {showAlternativeDatePicker && distinctCartDateGroups.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowAlternativeDatePicker(false);
+                        setFulfillmentDate(distinctCartDateGroups[0].dateStr);
+                      }}
+                      className="text-[11px] text-[#00346f] font-bold underline cursor-pointer"
+                    >
+                      Reset to Menu Date
+                    </button>
+                  )}
+                </div>
 
-            </div>
-          )}
+                {/* Horizontal Date Pills */}
+                <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+                  {upcomingDateOptions.map(opt => {
+                    const check = isDateSelectable(opt.dateStr, blackouts, cart, effectiveSubTab);
+                    const isSelected = fulfillmentDate === opt.dateStr;
 
-          {/* ═════════════════════════════════════════════════════════════════════ */}
-          {/* ── STEP 2: CUSTOMER DETAILS & ADDRESS ── */}
-          {/* ═════════════════════════════════════════════════════════════════════ */}
-          {step === 'details' && (
-            <div className="space-y-5">
-              
-              <div className="p-3 bg-blue-50/70 border border-blue-200 rounded-xl text-xs text-[#00346f] flex items-center justify-between">
-                <span>
-                  Fulfillment: <strong>{isDelivery ? 'Venue Delivery' : 'Self-Pickup'}</strong> on <strong>{fulfillmentDate} ({fulfillmentTime})</strong>
-                </span>
-                <button
-                  type="button"
-                  onClick={() => setStep('schedule')}
-                  className="text-xs font-bold text-[#00346f] underline hover:text-[#775a19] cursor-pointer"
-                >
-                  Change Date
-                </button>
-              </div>
+                    return (
+                      <button
+                        key={opt.dateStr}
+                        type="button"
+                        disabled={!check.selectable}
+                        onClick={() => handleSelectDate(opt.dateStr)}
+                        className={`flex flex-col items-center justify-center min-w-[60px] py-1.5 px-2 rounded-xl border text-center transition-all cursor-pointer shrink-0 ${
+                          !check.selectable
+                            ? 'bg-gray-100 border-gray-200 text-gray-300 cursor-not-allowed opacity-60'
+                            : isSelected
+                            ? 'bg-[#00346f] text-white border-[#00346f] shadow-xs ring-2 ring-[#00346f]/20'
+                            : 'bg-white hover:bg-gray-100 border-gray-200 text-gray-700'
+                        }`}
+                      >
+                        <span className="text-[9px] uppercase font-bold tracking-wider">{opt.dayOfWeek}</span>
+                        <span className="text-[11px] font-black mt-0.5 whitespace-nowrap">{opt.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
 
-              {/* Contact Information (Name, Phone, Email) */}
-              <div className="space-y-3">
-                <h3 className="font-serif font-bold text-sm text-[#00346f] flex items-center gap-2">
-                  <User className="w-4 h-4 text-[#775a19]" />
-                  <span>Customer Contact Information</span>
-                </h3>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {/* Date Input & Time Dropdown Row */}
+                <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <label className="block text-xs font-semibold text-gray-700 mb-1">
-                      Full Name <span className="text-rose-500">*</span>
+                    <label className="block text-[10px] font-bold uppercase text-gray-500 mb-0.5">
+                      Date
                     </label>
                     <input
-                      type="text"
-                      placeholder="e.g. Aditi Singhal"
-                      value={customerName}
-                      onChange={(e) => setCustomerName(e.target.value)}
-                      className={`w-full px-3 py-2.5 min-h-[44px] text-base sm:text-xs bg-gray-50 border rounded-xl focus:outline-none focus:bg-white transition-all ${
-                        formErrors.customerName ? 'border-rose-500' : 'border-gray-200 focus:border-[#00346f]'
-                      }`}
+                      type="date"
+                      value={fulfillmentDate}
+                      min={cutoffValidation.earliestAllowedDate}
+                      onChange={(e) => handleSelectDate(e.target.value)}
+                      className="w-full bg-white border border-gray-300 rounded-xl px-2.5 py-2 min-h-[40px] text-xs font-bold text-gray-800 focus:outline-none focus:border-[#00346f]"
                     />
-                    {formErrors.customerName && (
-                      <p className="text-[10px] text-rose-500 mt-0.5">{formErrors.customerName}</p>
-                    )}
                   </div>
 
                   <div>
-                    <label className="block text-xs font-semibold text-gray-700 mb-1">
-                      Contact Number <span className="text-rose-500">*</span>
+                    <label className="block text-[10px] font-bold uppercase text-gray-500 mb-0.5">
+                      Time Window
                     </label>
-                    <div className="flex items-center gap-1.5">
-                      <select
-                        value={countryCode}
-                        onChange={(e) => setCountryCode(e.target.value)}
-                        className="bg-gray-50 border border-gray-200 rounded-xl px-2.5 py-2.5 min-h-[44px] text-xs font-bold text-[#00346f] focus:outline-none focus:bg-white focus:border-[#00346f] transition-all shrink-0 cursor-pointer"
-                        aria-label="Country Code"
-                      >
-                        <option value="+1">🇺🇸 +1 (US/CA)</option>
-                        <option value="+91">🇮🇳 +91 (India)</option>
-                        <option value="+44">🇬🇧 +44 (UK)</option>
-                        <option value="+61">🇦🇺 +61 (Australia)</option>
-                        <option value="+971">🇦🇪 +971 (UAE)</option>
-                        <option value="+65">🇸🇬 +65 (Singapore)</option>
-                        <option value="+49">🇩🇪 +49 (Germany)</option>
-                        <option value="+33">🇫🇷 +33 (France)</option>
-                        <option value="+81">🇯🇵 +81 (Japan)</option>
-                      </select>
-                      <input
-                        type="tel"
-                        placeholder="(945) 527-4566"
-                        value={phoneNumber}
-                        onChange={(e) => handlePhoneChange(e.target.value)}
-                        className={`w-full px-3 py-2.5 min-h-[44px] text-base sm:text-xs bg-gray-50 border rounded-xl focus:outline-none focus:bg-white transition-all ${
-                          formErrors.phoneNumber ? 'border-rose-500' : 'border-gray-200 focus:border-[#00346f]'
-                        }`}
-                      />
-                    </div>
-                    {formErrors.phoneNumber && (
-                      <p className="text-[10px] text-rose-500 mt-0.5">{formErrors.phoneNumber}</p>
-                    )}
+                    <select
+                      value={fulfillmentTime}
+                      onChange={(e) => {
+                        const newTime = e.target.value;
+                        setFulfillmentTime(newTime);
+                        if (sameTimeForAllDays) {
+                          const updated: Record<string, string> = {};
+                          distinctCartDateGroups.forEach(g => updated[g.dateStr] = newTime);
+                          setPerDayTimes(updated);
+                        }
+                      }}
+                      className="w-full bg-white border border-gray-300 rounded-xl px-2.5 py-2 min-h-[40px] text-xs font-bold text-gray-800 focus:outline-none focus:border-[#00346f]"
+                    >
+                      {getTimeSlotsForDate(fulfillmentDate, cart, effectiveSubTab).map(slot => {
+                        const isSlotValid = isTimeSlotValidForDate(fulfillmentDate, slot, cart, effectiveSubTab);
+                        return (
+                          <option key={slot} value={slot} disabled={!isSlotValid}>
+                            {slot} {!isSlotValid ? '(Cutoff)' : ''}
+                          </option>
+                        );
+                      })}
+                    </select>
                   </div>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-gray-700 mb-1">
-                    Email Address <span className="text-gray-400 font-normal">(Optional)</span>
-                  </label>
-                  <input
-                    type="email"
-                    placeholder="name@example.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className={`w-full px-3 py-2.5 min-h-[44px] text-base sm:text-xs bg-gray-50 border rounded-xl focus:outline-none focus:bg-white transition-all ${
-                      formErrors.email ? 'border-rose-500' : 'border-gray-200 focus:border-[#00346f]'
-                    }`}
-                  />
-                  {formErrors.email && (
-                    <p className="text-[10px] text-rose-500 mt-0.5">{formErrors.email}</p>
-                  )}
                 </div>
               </div>
+            )}
+          </div>
 
-              {/* ── Interactive Suggestion-Based Delivery Address Box (Only if Delivery) ── */}
-              {isDelivery ? (
-                <div className="bg-gray-50 p-4 sm:p-5 rounded-2xl border border-gray-200 space-y-3">
-                  <div className="flex items-center gap-2">
-                    <Truck className="w-4 h-4 text-[#775a19]" />
-                    <h4 className="font-serif font-bold text-sm text-[#00346f]">
-                      Venue Delivery Address
-                    </h4>
-                  </div>
-                  
-                  <AddressValidationInput
-                    street={deliveryStreet}
-                    setStreet={setDeliveryStreet}
-                    apt={deliveryApt}
-                    setApt={setDeliveryApt}
-                    city={deliveryCity}
-                    setCity={setDeliveryCity}
-                    zip={deliveryZip}
-                    setZip={setDeliveryZip}
+          {/* ── 2. CUSTOMER CONTACT & ADDRESS ── */}
+          <div className="bg-white rounded-2xl p-3.5 sm:p-4 border border-gray-200 space-y-3">
+            <h3 className="font-serif font-bold text-xs sm:text-sm text-[#00346f] flex items-center gap-1.5">
+              <User className="w-4 h-4 text-[#775a19]" />
+              <span>Your Contact Information</span>
+            </h3>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              <div>
+                <label className="block text-[11px] font-semibold text-gray-700 mb-1">
+                  Full Name <span className="text-rose-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  autoComplete="name"
+                  placeholder="Your full name"
+                  value={customerName}
+                  onChange={(e) => setCustomerName(e.target.value)}
+                  className={`w-full px-3 py-2 min-h-[42px] text-sm sm:text-xs bg-gray-50 border rounded-xl focus:outline-none focus:bg-white transition-all ${
+                    formErrors.customerName ? 'border-rose-500' : 'border-gray-200 focus:border-[#00346f]'
+                  }`}
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-semibold text-gray-700 mb-1">
+                  Mobile Number (WhatsApp/SMS) <span className="text-rose-500">*</span>
+                </label>
+                <div className="flex items-center gap-1.5">
+                  <select
+                    value={countryCode}
+                    onChange={(e) => setCountryCode(e.target.value)}
+                    className="bg-gray-50 border border-gray-200 rounded-xl px-2 py-2 min-h-[42px] text-xs font-bold text-[#00346f] focus:outline-none focus:bg-white shrink-0 cursor-pointer"
+                    aria-label="Country Code"
+                  >
+                    <option value="+1">🇺🇸 +1</option>
+                    <option value="+91">🇮🇳 +91</option>
+                    <option value="+44">🇬🇧 +44</option>
+                    <option value="+61">🇦🇺 +61</option>
+                    <option value="+971">🇦🇪 +971</option>
+                  </select>
+                  <input
+                    type="tel"
+                    autoComplete="tel"
+                    placeholder="(945) 527-4566"
+                    value={phoneNumber}
+                    onChange={(e) => handlePhoneChange(e.target.value)}
+                    className={`w-full px-3 py-2 min-h-[42px] text-sm sm:text-xs bg-gray-50 border rounded-xl focus:outline-none focus:bg-white transition-all ${
+                      formErrors.phoneNumber ? 'border-rose-500' : 'border-gray-200 focus:border-[#00346f]'
+                    }`}
                   />
-
-                  {formErrors.deliveryStreet && (
-                    <p className="text-[10px] text-rose-500 mt-1 font-semibold">{formErrors.deliveryStreet}</p>
-                  )}
-                  {formErrors.deliveryZip && (
-                    <p className="text-[10px] text-rose-500 mt-0.5 font-semibold">{formErrors.deliveryZip}</p>
-                  )}
                 </div>
-              ) : (
-                <div className="p-3.5 bg-gray-50 rounded-xl border border-gray-200 text-xs text-gray-600 flex items-center gap-3">
-                  <Store className="w-5 h-5 text-gray-500 shrink-0" />
-                  <div>
-                    <span className="font-bold text-gray-900 block">Self-Pickup Location:</span>
-                    <span>Home Kitchen - Deerwood Dr, Little Elm, TX 75068</span>
+              </div>
+            </div>
+
+            <div>
+              <input
+                type="email"
+                autoComplete="email"
+                placeholder="Email address for receipt copy (optional)"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className={`w-full px-3 py-2 min-h-[40px] text-sm sm:text-xs bg-gray-50 border rounded-xl focus:outline-none focus:bg-white transition-all ${
+                  formErrors.email ? 'border-rose-500' : 'border-gray-200 focus:border-[#00346f]'
+                }`}
+              />
+            </div>
+
+            {/* Delivery Address Input (Only if Delivery) */}
+            {isDelivery && (
+              <div className="pt-2 border-t border-gray-100">
+                <AddressValidationInput
+                  street={deliveryStreet}
+                  setStreet={setDeliveryStreet}
+                  apt={deliveryApt}
+                  setApt={setDeliveryApt}
+                  city={deliveryCity}
+                  setCity={setDeliveryCity}
+                  zip={deliveryZip}
+                  setZip={setDeliveryZip}
+                />
+              </div>
+            )}
+
+            {/* Compact Dietary / Satvik & Optional Notes Toggle */}
+            <div className="pt-1 flex flex-wrap items-center justify-between gap-2">
+              <label className="inline-flex items-center gap-2 text-xs font-semibold text-amber-950 bg-amber-50/80 border border-amber-200 px-3 py-1.5 rounded-xl cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={isSatvikRequested}
+                  onChange={(e) => setIsSatvikRequested(e.target.checked)}
+                  className="rounded border-amber-300 text-[#775a19] focus:ring-[#775a19]"
+                />
+                <span>Satvik / Jain (No Onion/Garlic)</span>
+              </label>
+
+              <button
+                type="button"
+                onClick={() => setShowOptionalNotes(!showOptionalNotes)}
+                className="text-xs font-bold text-[#00346f] hover:underline flex items-center gap-1 cursor-pointer"
+              >
+                <span>{showOptionalNotes || dietaryNotes ? 'Special Instructions' : '+ Add Gate Code / Notes'}</span>
+                {showOptionalNotes ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+              </button>
+            </div>
+
+            {(showOptionalNotes || dietaryNotes) && (
+              <textarea
+                rows={2}
+                placeholder="Gate codes, allergy alerts, or spice preferences..."
+                value={dietaryNotes}
+                onChange={(e) => setDietaryNotes(e.target.value)}
+                className="w-full px-3 py-2 text-sm sm:text-xs bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:bg-white focus:border-[#00346f]"
+              />
+            )}
+          </div>
+
+          {/* ── 3. PAYMENT METHOD & COMPACT SUMMARY ── */}
+          <div className="bg-white rounded-2xl p-3.5 sm:p-4 border border-gray-200 space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="font-serif font-bold text-xs sm:text-sm text-[#00346f]">
+                Payment Method
+              </h3>
+              <span className="text-[11px] text-gray-500">
+                No upfront card charge required
+              </span>
+            </div>
+
+            {/* 3-Column Segmented Payment Bar (Fits on 1 row on mobile!) */}
+            <div className="grid grid-cols-3 gap-2">
+              <button
+                type="button"
+                onClick={() => setPaymentMethod('zelle')}
+                className={`p-2.5 rounded-xl border text-center transition-all cursor-pointer flex flex-col items-center justify-center gap-1 ${
+                  paymentMethod === 'zelle'
+                    ? 'border-[#00346f] bg-[#00346f] text-white shadow-xs ring-2 ring-[#00346f]/20'
+                    : 'border-gray-200 bg-gray-50/70 hover:bg-gray-100 text-gray-800'
+                }`}
+              >
+                <div className="flex items-center gap-1">
+                  <QrCode className={`w-3.5 h-3.5 ${paymentMethod === 'zelle' ? 'text-[#ffdea5]' : 'text-purple-600'}`} />
+                  <span className="text-xs font-bold">Zelle</span>
+                </div>
+                <span className={`text-[10px] font-semibold ${paymentMethod === 'zelle' ? 'text-[#ffdea5]' : 'text-emerald-700'}`}>
+                  0% Fee
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setPaymentMethod('cash')}
+                className={`p-2.5 rounded-xl border text-center transition-all cursor-pointer flex flex-col items-center justify-center gap-1 ${
+                  paymentMethod === 'cash'
+                    ? 'border-[#00346f] bg-[#00346f] text-white shadow-xs ring-2 ring-[#00346f]/20'
+                    : 'border-gray-200 bg-gray-50/70 hover:bg-gray-100 text-gray-800'
+                }`}
+              >
+                <div className="flex items-center gap-1">
+                  <Banknote className={`w-3.5 h-3.5 ${paymentMethod === 'cash' ? 'text-[#ffdea5]' : 'text-emerald-600'}`} />
+                  <span className="text-xs font-bold">Cash</span>
+                </div>
+                <span className={`text-[10px] font-semibold ${paymentMethod === 'cash' ? 'text-[#ffdea5]' : 'text-emerald-700'}`}>
+                  At Pickup
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setPaymentMethod('credit_card')}
+                className={`p-2.5 rounded-xl border text-center transition-all cursor-pointer flex flex-col items-center justify-center gap-1 ${
+                  paymentMethod === 'credit_card'
+                    ? 'border-[#00346f] bg-[#00346f] text-white shadow-xs ring-2 ring-[#00346f]/20'
+                    : 'border-gray-200 bg-gray-50/70 hover:bg-gray-100 text-gray-800'
+                }`}
+              >
+                <div className="flex items-center gap-1">
+                  <CreditCard className={`w-3.5 h-3.5 ${paymentMethod === 'credit_card' ? 'text-[#ffdea5]' : 'text-blue-600'}`} />
+                  <span className="text-xs font-bold">Card</span>
+                </div>
+                <span className={`text-[10px] font-semibold ${paymentMethod === 'credit_card' ? 'text-[#ffdea5]' : 'text-amber-700'}`}>
+                  +3.5% Fee
+                </span>
+              </button>
+            </div>
+
+            {paymentMethod === 'zelle' && (
+              <div className="px-3 py-2 bg-purple-50/70 border border-purple-200 rounded-xl text-[11px] text-purple-900 flex items-center justify-between">
+                <span>Zelle to: <strong>945-527-4566</strong> (Bluebonnet Whisk)</span>
+                <span className="font-semibold text-purple-700">0% Fee</span>
+              </div>
+            )}
+
+            {/* Compact Order Total Box with Expandable Itemized Details */}
+            <div className="bg-gray-50 rounded-xl p-3 border border-gray-200 space-y-2 text-xs">
+              <div className="flex items-center justify-between">
+                <button
+                  type="button"
+                  onClick={() => setShowItemizedBreakdown(!showItemizedBreakdown)}
+                  className="text-xs font-bold text-[#00346f] flex items-center gap-1 cursor-pointer"
+                >
+                  <span>Order Summary ({totalItemQty} {totalItemQty === 1 ? 'item' : 'items'})</span>
+                  {showItemizedBreakdown ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                </button>
+                <span className="text-[11px] text-gray-600">
+                  Subtotal: <strong>${foodSubtotal.toFixed(2)}</strong>
+                  {deliveryFee > 0 ? ` • Delivery: $${deliveryFee.toFixed(0)}` : ''}
+                  {taxAmount > 0 ? ` • Tax: $${taxAmount.toFixed(2)}` : ''}
+                  {processingFee > 0 ? ` • Card Fee: $${processingFee.toFixed(2)}` : ''}
+                </span>
+              </div>
+
+              {showItemizedBreakdown && (
+                <div className="pt-2 border-t border-gray-200 space-y-1.5 text-[11px] text-gray-600 animate-fade-in">
+                  {cart.map(item => (
+                    <div key={item.id} className="flex justify-between gap-2">
+                      <span className="truncate">{item.quantity}&times; {item.name} ({item.selectionLabel})</span>
+                      <span className="font-semibold text-gray-900 shrink-0">${item.totalPrice.toFixed(2)}</span>
+                    </div>
+                  ))}
+                  <div className="pt-1.5 border-t border-gray-200/80 space-y-0.5">
+                    <div className="flex justify-between">
+                      <span>Food Subtotal:</span>
+                      <span>${foodSubtotal.toFixed(2)}</span>
+                    </div>
+                    {isDelivery && (
+                      <div className="flex justify-between">
+                        <span>Venue Delivery Fee:</span>
+                        <span>${deliveryFee.toFixed(2)}</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between">
+                      <span>Sales Tax (8.25%):</span>
+                      <span>${taxAmount.toFixed(2)}</span>
+                    </div>
+                    {processingFee > 0 && (
+                      <div className="flex justify-between text-amber-800 font-semibold">
+                        <span>Card Processing Fee (3.5%):</span>
+                        <span>+${processingFee.toFixed(2)}</span>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
 
-              {/* Dietary & Satvik Preferences */}
-              <div className="pt-1">
-                <label className="flex items-start gap-2.5 p-3 rounded-xl bg-amber-50/70 border border-amber-200 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={isSatvikRequested}
-                    onChange={(e) => setIsSatvikRequested(e.target.checked)}
-                    className="mt-0.5 rounded border-amber-300 text-[#775a19] focus:ring-[#775a19]"
-                  />
-                  <div className="text-xs text-amber-950">
-                    <span className="font-bold">Request Satvik / No Onion–No Garlic / Jain-Friendly</span>
-                    <p className="text-[11px] text-amber-800 mt-0.5">
-                      Our chef will prepare eligible dishes without onion or garlic using pure sattvic ingredients.
-                    </p>
-                  </div>
-                </label>
+              <div className="pt-2 border-t border-gray-200 flex justify-between items-baseline font-bold text-sm text-[#00346f]">
+                <span>Total Due:</span>
+                <span className="font-serif text-lg sm:text-xl">${totalAmount.toFixed(2)}</span>
               </div>
-
-              {/* Special instructions */}
-              <div>
-                <label className="block text-xs font-semibold text-gray-700 mb-1">
-                  Special Instructions / Gate Codes / Dietary Notes
-                </label>
-                <textarea
-                  rows={2}
-                  placeholder="Mention gate codes, spice preferences, or any specific allergen precautions..."
-                  value={dietaryNotes}
-                  onChange={(e) => setDietaryNotes(e.target.value)}
-                  className="w-full px-3 py-2.5 min-h-[56px] text-base sm:text-xs bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:bg-white focus:border-[#00346f]"
-                />
-              </div>
-
             </div>
-          )}
-
-          {/* ═════════════════════════════════════════════════════════════════════ */}
-          {/* ── STEP 3: PAYMENT & CONFIRM ORDER ── */}
-          {/* ═════════════════════════════════════════════════════════════════════ */}
-          {step === 'payment' && (
-            <div className="space-y-5">
-              
-              {/* Review recap card */}
-              <div className="p-3.5 bg-gray-50 border border-gray-200 rounded-xl space-y-1.5 text-xs">
-                <div className="flex justify-between">
-                  <span className="text-gray-500">Recipient:</span>
-                  <strong className="text-gray-900">{customerName} • {countryCode} {phoneNumber}</strong>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-500">Fulfillment:</span>
-                  <span className="font-semibold text-[#00346f]">
-                    {isDelivery ? `Delivery to ${deliveryStreet}, ${deliveryCity}` : 'Self-Pickup (Little Elm)'}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-500">Date &amp; Time:</span>
-                  <span className="font-semibold text-gray-900">{fulfillmentDate} at {fulfillmentTime}</span>
-                </div>
-              </div>
-
-              {/* Method of Payment */}
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <h3 className="font-serif font-bold text-sm text-[#00346f]">
-                    Select Settlement Method <span className="text-rose-500">*</span>
-                  </h3>
-                  <span className="text-[11px] text-gray-500 hidden sm:inline">
-                    Choose how you would like to pay
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-                  {/* Zelle */}
-                  <button
-                    type="button"
-                    onClick={() => setPaymentMethod('zelle')}
-                    className={`p-3.5 rounded-xl border text-left flex flex-col justify-between transition-all cursor-pointer ${
-                      paymentMethod === 'zelle'
-                        ? 'border-[#00346f] bg-blue-50/70 text-[#00346f] ring-2 ring-[#00346f]/20 shadow-xs'
-                        : 'border-gray-200 hover:border-gray-300 bg-white text-gray-700'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between w-full">
-                      <QrCode className="w-5 h-5 text-purple-600" />
-                      <span className="text-[10px] font-bold uppercase tracking-wider bg-purple-100 text-purple-800 px-2 py-0.5 rounded-full">
-                        0% Fee
-                      </span>
-                    </div>
-                    <div className="mt-2.5">
-                      <div className="text-xs font-bold text-gray-900">Zelle Transfer</div>
-                      <div className="text-[11px] text-gray-500 mt-0.5">Bank transfer to 945-527-4566</div>
-                    </div>
-                  </button>
-
-                  {/* Cash */}
-                  <button
-                    type="button"
-                    onClick={() => setPaymentMethod('cash')}
-                    className={`p-3.5 rounded-xl border text-left flex flex-col justify-between transition-all cursor-pointer ${
-                      paymentMethod === 'cash'
-                        ? 'border-[#00346f] bg-blue-50/70 text-[#00346f] ring-2 ring-[#00346f]/20 shadow-xs'
-                        : 'border-gray-200 hover:border-gray-300 bg-white text-gray-700'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between w-full">
-                      <Banknote className="w-5 h-5 text-emerald-600" />
-                      <span className="text-[10px] font-bold uppercase tracking-wider bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full">
-                        0% Fee
-                      </span>
-                    </div>
-                    <div className="mt-2.5">
-                      <div className="text-xs font-bold text-gray-900">Cash Payment</div>
-                      <div className="text-[11px] text-gray-500 mt-0.5">Pay upon delivery / pickup</div>
-                    </div>
-                  </button>
-
-                  {/* Credit Card */}
-                  <button
-                    type="button"
-                    onClick={() => setPaymentMethod('credit_card')}
-                    className={`p-3.5 rounded-xl border text-left flex flex-col justify-between transition-all cursor-pointer ${
-                      paymentMethod === 'credit_card'
-                        ? 'border-[#00346f] bg-blue-50/70 text-[#00346f] ring-2 ring-[#00346f]/20 shadow-xs'
-                        : 'border-gray-200 hover:border-gray-300 bg-white text-gray-700'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between w-full">
-                      <CreditCard className="w-5 h-5 text-blue-600" />
-                      <span className="text-[10px] font-bold uppercase tracking-wider bg-amber-100 text-amber-900 border border-amber-200 px-2 py-0.5 rounded-full">
-                        +3.5% Fee
-                      </span>
-                    </div>
-                    <div className="mt-2.5">
-                      <div className="text-xs font-bold text-gray-900">Credit / Debit Card</div>
-                      <div className="text-[11px] text-gray-500 mt-0.5">Visa, Mastercard, Amex (+3.5%)</div>
-                    </div>
-                  </button>
-                </div>
-
-                {paymentMethod === 'zelle' && (
-                  <div className="p-3 bg-purple-50/70 border border-purple-200 rounded-xl text-xs text-purple-900 flex flex-col sm:flex-row sm:items-center justify-between gap-1">
-                    <span>Zelle Phone: <strong>945-527-4566</strong> (Bluebonnet Whisk)</span>
-                    <span className="text-[11px] font-semibold text-purple-700">Zero additional fees</span>
-                  </div>
-                )}
-
-                {paymentMethod === 'credit_card' && (
-                  <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-900 flex flex-col sm:flex-row sm:items-center justify-between gap-1">
-                    <span>Card Processing Surcharge (3.5%): <strong>+${processingFee.toFixed(2)}</strong></span>
-                    <span className="text-[11px] text-amber-700">Calculated on subtotal, delivery, and tax</span>
-                  </div>
-                )}
-              </div>
-
-              {/* Order Summary & Financial Breakdown */}
-              <div className="bg-gray-50 rounded-2xl p-4 border border-gray-200 space-y-2 text-xs">
-                <div className="flex justify-between text-gray-600">
-                  <span>Food Subtotal ({cart.length} item kinds):</span>
-                  <span className="font-bold text-gray-900">${foodSubtotal.toFixed(2)}</span>
-                </div>
-                {(cakeSubtotal > 0 || tiffinTotal > 0) && (
-                  <div className="pl-2 space-y-0.5 text-[11px] text-gray-500 border-l-2 border-gray-200">
-                    {cateringSubtotal > 0 && (
-                      <div className="flex justify-between">
-                        <span>• Catering Food (Taxable)</span>
-                        <span>${cateringSubtotal.toFixed(2)}</span>
-                      </div>
-                    )}
-                    {tiffinTotal > 0 && (
-                      <div className="flex justify-between text-blue-700">
-                        <span>• Tiffin Meals (Base Food, Tax-Inc.)</span>
-                        <span>${tiffinBase.toFixed(2)}</span>
-                      </div>
-                    )}
-                    {cakeSubtotal > 0 && (
-                      <div className="flex justify-between text-emerald-700">
-                        <span>• Cakes (0% Tax-Exempt)</span>
-                        <span>${cakeSubtotal.toFixed(2)}</span>
-                      </div>
-                    )}
-                  </div>
-                )}
-                <div className="flex justify-between text-gray-600">
-                  <span>{isDelivery ? 'Delivery Fee (DFW Flat Fee)' : 'Self-Pickup (Home Kitchen, Little Elm)'}</span>
-                  <span className="font-bold text-gray-900">${deliveryFee.toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between text-gray-600">
-                  <div>
-                    <span>Texas Sales Tax (8.25%):</span>
-                    {tiffinTotal > 0 && (
-                      <span className="text-[10px] text-blue-700 block">Includes ${tiffinTax.toFixed(2)} bifurcated from Tiffin price</span>
-                    )}
-                    {cakeSubtotal > 0 && (
-                      <span className="text-[10px] text-emerald-700 block">Bakery products: 0% tax</span>
-                    )}
-                  </div>
-                  <span className="font-bold text-gray-900">${taxAmount.toFixed(2)}</span>
-                </div>
-                {paymentMethod === 'credit_card' && (
-                  <div className="flex justify-between text-amber-800 font-bold">
-                    <span>Card Processing Fee (3.5%):</span>
-                    <span>+${processingFee.toFixed(2)}</span>
-                  </div>
-                )}
-                <div className="pt-2 border-t border-gray-200 flex justify-between items-baseline font-bold text-sm sm:text-base text-[#00346f]">
-                  <span>Grand Total:</span>
-                  <span className="font-serif text-xl sm:text-2xl">${totalAmount.toFixed(2)}</span>
-                </div>
-              </div>
-
-            </div>
-          )}
+          </div>
 
         </div>
 
-        {/* ── Modal Footer with Step-Specific Actions ── */}
-        <div className="p-4 sm:p-5 bg-gray-100 border-t border-gray-200 shrink-0">
-          
-          {/* Step 1 Actions */}
-          {step === 'schedule' && (
-            <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-2.5 sm:gap-3">
-              <button
-                type="button"
-                onClick={onClose}
-                className="min-h-[44px] px-5 py-2.5 rounded-xl border border-gray-300 text-gray-700 hover:bg-gray-200 text-xs font-semibold cursor-pointer inline-flex items-center justify-center"
-              >
-                Cancel
-              </button>
+        {/* ── Sticky Express Submit Footer ── */}
+        <div className="p-3.5 sm:p-4 bg-gray-100 border-t border-gray-200 shrink-0 flex items-center gap-2.5">
+          <button
+            type="button"
+            disabled={isSubmitting}
+            onClick={() => handleSubmit('estimate')}
+            className="min-h-[46px] px-3.5 py-2.5 rounded-xl border border-[#00346f] text-[#00346f] hover:bg-[#00346f]/10 text-xs font-bold uppercase tracking-wider transition-all cursor-pointer inline-flex items-center justify-center gap-1.5 shrink-0"
+            title="Save a printable estimate without placing a live order"
+          >
+            <FileText className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Save Quote</span>
+            <span className="sm:hidden">Quote</span>
+          </button>
 
-              <button
-                type="button"
-                onClick={handleProceedToDetails}
-                className="min-h-[44px] inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-[#00346f] hover:bg-[#00224d] text-white text-xs font-bold uppercase tracking-wider transition-all shadow-md cursor-pointer hover:scale-101"
-              >
-                <span>Continue to Customer Details</span>
-                <ArrowRight className="w-4 h-4" />
-              </button>
-            </div>
-          )}
-
-          {/* Step 2 Actions */}
-          {step === 'details' && (
-            <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-2.5 sm:gap-3">
-              <button
-                type="button"
-                onClick={() => setStep('schedule')}
-                className="min-h-[44px] inline-flex items-center justify-center gap-1.5 px-5 py-2.5 rounded-xl border border-gray-300 text-gray-700 hover:bg-gray-200 text-xs font-semibold cursor-pointer"
-              >
-                <ArrowLeft className="w-4 h-4" />
-                <span>Back to Schedule</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={handleProceedToPayment}
-                className="min-h-[44px] inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-[#00346f] hover:bg-[#00224d] text-white text-xs font-bold uppercase tracking-wider transition-all shadow-md cursor-pointer hover:scale-101"
-              >
-                <span>Continue to Payment &amp; Review</span>
-                <ArrowRight className="w-4 h-4" />
-              </button>
-            </div>
-          )}
-
-          {/* Step 3 Actions */}
-          {step === 'payment' && (
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 sm:gap-3">
-              <button
-                type="button"
-                onClick={() => setStep('details')}
-                className="min-h-[44px] inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl border border-gray-300 text-gray-700 hover:bg-gray-200 text-xs font-semibold cursor-pointer w-full sm:w-auto"
-              >
-                <ArrowLeft className="w-4 h-4" />
-                <span>Back to Details</span>
-              </button>
-
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
-                <button
-                  type="button"
-                  disabled={isSubmitting}
-                  onClick={() => handleSubmit('estimate')}
-                  className="min-h-[44px] flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl border border-[#00346f] text-[#00346f] hover:bg-[#00346f]/10 text-xs font-bold uppercase tracking-wider transition-all cursor-pointer"
-                >
-                  <FileText className="w-3.5 h-3.5" />
-                  <span>Save Estimate</span>
-                </button>
-
-                <button
-                  type="button"
-                  disabled={isSubmitting}
-                  onClick={() => handleSubmit('order')}
-                  className="min-h-[44px] flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-5 py-2.5 rounded-xl bg-[#00346f] hover:bg-[#00224d] text-white text-xs font-bold uppercase tracking-wider transition-all shadow-md cursor-pointer hover:scale-101"
-                >
-                  <Send className="w-3.5 h-3.5" />
-                  <span>{isSubmitting ? 'Submitting...' : 'Submit Order'}</span>
-                </button>
-              </div>
-            </div>
-          )}
-
+          <button
+            type="button"
+            disabled={isSubmitting}
+            onClick={() => handleSubmit('order')}
+            className="min-h-[46px] flex-1 inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#00346f] hover:bg-[#00224d] text-white text-xs sm:text-sm font-bold uppercase tracking-wider transition-all shadow-md cursor-pointer active:scale-[0.99]"
+          >
+            <Send className="w-4 h-4 text-[#ffdea5]" />
+            <span>{isSubmitting ? 'Submitting Order...' : `Submit Order • $${totalAmount.toFixed(2)}`}</span>
+          </button>
         </div>
 
       </div>
