@@ -115,11 +115,15 @@ export default function MenuOrderGrid({
   const [searchQuery, setSearchQuery] = useState('');
   const [allergenFilter, setAllergenFilter] = useState<Allergen[]>([]);
   const [satvikOnly, setSatvikOnly] = useState(false);
+  const [showMobileFilters, setShowMobileFilters] = useState(false);
 
-  // Accordion open/collapse state (all open by default)
+  // Accordion open/collapse state: on mobile (<768px), open first section by default to prevent a 3,500px scroll wall; on desktop, all open
   const [openSections, setOpenSections] = useState<Record<string, boolean>>(() => {
+    const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
     const initial: Record<string, boolean> = {};
-    MENU_SECTIONS.forEach(s => { initial[s.key] = true; });
+    MENU_SECTIONS.forEach((s, idx) => {
+      initial[s.key] = isMobile ? idx === 0 : true;
+    });
     return initial;
   });
 
@@ -202,12 +206,14 @@ export default function MenuOrderGrid({
     }
   };
 
+  const activeFilterCount = allergenFilter.length + (satvikOnly ? 1 : 0);
+
   return (
-    <div id="catering-menu-grid" className="w-full font-sans space-y-6">
+    <div id="catering-menu-grid" className="w-full font-sans space-y-3 sm:space-y-6">
       
-      {/* Quick Selection Summary & Checkout Trigger */}
+      {/* Quick Selection Summary & Checkout Trigger (Desktop only; Mobile uses sticky bottom bar) */}
       {cart.length > 0 && onProceedToCheckout && (
-        <div className="bg-blue-50/90 border border-blue-200 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
+        <div className="hidden md:flex bg-blue-50/90 border border-blue-200 rounded-2xl p-4 flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
           <div className="flex items-center gap-2 text-xs text-[#00346f]">
             <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
             <span className="font-bold">
@@ -231,25 +237,45 @@ export default function MenuOrderGrid({
       )}
 
       {/* ── FILTER & SEARCH BAR ── */}
-      <div className="bg-white rounded-2xl border border-gray-200 p-4 shadow-xs">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+      <div className="bg-white rounded-2xl border border-gray-200 p-3 sm:p-4 shadow-xs">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-2.5 sm:gap-4">
           
-          {/* Search Input */}
-          <div className="relative flex-1">
-            <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
-            <input
-              type="text"
-              placeholder="Search dishes (e.g. Shahi Paneer, Dal Makhani, Poori, Lassi)..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 min-h-[44px] bg-gray-50 border border-gray-200 rounded-xl text-base sm:text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:border-[#00346f] focus:bg-white transition-all shadow-2xs"
-            />
+          {/* Search Input + Mobile Filter Toggle */}
+          <div className="flex items-center gap-2 flex-1">
+            <div className="relative flex-1">
+              <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+              <input
+                type="text"
+                placeholder="Search dishes (e.g. Paneer, Dal, Pav)..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-9 pr-3 py-2 min-h-[42px] sm:min-h-[44px] bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:border-[#00346f] focus:bg-white transition-all shadow-2xs"
+              />
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setShowMobileFilters(!showMobileFilters)}
+              className={`lg:hidden inline-flex items-center gap-1.5 min-h-[42px] px-3 py-2 rounded-xl text-xs font-bold border transition-all cursor-pointer shrink-0 ${
+                activeFilterCount > 0 || showMobileFilters
+                  ? 'bg-[#00346f] text-white border-[#00346f]'
+                  : 'bg-gray-50 text-gray-700 border-gray-200'
+              }`}
+            >
+              <Filter className="w-3.5 h-3.5" />
+              <span>Filters</span>
+              {activeFilterCount > 0 && (
+                <span className="w-4 h-4 rounded-full bg-[#ffdea5] text-[#00346f] text-[10px] font-black flex items-center justify-center">
+                  {activeFilterCount}
+                </span>
+              )}
+            </button>
           </div>
 
           {/* Allergen Avoidance Filters & Satvik Toggle */}
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="flex items-center gap-1.5 text-xs text-gray-500 font-semibold mr-1">
-              <Filter className="w-3.5 h-3.5" />
+          <div className={`${showMobileFilters ? 'flex' : 'hidden lg:flex'} flex-wrap items-center gap-1.5 sm:gap-2 pt-2 lg:pt-0 border-t lg:border-t-0 border-gray-100`}>
+            <div className="flex items-center gap-1 text-xs text-gray-500 font-semibold mr-1">
+              <Filter className="w-3.5 h-3.5 hidden lg:inline" />
               <span>Exclude:</span>
             </div>
 
@@ -265,7 +291,7 @@ export default function MenuOrderGrid({
                 <button
                   key={a}
                   onClick={() => toggleAllergen(a)}
-                  className={`min-h-[36px] inline-flex items-center justify-center px-3 py-1.5 rounded-lg text-xs font-bold tracking-wider transition-all cursor-pointer border ${
+                  className={`min-h-[34px] sm:min-h-[36px] inline-flex items-center justify-center px-2.5 sm:px-3 py-1 rounded-lg text-xs font-bold tracking-wider transition-all cursor-pointer border ${
                     active
                       ? 'bg-rose-500 text-white border-rose-500 shadow-xs'
                       : 'bg-gray-100 hover:bg-gray-200 text-gray-700 border-gray-200'
@@ -279,24 +305,24 @@ export default function MenuOrderGrid({
 
             <button
               onClick={() => setSatvikOnly(!satvikOnly)}
-              className={`min-h-[36px] inline-flex items-center justify-center px-3.5 py-1.5 rounded-lg text-xs font-bold tracking-wider transition-all cursor-pointer border ${
+              className={`min-h-[34px] sm:min-h-[36px] inline-flex items-center justify-center px-3 py-1 rounded-lg text-xs font-bold tracking-wider transition-all cursor-pointer border ${
                 satvikOnly
                   ? 'bg-amber-600 text-white border-amber-600 shadow-xs'
                   : 'bg-amber-50 hover:bg-amber-100 text-amber-900 border-amber-200'
               }`}
             >
-              {satvikOnly ? '✓ Satvik / Jain Friendly' : 'Satvik / Jain Only'}
+              {satvikOnly ? '✓ Satvik / Jain' : 'Satvik / Jain Only'}
             </button>
           </div>
 
         </div>
 
-        {/* Category Navigation Pills & Expand/Collapse All Button */}
-        <div className="mt-4 pt-3 border-t border-gray-150 flex flex-wrap items-center justify-between gap-2">
+        {/* Category Navigation Pills (Single-row horizontal scroll on mobile) & Expand/Collapse All Button */}
+        <div className="mt-2.5 sm:mt-4 pt-2.5 sm:pt-3 border-t border-gray-150 flex items-center justify-between gap-2">
           
           {/* Quick jump pills */}
-          <div className="flex flex-wrap items-center gap-1.5 overflow-x-auto py-1">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-gray-500 mr-1 flex items-center gap-1">
+          <div className="flex items-center gap-1.5 overflow-x-auto py-0.5 scrollbar-none flex-1 min-w-0">
+            <span className="hidden sm:flex text-[11px] font-bold uppercase tracking-wider text-gray-500 mr-1 items-center gap-1 shrink-0">
               <SlidersHorizontal className="w-3 h-3" /> Jump:
             </span>
             {MENU_SECTIONS.map(s => {
@@ -308,7 +334,7 @@ export default function MenuOrderGrid({
                   key={s.key}
                   type="button"
                   onClick={() => scrollToSection(s.key)}
-                  className={`min-h-[36px] px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all border cursor-pointer flex items-center gap-1.5 ${
+                  className={`min-h-[32px] sm:min-h-[36px] px-2.5 sm:px-3 py-1 rounded-lg text-xs font-semibold whitespace-nowrap transition-all border cursor-pointer flex items-center gap-1.5 shrink-0 ${
                     count > 0
                       ? 'bg-[#00346f] text-white border-[#00346f] shadow-2xs'
                       : 'bg-gray-50 hover:bg-gray-100 text-gray-700 border-gray-200'
@@ -329,19 +355,21 @@ export default function MenuOrderGrid({
           <button
             type="button"
             onClick={toggleAllSections}
-            className="inline-flex items-center gap-1 text-xs font-bold text-[#00346f] hover:text-[#00224d] bg-blue-50/70 hover:bg-blue-100/70 border border-blue-200 px-3.5 py-2 min-h-[36px] rounded-xl cursor-pointer transition-all ml-auto"
+            className="inline-flex items-center gap-1 text-[11px] sm:text-xs font-bold text-[#00346f] hover:text-[#00224d] bg-blue-50/70 hover:bg-blue-100/70 border border-blue-200 px-2.5 sm:px-3.5 py-1.5 min-h-[32px] sm:min-h-[36px] rounded-xl cursor-pointer transition-all shrink-0"
           >
             <ChevronsUpDown className="w-3.5 h-3.5" />
-            <span>{allOpen ? 'Collapse All' : 'Expand All Sections'}</span>
+            <span className="hidden sm:inline">{allOpen ? 'Collapse All' : 'Expand All Sections'}</span>
+            <span className="sm:hidden">{allOpen ? 'Collapse' : 'Expand All'}</span>
           </button>
 
         </div>
       </div>
 
       {/* ── COLLAPSIBLE MENU SECTIONS ACCORDIONS ── */}
-      <div className="space-y-6">
+      <div className="space-y-3 sm:space-y-6">
         {MENU_SECTIONS.map(section => {
-          const isOpen = openSections[section.key] ?? true;
+          const isFilterActive = Boolean(searchQuery.trim() || allergenFilter.length > 0 || satvikOnly);
+          const isOpen = isFilterActive ? true : (openSections[section.key] ?? true);
           const dishes = filteredDishesBySection[section.key] || [];
           const Icon = section.icon;
 
@@ -354,7 +382,6 @@ export default function MenuOrderGrid({
           const sectionSubtotal = sectionCartItems.reduce((s, i) => s + i.totalPrice, 0);
 
           // If search/filter is active and no dishes match in this section, hide section
-          const isFilterActive = searchQuery.trim() || allergenFilter.length > 0 || satvikOnly;
           if (isFilterActive && dishes.length === 0) {
             return null;
           }
@@ -363,32 +390,32 @@ export default function MenuOrderGrid({
             <div 
               key={section.key} 
               id={`section-${section.key}`}
-              className="bg-white rounded-2xl border border-gray-200 shadow-xs overflow-hidden transition-all scroll-mt-48 sm:scroll-mt-52"
+              className="bg-white rounded-2xl border border-gray-200 shadow-xs overflow-hidden transition-all scroll-mt-36 sm:scroll-mt-52"
             >
               
               {/* Accordion Header */}
               <button
                 type="button"
                 onClick={() => toggleSection(section.key)}
-                className={`w-full p-4 sm:p-5 flex items-center justify-between text-left transition-colors cursor-pointer ${
+                className={`w-full p-3.5 sm:p-5 flex items-center justify-between text-left transition-colors cursor-pointer ${
                   isOpen ? 'bg-gray-50/80 border-b border-gray-200' : 'bg-white hover:bg-gray-50'
                 }`}
               >
-                <div className="flex items-center gap-3">
-                  <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 border ${
+                <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+                  <div className={`w-8 h-8 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center shrink-0 border ${
                     sectionCartCount > 0
                       ? 'bg-[#00346f] text-[#ffdea5] border-[#00346f]'
                       : 'bg-blue-50 text-[#00346f] border-blue-100'
                   }`}>
-                    <Icon className="w-5 h-5" />
+                    <Icon className="w-4 h-4 sm:w-5 sm:h-5" />
                   </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <h3 className="font-serif font-bold text-base sm:text-lg text-[#00346f]">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+                      <h3 className="font-serif font-bold text-sm sm:text-lg text-[#00346f] truncate">
                         {section.title}
                       </h3>
-                      <span className="text-[11px] text-gray-500 font-sans">
-                        ({dishes.length} dishes)
+                      <span className="text-[11px] text-gray-500 font-sans shrink-0">
+                        ({dishes.length})
                       </span>
                     </div>
                     <p className="text-xs text-gray-500 hidden sm:block mt-0.5">
@@ -397,12 +424,13 @@ export default function MenuOrderGrid({
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2.5">
+                <div className="flex items-center gap-2 shrink-0">
                   {/* Active selection badge */}
                   {sectionCartCount > 0 && (
-                    <span className="bg-[#ffdea5] text-[#00346f] px-2.5 py-1 rounded-full text-xs font-black shadow-2xs flex items-center gap-1">
-                      <Check className="w-3.5 h-3.5" />
-                      <span>{sectionCartCount} Selected (${sectionSubtotal.toFixed(2)})</span>
+                    <span className="bg-[#ffdea5] text-[#00346f] px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full text-[11px] sm:text-xs font-black shadow-2xs flex items-center gap-1">
+                      <Check className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                      <span className="hidden sm:inline">{sectionCartCount} Selected (${sectionSubtotal.toFixed(2)})</span>
+                      <span className="sm:hidden">{sectionCartCount} (${sectionSubtotal.toFixed(0)})</span>
                     </span>
                   )}
 
@@ -414,7 +442,7 @@ export default function MenuOrderGrid({
 
               {/* Accordion Body */}
               {isOpen && (
-                <div className="p-4 sm:p-6 bg-white animate-fade-in">
+                <div className="p-3 sm:p-6 bg-white animate-fade-in">
                   
                   {section.category === 'breads' ? (
                     
@@ -617,7 +645,7 @@ export default function MenuOrderGrid({
                   ) : (
                     
                     /* ── STANDARD TRAYS & DISHES GRID ── */
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
                       {dishes.map(item => {
                         const thirdQty = getItemQuantity(item.id, 'third');
                         const halfQty = getItemQuantity(item.id, 'half');
@@ -629,7 +657,7 @@ export default function MenuOrderGrid({
                         return (
                           <div
                             key={item.id}
-                            className={`rounded-2xl p-4 sm:p-5 border transition-all duration-200 flex flex-col justify-between ${
+                            className={`rounded-2xl p-3.5 sm:p-5 border transition-all duration-200 flex flex-col justify-between ${
                               hasSelection
                                 ? 'border-[#00346f] bg-blue-50/40 shadow-sm ring-1 ring-[#00346f]/20'
                                 : 'border-gray-200 hover:border-gray-300 bg-white'
@@ -637,14 +665,14 @@ export default function MenuOrderGrid({
                           >
                             <div>
                               {/* Header info */}
-                              <div className="flex items-start justify-between gap-3">
+                              <div className="flex items-start justify-between gap-2.5 sm:gap-3">
                                 <div className="min-w-0 flex-1">
-                                  <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
-                                    <h4 className="font-serif font-bold text-base text-gray-900 truncate min-w-0">
+                                  <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap sm:flex-nowrap">
+                                    <h4 className="font-serif font-bold text-sm sm:text-base text-gray-900 truncate min-w-0">
                                       {item.name}
                                     </h4>
                                     {item.tier && (
-                                      <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full shrink-0 ${
+                                      <span className={`text-[9px] sm:text-[10px] font-bold uppercase tracking-wider px-1.5 sm:px-2 py-0.5 rounded-full shrink-0 ${
                                         item.tier === 'Maharaja' ? 'bg-amber-100 text-amber-900 border border-amber-200' :
                                         item.tier === 'Darbari' ? 'bg-purple-100 text-purple-900 border border-purple-200' :
                                         item.tier === 'Shahi' ? 'bg-blue-100 text-blue-900 border border-blue-200' :
@@ -654,7 +682,7 @@ export default function MenuOrderGrid({
                                       </span>
                                     )}
                                   </div>
-                                  <p className="text-xs text-gray-500 mt-1 leading-relaxed line-clamp-2 overflow-hidden">
+                                  <p className="text-[11px] sm:text-xs text-gray-500 mt-0.5 sm:mt-1 leading-snug sm:leading-relaxed line-clamp-1 sm:line-clamp-2 overflow-hidden">
                                     {item.description}
                                   </p>
                                 </div>
@@ -664,7 +692,7 @@ export default function MenuOrderGrid({
                                   {item.allergens.map(a => (
                                     <span
                                       key={a}
-                                      className="w-5 h-5 rounded-full bg-gray-100 text-gray-700 border border-gray-300 flex items-center justify-center font-mono font-bold text-[10px]"
+                                      className="w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-gray-100 text-gray-700 border border-gray-300 flex items-center justify-center font-mono font-bold text-[9px] sm:text-[10px]"
                                       title={`Contains ${a}`}
                                     >
                                       {a}
@@ -674,24 +702,26 @@ export default function MenuOrderGrid({
                               </div>
 
                               {/* Dietary tags & Selected Confirmation Badge */}
-                              <div className="flex items-center justify-between gap-2 mt-2.5 text-[10px] font-medium">
-                                {item.isSatvikAvailable ? (
-                                  <span className="text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded font-semibold">
-                                    ✓ Satvik Option Available
-                                  </span>
-                                ) : <span />}
+                              {(item.isSatvikAvailable || hasSelection) && (
+                                <div className="flex items-center justify-between gap-2 mt-1.5 sm:mt-2.5 text-[10px] font-medium">
+                                  {item.isSatvikAvailable ? (
+                                    <span className="text-emerald-700 bg-emerald-50 px-1.5 sm:px-2 py-0.5 rounded font-semibold">
+                                      ✓ Satvik Option
+                                    </span>
+                                  ) : <span />}
 
-                                {hasSelection && (
-                                  <span className="flex items-center gap-1 bg-[#00346f] text-white font-bold px-2.5 py-0.5 rounded-full shadow-xs">
-                                    <Check className="w-3 h-3 text-[#ffdea5]" />
-                                    <span>{totalDishCount} Selected</span>
-                                  </span>
-                                )}
-                              </div>
+                                  {hasSelection && (
+                                    <span className="flex items-center gap-1 bg-[#00346f] text-white font-bold px-2 sm:px-2.5 py-0.5 rounded-full shadow-xs">
+                                      <Check className="w-3 h-3 text-[#ffdea5]" />
+                                      <span>{totalDishCount} Selected</span>
+                                    </span>
+                                  )}
+                                </div>
+                              )}
                             </div>
 
                             {/* ── STEPPER CONTROLS ── */}
-                            <div className="mt-4 pt-3 border-t border-gray-100">
+                            <div className="mt-2.5 sm:mt-4 pt-2.5 sm:pt-3 border-t border-gray-100">
                               {item.pricingType === 'tray' && item.trayPricing && (
                                 <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
                                   

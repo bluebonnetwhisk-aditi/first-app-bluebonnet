@@ -706,17 +706,17 @@ export default function TiffinOrderView({
         </div>
       )}
 
-      {/* ── TOP HEADER & FLYER THUMBNAIL ── */}
-      <div className="bg-gradient-to-r from-[#00346f] via-[#002856] to-[#111827] rounded-3xl p-5 sm:p-6 text-white shadow-md flex flex-col md:flex-row items-center justify-between gap-5 overflow-hidden">
-        <div className="space-y-2 max-w-xl">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#ffdea5]/15 border border-[#ffdea5]/30 text-[#ffdea5] text-[10px] font-bold uppercase tracking-widest">
-            <Sparkles className="w-3.5 h-3.5" />
-            <span>Ghar Ka Khana • Little Elm, TX</span>
+      {/* ── TOP HEADER & FLYER THUMBNAIL (Compact horizontal bar on mobile) ── */}
+      <div className="bg-gradient-to-r from-[#00346f] via-[#002856] to-[#111827] rounded-2xl sm:rounded-3xl p-3.5 sm:p-6 text-white shadow-md flex items-center justify-between gap-3 sm:gap-5 overflow-hidden">
+        <div className="space-y-1 sm:space-y-2 max-w-xl min-w-0">
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full bg-[#ffdea5]/15 border border-[#ffdea5]/30 text-[#ffdea5] text-[9px] sm:text-[10px] font-bold uppercase tracking-widest">
+            <Sparkles className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+            <span>Ghar Ka Khana • Little Elm</span>
           </div>
-          <h1 className="font-serif text-2xl sm:text-3xl md:text-4xl font-extrabold text-white tracking-tight">
+          <h1 className="font-serif text-lg sm:text-3xl md:text-4xl font-extrabold text-white tracking-tight leading-tight">
             Desi Dabba <span className="text-[#ffdea5] font-normal italic">Weekly Tiffin</span>
           </h1>
-          <p className="text-xs sm:text-sm text-gray-200 font-light leading-relaxed">
+          <p className="hidden sm:block text-xs sm:text-sm text-gray-200 font-light leading-relaxed">
             Scratch-prepared homestyle Indian meals, rotated daily. Order complete Dabbas, 5-day subscriptions, or extra 8oz/16oz tubs &amp; sides.
           </p>
         </div>
@@ -725,17 +725,17 @@ export default function TiffinOrderView({
         {(() => {
           if (!isWeekMenuUploaded) {
             return (
-              <div className="relative shrink-0 rounded-2xl border-2 border-dashed border-[#ffdea5]/40 h-28 sm:h-32 w-44 sm:w-52 bg-gradient-to-br from-black/60 to-[#001e40]/80 p-3 flex flex-col justify-between text-center shadow-lg">
-                <div className="flex items-center justify-center gap-1.5 text-[#ffdea5]">
+              <div className="relative shrink-0 rounded-xl sm:rounded-2xl border border-dashed border-[#ffdea5]/40 h-16 sm:h-32 w-28 sm:w-52 bg-gradient-to-br from-black/60 to-[#001e40]/80 p-2 sm:p-3 flex flex-col justify-center sm:justify-between text-center shadow-lg">
+                <div className="hidden sm:flex items-center justify-center gap-1.5 text-[#ffdea5]">
                   <Sparkles className="w-3.5 h-3.5 animate-pulse" />
                   <span className="text-[10px] font-black uppercase tracking-widest">Secret Vault</span>
                 </div>
                 <div className="space-y-0.5">
-                  <div className="text-xl">👨‍🍳✨</div>
-                  <p className="text-[11px] font-bold text-white leading-tight">Flyer Dropping Soon</p>
-                  <p className="text-[9px] text-[#ffdea5]/80 font-light">Chef curating delicacies</p>
+                  <div className="text-sm sm:text-xl">👨‍🍳✨</div>
+                  <p className="text-[10px] sm:text-[11px] font-bold text-white leading-tight">Flyer Soon</p>
+                  <p className="hidden sm:block text-[9px] text-[#ffdea5]/80 font-light">Chef curating delicacies</p>
                 </div>
-                <div className="text-[9px] font-semibold text-amber-300 bg-amber-950/60 rounded-md py-0.5 px-1.5 border border-amber-500/30">
+                <div className="hidden sm:block text-[9px] font-semibold text-amber-300 bg-amber-950/60 rounded-md py-0.5 px-1.5 border border-amber-500/30">
                   KDS Sync Pending
                 </div>
               </div>
@@ -751,7 +751,7 @@ export default function TiffinOrderView({
             <button
               type="button"
               onClick={() => setIsLightboxOpen(true)}
-              className="relative group cursor-pointer shrink-0 rounded-2xl overflow-hidden border-2 border-[#ffdea5]/40 shadow-lg hover:border-[#ffdea5] transition-all h-28 sm:h-32 w-44 sm:w-52 bg-gray-950 text-left focus:outline-none ring-offset-2 ring-offset-gray-900 focus:ring-2 focus:ring-[#ffdea5]"
+              className="relative group cursor-pointer shrink-0 rounded-xl sm:rounded-2xl overflow-hidden border-2 border-[#ffdea5]/40 shadow-lg hover:border-[#ffdea5] transition-all h-16 sm:h-32 w-28 sm:w-52 bg-gray-950 text-left focus:outline-none ring-offset-2 ring-offset-gray-900 focus:ring-2 focus:ring-[#ffdea5]"
               title="Click to expand full menu flyer"
             >
               <img
@@ -759,10 +759,11 @@ export default function TiffinOrderView({
                 alt="Tiffin Menu Flyer Thumbnail"
                 className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-300 opacity-90 group-hover:opacity-100"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent flex items-end justify-center p-2 group-hover:bg-black/60 transition-colors">
-                <span className="text-[10px] font-extrabold uppercase tracking-wider text-white bg-black/60 px-2.5 py-1 rounded-lg border border-white/20 flex items-center gap-1.5 group-hover:bg-[#00346f] group-hover:text-[#ffdea5] group-hover:border-[#ffdea5]/50 transition-all shadow-xs">
-                  <Maximize2 className="w-3 h-3 text-[#ffdea5]" />
-                  <span>{isWeekendActive ? 'Expand Weekend Flyer' : 'Expand Menu Flyer'}</span>
+              <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent flex items-end justify-center p-1.5 sm:p-2 group-hover:bg-black/60 transition-colors">
+                <span className="text-[9px] sm:text-[10px] font-extrabold uppercase tracking-wider text-white bg-black/60 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg border border-white/20 flex items-center gap-1 group-hover:bg-[#00346f] group-hover:text-[#ffdea5] group-hover:border-[#ffdea5]/50 transition-all shadow-xs">
+                  <Maximize2 className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-[#ffdea5] shrink-0" />
+                  <span className="sm:hidden">Flyer</span>
+                  <span className="hidden sm:inline">{isWeekendActive ? 'Expand Weekend Flyer' : 'Expand Menu Flyer'}</span>
                 </span>
               </div>
             </button>
@@ -771,17 +772,17 @@ export default function TiffinOrderView({
       </div>
 
       {/* ── 1. UNIFIED DATE & WEEK CONTROLLER (SINGLE SOURCE OF TRUTH) ── */}
-      <div className="bg-white rounded-3xl border border-gray-200 p-5 sm:p-6 shadow-xs space-y-4">
+      <div className="bg-white rounded-2xl sm:rounded-3xl border border-gray-200 p-3.5 sm:p-6 shadow-xs space-y-3 sm:space-y-4">
         {/* Week Selection Bar */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 pb-3 border-b border-gray-150">
-          <div className="flex items-center gap-2">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 sm:gap-3 pb-2.5 sm:pb-3 border-b border-gray-150">
+          <div className="hidden sm:flex items-center gap-2">
             <Calendar className="w-4 h-4 text-[#00346f]" />
             <span className="text-xs font-bold uppercase tracking-wider text-gray-800">
               Select Ordering Week:
             </span>
           </div>
 
-          <div className="flex items-center gap-2 overflow-x-auto pb-1 md:pb-0 scrollbar-none">
+          <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto pb-0.5 md:pb-0 scrollbar-none">
             {upcomingWeeks.map((week) => {
               const isSelected = activeWeeklyPlan?.id === week.id;
               const isThisWeekUploaded = Boolean(settings?.weekStartDate && week.monDateStr === settings.weekStartDate);
@@ -790,18 +791,19 @@ export default function TiffinOrderView({
                   key={week.id}
                   type="button"
                   onClick={() => setSelectedWeekId(week.id)}
-                  className={`px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer inline-flex items-center gap-1.5 ${
+                  className={`px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-[11px] sm:text-xs font-bold whitespace-nowrap transition-all cursor-pointer inline-flex items-center gap-1.5 ${
                     isSelected
                       ? 'bg-[#00346f] text-white shadow-xs ring-2 ring-[#ffdea5]/40'
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200'
                   }`}
                 >
-                  <span>{week.label} ({week.shortRange})</span>
+                  <span className="sm:hidden">{week.shortRange}</span>
+                  <span className="hidden sm:inline">{week.label} ({week.shortRange})</span>
                   {!isThisWeekUploaded && (
                     <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-bold ${
                       isSelected ? 'bg-[#ffdea5] text-[#00346f]' : 'bg-amber-100 text-amber-800'
                     }`}>
-                      Chef Deciding
+                      Soon
                     </span>
                   )}
                 </button>
@@ -812,16 +814,16 @@ export default function TiffinOrderView({
 
         {/* Day Selection Pills Bar */}
         <div>
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-[11px] font-bold uppercase tracking-widest text-[#775a19]">
-              Active Day Menu for {activeWeeklyPlan?.shortRange}:
+          <div className="flex items-center justify-between mb-1.5 sm:mb-2">
+            <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-widest text-[#775a19]">
+              Select Day ({activeWeeklyPlan?.shortRange}):
             </span>
-            <span className="text-[11px] text-gray-500 font-medium">
+            <span className="hidden sm:inline text-[11px] text-gray-500 font-medium">
               {headerTimeAndStatusText}
             </span>
           </div>
 
-          <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+          <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto pb-1 scrollbar-none">
             {schedule.map(day => {
               const isSelected = selectedDayTab === day.dateStr;
               return (
@@ -829,7 +831,7 @@ export default function TiffinOrderView({
                   key={day.dayName}
                   type="button"
                   onClick={() => setSelectedDayTab(day.dateStr)}
-                  className={`flex-1 min-w-[110px] p-3 rounded-2xl border text-left transition-all cursor-pointer ${
+                  className={`flex-1 min-w-[68px] sm:min-w-[110px] p-2 sm:p-3 rounded-xl sm:rounded-2xl border text-left transition-all cursor-pointer ${
                     isSelected
                       ? 'bg-[#00346f] text-white border-[#00346f] shadow-md ring-2 ring-[#ffdea5]/50'
                       : day.isSelectable
@@ -839,12 +841,12 @@ export default function TiffinOrderView({
                       : 'bg-gray-100 border-gray-200 text-gray-400 opacity-60'
                   }`}
                 >
-                  <div className="flex items-center justify-between">
-                    <span className={`text-xs font-bold ${isSelected ? 'text-white' : 'text-gray-900'}`}>
+                  <div className="flex items-center justify-between gap-1">
+                    <span className={`text-[11px] sm:text-xs font-bold ${isSelected ? 'text-white' : 'text-gray-900'}`}>
                       {day.dayName.slice(0, 3)}
                     </span>
                     {!isWeekMenuUploaded ? (
-                      <span className={`text-[9px] font-bold px-1 rounded ${
+                      <span className={`text-[8px] sm:text-[9px] font-bold px-1 rounded ${
                         isSelected ? 'bg-[#ffdea5] text-[#00346f]' : 'bg-gray-200 text-gray-600'
                       }`}>
                         Soon
@@ -852,21 +854,21 @@ export default function TiffinOrderView({
                     ) : (
                       <>
                         {day.isSaturdaySpecial && (
-                          <span className={`text-[9px] font-black uppercase px-1 rounded ${
+                          <span className={`text-[8px] sm:text-[9px] font-black uppercase px-1 rounded ${
                             isSelected ? 'bg-[#ffdea5] text-[#00346f]' : 'bg-purple-100 text-purple-800'
                           }`}>
                             Spec
                           </span>
                         )}
                         {day.isSundayClosed && (
-                          <span className="text-[9px] font-bold text-amber-800">
+                          <span className="text-[8px] sm:text-[9px] font-bold text-amber-800">
                             Off
                           </span>
                         )}
                       </>
                     )}
                   </div>
-                  <span className={`text-[11px] block mt-0.5 font-semibold ${isSelected ? 'text-gray-200' : 'text-gray-600'}`}>
+                  <span className={`text-[10px] sm:text-[11px] block mt-0.5 font-semibold whitespace-nowrap ${isSelected ? 'text-gray-200' : 'text-gray-600'}`}>
                     {day.displayDate}
                   </span>
                 </button>
@@ -878,31 +880,33 @@ export default function TiffinOrderView({
 
       {/* ── 2. SEGMENTED MAIN TABS NAVIGATION (WEEKDAYS ONLY) ── */}
       {!(activeDay?.dayName === 'Saturday' || activeDay?.dayName === 'Sunday') && (
-        <div className="flex bg-gray-200/80 p-1.5 rounded-2xl border border-gray-300 max-w-xl mx-auto shadow-2xs">
+        <div className="flex bg-gray-200/80 p-1 sm:p-1.5 rounded-2xl border border-gray-300 max-w-xl mx-auto shadow-2xs">
           <button
             type="button"
             onClick={() => setActiveTab('meals')}
-            className={`flex-1 py-3 px-4 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer flex items-center justify-center gap-2 ${
+            className={`flex-1 py-2.5 sm:py-3 px-2.5 sm:px-4 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 sm:gap-2 ${
               activeTab === 'meals'
                 ? 'bg-[#00346f] text-white shadow-sm font-extrabold'
                 : 'text-gray-700 hover:text-gray-900 hover:bg-white/50'
             }`}
           >
-            <Utensils className="w-4 h-4 text-[#ffdea5]" />
-            <span>🍱 Full Meals &amp; Weekly Plan</span>
+            <Utensils className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#ffdea5] shrink-0" />
+            <span className="sm:hidden">🍱 Dabbas &amp; Weekly</span>
+            <span className="hidden sm:inline">🍱 Full Meals &amp; Weekly Plan</span>
           </button>
 
           <button
             type="button"
             onClick={() => setActiveTab('alacarte')}
-            className={`flex-1 py-3 px-4 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer flex items-center justify-center gap-2 ${
+            className={`flex-1 py-2.5 sm:py-3 px-2.5 sm:px-4 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 sm:gap-2 ${
               activeTab === 'alacarte'
                 ? 'bg-[#00346f] text-white shadow-sm font-extrabold'
                 : 'text-gray-700 hover:text-gray-900 hover:bg-white/50'
             }`}
           >
-            <Layers className="w-4 h-4 text-[#ffdea5]" />
-            <span>🍲 Tubs (8/16oz), Sides &amp; Breads</span>
+            <Layers className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#ffdea5] shrink-0" />
+            <span className="sm:hidden">🍲 Tubs &amp; Sides</span>
+            <span className="hidden sm:inline">🍲 Tubs (8/16oz), Sides &amp; Breads</span>
           </button>
         </div>
       )}
@@ -1215,56 +1219,58 @@ export default function TiffinOrderView({
               ) : (
                 /* Weekdays Mon-Fri */
                 <>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="p-4 bg-amber-50/50 rounded-2xl border border-amber-200/70 flex items-start gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center shrink-0">
-                        <Flame className="w-5 h-5" />
+                  <div className="grid grid-cols-2 gap-2.5 sm:gap-4">
+                    <div className="p-3 sm:p-4 bg-amber-50/50 rounded-2xl border border-amber-200/70 flex items-start gap-2 sm:gap-3">
+                      <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center shrink-0">
+                        <Flame className="w-4 h-4 sm:w-5 sm:h-5" />
                       </div>
-                      <div>
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-amber-800 block">Dal / Curry Course</span>
-                        <span className="font-bold text-sm text-gray-900 block mt-0.5">{activeDay.dalOrCurry}</span>
-                        <span className="text-xs text-gray-500 block mt-0.5">Slow-simmered, rich homestyle spices</span>
+                      <div className="min-w-0">
+                        <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-amber-800 block">Dal / Curry</span>
+                        <span className="font-bold text-xs sm:text-sm text-gray-900 block mt-0.5 leading-snug">{activeDay.dalOrCurry}</span>
+                        <span className="hidden sm:block text-xs text-gray-500 mt-0.5">Slow-simmered, rich homestyle spices</span>
                       </div>
                     </div>
 
-                    <div className="p-4 bg-emerald-50/50 rounded-2xl border border-emerald-200/70 flex items-start gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center shrink-0">
-                        <Utensils className="w-5 h-5" />
+                    <div className="p-3 sm:p-4 bg-emerald-50/50 rounded-2xl border border-emerald-200/70 flex items-start gap-2 sm:gap-3">
+                      <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center shrink-0">
+                        <Utensils className="w-4 h-4 sm:w-5 sm:h-5" />
                       </div>
-                      <div>
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-800 block">Dry Sabzi Course</span>
-                        <span className="font-bold text-sm text-gray-900 block mt-0.5">{activeDay.sabzi}</span>
-                        <span className="text-xs text-gray-500 block mt-0.5">Fresh seasonal vegetables sauteed with jeera &amp; herbs</span>
+                      <div className="min-w-0">
+                        <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-emerald-800 block">Dry Sabzi</span>
+                        <span className="font-bold text-xs sm:text-sm text-gray-900 block mt-0.5 leading-snug">{activeDay.sabzi}</span>
+                        <span className="hidden sm:block text-xs text-gray-500 mt-0.5">Fresh seasonal vegetables sauteed with jeera &amp; herbs</span>
                       </div>
                     </div>
                   </div>
 
                   {/* Meal Contents Pill */}
-                  <div className="p-3 bg-blue-50/70 border border-blue-200/80 rounded-xl flex flex-wrap items-center justify-between gap-2 text-xs text-[#00346f]">
-                    <span className="font-bold">What is inside each daily Dabba:</span>
-                    <div className="flex flex-wrap items-center gap-3 font-medium">
-                      <span>🍚 1 Cup Basmati Rice</span>
-                      <span>🫓 2 Fresh Tawa Roti</span>
-                      <span>🥘 1 Cup Dal / Curry</span>
-                      <span>🥗 1/2 Cup Dry Sabzi</span>
+                  <div className="p-2.5 sm:p-3 bg-blue-50/70 border border-blue-200/80 rounded-xl flex flex-wrap items-center justify-between gap-1.5 sm:gap-2 text-[11px] sm:text-xs text-[#00346f]">
+                    <span className="font-bold">Each Dabba includes:</span>
+                    <div className="flex flex-wrap items-center gap-2 sm:gap-3 font-medium">
+                      <span>🍚 Rice</span>
+                      <span>🫓 2 Roti</span>
+                      <span>🥘 Dal/Curry</span>
+                      <span>🥗 Sabzi</span>
                     </div>
                   </div>
 
                   {/* Single vs Family Dabba Options */}
                   {activeDay.isSelectable ? (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 pt-1">
                       {/* Single Dabba */}
                       {(() => {
                         const qty = getSingleQty(activeDay.dateStr);
                         return (
-                          <div className="p-5 bg-white rounded-2xl border border-gray-300 hover:border-[#00346f] transition-all flex flex-col justify-between shadow-2xs space-y-4">
+                          <div className="p-4 sm:p-5 bg-white rounded-2xl border border-gray-300 hover:border-[#00346f] transition-all flex flex-col justify-between shadow-2xs space-y-3 sm:space-y-4">
                             <div>
                               <div className="flex items-center justify-between">
-                                <h4 className="font-serif font-bold text-lg text-gray-900">Single Dabba</h4>
-                                <span className="px-2 py-0.5 bg-gray-100 rounded text-[10px] font-bold uppercase text-gray-600">Serves 1</span>
+                                <div className="flex items-center gap-2">
+                                  <h4 className="font-serif font-bold text-base sm:text-lg text-gray-900">Single Dabba</h4>
+                                  <span className="px-2 py-0.5 bg-gray-100 rounded text-[10px] font-bold uppercase text-gray-600">Serves 1</span>
+                                </div>
+                                <span className="font-serif text-xl sm:text-2xl font-black text-[#00346f]">${singlePrice.toFixed(2)}</span>
                               </div>
-                              <span className="font-serif text-2xl font-black text-[#00346f] block mt-1">${singlePrice.toFixed(2)}</span>
-                              <p className="text-xs text-gray-500 mt-1 leading-relaxed">
+                              <p className="hidden sm:block text-xs text-gray-500 mt-1 leading-relaxed">
                                 1 complete meal: 1 cup rice, 1 cup curry, 1/2 cup sabzi, 2 tawa roti. Perfect for individual dinner!
                               </p>
                             </div>
@@ -1294,10 +1300,10 @@ export default function TiffinOrderView({
                               <button
                                 type="button"
                                 onClick={() => handleAddDailyDabba('single', activeDay)}
-                                className="w-full min-h-[44px] inline-flex items-center justify-center gap-2 bg-[#00346f] hover:bg-[#00224d] text-white py-2.5 px-4 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-xs cursor-pointer"
+                                className="w-full min-h-[42px] sm:min-h-[44px] inline-flex items-center justify-center gap-2 bg-[#00346f] hover:bg-[#00224d] text-white py-2.5 px-4 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-xs cursor-pointer"
                               >
                                 <Plus className="w-4 h-4 text-[#ffdea5]" />
-                                <span>Add Single Dabba ({activeDay.displayDate}) • ${(singlePrice * qty).toFixed(2)}</span>
+                                <span>Add Single Dabba • ${(singlePrice * qty).toFixed(2)}</span>
                               </button>
                             </div>
                           </div>
@@ -1308,14 +1314,16 @@ export default function TiffinOrderView({
                       {(() => {
                         const qty = getFamilyQty(activeDay.dateStr);
                         return (
-                          <div className="p-5 bg-white rounded-2xl border border-gray-300 hover:border-[#00346f] transition-all flex flex-col justify-between shadow-2xs space-y-4">
+                          <div className="p-4 sm:p-5 bg-white rounded-2xl border border-gray-300 hover:border-[#00346f] transition-all flex flex-col justify-between shadow-2xs space-y-3 sm:space-y-4">
                             <div>
                               <div className="flex items-center justify-between">
-                                <h4 className="font-serif font-bold text-lg text-gray-900">Family Dabba</h4>
-                                <span className="px-2 py-0.5 bg-[#ffdea5]/40 text-[#775a19] rounded text-[10px] font-bold uppercase">Serves 4</span>
+                                <div className="flex items-center gap-2">
+                                  <h4 className="font-serif font-bold text-base sm:text-lg text-gray-900">Family Dabba</h4>
+                                  <span className="px-2 py-0.5 bg-[#ffdea5]/40 text-[#775a19] rounded text-[10px] font-bold uppercase">Serves 4</span>
+                                </div>
+                                <span className="font-serif text-xl sm:text-2xl font-black text-[#00346f]">${familyPrice.toFixed(2)}</span>
                               </div>
-                              <span className="font-serif text-2xl font-black text-[#00346f] block mt-1">${familyPrice.toFixed(2)}</span>
-                              <p className="text-xs text-gray-500 mt-1 leading-relaxed">
+                              <p className="hidden sm:block text-xs text-gray-500 mt-1 leading-relaxed">
                                 4 complete meals: larger family portions of dal/curry, sabzi, 4 cups rice, 8 tawa rotis. Ideal for family!
                               </p>
                             </div>
@@ -1345,10 +1353,10 @@ export default function TiffinOrderView({
                               <button
                                 type="button"
                                 onClick={() => handleAddDailyDabba('family', activeDay)}
-                                className="w-full min-h-[44px] inline-flex items-center justify-center gap-2 bg-[#775a19] hover:bg-[#5e4612] text-white py-2.5 px-4 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-xs cursor-pointer"
+                                className="w-full min-h-[42px] sm:min-h-[44px] inline-flex items-center justify-center gap-2 bg-[#775a19] hover:bg-[#5e4612] text-white py-2.5 px-4 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-xs cursor-pointer"
                               >
                                 <Plus className="w-4 h-4 text-[#ffdea5]" />
-                                <span>Add Family Dabba ({activeDay.displayDate}) • ${(familyPrice * qty).toFixed(2)}</span>
+                                <span>Add Family Dabba • ${(familyPrice * qty).toFixed(2)}</span>
                               </button>
                             </div>
                           </div>
@@ -2186,40 +2194,14 @@ export default function TiffinOrderView({
               onClick={onProceedToCheckout}
               className="w-full min-h-[48px] mt-2 py-3 px-4 rounded-xl bg-[#00346f] hover:bg-[#00224d] text-white text-xs sm:text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-2 shadow-sm cursor-pointer transition-all hover:scale-[1.005]"
             >
-              <span>Proceed to Checkout with {tiffinCartItems.length} Tiffin Item{tiffinCartItems.length !== 1 ? 's' : ''} (${totalTiffinCartSubtotal.toFixed(2)})</span>
+              <span>Proceed to Checkout ({tiffinCartItems.length} Tiffin Item{tiffinCartItems.length !== 1 ? 's' : ''} • ${totalTiffinCartSubtotal.toFixed(2)})</span>
               <ArrowRight className="w-4 h-4" />
             </button>
           )}
         </div>
       )}
 
-      {/* ── 6. PERSISTENT FLOATING BOTTOM CHECKOUT BAR ── */}
-      {tiffinCartItems.length > 0 && onProceedToCheckout && (
-        <div className="fixed bottom-4 left-4 right-4 z-40 max-w-2xl mx-auto animate-bounce-short">
-          <div className="bg-[#00346f] text-white p-3 sm:p-4 rounded-2xl shadow-2xl border border-white/20 flex items-center justify-between gap-3 backdrop-blur-md">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-[#ffdea5] text-[#00346f] font-black flex items-center justify-center shrink-0 text-sm shadow-inner">
-                {tiffinCartItems.length}
-              </div>
-              <div>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-[#ffdea5] block">Tiffin Order Total</span>
-                <span className="font-serif font-black text-lg text-white">${totalTiffinCartSubtotal.toFixed(2)}</span>
-              </div>
-            </div>
-
-            <button
-              type="button"
-              onClick={onProceedToCheckout}
-              className="px-5 py-2.5 bg-[#ffdea5] hover:bg-[#ffe6ba] text-[#00346f] font-extrabold text-xs uppercase tracking-wider rounded-xl transition-all flex items-center gap-2 shadow-md cursor-pointer shrink-0"
-            >
-              <span>Checkout Now</span>
-              <ArrowRight className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* ── 7. FLYER LIGHTBOX MODAL ── */}
+      {/* ── 6. FLYER LIGHTBOX MODAL ── */}
       {isLightboxOpen && createPortal(
         <div 
           className="fixed inset-0 z-[9999] bg-black/90 backdrop-blur-md flex items-center justify-center p-2 sm:p-4 md:p-6 animate-fade-in"

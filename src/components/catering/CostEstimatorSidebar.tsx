@@ -79,7 +79,7 @@ export default function CostEstimatorSidebar({
 
   if (cart.length === 0) {
     return (
-      <div className="fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur-md border-t border-gray-200 shadow-lg pt-2.5 pb-[max(0.625rem,env(safe-area-inset-bottom,0px))] px-3 sm:px-6 font-sans">
+      <div className="hidden md:block fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur-md border-t border-gray-200 shadow-lg pt-2.5 pb-[max(0.625rem,env(safe-area-inset-bottom,0px))] px-3 sm:px-6 font-sans">
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-3 text-xs text-gray-500">
           <div className="flex items-center gap-2 min-w-0">
             <ShoppingBag className="w-4 h-4 text-gray-400 shrink-0" />
@@ -229,49 +229,38 @@ export default function CostEstimatorSidebar({
 
       {/* ── Main Sticky Bottom Bar ── */}
       
-      {/* 1. Mobile Screen Layout (< md) */}
-      <div className="md:hidden px-3.5 pt-2.5 pb-[max(0.75rem,env(safe-area-inset-bottom,0px))] space-y-2 bg-white">
-        <div className="flex items-center justify-between gap-2">
-          {/* Left: Cart toggle */}
-          <button
-            type="button"
-            onClick={() => setIsExpanded(!isExpanded)}
-            className="flex items-center gap-2 text-left cursor-pointer min-h-[44px] py-1"
-          >
-            <div className="w-8 h-8 rounded-lg bg-[#00346f] text-[#ffdea5] flex items-center justify-center font-bold text-xs shrink-0 shadow-xs">
-              {totalItemCount}
+      {/* 1. Mobile Screen Layout (< md): Single sleek horizontal thumb bar */}
+      <div className="md:hidden px-3 pt-2 pb-[max(0.625rem,env(safe-area-inset-bottom,0px))] bg-white flex items-center justify-between gap-2.5">
+        {/* Left: Cart toggle + Total */}
+        <button
+          type="button"
+          onClick={() => setIsExpanded(!isExpanded)}
+          className="flex items-center gap-2.5 text-left cursor-pointer min-h-[44px] py-1 min-w-0"
+        >
+          <div className="w-9 h-9 rounded-xl bg-[#00346f] text-[#ffdea5] flex items-center justify-center font-bold text-xs shrink-0 shadow-xs">
+            {totalItemCount}
+          </div>
+          <div className="min-w-0">
+            <div className="flex items-center gap-1.5">
+              <span className="font-serif font-black text-base text-[#00346f] leading-none">
+                ${totalAmount.toFixed(2)}
+              </span>
+              {isExpanded ? <ChevronDown className="w-3.5 h-3.5 text-[#00346f] shrink-0" /> : <ChevronUp className="w-3.5 h-3.5 text-[#00346f] shrink-0" />}
             </div>
-            <div>
-              <div className="text-xs font-bold text-gray-900 flex items-center gap-1">
-                <span>{totalItemCount} {totalItemCount === 1 ? 'Item' : 'Items'}</span>
-                {isExpanded ? <ChevronDown className="w-3.5 h-3.5 text-[#00346f]" /> : <ChevronUp className="w-3.5 h-3.5 text-[#00346f]" />}
-              </div>
-              <div className="text-[10px] text-gray-500">
-                {isDelivery ? 'Delivery' : 'Pickup'} • Tap to inspect
-              </div>
-            </div>
-          </button>
-
-          {/* Right: Total */}
-          <div className="text-right">
-            <span className="text-[9px] uppercase font-bold tracking-wider text-gray-400 block">
-              Estimated Total
-            </span>
-            <div className="font-serif font-black text-lg text-[#00346f] leading-none">
-              ${totalAmount.toFixed(2)}
+            <div className="text-[10px] text-gray-500 truncate mt-0.5">
+              {totalItemCount} {totalItemCount === 1 ? 'item' : 'items'} • Tap to view cart
             </div>
           </div>
-        </div>
+        </button>
 
-        {/* Full-width, prominent, thumb-friendly Checkout Button */}
+        {/* Right: Prominent Checkout Button */}
         <button
           type="button"
           onClick={onProceedToCheckout}
-          className="w-full flex items-center justify-center gap-2 min-h-[48px] py-3 px-4 rounded-xl bg-[#00346f] active:bg-[#00224d] text-white text-xs font-bold uppercase tracking-wider shadow-md cursor-pointer transition-transform active:scale-[0.99]"
+          className="flex items-center justify-center gap-1.5 min-h-[44px] py-2.5 px-4 rounded-xl bg-[#00346f] active:bg-[#00224d] text-white text-xs font-bold uppercase tracking-wider shadow-md cursor-pointer transition-transform active:scale-[0.99] shrink-0"
         >
-          <span>Proceed to Checkout</span>
-          <span className="font-serif font-bold text-sm text-[#ffdea5]">(${totalAmount.toFixed(2)})</span>
-          <ArrowRight className="w-4 h-4 ml-0.5" />
+          <span>Checkout</span>
+          <ArrowRight className="w-4 h-4" />
         </button>
       </div>
 

@@ -213,42 +213,42 @@ export default function CakeConfigurator({
     <div className="w-full bg-white rounded-2xl border border-gray-200 shadow-xs overflow-hidden font-sans">
       
       {/* Header Banner */}
-      <div className="bg-linear-to-r from-[#00346f] via-[#002855] to-[#1e3a5f] text-white p-5 sm:p-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center text-[#ffdea5] shrink-0 border border-white/10">
-              <CakeIcon className="w-6 h-6" />
+      <div className="bg-linear-to-r from-[#00346f] via-[#002855] to-[#1e3a5f] text-white p-3.5 sm:p-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-3">
+          <div className="flex items-center gap-2.5 sm:gap-3">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-white/10 flex items-center justify-center text-[#ffdea5] shrink-0 border border-white/10">
+              <CakeIcon className="w-5 h-5 sm:w-6 sm:h-6" />
             </div>
             <div>
               <div className="flex items-center gap-2 flex-wrap">
-                <h3 className="font-serif font-bold text-lg sm:text-xl text-white">
-                  Cakes &amp; Specialty Bakes Configurator
+                <h3 className="font-serif font-bold text-base sm:text-xl text-white">
+                  Custom Cakes Configurator
                 </h3>
-                <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-300/80 text-[10px] font-bold uppercase tracking-wider">
-                  <span>⏱️</span> 48h Advance Notice
+                <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-300/80 text-[10px] font-bold uppercase tracking-wider">
+                  <span>⏱️</span> 48h Notice
                 </div>
               </div>
-              <p className="text-xs text-white/80 mt-0.5">
+              <p className="hidden sm:block text-xs text-white/80 mt-0.5">
                 Artisan celebration cakes crafted fresh for your birthdays, anniversaries &amp; milestone gatherings. Available eggless on request.
               </p>
             </div>
           </div>
           
-          <div className="inline-flex items-center gap-1.5 self-start sm:self-auto bg-emerald-500/20 text-[#ffdea5] px-3 py-1.5 rounded-full border border-emerald-400/30 text-xs font-semibold">
+          <div className="hidden sm:inline-flex items-center gap-1.5 self-start sm:self-auto bg-emerald-500/20 text-[#ffdea5] px-3 py-1.5 rounded-full border border-emerald-400/30 text-xs font-semibold">
             <Leaf className="w-3.5 h-3.5 text-emerald-300" />
             <span>Eggless Option on Request</span>
           </div>
         </div>
       </div>
 
-      <div className="p-5 sm:p-7 space-y-6">
+      <div className="p-3.5 sm:p-7 space-y-4 sm:space-y-6">
 
-        {/* ── STEP 1: SIZING SELECTORS (Pill Cards) ── */}
+        {/* ── STEP 1: SIZING SELECTORS (2x2 Grid on Mobile, 4-col on Desktop) ── */}
         <div>
-          <label className="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-2.5">
-            1. Select Cake Size &amp; Gathering Portions
+          <label className="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-2">
+            1. Select Cake Size
           </label>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
             {CAKE_SIZES.map(s => {
               const isSelected = selectedSize === s.id;
               const price = s.id === '6inch' 
@@ -263,32 +263,32 @@ export default function CakeConfigurator({
                   key={s.id}
                   type="button"
                   onClick={() => setSelectedSize(s.id)}
-                  className={`p-4 rounded-xl border text-left transition-all cursor-pointer relative ${
+                  className={`p-2.5 sm:p-4 rounded-xl border text-left transition-all cursor-pointer relative ${
                     isSelected
                       ? 'border-[#00346f] bg-blue-50/50 shadow-sm ring-2 ring-[#00346f]/20'
                       : 'border-gray-200 hover:border-gray-300 bg-white'
                   }`}
                 >
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <div className="font-serif font-bold text-base text-[#00346f]">
+                  <div className="flex items-start justify-between gap-1">
+                    <div className="min-w-0">
+                      <div className="font-serif font-bold text-xs sm:text-base text-[#00346f] leading-tight">
                         {s.name}
                       </div>
-                      <div className="text-xs text-gray-600 mt-0.5 font-medium">
-                        {s.serves} • {s.weight}
+                      <div className="text-[10px] sm:text-xs text-gray-600 mt-0.5 font-medium">
+                        {s.serves} <span className="hidden sm:inline">• {s.weight}</span>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <div className="text-base font-bold text-gray-900">
+                    <div className="text-right shrink-0">
+                      <div className="text-sm sm:text-base font-bold text-gray-900">
                         ${price}
                       </div>
-                      <div className="text-[10px] text-gray-500">
+                      <div className="hidden sm:block text-[10px] text-gray-500">
                         base tier
                       </div>
                     </div>
                   </div>
                   {isSelected && (
-                    <div className="absolute top-2 right-2 w-4 h-4 rounded-full bg-[#00346f] text-white flex items-center justify-center">
+                    <div className="hidden sm:flex absolute top-2 right-2 w-4 h-4 rounded-full bg-[#00346f] text-white items-center justify-center">
                       <Check className="w-2.5 h-2.5 text-[#ffdea5]" />
                     </div>
                   )}
@@ -298,12 +298,12 @@ export default function CakeConfigurator({
           </div>
         </div>
 
-        {/* ── STEP 2: FLAVOR CATEGORIES & TIERED PRICING ── */}
+        {/* ── STEP 2: FLAVOR CATEGORIES & TIERED PRICING (2x2 Grid on Mobile) ── */}
         <div>
-          <label className="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-2.5">
-            2. Choose Flavor Collection &amp; Recipe Tier
+          <label className="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-2">
+            2. Choose Flavor Collection
           </label>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-2.5">
             {CAKE_CATEGORIES.map(cat => {
               const isCatSelected = selectedCategoryId === cat.id;
               const catPrice = selectedSize === '6inch' 
@@ -318,29 +318,29 @@ export default function CakeConfigurator({
                   key={cat.id}
                   type="button"
                   onClick={() => handleSelectCategory(cat.id)}
-                  className={`p-3.5 rounded-xl border text-left flex flex-col justify-between transition-all cursor-pointer ${
+                  className={`p-2.5 sm:p-3.5 rounded-xl border text-left flex flex-col justify-between transition-all cursor-pointer ${
                     isCatSelected
                       ? 'border-[#00346f] bg-[#00346f] text-white shadow-md ring-2 ring-[#ffdea5]/50 scale-[1.01]'
                       : 'border-gray-200 hover:border-gray-300 bg-gray-50/60 text-gray-800'
                   }`}
                 >
                   <div>
-                    <div className="flex items-center justify-between">
-                      <span className={`text-xs font-bold ${isCatSelected ? 'text-white' : 'text-[#00346f]'}`}>
+                    <div className="flex items-center justify-between gap-1">
+                      <span className={`text-xs font-bold leading-tight ${isCatSelected ? 'text-white' : 'text-[#00346f]'}`}>
                         {cat.name}
                       </span>
-                      <span className={`text-xs font-black ${isCatSelected ? 'text-[#ffdea5]' : 'text-gray-900'}`}>
+                      <span className={`text-xs font-black shrink-0 ${isCatSelected ? 'text-[#ffdea5]' : 'text-gray-900'}`}>
                         ${catPrice}
                       </span>
                     </div>
-                    <p className={`text-[11px] mt-1 line-clamp-2 ${isCatSelected ? 'text-white/80' : 'text-gray-500'}`}>
+                    <p className={`hidden sm:block text-[11px] mt-1 line-clamp-2 ${isCatSelected ? 'text-white/80' : 'text-gray-500'}`}>
                       {cat.tagline}
                     </p>
                   </div>
-                  <div className={`text-[10px] mt-2 pt-2 border-t font-semibold ${
+                  <div className={`text-[10px] mt-1.5 sm:mt-2 pt-1.5 sm:pt-2 border-t font-semibold ${
                     isCatSelected ? 'border-white/20 text-[#ffdea5]' : 'border-gray-200 text-gray-600'
                   }`}>
-                    {cat.flavors.length} Flavors Available
+                    {cat.flavors.length} Flavors
                   </div>
                 </button>
               );
@@ -349,25 +349,25 @@ export default function CakeConfigurator({
         </div>
 
         {/* ── STEP 3: FLAVOR SELECTION (Interactive Cards) ── */}
-        <div className="bg-gray-50/70 p-4 sm:p-5 rounded-2xl border border-gray-200 space-y-3">
-          <div className="flex items-center justify-between">
+        <div className="bg-gray-50/70 p-3 sm:p-5 rounded-2xl border border-gray-200 space-y-2.5 sm:space-y-3">
+          <div className="flex items-center justify-between gap-2">
             <div>
               <span className="text-xs font-bold text-gray-900">
-                3. Select Flavor in {currentCategory.name}
+                3. Select Flavor ({currentCategory.name})
               </span>
-              <p className="text-[11px] text-gray-500">
+              <p className="hidden sm:block text-[11px] text-gray-500">
                 {selectedCategoryId === 'classic' && 'Pineapple & Strawberry are exclusive to Classic Favorites.'}
                 {selectedCategoryId === 'fusion' && 'Authentic Indian mithai flavors including Rasmalai, Gulab Jamun & Mango.'}
                 {selectedCategoryId === 'fruit' && 'Whole berry compotes, fresh curds & light fruit creams.'}
                 {selectedCategoryId === 'premium' && 'Decadent European ganache, Biscoff, Ferrero Rocher & chocolate hazelnut.'}
               </p>
             </div>
-            <span className="text-xs font-bold text-[#00346f] bg-white px-2.5 py-1 rounded-lg border border-gray-200 shadow-2xs">
-              Selected: <strong className="text-gray-900">{selectedFlavor}</strong>
+            <span className="text-[11px] sm:text-xs font-bold text-[#00346f] bg-white px-2 sm:px-2.5 py-1 rounded-lg border border-gray-200 shadow-2xs shrink-0">
+              <strong className="text-gray-900">{selectedFlavor}</strong>
             </span>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-1.5 sm:gap-2">
             {currentCategory.flavors.map(flavor => {
               const isFlavorSelected = selectedFlavor === flavor;
               return (
@@ -375,7 +375,7 @@ export default function CakeConfigurator({
                   key={flavor}
                   type="button"
                   onClick={() => setSelectedFlavor(flavor)}
-                  className={`min-h-[44px] p-2.5 rounded-xl border text-center text-xs font-semibold transition-all cursor-pointer flex items-center justify-center ${
+                  className={`min-h-[40px] sm:min-h-[44px] p-2 sm:p-2.5 rounded-xl border text-center text-xs font-semibold transition-all cursor-pointer flex items-center justify-center ${
                     isFlavorSelected
                       ? 'border-[#00346f] bg-[#00346f] text-white shadow-xs ring-1 ring-[#00346f]'
                       : 'border-gray-200 hover:border-gray-300 bg-white text-gray-700 hover:bg-gray-100'
@@ -389,7 +389,7 @@ export default function CakeConfigurator({
         </div>
 
         {/* ── STEP 4: CUSTOMIZATION INPUTS ── */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
           
           {/* Inscription on Cake */}
           <div>
@@ -398,7 +398,7 @@ export default function CakeConfigurator({
                 Inscription / Message on Cake
               </label>
               <span className="text-[10px] text-gray-400 font-mono">
-                {inscription.length}/50 chars
+                {inscription.length}/50
               </span>
             </div>
             <input
@@ -407,7 +407,7 @@ export default function CakeConfigurator({
               placeholder="e.g. Happy 10th Birthday Aarav!"
               value={inscription}
               onChange={(e) => setInscription(e.target.value)}
-              className="w-full px-3 py-2.5 min-h-[44px] text-base sm:text-xs bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:bg-white focus:border-[#00346f] text-gray-900"
+              className="w-full px-3 py-2 min-h-[42px] sm:min-h-[44px] text-sm sm:text-xs bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:bg-white focus:border-[#00346f] text-gray-900"
             />
           </div>
 
@@ -421,14 +421,14 @@ export default function CakeConfigurator({
               placeholder="Color theme, piping style, sprinkles, candle age number..."
               value={designNotes}
               onChange={(e) => setDesignNotes(e.target.value)}
-              className="w-full px-3 py-2.5 min-h-[54px] text-base sm:text-xs bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:bg-white focus:border-[#00346f] text-gray-900"
+              className="w-full px-3 py-2 min-h-[48px] sm:min-h-[54px] text-sm sm:text-xs bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:bg-white focus:border-[#00346f] text-gray-900"
             />
           </div>
 
         </div>
 
         {/* Eggless Option Checkbox with tier fees */}
-        <div className="p-4 rounded-xl bg-emerald-50/80 border border-emerald-200">
+        <div className="p-3 sm:p-4 rounded-xl bg-emerald-50/80 border border-emerald-200">
           <label className="flex items-start gap-2.5 cursor-pointer">
             <input
               type="checkbox"
@@ -437,16 +437,16 @@ export default function CakeConfigurator({
               className="mt-0.5 rounded border-emerald-300 text-emerald-700 focus:ring-emerald-700 cursor-pointer"
             />
             <div className="text-xs text-emerald-950 flex-1">
-              <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="flex flex-wrap items-center justify-between gap-1.5 sm:gap-2">
                 <span className="font-bold flex items-center gap-1.5">
                   <Leaf className="w-3.5 h-3.5 text-emerald-700" />
-                  Bake as 100% Eggless / Pure Vegetarian
+                  100% Eggless / Pure Vegetarian
                 </span>
                 <span className="text-[10px] font-bold font-mono bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full border border-emerald-300">
-                  +$5 (6″) / +$10 (8″) / +$15 (2-Tier) / +$25 (3-Tier)
+                  +$5 (6″) · +$10 (8″) · +$15 (2T) · +$25 (3T)
                 </span>
               </div>
-              <p className="text-[11px] text-emerald-800 mt-1 leading-snug">
+              <p className="hidden sm:block text-[11px] text-emerald-800 mt-1 leading-snug">
                 Custom handcrafted eggless recipe (+$5 for 6″, +$10 for 8″, +$15 for 2-Tier, +$25 for 3-Tier). Delivers heavenly moisture, cloud-like crumb, and rich taste.
               </p>
             </div>
@@ -454,7 +454,7 @@ export default function CakeConfigurator({
         </div>
 
         {/* Custom Theme / Additional Customization Checkbox & Dynamic Input Box */}
-        <div className="space-y-3 p-4 rounded-xl bg-purple-50/70 border border-purple-200">
+        <div className="space-y-2.5 sm:space-y-3 p-3 sm:p-4 rounded-xl bg-purple-50/70 border border-purple-200">
           <label className="flex items-start gap-2.5 cursor-pointer">
             <input
               type="checkbox"
@@ -463,8 +463,8 @@ export default function CakeConfigurator({
               className="mt-0.5 rounded border-purple-300 text-purple-700 focus:ring-purple-700"
             />
             <div className="text-xs text-purple-950">
-              <span className="font-bold">Request Custom Theme / Additional Customization (Additional quote required)</span>
-              <p className="text-[11px] text-purple-800 mt-0.5 leading-snug">
+              <span className="font-bold">Request Custom Theme / Fondant Toppers (Quote required)</span>
+              <p className="hidden sm:block text-[11px] text-purple-800 mt-0.5 leading-snug">
                 Check this if you require custom fondant toppers, character themes, cartoon figurines, multi-tier tiers, edible prints, or floral cascades.
               </p>
             </div>
@@ -472,23 +472,20 @@ export default function CakeConfigurator({
 
           {/* Dynamic box to enter the required customization */}
           {requestCustomTheme && (
-            <div className="pt-3 border-t border-purple-200/80 space-y-1.5 animate-fade-in">
+            <div className="pt-2.5 sm:pt-3 border-t border-purple-200/80 space-y-1.5 animate-fade-in">
               <div className="flex items-center justify-between">
                 <label className="block text-xs font-bold text-purple-950">
                   Required Customization / Theme Details <span className="text-rose-600">*</span>
                 </label>
-                <span className="text-[10px] text-purple-600 font-semibold">Specialty Baker Review</span>
+                <span className="text-[10px] text-purple-600 font-semibold">Baker Review</span>
               </div>
               <textarea
                 rows={3}
-                placeholder="Please describe your theme in detail (e.g. 2-tier Peppa Pig theme in pastel pink & gold, fondant clouds, custom edible topper with name, and star sprinkles...)"
+                placeholder="Describe your theme (e.g. Peppa Pig pastel pink & gold, fondant clouds, custom name topper...)"
                 value={customThemeDetails}
                 onChange={(e) => setCustomThemeDetails(e.target.value)}
-                className="w-full px-3.5 py-2.5 text-base sm:text-xs bg-white border border-purple-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 placeholder-purple-400 text-gray-800 shadow-2xs"
+                className="w-full px-3 py-2 text-sm sm:text-xs bg-white border border-purple-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 placeholder-purple-400 text-gray-800 shadow-2xs"
               />
-              <p className="text-[10px] text-purple-700">
-                Our head cake designer will review your theme specifications and confirm any additional decoration charges prior to fulfillment.
-              </p>
             </div>
           )}
         </div>

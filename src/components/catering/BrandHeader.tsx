@@ -9,37 +9,52 @@ import {
   Mail, 
   Globe, 
   Info,
+  ChevronDown,
+  ChevronUp,
   X
 } from 'lucide-react';
 import { ALLERGEN_LABELS } from '../../data/desiDabbaMenu';
 
 export function TrayPricingHeader() {
   const [showAllergenModal, setShowAllergenModal] = useState(false);
+  const [mobileExpanded, setMobileExpanded] = useState(false);
 
   return (
-    <div className="w-full font-sans mb-6">
+    <div className="w-full font-sans mb-3 sm:mb-6">
       {/* ── TRAY PRICING TIERS OVERVIEW BANNER ── */}
-      <div className="bg-white rounded-2xl border border-[#775a19]/20 p-5 sm:p-6 shadow-sm">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 pb-4 border-b border-gray-100">
-          <div>
-            <div className="flex items-center gap-2 mb-1 flex-wrap">
-              <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full bg-[#00346f]/10 text-[#00346f] text-[10px] font-bold uppercase tracking-wider">
-                ✨ Homestyle Vegetarian Catering
+      <div className="bg-white rounded-2xl border border-[#775a19]/20 p-3.5 sm:p-6 shadow-sm">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-2.5 sm:gap-3 md:pb-4 md:border-b md:border-gray-100">
+          <div className="flex items-center justify-between gap-2">
+            <div>
+              <div className="flex items-center gap-1.5 sm:gap-2 mb-0.5 sm:mb-1 flex-wrap">
+                <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-[#00346f]/10 text-[#00346f] text-[10px] font-bold uppercase tracking-wider">
+                  ✨ Vegetarian Catering
+                </div>
+                <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-300/80 text-[10px] font-bold uppercase tracking-wider">
+                  <span>⏱️</span> 24h Notice
+                </div>
               </div>
-              <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-300/80 text-[10px] font-bold uppercase tracking-wider">
-                <span>⏱️</span> 24h Advance Notice
-              </div>
+              <h2 className="font-serif font-bold text-sm sm:text-xl text-[#00346f] tracking-wide">
+                TRAY SIZES &amp; PRICING TIERS
+              </h2>
+              <p className="hidden sm:block text-xs text-gray-500 mt-0.5">
+                Same generous portions &amp; straightforward pricing across all 4 of our culinary tiers.
+              </p>
             </div>
-            <h2 className="font-serif font-bold text-lg sm:text-xl text-[#00346f] tracking-wide">
-              TRAY SIZES & SIMPLE PRICING TIERS
-            </h2>
-            <p className="text-xs text-gray-500 mt-0.5">
-              Same generous portions & straightforward pricing across all 4 of our culinary tiers.
-            </p>
+
+            {/* Mobile Accordion Toggle Button */}
+            <button
+              type="button"
+              onClick={() => setMobileExpanded(!mobileExpanded)}
+              className="md:hidden inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-[#FAF8F5] border border-[#D4AF37]/40 text-[#00346f] text-[11px] font-bold shrink-0 cursor-pointer"
+            >
+              <span>{mobileExpanded ? 'Hide Guide' : 'Pricing & Info'}</span>
+              {mobileExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+            </button>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="flex items-center gap-1.5 text-xs font-semibold text-gray-600 bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-200">
+          <div className={`${mobileExpanded ? 'flex' : 'hidden md:flex'} flex-wrap items-center gap-2 pt-2 md:pt-0 border-t md:border-t-0 border-gray-100`}>
+            <div className="flex items-center gap-1.5 text-xs font-semibold text-gray-600 bg-gray-50 px-2.5 py-1.5 rounded-lg border border-gray-200 flex-wrap">
               <span className="text-gray-400 text-[10px] uppercase font-bold">Allergens:</span>
               <span className="px-1.5 py-0.5 bg-blue-50 text-blue-800 rounded font-mono text-[10px] font-bold">D: Dairy</span>
               <span className="px-1.5 py-0.5 bg-amber-50 text-amber-800 rounded font-mono text-[10px] font-bold">G: Gluten</span>
@@ -48,6 +63,7 @@ export function TrayPricingHeader() {
             </div>
 
             <button
+              type="button"
               onClick={() => setShowAllergenModal(true)}
               className="inline-flex items-center gap-1.5 bg-[#00346f]/10 hover:bg-[#00346f]/20 text-[#00346f] px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer border border-[#00346f]/20"
             >
@@ -57,41 +73,41 @@ export function TrayPricingHeader() {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mt-4 text-center">
+        <div className={`${mobileExpanded ? 'grid' : 'hidden md:grid'} grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3 mt-3 sm:mt-4 text-center`}>
           
-          <div className="p-3.5 rounded-xl bg-gray-50 border border-gray-200 hover:border-gray-300 transition-colors">
-            <span className="text-[10px] uppercase font-bold tracking-widest text-gray-500 block">TIER 1</span>
-            <span className="font-serif text-lg font-bold text-[#00346f]">KHAAS</span>
-            <div className="text-xs font-bold text-[#775a19] mt-1">$70 <span className="text-[10px] font-medium text-gray-500">FULL</span></div>
-            <div className="text-[11px] text-gray-600 font-medium">$50 Half · $35 1/3</div>
+          <div className="p-2.5 sm:p-3.5 rounded-xl bg-gray-50 border border-gray-200 hover:border-gray-300 transition-colors">
+            <span className="text-[9px] sm:text-[10px] uppercase font-bold tracking-widest text-gray-500 block">TIER 1</span>
+            <span className="font-serif text-base sm:text-lg font-bold text-[#00346f]">KHAAS</span>
+            <div className="text-xs font-bold text-[#775a19] mt-0.5 sm:mt-1">$70 <span className="text-[10px] font-medium text-gray-500">FULL</span></div>
+            <div className="text-[10px] sm:text-[11px] text-gray-600 font-medium">$50 Half · $35 1/3</div>
           </div>
 
-          <div className="p-3.5 rounded-xl bg-[#00346f]/5 border border-[#00346f]/15 hover:border-[#00346f]/30 transition-colors">
-            <span className="text-[10px] uppercase font-bold tracking-widest text-[#00346f]/70 block">TIER 2</span>
-            <span className="font-serif text-lg font-bold text-[#00346f]">SHAHI</span>
-            <div className="text-xs font-bold text-[#775a19] mt-1">$90 <span className="text-[10px] font-medium text-gray-500">FULL</span></div>
-            <div className="text-[11px] text-gray-600 font-medium">$60 Half · $45 1/3</div>
+          <div className="p-2.5 sm:p-3.5 rounded-xl bg-[#00346f]/5 border border-[#00346f]/15 hover:border-[#00346f]/30 transition-colors">
+            <span className="text-[9px] sm:text-[10px] uppercase font-bold tracking-widest text-[#00346f]/70 block">TIER 2</span>
+            <span className="font-serif text-base sm:text-lg font-bold text-[#00346f]">SHAHI</span>
+            <div className="text-xs font-bold text-[#775a19] mt-0.5 sm:mt-1">$90 <span className="text-[10px] font-medium text-gray-500">FULL</span></div>
+            <div className="text-[10px] sm:text-[11px] text-gray-600 font-medium">$60 Half · $45 1/3</div>
           </div>
 
-          <div className="p-3.5 rounded-xl bg-[#775a19]/5 border border-[#775a19]/20 hover:border-[#775a19]/40 transition-colors">
-            <span className="text-[10px] uppercase font-bold tracking-widest text-[#775a19] block">TIER 3</span>
-            <span className="font-serif text-lg font-bold text-[#775a19]">DARBARI</span>
-            <div className="text-xs font-bold text-[#775a19] mt-1">$110 <span className="text-[10px] font-medium text-gray-500">FULL</span></div>
-            <div className="text-[11px] text-gray-600 font-medium">$70 Half · $55 1/3</div>
+          <div className="p-2.5 sm:p-3.5 rounded-xl bg-[#775a19]/5 border border-[#775a19]/20 hover:border-[#775a19]/40 transition-colors">
+            <span className="text-[9px] sm:text-[10px] uppercase font-bold tracking-widest text-[#775a19] block">TIER 3</span>
+            <span className="font-serif text-base sm:text-lg font-bold text-[#775a19]">DARBARI</span>
+            <div className="text-xs font-bold text-[#775a19] mt-0.5 sm:mt-1">$110 <span className="text-[10px] font-medium text-gray-500">FULL</span></div>
+            <div className="text-[10px] sm:text-[11px] text-gray-600 font-medium">$70 Half · $55 1/3</div>
           </div>
 
-          <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-300 hover:border-amber-400 transition-colors">
-            <span className="text-[10px] uppercase font-bold tracking-widest text-amber-900 block">TIER 4 (ROYAL)</span>
-            <span className="font-serif text-lg font-bold text-amber-950">MAHARAJA</span>
-            <div className="text-xs font-bold text-amber-900 mt-1">$130 <span className="text-[10px] font-medium text-gray-500">FULL</span></div>
-            <div className="text-[11px] text-gray-700 font-medium">$80 Half · $65 1/3</div>
+          <div className="p-2.5 sm:p-3.5 rounded-xl bg-amber-500/10 border border-amber-300 hover:border-amber-400 transition-colors">
+            <span className="text-[9px] sm:text-[10px] uppercase font-bold tracking-widest text-amber-900 block">TIER 4 (ROYAL)</span>
+            <span className="font-serif text-base sm:text-lg font-bold text-amber-950">MAHARAJA</span>
+            <div className="text-xs font-bold text-amber-900 mt-0.5 sm:mt-1">$130 <span className="text-[10px] font-medium text-gray-500">FULL</span></div>
+            <div className="text-[10px] sm:text-[11px] text-gray-700 font-medium">$80 Half · $65 1/3</div>
           </div>
 
         </div>
 
-        <div className="mt-4 pt-3 border-t border-gray-100 flex flex-wrap items-center justify-between text-[11px] text-gray-500 gap-2">
+        <div className="hidden md:flex mt-4 pt-3 border-t border-gray-100 flex-wrap items-center justify-between text-[11px] text-gray-500 gap-2">
           <span className="font-medium text-gray-600">
-            Freshly crafted in Frisco, TX & DFW metroplex. Flat $50 delivery fee or free pickup. Strict 24h advance notice.
+            Freshly crafted in Frisco, TX &amp; DFW metroplex. Flat $50 delivery fee or free pickup. Strict 24h advance notice.
           </span>
           <div className="flex items-center gap-4 text-gray-700 font-medium">
             <span className="inline-flex items-center gap-1"><Phone className="w-3 h-3 text-[#00346f]" /> 945-527-4566</span>
@@ -115,7 +131,7 @@ export function TrayPricingHeader() {
 
             <div className="flex items-center gap-2.5 text-[#00346f] mb-3">
               <AlertTriangle className="w-6 h-6 text-amber-600" />
-              <h3 className="font-serif text-xl font-bold">Common Allergens & Kitchen Notice</h3>
+              <h3 className="font-serif text-xl font-bold">Common Allergens &amp; Kitchen Notice</h3>
             </div>
 
             <p className="text-xs text-gray-600 mb-4 leading-relaxed">
@@ -163,64 +179,64 @@ export function TrayPricingHeader() {
 
 export function CateringDifferentiators() {
   return (
-    <div className="w-full pt-10 pb-6 font-sans border-t border-[#775a19]/15 mt-10 animate-fade-in">
+    <div className="w-full pt-6 sm:pt-10 pb-4 sm:pb-6 font-sans border-t border-[#775a19]/15 mt-6 sm:mt-10 animate-fade-in">
       <div className="max-w-7xl mx-auto">
-        <div className="text-center max-w-xl mx-auto mb-8">
-          <span className="text-[11px] font-bold text-[#775a19] uppercase tracking-widest block mb-1">
+        <div className="text-center max-w-xl mx-auto mb-4 sm:mb-8">
+          <span className="text-[10px] sm:text-[11px] font-bold text-[#775a19] uppercase tracking-widest block mb-0.5 sm:mb-1">
             WHY BLUEBONNET WHISK
           </span>
-          <h2 className="font-serif text-2xl font-bold text-gray-900">
+          <h2 className="font-serif text-lg sm:text-2xl font-bold text-gray-900">
             Our 4 Culinary Pillars
           </h2>
-          <div className="h-0.5 w-12 bg-[#775a19] mx-auto mt-2" />
+          <div className="h-0.5 w-10 sm:w-12 bg-[#775a19] mx-auto mt-1.5 sm:mt-2" />
         </div>
 
-        {/* ── THE 4 DIFFERENTIATOR CARDS ── */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* ── THE 4 DIFFERENTIATOR CARDS (Compact 2x2 on mobile, 4-col on desktop) ── */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
           
-          <div className="bg-white rounded-2xl p-5 shadow-sm border border-[#775a19]/15 flex items-start gap-3.5 transition-transform hover:-translate-y-0.5">
-            <div className="p-2.5 bg-[#00346f]/10 text-[#00346f] rounded-xl shrink-0">
-              <ShieldCheck className="w-5 h-5" />
+          <div className="bg-white rounded-xl sm:rounded-2xl p-3 sm:p-5 shadow-xs sm:shadow-sm border border-[#775a19]/15 flex items-center sm:items-start gap-2.5 sm:gap-3.5">
+            <div className="p-2 sm:p-2.5 bg-[#00346f]/10 text-[#00346f] rounded-lg sm:rounded-xl shrink-0">
+              <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5" />
             </div>
             <div>
-              <h3 className="font-serif font-bold text-sm sm:text-base text-[#00346f]">No Preservatives</h3>
-              <p className="text-xs text-gray-600 mt-1 leading-relaxed">
+              <h3 className="font-serif font-bold text-xs sm:text-base text-[#00346f] leading-tight">No Preservatives</h3>
+              <p className="hidden sm:block text-xs text-gray-600 mt-1 leading-relaxed">
                 Cooked fresh for your event — never premade, never stored.
               </p>
             </div>
           </div>
 
-          <div className="bg-white rounded-2xl p-5 shadow-sm border border-[#775a19]/15 flex items-start gap-3.5 transition-transform hover:-translate-y-0.5">
-            <div className="p-2.5 bg-[#775a19]/10 text-[#775a19] rounded-xl shrink-0">
-              <Droplet className="w-5 h-5" />
+          <div className="bg-white rounded-xl sm:rounded-2xl p-3 sm:p-5 shadow-xs sm:shadow-sm border border-[#775a19]/15 flex items-center sm:items-start gap-2.5 sm:gap-3.5">
+            <div className="p-2 sm:p-2.5 bg-[#775a19]/10 text-[#775a19] rounded-lg sm:rounded-xl shrink-0">
+              <Droplet className="w-4 h-4 sm:w-5 sm:h-5" />
             </div>
             <div>
-              <h3 className="font-serif font-bold text-sm sm:text-base text-[#775a19]">Healthy Oils</h3>
-              <p className="text-xs text-gray-600 mt-1 leading-relaxed">
+              <h3 className="font-serif font-bold text-xs sm:text-base text-[#775a19] leading-tight">Healthy Oils</h3>
+              <p className="hidden sm:block text-xs text-gray-600 mt-1 leading-relaxed">
                 Light quality cooking oils — nothing reused, nothing heavy.
               </p>
             </div>
           </div>
 
-          <div className="bg-white rounded-2xl p-5 shadow-sm border border-[#775a19]/15 flex items-start gap-3.5 transition-transform hover:-translate-y-0.5">
-            <div className="p-2.5 bg-emerald-100/70 text-emerald-800 rounded-xl shrink-0">
-              <Leaf className="w-5 h-5" />
+          <div className="bg-white rounded-xl sm:rounded-2xl p-3 sm:p-5 shadow-xs sm:shadow-sm border border-[#775a19]/15 flex items-center sm:items-start gap-2.5 sm:gap-3.5">
+            <div className="p-2 sm:p-2.5 bg-emerald-100/70 text-emerald-800 rounded-lg sm:rounded-xl shrink-0">
+              <Leaf className="w-4 h-4 sm:w-5 sm:h-5" />
             </div>
             <div>
-              <h3 className="font-serif font-bold text-sm sm:text-base text-emerald-900">Organic Ingredients</h3>
-              <p className="text-xs text-gray-600 mt-1 leading-relaxed">
-                Fresh produce & whole spices, sourced with utmost care.
+              <h3 className="font-serif font-bold text-xs sm:text-base text-emerald-900 leading-tight">Organic Produce</h3>
+              <p className="hidden sm:block text-xs text-gray-600 mt-1 leading-relaxed">
+                Fresh produce &amp; whole spices, sourced with utmost care.
               </p>
             </div>
           </div>
 
-          <div className="bg-white rounded-2xl p-5 shadow-sm border border-[#775a19]/15 flex items-start gap-3.5 transition-transform hover:-translate-y-0.5">
-            <div className="p-2.5 bg-rose-100/70 text-rose-800 rounded-xl shrink-0">
-              <Heart className="w-5 h-5" />
+          <div className="bg-white rounded-xl sm:rounded-2xl p-3 sm:p-5 shadow-xs sm:shadow-sm border border-[#775a19]/15 flex items-center sm:items-start gap-2.5 sm:gap-3.5">
+            <div className="p-2 sm:p-2.5 bg-rose-100/70 text-rose-800 rounded-lg sm:rounded-xl shrink-0">
+              <Heart className="w-4 h-4 sm:w-5 sm:h-5" />
             </div>
             <div>
-              <h3 className="font-serif font-bold text-sm sm:text-base text-rose-900">Made with Love & Taste</h3>
-              <p className="text-xs text-gray-600 mt-1 leading-relaxed">
+              <h3 className="font-serif font-bold text-xs sm:text-base text-rose-900 leading-tight">Homestyle Taste</h3>
+              <p className="hidden sm:block text-xs text-gray-600 mt-1 leading-relaxed">
                 Small batches, family recipes — homestyle, not restaurant-style.
               </p>
             </div>

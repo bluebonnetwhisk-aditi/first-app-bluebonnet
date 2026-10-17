@@ -251,26 +251,28 @@ export default function CateringContainer() {
       {/* ── 1. SUB-NAVIGATION BAR (Top Experience Switcher: [ 🍱 Daily Tiffin | 🥘 Party Catering | 🎂 Custom Cakes ]) ── */}
       <div className="sticky top-0 z-40 w-full bg-white/95 backdrop-blur-md border-b border-[#D4AF37]/30 shadow-xs">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between min-h-[56px] py-2">
+          <div className="flex items-center justify-between min-h-[52px] sm:min-h-[56px] py-1.5 sm:py-2">
             
             <div className="flex items-center gap-2 overflow-x-auto py-1 scrollbar-none w-full sm:w-auto">
               <span className="font-serif font-bold text-xs uppercase tracking-widest text-[#0B192C] hidden sm:inline mr-1">
                 EXPERIENCE:
               </span>
               
-              <div className="flex items-center gap-1.5 bg-[#FAF8F5] p-1.5 rounded-2xl border border-[#D4AF37]/40 shadow-inner">
+              {/* Mobile: 3 equal-width segments with short labels; Desktop: full labels */}
+              <div className="grid grid-cols-3 sm:flex items-center gap-1 sm:gap-1.5 bg-[#FAF8F5] p-1 sm:p-1.5 rounded-2xl border border-[#D4AF37]/40 shadow-inner w-full sm:w-auto">
                 {/* 1. Daily Tiffin */}
                 <button
                   type="button"
                   onClick={() => switchSubTab('tiffin')}
-                  className={`inline-flex items-center gap-2 min-h-[42px] px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer whitespace-nowrap ${
+                  className={`inline-flex items-center justify-center gap-1.5 sm:gap-2 min-h-[42px] px-2 sm:px-4 py-2 rounded-xl text-[11px] sm:text-xs font-bold uppercase tracking-wide sm:tracking-wider transition-all cursor-pointer whitespace-nowrap ${
                     subTab === 'tiffin'
                       ? 'bg-[#0B192C] text-white shadow-md ring-1 ring-[#D4AF37]'
                       : 'text-[#1E293B] hover:text-[#0B192C] hover:bg-white'
                   }`}
                 >
                   <span className="text-base leading-none">🍱</span>
-                  <span>Daily Tiffin</span>
+                  <span className="sm:hidden">Tiffin</span>
+                  <span className="hidden sm:inline">Daily Tiffin</span>
                   {tiffinCount > 0 && (
                     <span className="w-4 h-4 rounded-full bg-[#D4AF37] text-[#0B192C] text-[10px] flex items-center justify-center font-black">
                       {tiffinCount}
@@ -282,14 +284,15 @@ export default function CateringContainer() {
                 <button
                   type="button"
                   onClick={() => switchSubTab('order')}
-                  className={`inline-flex items-center gap-2 min-h-[42px] px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer whitespace-nowrap ${
+                  className={`inline-flex items-center justify-center gap-1.5 sm:gap-2 min-h-[40px] sm:min-h-[42px] px-2 sm:px-4 py-1.5 sm:py-2 rounded-xl text-[11px] sm:text-xs font-bold uppercase tracking-wide sm:tracking-wider transition-all cursor-pointer whitespace-nowrap ${
                     subTab === 'order'
                       ? 'bg-[#0B192C] text-white shadow-md ring-1 ring-[#D4AF37]'
                       : 'text-[#1E293B] hover:text-[#0B192C] hover:bg-white'
                   }`}
                 >
                   <span className="text-base leading-none">🥘</span>
-                  <span>Party Catering</span>
+                  <span className="sm:hidden">Catering</span>
+                  <span className="hidden sm:inline">Party Catering</span>
                   {cateringDishCount > 0 && (
                     <span className="w-4 h-4 rounded-full bg-[#D4AF37] text-[#0B192C] text-[10px] flex items-center justify-center font-black">
                       {cateringDishCount}
@@ -301,14 +304,15 @@ export default function CateringContainer() {
                 <button
                   type="button"
                   onClick={() => switchSubTab('cake')}
-                  className={`inline-flex items-center gap-2 min-h-[42px] px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer whitespace-nowrap ${
+                  className={`inline-flex items-center justify-center gap-1.5 sm:gap-2 min-h-[40px] sm:min-h-[42px] px-2 sm:px-4 py-1.5 sm:py-2 rounded-xl text-[11px] sm:text-xs font-bold uppercase tracking-wide sm:tracking-wider transition-all cursor-pointer whitespace-nowrap ${
                     subTab === 'cake'
                       ? 'bg-[#0B192C] text-white shadow-md ring-1 ring-[#D4AF37]'
                       : 'text-[#1E293B] hover:text-[#0B192C] hover:bg-white'
                   }`}
                 >
                   <span className="text-base leading-none">🎂</span>
-                  <span>Custom Cakes</span>
+                  <span className="sm:hidden">Cakes</span>
+                  <span className="hidden sm:inline">Custom Cakes</span>
                   {cakeCount > 0 && (
                     <span className="w-4 h-4 rounded-full bg-[#D4AF37] text-[#0B192C] text-[10px] flex items-center justify-center font-black">
                       {cakeCount}
@@ -330,8 +334,8 @@ export default function CateringContainer() {
 
         {/* ── UNIFIED DAY & SCHEDULE RAIL (For Party Catering & Custom Cakes; Tiffin uses native Active Day Menu selector) ── */}
         {subTab !== 'tiffin' && (
-          <div className="w-full bg-[#FAF8F5] border-t border-b border-[#D4AF37]/30 py-2.5 px-4 shadow-2xs">
-            <div className="max-w-7xl mx-auto flex items-center gap-3">
+          <div className="w-full bg-[#FAF8F5] border-t border-b border-[#D4AF37]/30 py-1.5 sm:py-2.5 px-3 sm:px-4 shadow-2xs">
+            <div className="max-w-7xl mx-auto flex items-center gap-2 sm:gap-3">
               <div className="hidden md:flex flex-col shrink-0 pr-3 border-r border-[#D4AF37]/30">
                 <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#0B192C]">
                   SCHEDULE RAIL
@@ -341,7 +345,7 @@ export default function CateringContainer() {
                 </span>
               </div>
 
-              <div className="flex gap-2 overflow-x-auto py-0.5 scrollbar-none w-full">
+              <div className="flex gap-1.5 sm:gap-2 overflow-x-auto py-0.5 scrollbar-none w-full">
                 {upcomingDates.map(opt => {
                   const isSelected = selectedGlobalDate === opt.dateStr;
                   const isBlackout = blackoutDates.includes(opt.dateStr);
@@ -362,7 +366,7 @@ export default function CateringContainer() {
                       key={opt.dateStr}
                       type="button"
                       onClick={() => setSelectedGlobalDate(opt.dateStr)}
-                      className={`flex flex-col items-center justify-center min-w-[76px] py-1.5 px-2 rounded-xl border text-center transition-all cursor-pointer shrink-0 ${
+                      className={`flex flex-col items-center justify-center min-w-[60px] sm:min-w-[76px] py-1 sm:py-1.5 px-1.5 sm:px-2 rounded-xl border text-center transition-all cursor-pointer shrink-0 ${
                         isSelected
                           ? 'bg-[#0B192C] text-white border-[#0B192C] shadow-md ring-2 ring-[#D4AF37]'
                           : isBlackout
@@ -373,13 +377,15 @@ export default function CateringContainer() {
                       }`}
                       title={!check.selectable ? check.reason : `Set target date to ${opt.label}`}
                     >
-                      <span className={`text-[10px] uppercase font-bold tracking-wider ${isSelected ? 'text-[#D4AF37]' : 'text-gray-500'}`}>
+                      <span className={`text-[9px] sm:text-[10px] uppercase font-bold tracking-wider leading-tight ${isSelected ? 'text-[#D4AF37]' : 'text-gray-500'}`}>
                         {opt.dayOfWeek}
                       </span>
-                      <span className="text-xs font-black mt-0.5 whitespace-nowrap">
+                      <span className="text-[11px] sm:text-xs font-black mt-0.5 whitespace-nowrap leading-tight">
                         {opt.label}
                       </span>
                       <span className={`text-[8px] uppercase tracking-tighter font-black px-1.5 py-0.5 rounded-full mt-1 ${
+                        badgeText === 'Open' ? 'hidden sm:inline-block' : 'inline-block'
+                      } ${
                         isSelected ? 'bg-[#D4AF37] text-[#0B192C]' : badgeStyle
                       }`}>
                         {badgeText}
