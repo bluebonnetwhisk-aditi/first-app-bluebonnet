@@ -10,7 +10,9 @@ import {
   Cake,
   Package,
   BarChart3,
-  Layers
+  Layers,
+  Search,
+  ArrowUpDown
 } from 'lucide-react';
 import type { CateringOrder, CartItem } from '../../types/catering';
 import { getCentralTimeNow } from '../../utils/centralTime';
@@ -20,6 +22,7 @@ interface KDSAnalyticsTabProps {
 }
 
 export type PrimarySegment = 'tiffin' | 'catering' | 'cakes';
+type DishSortMode = 'quantity' | 'revenue';
 
 export function classifyOrderItemSegment(item: CartItem): PrimarySegment {
   const cat = (item.category || '').toLowerCase();
@@ -74,6 +77,48 @@ function extractCakeFlavor(item: CartItem): string | null {
   return match ? match[1].trim() : null;
 }
 
+/**
+ * Derives a clean sub-category label for an order item within its primary segment.
+ */
+function resolveItemSubCategory(item: CartItem, segment: PrimarySegment): string {
+  const sel = (item.selectionType || '').toLowerCase();
+  const name = (item.name || '').toLowerCase();
+  const cat = (item.category || '').toLowerCase();
+  const label = (item.categoryLabel || '').trim();
+
+  if (segment === 'tiffin') {
+    if (sel === 'tiffin_weekly' || name.includes('weekly')) return 'Weekly Dabba Plans';
+    if (sel === 'tiffin_family' || name.includes('family dabba')) return 'Family Dabbas (Serves 4)';
+    if (sel === 'tiffin_single' || name.includes('single dabba')) return 'Single Dabbas (Serves 1)';
+    if (label.toLowerCase().includes('special') || (item.menuItemId || '').includes('special')) {
+      return 'Weekend & Chef Specials';
+    }
+    if (sel === 'container_8oz' || sel === 'container_16oz' || name.includes('8oz') || name.includes('16oz')) {
+      return '8oz / 16oz Extra Tubs';
+    }
+    return label || 'Tiffin Sides & Add-ons';
+  }
+
+  if (segment === 'cakes') {
+    if (name.includes('cupcake')) return 'Cupcakes';
+    if (name.includes('2-tier') || name.includes('3-tier')) return 'Multi-Tier Celebration Cakes';
+    if (name.includes('8″') || name.includes('8"')) return '8″ Single Tier Cakes';
+    if (name.includes('6″') || name.includes('6"')) return '6″ Single Tier Cakes';
+    return label || 'Custom Cakes & Bakery';
+  }
+
+  // Catering sub-categories
+  if (cat === 'mains') return item.tier ? `Mains (${item.tier})` : 'Mains & Curries';
+  if (cat === 'sabzi') return item.tier ? `Dry Sabzi (${item.tier})` : 'Dry Sabzi';
+  if (cat === 'rice') return 'Specialty Rice & Pulao';
+  if (cat === 'starters') return 'Starters & Indo-Chinese';
+  if (cat === 'breads') return 'Breads & Pav';
+  if (cat === 'sides') return 'Raita & Sides';
+  if (cat === 'desserts') return 'Indian Desserts';
+  if (cat === 'beverages') return 'Beverages (Gallon)';
+  return label || 'Party Catering Trays';
+}
+
 function formatMonthLabel(ym: string): string {
   if (ym === 'all') return 'All Time';
   const [y, m] = ym.split('-').map(Number);
@@ -90,14 +135,25 @@ function getPreviousMonthKey(ym: string): string | null {
   return `${prevDate.getFullYear()}-${String(prevDate.getMonth() + 1).padStart(2, '0')}`;
 }
 
-interface DishStat {
+export interface DishStat {
   key: string;
   name: string;
+  segment: PrimarySegment;
+  subCategory: string;
   subLabel: string;
   totalQty: number;
   totalRevenue: number;
   orderCount: number;
+  avgUnitRevenue: number;
   unitBreakdown: Record<string, number>;
+}
+
+export interface SubCategoryStat {
+  subCategory: string;
+  segment: PrimarySegment;
+  totalQty: number;
+  totalRevenue: number;
+  dishCount: number;
 }
 
 export default function KDSAnalyticsTab({ orders }: KDSAnalyticsTabProps) {
@@ -133,6 +189,15 @@ export default function KDSAnalyticsTab({ orders }: KDSAnalyticsTabProps) {
   const [selectedMonth, setSelectedMonth] = useState<string>(currentMonthKey);
   const [chartMetric, setChartMetric] = useState<'revenue' | 'orders'>('revenue');
 
+  // Leaderboard ranking mode: 'quantity' vs 'revenue'
+  const [leaderboardSortMode, setLeaderboardSortMode] = useState<DishSortMode>('quantity');
+
+  // Deep-dive Dish Matrix filters
+  const [matrixCategory, setMatrixCategory] = useState<'all' | PrimarySegment>('all');
+  const [matrixSubCategory, setMatrixSubCategory] = useState<string>('all');
+  const [matrixSortBy, setMatrixSortBy] = useState<'quantity' | 'revenue' | 'orders' | 'avgPrice'>('revenue');
+  const [matrixSearch, setMatrixSearch] = useState<string>('');
+
   // Filter orders for selected month (and previous month for MoM comparison)
   const prevMonthKey = useMemo(() => getPreviousMonthKey(selectedMonth), [selectedMonth]);
 
@@ -151,10 +216,7 @@ export default function KDSAnalyticsTab({ orders }: KDSAnalyticsTabProps) {
     const grossRevenue = monthOrders.reduce((s, o) => s + (o.total_amount || 0), 0);
     const prevGrossRevenue = prevMonthOrders.reduce((s, o) => s + (o.total_amount || 0), 0);
     const netFoodRevenue = monthOrders.reduce((s, o) => {
-      const base = o.food_subtotal || 0;
-      const disc = o.discount_amount || 0;
-      const reb = o.rebate_amount || 0;
-      return s + Math.max(0, base - disc - reb);
+      return s + Math.max(0, o.food_subtotal || 0);
     }, 0);
     const totalTax = monthOrders.reduce((s, o) => s + (o.tax_amount || 0), 0);
     const orderCount = monthOrders.length;
@@ -195,6 +257,8 @@ export default function KDSAnalyticsTab({ orders }: KDSAnalyticsTabProps) {
 
     const totalItemRevenue =
       segmentRevenue.tiffin + segmentRevenue.catering + segmentRevenue.cakes;
+    const totalItemUnits =
+      segmentUnits.tiffin + segmentUnits.catering + segmentUnits.cakes;
 
     return {
       grossRevenue,
@@ -208,14 +272,14 @@ export default function KDSAnalyticsTab({ orders }: KDSAnalyticsTabProps) {
       orderChangePct,
       segmentRevenue,
       segmentUnits,
-      totalItemRevenue
+      totalItemRevenue,
+      totalItemUnits
     };
   }, [monthOrders, prevMonthOrders]);
 
   // Daily / Monthly Trend Series for the Chart
   const trendSeries = useMemo(() => {
     if (selectedMonth === 'all') {
-      // Group by YYYY-MM across all time
       const map = new Map<
         string,
         {
@@ -273,7 +337,6 @@ export default function KDSAnalyticsTab({ orders }: KDSAnalyticsTabProps) {
       return Array.from(map.values());
     }
 
-    // Specific YYYY-MM: generate all days of that month (1..daysInMonth)
     const [year, month] = selectedMonth.split('-').map(Number);
     const daysInMonth = new Date(year, month, 0).getDate();
     const days: {
@@ -335,7 +398,6 @@ export default function KDSAnalyticsTab({ orders }: KDSAnalyticsTabProps) {
       }
     });
 
-    // Weekly buckets (Week 1: days 1-7, Week 2: 8-14, Week 3: 15-21, Week 4: 22-28, Week 5: 29+)
     const weeks = [
       { label: 'Week 1 (1–7)', revenue: 0, orders: 0 },
       { label: 'Week 2 (8–14)', revenue: 0, orders: 0 },
@@ -352,7 +414,6 @@ export default function KDSAnalyticsTab({ orders }: KDSAnalyticsTabProps) {
       });
     }
 
-    // Day-of-week demand
     const weekdayOrder = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
     const weekdayTotals: Record<string, { revenue: number; orders: number }> = {
       Mon: { revenue: 0, orders: 0 },
@@ -384,14 +445,15 @@ export default function KDSAnalyticsTab({ orders }: KDSAnalyticsTabProps) {
     return { peakBucket, weeks: weeks.filter(w => w.orders > 0 || selectedMonth !== 'all'), weekdayStats };
   }, [trendSeries, selectedMonth, monthOrders]);
 
-  // Top Dishes Per Category (Tiffin, Catering, Cakes & Bakery) + Top Cake Flavors
-  const topDishesByCategory = useMemo(() => {
+  // Dish & Sub-Category Aggregation by Category (Quantity & Revenue)
+  const dishAnalytics = useMemo(() => {
     const maps: Record<PrimarySegment, Map<string, DishStat>> = {
       tiffin: new Map(),
       catering: new Map(),
       cakes: new Map()
     };
 
+    const subCatMap = new Map<string, SubCategoryStat>();
     const cakeFlavorsMap = new Map<string, { flavor: string; count: number; revenue: number }>();
 
     monthOrders.forEach(order => {
@@ -401,6 +463,7 @@ export default function KDSAnalyticsTab({ orders }: KDSAnalyticsTabProps) {
         const segment = classifyOrderItemSegment(item);
         const cleanName = normalizeDishName(item.name);
         const flavor = segment === 'cakes' ? extractCakeFlavor(item) : null;
+        const subCategory = resolveItemSubCategory(item, segment);
 
         // Track Cake Flavors separately as well
         if (segment === 'cakes' && flavor) {
@@ -410,7 +473,6 @@ export default function KDSAnalyticsTab({ orders }: KDSAnalyticsTabProps) {
           cakeFlavorsMap.set(flavor, prevF);
         }
 
-        // For custom cakes, include flavor in the dish name if generic
         const displayKey =
           segment === 'cakes' && flavor && !cleanName.toLowerCase().includes(flavor.toLowerCase())
             ? `${cleanName} — ${flavor}`
@@ -419,12 +481,15 @@ export default function KDSAnalyticsTab({ orders }: KDSAnalyticsTabProps) {
         const map = maps[segment];
         if (!map.has(displayKey)) {
           map.set(displayKey, {
-            key: displayKey,
+            key: `${segment}:${displayKey}`,
             name: displayKey,
-            subLabel: item.tier ? `${item.tier} • ${item.categoryLabel}` : item.categoryLabel || '',
+            segment,
+            subCategory,
+            subLabel: item.tier ? `${item.tier} • ${subCategory}` : subCategory,
             totalQty: 0,
             totalRevenue: 0,
             orderCount: 0,
+            avgUnitRevenue: 0,
             unitBreakdown: {}
           });
         }
@@ -434,6 +499,7 @@ export default function KDSAnalyticsTab({ orders }: KDSAnalyticsTabProps) {
         const rev = item.totalPrice || item.unitPrice * qty || 0;
         stat.totalQty += qty;
         stat.totalRevenue += rev;
+        stat.avgUnitRevenue = stat.totalQty > 0 ? stat.totalRevenue / stat.totalQty : 0;
 
         if (!seenInOrder.has(`${segment}:${displayKey}`)) {
           stat.orderCount += 1;
@@ -460,22 +526,91 @@ export default function KDSAnalyticsTab({ orders }: KDSAnalyticsTabProps) {
             : item.selectionLabel || 'Unit';
 
         stat.unitBreakdown[unitLabel] = (stat.unitBreakdown[unitLabel] || 0) + qty;
+
+        // Update sub-category totals
+        const subKey = `${segment}:${subCategory}`;
+        const prevSub = subCatMap.get(subKey) || {
+          subCategory,
+          segment,
+          totalQty: 0,
+          totalRevenue: 0,
+          dishCount: 0
+        };
+        prevSub.totalQty += qty;
+        prevSub.totalRevenue += rev;
+        subCatMap.set(subKey, prevSub);
       });
     });
 
-    const sortDishes = (m: Map<string, DishStat>) =>
+    // Count distinct dishes per sub-category
+    (['tiffin', 'catering', 'cakes'] as PrimarySegment[]).forEach(seg => {
+      maps[seg].forEach(dish => {
+        const subKey = `${seg}:${dish.subCategory}`;
+        const s = subCatMap.get(subKey);
+        if (s) s.dishCount += 1;
+      });
+    });
+
+    const getSorted = (m: Map<string, DishStat>, mode: DishSortMode) =>
       Array.from(m.values()).sort((a, b) => {
+        if (mode === 'revenue') {
+          if (b.totalRevenue !== a.totalRevenue) return b.totalRevenue - a.totalRevenue;
+          return b.totalQty - a.totalQty;
+        }
         if (b.totalQty !== a.totalQty) return b.totalQty - a.totalQty;
         return b.totalRevenue - a.totalRevenue;
       });
 
+    const allDishes = [
+      ...Array.from(maps.tiffin.values()),
+      ...Array.from(maps.catering.values()),
+      ...Array.from(maps.cakes.values())
+    ];
+
     return {
-      tiffin: sortDishes(maps.tiffin),
-      catering: sortDishes(maps.catering),
-      cakes: sortDishes(maps.cakes),
+      tiffin: getSorted(maps.tiffin, leaderboardSortMode),
+      catering: getSorted(maps.catering, leaderboardSortMode),
+      cakes: getSorted(maps.cakes, leaderboardSortMode),
+      tiffinByQty: getSorted(maps.tiffin, 'quantity'),
+      tiffinByRev: getSorted(maps.tiffin, 'revenue'),
+      cateringByQty: getSorted(maps.catering, 'quantity'),
+      cateringByRev: getSorted(maps.catering, 'revenue'),
+      cakesByQty: getSorted(maps.cakes, 'quantity'),
+      cakesByRev: getSorted(maps.cakes, 'revenue'),
+      allDishes,
+      subCategories: Array.from(subCatMap.values()).sort((a, b) => b.totalRevenue - a.totalRevenue),
       topCakeFlavors: Array.from(cakeFlavorsMap.values()).sort((a, b) => b.count - a.count)
     };
-  }, [monthOrders]);
+  }, [monthOrders, leaderboardSortMode]);
+
+  // Available sub-categories for the currently selected Matrix Category
+  const availableMatrixSubCategories = useMemo(() => {
+    const list =
+      matrixCategory === 'all'
+        ? dishAnalytics.subCategories
+        : dishAnalytics.subCategories.filter(s => s.segment === matrixCategory);
+    return list;
+  }, [dishAnalytics.subCategories, matrixCategory]);
+
+  // Filtered & sorted rows for the Deep-Dive Dish Quantity & Revenue Matrix
+  const filteredMatrixDishes = useMemo(() => {
+    const q = matrixSearch.trim().toLowerCase();
+    return dishAnalytics.allDishes
+      .filter(d => {
+        if (matrixCategory !== 'all' && d.segment !== matrixCategory) return false;
+        if (matrixSubCategory !== 'all' && d.subCategory !== matrixSubCategory) return false;
+        if (q && !d.name.toLowerCase().includes(q) && !d.subCategory.toLowerCase().includes(q)) {
+          return false;
+        }
+        return true;
+      })
+      .sort((a, b) => {
+        if (matrixSortBy === 'revenue') return b.totalRevenue - a.totalRevenue || b.totalQty - a.totalQty;
+        if (matrixSortBy === 'quantity') return b.totalQty - a.totalQty || b.totalRevenue - a.totalRevenue;
+        if (matrixSortBy === 'orders') return b.orderCount - a.orderCount || b.totalRevenue - a.totalRevenue;
+        return b.avgUnitRevenue - a.avgUnitRevenue || b.totalRevenue - a.totalRevenue;
+      });
+  }, [dishAnalytics.allDishes, matrixCategory, matrixSubCategory, matrixSortBy, matrixSearch]);
 
   const maxChartVal = useMemo(() => {
     const vals = trendSeries.map(d => (chartMetric === 'revenue' ? d.revenue : d.orders));
@@ -498,7 +633,7 @@ export default function KDSAnalyticsTab({ orders }: KDSAnalyticsTabProps) {
             </h2>
           </div>
           <p className="text-xs text-gray-500 mt-0.5">
-            Live revenue trends and top-selling dishes across <strong>Daily Tiffin</strong>, <strong>Party Catering</strong>, and <strong>Cakes &amp; Bakery</strong>.
+            Live revenue trends and dish performance by <strong>Quantity</strong> &amp; <strong>Revenue</strong> across <strong>Daily Tiffin</strong>, <strong>Party Catering</strong>, and <strong>Cakes &amp; Bakery</strong>.
           </p>
         </div>
 
@@ -608,7 +743,7 @@ export default function KDSAnalyticsTab({ orders }: KDSAnalyticsTabProps) {
               ${kpis.aov.toFixed(2)}
             </div>
             <div className="text-[11px] text-gray-500 mt-0.5">
-              <strong>{kpis.segmentUnits.tiffin + kpis.segmentUnits.catering + kpis.segmentUnits.cakes}</strong> total dishes/units ordered
+              <strong>{kpis.totalItemUnits}</strong> total dishes/units ordered
             </div>
           </div>
 
@@ -619,11 +754,11 @@ export default function KDSAnalyticsTab({ orders }: KDSAnalyticsTabProps) {
           </span>
         </div>
 
-        {/* Card 4: Category Revenue Mix */}
+        {/* Card 4: Category Quantity & Revenue Share */}
         <div className="bg-white rounded-2xl border border-gray-200 p-4 shadow-xs flex flex-col justify-between">
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-bold uppercase tracking-widest text-gray-500">
-              Category Revenue Share
+              Category Qty &amp; Revenue Mix
             </span>
             <div className="p-2 rounded-xl bg-purple-50 text-purple-700">
               <Layers className="w-4 h-4" />
@@ -638,17 +773,17 @@ export default function KDSAnalyticsTab({ orders }: KDSAnalyticsTabProps) {
                   <div
                     style={{ width: `${(kpis.segmentRevenue.tiffin / kpis.totalItemRevenue) * 100}%` }}
                     className="bg-amber-500 h-full transition-all"
-                    title={`Tiffin: $${kpis.segmentRevenue.tiffin.toFixed(2)}`}
+                    title={`Tiffin: $${kpis.segmentRevenue.tiffin.toFixed(2)} (${kpis.segmentUnits.tiffin} units)`}
                   />
                   <div
                     style={{ width: `${(kpis.segmentRevenue.catering / kpis.totalItemRevenue) * 100}%` }}
                     className="bg-[#00346f] h-full transition-all"
-                    title={`Catering: $${kpis.segmentRevenue.catering.toFixed(2)}`}
+                    title={`Catering: $${kpis.segmentRevenue.catering.toFixed(2)} (${kpis.segmentUnits.catering} units)`}
                   />
                   <div
                     style={{ width: `${(kpis.segmentRevenue.cakes / kpis.totalItemRevenue) * 100}%` }}
                     className="bg-pink-500 h-full transition-all"
-                    title={`Cakes & Bakery: $${kpis.segmentRevenue.cakes.toFixed(2)}`}
+                    title={`Cakes & Bakery: $${kpis.segmentRevenue.cakes.toFixed(2)} (${kpis.segmentUnits.cakes} units)`}
                   />
                 </>
               ) : (
@@ -659,15 +794,18 @@ export default function KDSAnalyticsTab({ orders }: KDSAnalyticsTabProps) {
             <div className="grid grid-cols-3 gap-1 text-[10px]">
               <div className="bg-amber-50/80 border border-amber-200/70 rounded-lg p-1.5">
                 <span className="font-bold text-amber-900 block truncate">🍱 Tiffin</span>
-                <span className="font-mono font-extrabold text-gray-900">${kpis.segmentRevenue.tiffin.toFixed(0)}</span>
+                <span className="font-mono font-extrabold text-gray-900 block">${kpis.segmentRevenue.tiffin.toFixed(0)}</span>
+                <span className="text-[9px] text-amber-800 font-semibold">{kpis.segmentUnits.tiffin} units</span>
               </div>
               <div className="bg-blue-50/80 border border-blue-200/70 rounded-lg p-1.5">
                 <span className="font-bold text-[#00346f] block truncate">🍛 Catering</span>
-                <span className="font-mono font-extrabold text-gray-900">${kpis.segmentRevenue.catering.toFixed(0)}</span>
+                <span className="font-mono font-extrabold text-gray-900 block">${kpis.segmentRevenue.catering.toFixed(0)}</span>
+                <span className="text-[9px] text-[#00346f] font-semibold">{kpis.segmentUnits.catering} units</span>
               </div>
               <div className="bg-pink-50/80 border border-pink-200/70 rounded-lg p-1.5">
                 <span className="font-bold text-pink-900 block truncate">🎂 Cakes</span>
-                <span className="font-mono font-extrabold text-gray-900">${kpis.segmentRevenue.cakes.toFixed(0)}</span>
+                <span className="font-mono font-extrabold text-gray-900 block">${kpis.segmentRevenue.cakes.toFixed(0)}</span>
+                <span className="text-[9px] text-pink-800 font-semibold">{kpis.segmentUnits.cakes} units</span>
               </div>
             </div>
           </div>
@@ -836,66 +974,367 @@ export default function KDSAnalyticsTab({ orders }: KDSAnalyticsTabProps) {
         </div>
       </div>
 
-      {/* ── 4. TOP DISHES ORDERED PER CATEGORY (3 LEADERBOARD COLUMNS) ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        {/* COLUMN 1: TOP TIFFIN DISHES & PLANS */}
-        <CategoryLeaderboardCard
-          title="Top Tiffin Dishes & Plans"
-          subtitle="Daily Homestyle Dabbas, Weekly Passes & Regional Specials"
-          badgeText="🍱 Tiffin"
-          badgeClass="bg-amber-100 text-amber-900 border-amber-300"
-          accentBarClass="bg-amber-500"
-          icon={<Package className="w-4 h-4 text-amber-700" />}
-          dishes={topDishesByCategory.tiffin}
-          totalCategoryRevenue={kpis.segmentRevenue.tiffin}
-          emptyMessage="No Tiffin dishes ordered in this period."
-        />
+      {/* ── 4. DISH LEADERS BY CATEGORY (QUANTITY vs REVENUE RANKING) ── */}
+      <div className="space-y-3">
+        <div className="bg-white rounded-2xl border border-gray-200 px-4 py-3 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+          <div>
+            <h3 className="font-serif font-bold text-base text-[#00346f]">
+              Category Dish Leaders — Quantity vs. Revenue
+            </h3>
+            <p className="text-[11px] text-gray-500">
+              Compare highest-volume dishes (units ordered) against top revenue generators ($) in each category
+            </p>
+          </div>
 
-        {/* COLUMN 2: TOP PARTY CATERING DISHES */}
-        <CategoryLeaderboardCard
-          title="Top Party Catering Dishes"
-          subtitle="Khaas, Shahi, Darbari & Maharaja Trays, Starters & Breads"
-          badgeText="🍛 Catering"
-          badgeClass="bg-blue-100 text-[#00346f] border-blue-300"
-          accentBarClass="bg-[#00346f]"
-          icon={<Utensils className="w-4 h-4 text-[#00346f]" />}
-          dishes={topDishesByCategory.catering}
-          totalCategoryRevenue={kpis.segmentRevenue.catering}
-          emptyMessage="No Party Catering trays ordered in this period."
-        />
+          <div className="inline-flex items-center bg-gray-100 p-1 rounded-xl self-start sm:self-auto">
+            <button
+              type="button"
+              onClick={() => setLeaderboardSortMode('quantity')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
+                leaderboardSortMode === 'quantity'
+                  ? 'bg-[#00346f] text-white shadow-2xs'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              <Package className="w-3.5 h-3.5" />
+              <span>Rank by Quantity (Units)</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setLeaderboardSortMode('revenue')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
+                leaderboardSortMode === 'revenue'
+                  ? 'bg-[#00346f] text-white shadow-2xs'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              <DollarSign className="w-3.5 h-3.5" />
+              <span>Rank by Revenue ($)</span>
+            </button>
+          </div>
+        </div>
 
-        {/* COLUMN 3: TOP CAKES & BAKERY ITEMS */}
-        <CategoryLeaderboardCard
-          title="Top Cakes & Bakery"
-          subtitle="Custom Celebration Cakes, Eggless Fusion Flavors & Cupcakes"
-          badgeText="🎂 Cakes & Bakery"
-          badgeClass="bg-pink-100 text-pink-900 border-pink-300"
-          accentBarClass="bg-pink-500"
-          icon={<Cake className="w-4 h-4 text-pink-700" />}
-          dishes={topDishesByCategory.cakes}
-          totalCategoryRevenue={kpis.segmentRevenue.cakes}
-          emptyMessage="No Cakes or Bakery items ordered in this period."
-          extraFooter={
-            topDishesByCategory.topCakeFlavors.length > 0 ? (
-              <div className="pt-3 mt-3 border-t border-gray-150">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-pink-900 block mb-1.5">
-                  Most Requested Cake Flavors:
-                </span>
-                <div className="flex flex-wrap gap-1.5">
-                  {topDishesByCategory.topCakeFlavors.slice(0, 6).map(f => (
-                    <span
-                      key={f.flavor}
-                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-pink-50 border border-pink-200 text-[11px] font-semibold text-pink-950"
-                    >
-                      <span>{f.flavor}</span>
-                      <span className="font-mono font-bold text-pink-700">&times;{f.count}</span>
-                    </span>
-                  ))}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          {/* COLUMN 1: TOP TIFFIN DISHES & PLANS */}
+          <CategoryLeaderboardCard
+            title="Top Tiffin Dishes & Plans"
+            subtitle="Daily Homestyle Dabbas, Weekly Passes & Regional Specials"
+            badgeText="🍱 Tiffin"
+            badgeClass="bg-amber-100 text-amber-900 border-amber-300"
+            accentBarClass="bg-amber-500"
+            icon={<Package className="w-4 h-4 text-amber-700" />}
+            dishes={dishAnalytics.tiffin}
+            topQtyDish={dishAnalytics.tiffinByQty[0] || null}
+            topRevDish={dishAnalytics.tiffinByRev[0] || null}
+            sortMode={leaderboardSortMode}
+            totalCategoryRevenue={kpis.segmentRevenue.tiffin}
+            totalCategoryUnits={kpis.segmentUnits.tiffin}
+            emptyMessage="No Tiffin dishes ordered in this period."
+          />
+
+          {/* COLUMN 2: TOP PARTY CATERING DISHES */}
+          <CategoryLeaderboardCard
+            title="Top Party Catering Dishes"
+            subtitle="Khaas, Shahi, Darbari & Maharaja Trays, Starters & Breads"
+            badgeText="🍛 Catering"
+            badgeClass="bg-blue-100 text-[#00346f] border-blue-300"
+            accentBarClass="bg-[#00346f]"
+            icon={<Utensils className="w-4 h-4 text-[#00346f]" />}
+            dishes={dishAnalytics.catering}
+            topQtyDish={dishAnalytics.cateringByQty[0] || null}
+            topRevDish={dishAnalytics.cateringByRev[0] || null}
+            sortMode={leaderboardSortMode}
+            totalCategoryRevenue={kpis.segmentRevenue.catering}
+            totalCategoryUnits={kpis.segmentUnits.catering}
+            emptyMessage="No Party Catering trays ordered in this period."
+          />
+
+          {/* COLUMN 3: TOP CAKES & BAKERY ITEMS */}
+          <CategoryLeaderboardCard
+            title="Top Cakes & Bakery"
+            subtitle="Custom Celebration Cakes, Eggless Fusion Flavors & Cupcakes"
+            badgeText="🎂 Cakes & Bakery"
+            badgeClass="bg-pink-100 text-pink-900 border-pink-300"
+            accentBarClass="bg-pink-500"
+            icon={<Cake className="w-4 h-4 text-pink-700" />}
+            dishes={dishAnalytics.cakes}
+            topQtyDish={dishAnalytics.cakesByQty[0] || null}
+            topRevDish={dishAnalytics.cakesByRev[0] || null}
+            sortMode={leaderboardSortMode}
+            totalCategoryRevenue={kpis.segmentRevenue.cakes}
+            totalCategoryUnits={kpis.segmentUnits.cakes}
+            emptyMessage="No Cakes or Bakery items ordered in this period."
+            extraFooter={
+              dishAnalytics.topCakeFlavors.length > 0 ? (
+                <div className="pt-3 mt-3 border-t border-gray-150">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-pink-900 block mb-1.5">
+                    Most Requested Cake Flavors (Qty &amp; Revenue):
+                  </span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {dishAnalytics.topCakeFlavors.slice(0, 6).map(f => (
+                      <span
+                        key={f.flavor}
+                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-pink-50 border border-pink-200 text-[11px] font-semibold text-pink-950"
+                      >
+                        <span>{f.flavor}</span>
+                        <span className="font-mono font-bold text-pink-700">&times;{f.count}</span>
+                        <span className="text-[10px] text-gray-500 font-mono">(${f.revenue.toFixed(0)})</span>
+                      </span>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            ) : null
-          }
-        />
+              ) : null
+            }
+          />
+        </div>
+      </div>
+
+      {/* ── 5. DEEP-DIVE DISH QUANTITY & REVENUE MATRIX BY CATEGORY & SUB-CATEGORY ── */}
+      <div className="bg-white rounded-2xl border border-gray-200 p-4 sm:p-5 shadow-xs space-y-4">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 pb-3 border-b border-gray-150">
+          <div>
+            <h3 className="font-serif font-bold text-base sm:text-lg text-[#00346f]">
+              Complete Dish Quantity &amp; Revenue Breakdown by Category
+            </h3>
+            <p className="text-xs text-gray-500">
+              Filter by category or sub-category to inspect exact unit volume, revenue contribution, and average unit price per dish
+            </p>
+          </div>
+
+          {/* Primary Category Filter Tabs */}
+          <div className="flex flex-wrap items-center gap-1.5 bg-gray-100 p-1 rounded-xl">
+            {[
+              { key: 'all', label: 'All Categories', units: kpis.totalItemUnits, rev: kpis.totalItemRevenue },
+              { key: 'tiffin', label: '🍱 Tiffin', units: kpis.segmentUnits.tiffin, rev: kpis.segmentRevenue.tiffin },
+              { key: 'catering', label: '🍛 Catering', units: kpis.segmentUnits.catering, rev: kpis.segmentRevenue.catering },
+              { key: 'cakes', label: '🎂 Cakes', units: kpis.segmentUnits.cakes, rev: kpis.segmentRevenue.cakes }
+            ].map(tab => (
+              <button
+                key={tab.key}
+                type="button"
+                onClick={() => {
+                  setMatrixCategory(tab.key as 'all' | PrimarySegment);
+                  setMatrixSubCategory('all');
+                }}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
+                  matrixCategory === tab.key
+                    ? 'bg-[#00346f] text-white shadow-2xs'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                <span>{tab.label}</span>
+                <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono ${
+                  matrixCategory === tab.key ? 'bg-[#ffdea5] text-[#00346f] font-black' : 'bg-gray-200 text-gray-700'
+                }`}>
+                  {tab.units}u • ${tab.rev.toFixed(0)}
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Sub-Category Quantity & Revenue Summary Cards */}
+        {availableMatrixSubCategories.length > 0 && (
+          <div className="space-y-1.5">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500 block">
+              Sub-Category Volume &amp; Revenue Breakdown (Click to filter):
+            </span>
+            <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+              <button
+                type="button"
+                onClick={() => setMatrixSubCategory('all')}
+                className={`px-3 py-2 rounded-xl border text-left transition cursor-pointer shrink-0 ${
+                  matrixSubCategory === 'all'
+                    ? 'bg-[#00346f] text-white border-[#00346f] shadow-2xs'
+                    : 'bg-gray-50 hover:bg-gray-100 border-gray-200 text-gray-800'
+                }`}
+              >
+                <span className="text-[11px] font-bold block">All Sub-Categories</span>
+                <span className={`text-[10px] font-mono block mt-0.5 ${
+                  matrixSubCategory === 'all' ? 'text-[#ffdea5]' : 'text-gray-500'
+                }`}>
+                  {availableMatrixSubCategories.reduce((s, c) => s + c.totalQty, 0)} units • $
+                  {availableMatrixSubCategories.reduce((s, c) => s + c.totalRevenue, 0).toFixed(0)}
+                </span>
+              </button>
+
+              {availableMatrixSubCategories.map(sub => {
+                const isSelected = matrixSubCategory === sub.subCategory;
+                return (
+                  <button
+                    key={`${sub.segment}:${sub.subCategory}`}
+                    type="button"
+                    onClick={() =>
+                      setMatrixSubCategory(isSelected ? 'all' : sub.subCategory)
+                    }
+                    className={`px-3 py-2 rounded-xl border text-left transition cursor-pointer shrink-0 ${
+                      isSelected
+                        ? 'bg-[#00346f] text-white border-[#00346f] shadow-2xs'
+                        : 'bg-gray-50 hover:bg-gray-100 border-gray-200 text-gray-800'
+                    }`}
+                  >
+                    <span className="text-[11px] font-bold block">{sub.subCategory}</span>
+                    <div className={`flex items-center gap-2 text-[10px] font-mono mt-0.5 ${
+                      isSelected ? 'text-[#ffdea5]' : 'text-gray-600'
+                    }`}>
+                      <span><strong>{sub.totalQty}</strong> qty</span>
+                      <span>•</span>
+                      <span><strong>${sub.totalRevenue.toFixed(0)}</strong> rev</span>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Search & Sort Controls Bar */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+          <div className="relative flex-1 max-w-sm">
+            <Search className="w-3.5 h-3.5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <input
+              type="text"
+              value={matrixSearch}
+              onChange={e => setMatrixSearch(e.target.value)}
+              placeholder="Search dish name or sub-category..."
+              className="w-full pl-8 pr-3 py-1.5 bg-gray-50 border border-gray-200 rounded-xl text-xs text-gray-800 focus:outline-none focus:bg-white focus:border-[#00346f]"
+            />
+          </div>
+
+          <div className="flex items-center gap-2 text-xs">
+            <span className="text-[11px] font-bold text-gray-500 flex items-center gap-1">
+              <ArrowUpDown className="w-3.5 h-3.5 text-[#00346f]" />
+              <span>Sort Dishes By:</span>
+            </span>
+            <div className="inline-flex bg-gray-100 p-0.5 rounded-xl border border-gray-200">
+              {[
+                { key: 'revenue', label: 'Revenue ($)' },
+                { key: 'quantity', label: 'Quantity (Units)' },
+                { key: 'orders', label: 'Order Count' },
+                { key: 'avgPrice', label: 'Avg $/Unit' }
+              ].map(opt => (
+                <button
+                  key={opt.key}
+                  type="button"
+                  onClick={() => setMatrixSortBy(opt.key as any)}
+                  className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition cursor-pointer ${
+                    matrixSortBy === opt.key
+                      ? 'bg-white text-[#00346f] shadow-2xs'
+                      : 'text-gray-600 hover:text-gray-900'
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Dish Quantity & Revenue Table */}
+        {filteredMatrixDishes.length === 0 ? (
+          <div className="py-10 text-center text-xs text-gray-400 italic bg-gray-50 rounded-xl border border-dashed border-gray-200">
+            No dishes match the selected category filters for this period.
+          </div>
+        ) : (
+          <div className="overflow-x-auto border border-gray-200 rounded-xl">
+            <table className="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr className="bg-gray-50 border-b border-gray-200 text-[10px] font-extrabold uppercase tracking-wider text-gray-500">
+                  <th className="py-2.5 px-3 w-10">#</th>
+                  <th className="py-2.5 px-3">Dish Name &amp; Portion Breakdown</th>
+                  <th className="py-2.5 px-3">Category / Sub-Category</th>
+                  <th className="py-2.5 px-3 text-right">Quantity Ordered</th>
+                  <th className="py-2.5 px-3 text-right">Dish Revenue</th>
+                  <th className="py-2.5 px-3 text-right">Avg / Unit</th>
+                  <th className="py-2.5 px-3 text-center">Orders</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-150">
+                {filteredMatrixDishes.map((dish, idx) => {
+                  const catUnits = kpis.segmentUnits[dish.segment] || 1;
+                  const catRev = kpis.segmentRevenue[dish.segment] || 1;
+                  const qtySharePct = Math.min(100, Math.round((dish.totalQty / catUnits) * 100));
+                  const revSharePct = Math.min(100, Math.round((dish.totalRevenue / catRev) * 100));
+                  const breakdownParts = Object.entries(dish.unitBreakdown).map(
+                    ([unit, count]) => `${count}× ${unit}`
+                  );
+
+                  return (
+                    <tr key={dish.key} className="hover:bg-blue-50/30 transition-colors">
+                      <td className="py-2.5 px-3 font-mono font-bold text-gray-400">
+                        {idx + 1}
+                      </td>
+                      <td className="py-2.5 px-3">
+                        <span className="font-bold text-gray-900 block">{dish.name}</span>
+                        <span className="text-[10px] text-gray-500 block">
+                          {breakdownParts.join(' • ')}
+                        </span>
+                      </td>
+                      <td className="py-2.5 px-3">
+                        <span
+                          className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold ${
+                            dish.segment === 'tiffin'
+                              ? 'bg-amber-100 text-amber-900'
+                              : dish.segment === 'cakes'
+                              ? 'bg-pink-100 text-pink-900'
+                              : 'bg-blue-100 text-[#00346f]'
+                          }`}
+                        >
+                          {dish.segment === 'tiffin'
+                            ? '🍱 Tiffin'
+                            : dish.segment === 'cakes'
+                            ? '🎂 Cakes'
+                            : '🍛 Catering'}
+                        </span>
+                        <span className="text-[10px] text-gray-500 block mt-0.5 font-medium">
+                          {dish.subCategory}
+                        </span>
+                      </td>
+                      <td className="py-2.5 px-3 text-right">
+                        <span className="font-mono font-extrabold text-[#00346f] text-xs block">
+                          &times;{dish.totalQty}
+                        </span>
+                        <div className="flex items-center justify-end gap-1.5 mt-0.5">
+                          <div className="w-14 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                            <div
+                              style={{ width: `${Math.max(6, qtySharePct)}%` }}
+                              className="h-full bg-[#00346f] rounded-full"
+                            />
+                          </div>
+                          <span className="text-[10px] text-gray-400 font-mono w-8 text-right">
+                            {qtySharePct}%
+                          </span>
+                        </div>
+                      </td>
+                      <td className="py-2.5 px-3 text-right">
+                        <span className="font-mono font-extrabold text-emerald-800 text-xs block">
+                          ${dish.totalRevenue.toFixed(2)}
+                        </span>
+                        <div className="flex items-center justify-end gap-1.5 mt-0.5">
+                          <div className="w-14 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                            <div
+                              style={{ width: `${Math.max(6, revSharePct)}%` }}
+                              className="h-full bg-emerald-600 rounded-full"
+                            />
+                          </div>
+                          <span className="text-[10px] text-gray-400 font-mono w-8 text-right">
+                            {revSharePct}%
+                          </span>
+                        </div>
+                      </td>
+                      <td className="py-2.5 px-3 text-right font-mono text-gray-700 font-semibold">
+                        ${dish.avgUnitRevenue.toFixed(2)}
+                      </td>
+                      <td className="py-2.5 px-3 text-center font-mono font-bold text-gray-700">
+                        {dish.orderCount}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -909,7 +1348,11 @@ interface CategoryLeaderboardCardProps {
   accentBarClass: string;
   icon: React.ReactNode;
   dishes: DishStat[];
+  topQtyDish: DishStat | null;
+  topRevDish: DishStat | null;
+  sortMode: DishSortMode;
   totalCategoryRevenue: number;
+  totalCategoryUnits: number;
   emptyMessage: string;
   extraFooter?: React.ReactNode;
 }
@@ -922,11 +1365,21 @@ function CategoryLeaderboardCard({
   accentBarClass,
   icon,
   dishes,
+  topQtyDish,
+  topRevDish,
+  sortMode,
   totalCategoryRevenue,
+  totalCategoryUnits,
   emptyMessage,
   extraFooter
 }: CategoryLeaderboardCardProps) {
-  const maxQty = dishes.length > 0 ? Math.max(...dishes.map(d => d.totalQty), 1) : 1;
+  const maxMetric =
+    dishes.length > 0
+      ? Math.max(
+          ...dishes.map(d => (sortMode === 'revenue' ? d.totalRevenue : d.totalQty)),
+          1
+        )
+      : 1;
 
   return (
     <div className="bg-white rounded-2xl border border-gray-200 p-4 sm:p-5 shadow-xs flex flex-col justify-between">
@@ -949,15 +1402,59 @@ function CategoryLeaderboardCard({
           </span>
         </div>
 
+        {/* Category Champions Strip: Top by Quantity vs Top by Revenue */}
+        {topQtyDish && topRevDish && (
+          <div className="grid grid-cols-2 gap-2 my-3">
+            <div className="p-2.5 rounded-xl bg-gray-50 border border-gray-200/80">
+              <span className="text-[9px] font-extrabold uppercase tracking-wider text-gray-500 block">
+                📦 Most Ordered (Qty)
+              </span>
+              <span className="text-xs font-bold text-gray-900 truncate block mt-0.5" title={topQtyDish.name}>
+                {topQtyDish.name}
+              </span>
+              <span className="text-[11px] font-mono font-extrabold text-[#00346f] block mt-0.5">
+                &times;{topQtyDish.totalQty} units{' '}
+                <span className="text-[10px] font-normal text-gray-500">
+                  (${topQtyDish.totalRevenue.toFixed(0)})
+                </span>
+              </span>
+            </div>
+
+            <div className="p-2.5 rounded-xl bg-emerald-50/60 border border-emerald-200/80">
+              <span className="text-[9px] font-extrabold uppercase tracking-wider text-emerald-800 block">
+                💎 Top Revenue ($)
+              </span>
+              <span className="text-xs font-bold text-gray-900 truncate block mt-0.5" title={topRevDish.name}>
+                {topRevDish.name}
+              </span>
+              <span className="text-[11px] font-mono font-extrabold text-emerald-800 block mt-0.5">
+                ${topRevDish.totalRevenue.toFixed(2)}{' '}
+                <span className="text-[10px] font-normal text-gray-500">
+                  (&times;{topRevDish.totalQty})
+                </span>
+              </span>
+            </div>
+          </div>
+        )}
+
         {/* Dish Leaderboard List */}
         {dishes.length === 0 ? (
           <div className="py-10 text-center text-xs text-gray-400 italic">
             {emptyMessage}
           </div>
         ) : (
-          <div className="divide-y divide-gray-100 mt-2 max-h-[380px] overflow-y-auto pr-1">
+          <div className="divide-y divide-gray-100 mt-1 max-h-[380px] overflow-y-auto pr-1">
             {dishes.slice(0, 10).map((dish, idx) => {
-              const barPct = Math.max(8, Math.round((dish.totalQty / maxQty) * 100));
+              const metricVal = sortMode === 'revenue' ? dish.totalRevenue : dish.totalQty;
+              const barPct = Math.max(8, Math.round((metricVal / maxMetric) * 100));
+              const qtyShare =
+                totalCategoryUnits > 0
+                  ? Math.round((dish.totalQty / totalCategoryUnits) * 100)
+                  : 0;
+              const revShare =
+                totalCategoryRevenue > 0
+                  ? Math.round((dish.totalRevenue / totalCategoryRevenue) * 100)
+                  : 0;
               const breakdownParts = Object.entries(dish.unitBreakdown).map(
                 ([unit, count]) => `${count} ${unit}`
               );
@@ -984,22 +1481,38 @@ function CategoryLeaderboardCard({
                           {dish.name}
                         </span>
                         <span className="text-[10px] text-gray-500 block">
-                          {breakdownParts.join(' • ')} ({dish.orderCount} {dish.orderCount === 1 ? 'order' : 'orders'})
+                          {breakdownParts.join(' • ')} • {dish.subCategory}
                         </span>
                       </div>
                     </div>
 
+                    {/* Dual Quantity + Revenue Readout */}
                     <div className="text-right shrink-0">
-                      <span className="font-mono text-xs font-extrabold text-[#00346f] block">
-                        &times;{dish.totalQty}
-                      </span>
-                      <span className="font-mono text-[10px] text-gray-500 block">
-                        ${dish.totalRevenue.toFixed(2)}
-                      </span>
+                      {sortMode === 'revenue' ? (
+                        <>
+                          <span className="font-mono text-xs font-extrabold text-emerald-800 block">
+                            ${dish.totalRevenue.toFixed(2)}{' '}
+                            <span className="text-[9px] font-semibold text-gray-400">({revShare}%)</span>
+                          </span>
+                          <span className="font-mono text-[10px] font-bold text-[#00346f] block">
+                            &times;{dish.totalQty} units ({qtyShare}%)
+                          </span>
+                        </>
+                      ) : (
+                        <>
+                          <span className="font-mono text-xs font-extrabold text-[#00346f] block">
+                            &times;{dish.totalQty} units{' '}
+                            <span className="text-[9px] font-semibold text-gray-400">({qtyShare}%)</span>
+                          </span>
+                          <span className="font-mono text-[10px] font-bold text-emerald-800 block">
+                            ${dish.totalRevenue.toFixed(2)} ({revShare}%)
+                          </span>
+                        </>
+                      )}
                     </div>
                   </div>
 
-                  {/* Popularity Bar */}
+                  {/* Popularity / Revenue Bar */}
                   <div className="h-1.5 w-full bg-gray-100 rounded-full overflow-hidden">
                     <div
                       style={{ width: `${barPct}%` }}
@@ -1015,14 +1528,24 @@ function CategoryLeaderboardCard({
         {extraFooter}
       </div>
 
-      {/* Category Total Footer */}
+      {/* Category Total Footer (Quantity & Revenue) */}
       <div className="pt-3 mt-3 border-t border-gray-150 flex items-center justify-between text-xs">
-        <span className="font-bold text-gray-500 uppercase tracking-wider text-[10px]">
-          Category Total Revenue
-        </span>
-        <span className="font-serif font-bold text-sm text-[#00346f]">
-          ${totalCategoryRevenue.toFixed(2)}
-        </span>
+        <div>
+          <span className="font-bold text-gray-500 uppercase tracking-wider text-[10px] block">
+            Category Volume
+          </span>
+          <span className="font-mono font-extrabold text-xs text-gray-900">
+            {totalCategoryUnits} units ({dishes.length} dishes)
+          </span>
+        </div>
+        <div className="text-right">
+          <span className="font-bold text-gray-500 uppercase tracking-wider text-[10px] block">
+            Category Revenue
+          </span>
+          <span className="font-serif font-bold text-sm text-[#00346f]">
+            ${totalCategoryRevenue.toFixed(2)}
+          </span>
+        </div>
       </div>
     </div>
   );
