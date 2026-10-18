@@ -571,7 +571,12 @@ export default function KDSTiffinMenuModal({
   const handleUpdateSpecial = (idx: number, field: keyof TiffinSpecialDish, value: any) => {
     setSpecialDishes(prev => {
       const copy = [...prev];
-      copy[idx] = { ...copy[idx], [field]: value };
+      const updated = { ...copy[idx], [field]: value };
+      if (field === 'price') {
+        const numPrice = Number(value) || 0;
+        updated.price16oz = numPrice > 0 ? numPrice : undefined;
+      }
+      copy[idx] = updated;
       return copy;
     });
   };
@@ -613,16 +618,20 @@ export default function KDSTiffinMenuModal({
         familyPrice: Number(dabbaPricing.familyPrice) || 34.99,
         weeklyPrice: Number(dabbaPricing.weeklyPrice) || 54.99
       },
-      specialDishes: specialDishes.map(s => ({
-        ...s,
-        title: s.title.trim(),
-        description: s.description.trim(),
-        price: Math.max(0, s.price),
-        price16oz: s.price16oz !== undefined && !isNaN(Number(s.price16oz)) && Number(s.price16oz) > 0 ? Number(s.price16oz) : undefined,
-        price8oz: s.price8oz !== undefined && !isNaN(Number(s.price8oz)) && Number(s.price8oz) > 0 ? Number(s.price8oz) : undefined,
-        portionSize: s.portionSize ? s.portionSize.trim() : undefined,
-        availableDays: Array.isArray(s.availableDays) && s.availableDays.length > 0 ? s.availableDays : ['Saturday', 'Sunday']
-      })),
+      specialDishes: specialDishes.map(s => {
+        const cleanPrice = Math.max(0, Number(s.price) || 0);
+        const cleanPrice8oz = s.price8oz !== undefined && !isNaN(Number(s.price8oz)) && Number(s.price8oz) > 0 ? Number(s.price8oz) : undefined;
+        return {
+          ...s,
+          title: s.title.trim(),
+          description: s.description.trim(),
+          price: cleanPrice,
+          price16oz: cleanPrice > 0 ? cleanPrice : undefined,
+          price8oz: cleanPrice8oz,
+          portionSize: s.portionSize ? s.portionSize.trim() : undefined,
+          availableDays: Array.isArray(s.availableDays) && s.availableDays.length > 0 ? s.availableDays : ['Saturday', 'Sunday']
+        };
+      }),
       // Legacy fields for backward compatibility:
       saturdaySpecialTitle: specialDishes[0]?.title || DEFAULT_TIFFIN_SETTINGS.saturdaySpecialTitle,
       saturdaySpecialDescription: specialDishes[0]?.description || DEFAULT_TIFFIN_SETTINGS.saturdaySpecialDescription,

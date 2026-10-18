@@ -540,18 +540,68 @@ export default function TiffinOrderView({
     triggerAddedAlert(`✓ Added ${qty} × ${sizeName} for ${day.dayName} (${day.displayDate}) ($${(unitPrice * qty).toFixed(2)})!`);
   };
 
+  // Unified pricing resolver for Chef's Special dishes & tubs so card display and cart item always match
+  const resolveSpecialDishPricing = (dish: TiffinSpecialDish, explicitSize?: '8oz' | '16oz') => {
+    const base16ozPrice = Number(dish.price) > 0
+      ? Number(dish.price)
+      : (dish.price16oz && Number(dish.price16oz) > 0 ? Number(dish.price16oz) : 13.99);
+    const hasDualTubPricing = Boolean(dish.price8oz && Number(dish.price8oz) > 0 && base16ozPrice > 0);
+    const selectedSize: '8oz' | '16oz' = explicitSize || (
+      hasDualTubPricing
+        ? getSpecialSize(dish.id)
+        : (dish.portionSize?.includes('8oz') && !dish.portionSize?.includes('16oz') ? '8oz' : '16oz')
+    );
+    const activeUnitPrice = (hasDualTubPricing && selectedSize === '8oz')
+      ? Number(dish.price8oz!)
+      : base16ozPrice;
+    const totalPrice = Math.round(activeUnitPrice * getSpecialQty(dish.id) * 100) / 100;
+    return {
+      base16ozPrice,
+      hasDualTubPricing,
+      selectedSize,
+      activeUnitPrice,
+      totalPrice
+    };
+  };
+
+  // Auto-sync any special dish already in cart if KDS price was updated
+  useEffect(() => {
+    if (!specialsList || specialsList.length === 0 || !cart || cart.length === 0) return;
+    cart.forEach(item => {
+      if (!item.menuItemId?.startsWith('tiffin-special-')) return;
+      const matchedDish = specialsList.find(d => item.menuItemId.startsWith(`tiffin-special-${d.id}-`));
+      if (!matchedDish) return;
+      const itemSize: '8oz' | '16oz' = item.selectionType === 'container_8oz' ? '8oz' : '16oz';
+      const { activeUnitPrice } = resolveSpecialDishPricing(matchedDish, itemSize);
+      const expectedTotal = Math.round(activeUnitPrice * item.quantity * 100) / 100;
+      if (Math.abs(item.unitPrice - activeUnitPrice) > 0.005 || Math.abs(item.totalPrice - expectedTotal) > 0.005) {
+        onUpdateCartItem(
+          {
+            id: item.menuItemId,
+            name: item.name,
+            category: 'tiffin',
+            categoryLabel: item.categoryLabel,
+            description: matchedDish.description || 'Special handcrafted recipe',
+            allergens: item.allergens || ['G', 'D'],
+            pricingType: 'tiffin',
+            leadTimeHours: 0,
+            isSatvikAvailable: true
+          },
+          item.selectionType,
+          item.quantity,
+          item.selectionLabel,
+          activeUnitPrice,
+          item.notes
+        );
+      }
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [specialsList]);
+
   // Add Chef's Special Dish / Tub to Cart
   const handleAddSpecialDish = (dish: TiffinSpecialDish, day: DaySchedule, explicitSize?: '8oz' | '16oz') => {
     const qty = getSpecialQty(dish.id);
-    const hasDualPricing = Boolean(dish.price8oz && dish.price8oz > 0 && dish.price16oz && dish.price16oz > 0);
-    const size = explicitSize || (hasDualPricing ? getSpecialSize(dish.id) : (dish.portionSize?.includes('8oz') ? '8oz' : '16oz'));
-
-    let unitPrice = dish.price > 0 ? dish.price : 13.99;
-    if (size === '8oz' && dish.price8oz && dish.price8oz > 0) {
-      unitPrice = dish.price8oz;
-    } else if (size === '16oz' && dish.price16oz && dish.price16oz > 0) {
-      unitPrice = dish.price16oz;
-    }
+    const { hasDualTubPricing: hasDualPricing, selectedSize: size, activeUnitPrice: unitPrice } = resolveSpecialDishPricing(dish, explicitSize);
 
     const sizeSuffix = hasDualPricing ? ` (${size} Tub)` : '';
     const itemId = `tiffin-special-${dish.id}-${size}-${day.dateStr}`;
@@ -568,6 +618,8 @@ export default function TiffinOrderView({
       isSatvikAvailable: true
     };
 
+    const lineTotal = Math.round(unitPrice * qty * 100) / 100;
+
     onUpdateCartItem(
       menuItem,
       size === '8oz' ? 'container_8oz' : 'container_16oz',
@@ -577,7 +629,7 @@ export default function TiffinOrderView({
       `${day.dayName}, ${day.displayDate}: ${dish.title}${sizeSuffix} (Qty: ${qty})`
     );
 
-    triggerAddedAlert(`✓ Added ${qty} × ${dish.title}${sizeSuffix} ($${(unitPrice * qty).toFixed(2)})!`);
+    triggerAddedAlert(`✓ Added ${qty} × ${dish.title}${sizeSuffix} ($${lineTotal.toFixed(2)})!`);
   };
 
   // Add Weekly Dabba to Cart
@@ -1013,12 +1065,7 @@ export default function TiffinOrderView({
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                       {activeSpecialsForDay.map(dish => {
                         const dishQty = getSpecialQty(dish.id);
-                        const hasDualTubPricing = Boolean(dish.price8oz && dish.price8oz > 0 && dish.price16oz && dish.price16oz > 0);
-                        const selectedSize = getSpecialSize(dish.id);
-                        const activeUnitPrice = hasDualTubPricing
-                          ? (selectedSize === '8oz' ? dish.price8oz! : dish.price16oz!)
-                          : (dish.price > 0 ? dish.price : 13.99);
-                        const totalPrice = activeUnitPrice * dishQty;
+                        const { base16ozPrice, hasDualTubPricing, selectedSize, activeUnitPrice, totalPrice } = resolveSpecialDishPricing(dish);
                         const isTubItem = /16\s*oz|8\s*oz|tub|container/i.test(dish.title) || 
                           Boolean(dish.portionSize && /oz|tub/i.test(dish.portionSize)) || 
                           hasDualTubPricing;
@@ -1065,7 +1112,7 @@ export default function TiffinOrderView({
                                         : 'text-purple-900 hover:text-purple-950'
                                     }`}
                                   >
-                                    8 oz (${dish.price8oz!.toFixed(2)})
+                                    8 oz (${Number(dish.price8oz!).toFixed(2)})
                                   </button>
                                   <button
                                     type="button"
@@ -1076,7 +1123,7 @@ export default function TiffinOrderView({
                                         : 'text-purple-900 hover:text-purple-950'
                                     }`}
                                   >
-                                    16 oz (${dish.price16oz!.toFixed(2)})
+                                    16 oz (${base16ozPrice.toFixed(2)})
                                   </button>
                                 </div>
                               )}
@@ -1411,12 +1458,7 @@ export default function TiffinOrderView({
                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                         {activeSpecialsForDay.map(dish => {
                           const dishQty = getSpecialQty(dish.id);
-                          const hasDualTubPricing = Boolean(dish.price8oz && dish.price8oz > 0 && dish.price16oz && dish.price16oz > 0);
-                          const selectedSize = getSpecialSize(dish.id);
-                          const activeUnitPrice = hasDualTubPricing
-                            ? (selectedSize === '8oz' ? dish.price8oz! : dish.price16oz!)
-                            : (dish.price > 0 ? dish.price : 13.99);
-                          const totalPrice = activeUnitPrice * dishQty;
+                          const { base16ozPrice, hasDualTubPricing, selectedSize, activeUnitPrice, totalPrice } = resolveSpecialDishPricing(dish);
                           const isTubItem = /16\s*oz|8\s*oz|tub|container/i.test(dish.title) || 
                             Boolean(dish.portionSize && /oz|tub/i.test(dish.portionSize)) || 
                             hasDualTubPricing;
@@ -1463,7 +1505,7 @@ export default function TiffinOrderView({
                                           : 'text-purple-900 hover:text-purple-950'
                                       }`}
                                     >
-                                      8 oz (${dish.price8oz!.toFixed(2)})
+                                      8 oz (${Number(dish.price8oz!).toFixed(2)})
                                     </button>
                                     <button
                                       type="button"
@@ -1474,7 +1516,7 @@ export default function TiffinOrderView({
                                           : 'text-purple-900 hover:text-purple-950'
                                       }`}
                                     >
-                                      16 oz (${dish.price16oz!.toFixed(2)})
+                                      16 oz (${base16ozPrice.toFixed(2)})
                                     </button>
                                   </div>
                                 )}
@@ -1643,12 +1685,7 @@ export default function TiffinOrderView({
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                       {activeSpecialsForDay.map(dish => {
                         const dishQty = getSpecialQty(dish.id);
-                        const hasDualTubPricing = Boolean(dish.price8oz && dish.price8oz > 0 && dish.price16oz && dish.price16oz > 0);
-                        const selectedSize = getSpecialSize(dish.id);
-                        const activeUnitPrice = hasDualTubPricing
-                          ? (selectedSize === '8oz' ? dish.price8oz! : dish.price16oz!)
-                          : (dish.price > 0 ? dish.price : 13.99);
-                        const totalPrice = activeUnitPrice * dishQty;
+                        const { base16ozPrice, hasDualTubPricing, selectedSize, activeUnitPrice, totalPrice } = resolveSpecialDishPricing(dish);
 
                         return (
                           <div 
@@ -1680,7 +1717,7 @@ export default function TiffinOrderView({
                                         : 'text-gray-600 hover:text-gray-900'
                                     }`}
                                   >
-                                    8 oz (${dish.price8oz!.toFixed(2)})
+                                    8 oz (${Number(dish.price8oz!).toFixed(2)})
                                   </button>
                                   <button
                                     type="button"
@@ -1691,7 +1728,7 @@ export default function TiffinOrderView({
                                         : 'text-gray-600 hover:text-gray-900'
                                     }`}
                                   >
-                                    16 oz (${dish.price16oz!.toFixed(2)})
+                                    16 oz (${base16ozPrice.toFixed(2)})
                                   </button>
                                 </div>
                               )}

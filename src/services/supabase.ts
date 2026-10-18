@@ -1245,7 +1245,17 @@ export async function fetchTiffinMenuSettings(): Promise<TiffinMenuSettings> {
     if (!Array.isArray(rawSpecials) || rawSpecials.length === 0) {
       return DEFAULT_WEEKEND_FLYER_SPECIALS;
     }
-    return rawSpecials;
+    return rawSpecials.map(s => {
+      const basePrice = Number(s.price) > 0
+        ? Number(s.price)
+        : (s.price16oz && Number(s.price16oz) > 0 ? Number(s.price16oz) : 0);
+      return {
+        ...s,
+        price: basePrice,
+        price16oz: basePrice > 0 ? basePrice : undefined,
+        price8oz: s.price8oz !== undefined && Number(s.price8oz) > 0 ? Number(s.price8oz) : undefined
+      };
+    });
   };
 
   if (supabase) {
