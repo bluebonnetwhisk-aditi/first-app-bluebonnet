@@ -95,7 +95,7 @@ const MENU_SECTIONS: SectionDef[] = [
     key: 'desserts',
     category: 'desserts',
     title: 'Desserts',
-    subtitle: 'Slow-cooked kheer, dry fruit halwa, shahi tukda & warm gulab jamun',
+    subtitle: 'Slow-cooked kheer, moong dal & almond flour halwa, shahi tukda & warm gulab jamun',
     icon: Sparkles
   },
   {

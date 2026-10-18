@@ -634,6 +634,32 @@ export const DESI_DABBA_ITEMS: MenuItem[] = [
     leadTimeHours: 24,
     isSatvikAvailable: true
   },
+  {
+    id: 'moong-dal-halwa',
+    name: 'Moong Dal Halwa',
+    category: 'desserts',
+    categoryLabel: 'Desserts',
+    tier: 'Maharaja',
+    description: 'Slow-roasted yellow moong lentils simmered in pure ghee, saffron & nuts.',
+    allergens: ['D', 'N'],
+    pricingType: 'tray',
+    trayPricing: { third: 90, half: 110, full: 180 },
+    leadTimeHours: 24,
+    isSatvikAvailable: true
+  },
+  {
+    id: 'almond-flour-halwa',
+    name: 'Almond Flour Halwa',
+    category: 'desserts',
+    categoryLabel: 'Desserts',
+    tier: 'Maharaja',
+    description: 'Rich, velvety badam halwa crafted with finely ground almonds, pure ghee & cardamom.',
+    allergens: ['D', 'N'],
+    pricingType: 'tray',
+    trayPricing: { third: 90, half: 110, full: 180 },
+    leadTimeHours: 24,
+    isSatvikAvailable: true
+  },
 
   // G. BREADS (Standard: $0.90/pc [$27/30pcs], Speciality: $1.40/pc [$42/30pcs], Min. 30 pieces)
   {

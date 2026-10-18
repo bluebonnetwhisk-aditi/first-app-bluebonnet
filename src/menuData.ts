@@ -567,6 +567,24 @@ export const DESSERT_TRAYS: MenuItem[] = [
     prices: { third: 75, half: 140, full: 270 },
     allergens: ['Dairy', 'Gluten', 'Tree Nuts'],
     image: 'https://images.unsplash.com/photo-1528751003873-ac9700ac7f31?auto=format&fit=crop&q=80&w=200&h=200'
+  },
+  {
+    id: 'dt_moong_dal_halwa',
+    name: 'Moong Dal Halwa (Tray)',
+    description: 'Slow-roasted yellow moong lentils simmered in pure ghee, saffron & nuts.',
+    tag: 'CONTAINS NUTS',
+    prices: { third: 90, half: 110, full: 180 },
+    allergens: ['Dairy', 'Tree Nuts'],
+    image: 'https://images.unsplash.com/photo-1505253685822-fe48b59cfc8f?auto=format&fit=crop&q=80&w=200&h=200'
+  },
+  {
+    id: 'dt_almond_flour_halwa',
+    name: 'Almond Flour Halwa (Tray)',
+    description: 'Rich, velvety badam halwa crafted with finely ground almonds, pure ghee & cardamom.',
+    tag: 'CONTAINS NUTS',
+    prices: { third: 90, half: 110, full: 180 },
+    allergens: ['Dairy', 'Tree Nuts'],
+    image: 'https://images.unsplash.com/photo-1505253685822-fe48b59cfc8f?auto=format&fit=crop&q=80&w=200&h=200'
   }
 ];
 
