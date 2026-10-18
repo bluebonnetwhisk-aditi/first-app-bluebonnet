@@ -23,7 +23,10 @@ import {
   VolumeX,
   BellRing,
   Check,
-  MessageCircle
+  MessageCircle,
+  BarChart3,
+  ClipboardList,
+  Search
 } from 'lucide-react';
 import type { CateringOrder, OrderStatus } from '../../types/catering';
 import { getCentralTimeNow, getUpcomingDates } from '../../utils/centralTime';
@@ -31,6 +34,7 @@ import { fetchOrders, updateOrderStatus, subscribeToOrders, deleteOrderFromSupab
 import KDSBlackoutManager from './KDSBlackoutManager';
 import KDSEditOrderModal from './KDSEditOrderModal';
 import KDSTiffinMenuModal from './KDSTiffinMenuModal';
+import KDSAnalyticsTab, { classifyOrderItemSegment, normalizeDishName, type PrimarySegment } from './KDSAnalyticsTab';
 
 interface KitchenKDSProps {
   onBackToOrder?: () => void;
@@ -65,7 +69,7 @@ function playKitchenChime() {
       const osc = ctx.createOscillator();
       const gainNode = ctx.createGain();
 
-      osc.type = 'triangle'; // Warm, ringing brass bell tone
+      osc.type = 'triangle';
       osc.frequency.setValueAtTime(freq, ctx.currentTime + time);
 
       gainNode.gain.setValueAtTime(0.0001, ctx.currentTime + time);
@@ -85,7 +89,6 @@ function playKitchenChime() {
 
 /**
  * Normalizes phone number into E.164 digits for WhatsApp wa.me links.
- * E.g., "(945) 555-4081" -> "19455554081"
  */
 function formatWhatsAppPhone(phone: string): string {
   const digits = (phone || '').replace(/\D/g, '');
@@ -113,7 +116,6 @@ function parseTimeToMinutes(timeStr?: string): number {
 
 /**
  * Generates WhatsApp message template for Order Accepted, Order Ready, or Order Declined
- * Using Style 2: Minimalist Editorial Typography with Clean Dividers
  */
 function buildWhatsAppMessage(order: CateringOrder, eventType: 'accepted' | 'ready' | 'rejected'): string {
   const shortId = order.id ? order.id.slice(0, 8).toUpperCase() : '';
@@ -121,7 +123,6 @@ function buildWhatsAppMessage(order: CateringOrder, eventType: 'accepted' | 'rea
   const dateStr = order.fulfillment_date || '';
   const timeStr = order.fulfillment_time || '';
   
-  // Format item list cleanly
   const itemsText = order.items && order.items.length > 0
     ? order.items.map(i => {
         const sizeStr = i.selectionLabel ? ` (${i.selectionLabel})` : '';
@@ -186,7 +187,6 @@ Thank you for supporting a local woman owned small business.
 Desi Dabba | BlueBonnet Whisk`
     );
   } else {
-    // Super Crisp & Dynamic Order Ready message (auto-switches Delivery vs Pickup)
     const statusHeader = order.is_delivery ? '🚗 Order Out for Delivery!' : '🍱 Order Ready for Pickup!';
     const actionText = order.is_delivery
       ? `your order #${shortId} is fresh & on its way for delivery!`
@@ -195,7 +195,6 @@ Desi Dabba | BlueBonnet Whisk`
       ? `📍 Delivery Destination:\n${order.delivery_address || 'Address on file'}`
       : `📍 Pickup Location:\n2437 Deerwood Dr, Little Elm, TX`;
 
-    // Clean, crisp item summary without heavy price breakdown
     const cleanItemsText = order.items && order.items.length > 0
       ? order.items.map(i => {
           const sizeStr = i.selectionLabel ? ` (${i.selectionLabel})` : '';
@@ -222,6 +221,9 @@ Desi Dabba | BlueBonnet Whisk`
 }
 
 export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
+  // Primary KDS Tab: 'orders' (Live Queue) vs 'analytics' (Monthly Trends & Top Dishes)
+  const [activeKdsTab, setActiveKdsTab] = useState<'orders' | 'analytics'>('orders');
+
   // Authentication PIN state
   const [masterPin, setMasterPin] = useState<string>(() => {
     if (typeof window !== 'undefined') {
@@ -247,29 +249,26 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
   const [pinChangeError, setPinChangeError] = useState('');
   const [pinChangeSuccess, setPinChangeSuccess] = useState(false);
 
-  // Date Filter state: Defaults to 'all' for All Upcoming schedule view
+  // Date, Status, Station & Search Filters
   const { dateStr: todayDateStr } = getCentralTimeNow();
   const [selectedDate, setSelectedDate] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [stationFilter, setStationFilter] = useState<'all' | PrimarySegment>('all');
+  const [searchQuery, setSearchQuery] = useState<string>('');
 
   // Orders and loading
   const [allOrders, setAllOrders] = useState<CateringOrder[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  // Kitchen Prep Sheet Modal
+  // Modals
   const [showPrepSheet, setShowPrepSheet] = useState(false);
-
-  // Blackout Dates Manager Modal
   const [showBlackoutModal, setShowBlackoutModal] = useState(false);
-
-  // Edit Order Items & Pricing Modal
   const [editingOrder, setEditingOrder] = useState<CateringOrder | null>(null);
-
-  // Weekly Tiffin Flyer & Specials Modal
   const [showTiffinModal, setShowTiffinModal] = useState(false);
+  const [dismissedAlertPrompt, setDismissedAlertPrompt] = useState(false);
 
-  // Audio chime settings (persisted in localStorage, default: true)
+  // Audio chime settings
   const [soundEnabled, setSoundEnabled] = useState<boolean>(() => {
     if (typeof window !== 'undefined') {
       return localStorage.getItem('bbw_kds_sound_enabled') !== 'false';
@@ -285,11 +284,10 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
     return 'unsupported';
   });
 
-  // Set dedicated page title for Order System
   useEffect(() => {
     if (typeof document !== 'undefined') {
       const prevTitle = document.title;
-      document.title = "BlueBonnet Order Management & Financial Reconciliation System | Bluebonnet Whisk";
+      document.title = "BlueBonnet KDS & Analytics | Bluebonnet Whisk";
       return () => {
         document.title = prevTitle;
       };
@@ -303,14 +301,11 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
   const knownOrderIdsRef = useRef<Set<string>>(new Set());
   const isInitialLoadRef = useRef(true);
 
-  // Handle incoming newly punched order (audio chime + notification + alert banner)
   const handleIncomingNewOrder = (order: CateringOrder) => {
-    // 1. Play kitchen bell chime
     if (soundEnabled) {
       playKitchenChime();
     }
 
-    // 2. Fire OS desktop/mobile notification if granted
     if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
       try {
         new Notification(`🔔 New ${order.order_type === 'estimate' ? 'Estimate' : 'Order'} Punched!`, {
@@ -322,13 +317,11 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
       }
     }
 
-    // 3. Display high-visibility flash banner
     setNewOrderAlert(order);
   };
 
-  // Enable Notifications and test chime (compatible with Chrome, Safari, macOS, iOS PWA)
   const handleEnableAlerts = async () => {
-    playKitchenChime(); // Warm up Web Audio Context on user click
+    playKitchenChime();
 
     if (typeof window !== 'undefined' && 'Notification' in window) {
       try {
@@ -346,29 +339,26 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
 
         if (res === 'granted') {
           new Notification('🔔 Bluebonnet Whisk KDS Active!', {
-            body: 'Live order alerts active! You will hear a bell chime and receive desktop popups whenever an order is punched.',
+            body: 'Live order alerts active! You will hear a bell chime and receive popups whenever an order is punched.',
             icon: '/favicon.ico'
           });
         } else if (res === 'denied') {
-          alert('Notification permission was blocked in browser settings. Please allow notifications for bluebonnetwhisk.com in your browser site settings.');
+          alert('Notification permission was blocked in browser settings. Please allow notifications for bluebonnetwhisk.com.');
         }
       } catch (err) {
         console.warn('Notification permission error:', err);
       }
     } else {
-      alert('Desktop notifications are not supported in this browser tab. On iPhone / iPad Safari, tap Share ➔ "Add to Home Screen" to enable notifications.');
+      alert('Desktop notifications are not supported in this browser tab. On iPhone / iPad Safari, tap Share ➔ "Add to Home Screen".');
     }
   };
 
-  // Load all orders
   const loadOrders = async () => {
     setIsRefreshing(true);
     try {
-      // Fetch all orders from database to calculate badge counts and notify for any upcoming date
       const data = await fetchOrders();
       const activeData = data.filter(o => o.status !== 'cancelled');
       
-      // If not initial load, check if any newly added order with 'new' status was fetched
       if (!isInitialLoadRef.current) {
         const newlyAdded = activeData.find(o => !knownOrderIdsRef.current.has(o.id) && o.status === 'new');
         if (newlyAdded) {
@@ -389,12 +379,10 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
     if (isUnlocked) {
       loadOrders();
 
-      // Background periodic polling every 7 seconds to immediately catch newly punched orders
       const pollTimer = setInterval(() => {
         loadOrders();
       }, 7000);
 
-      // Subscribe to Realtime Postgres Changes & Local Storage events
       const unsubscribe = subscribeToOrders((eventInfo) => {
         if (eventInfo?.eventType === 'INSERT' && eventInfo?.order) {
           handleIncomingNewOrder(eventInfo.order);
@@ -409,7 +397,6 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
     }
   }, [isUnlocked, soundEnabled]);
 
-  // Handle PIN entry with serverless verification
   const handlePinSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     const clean = pinInput.trim();
@@ -431,7 +418,7 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
         return;
       }
     } catch {
-      // Fallback for local dev environments
+      // Fallback for local dev
     }
 
     if (clean === masterPin) {
@@ -446,7 +433,6 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
     }
   };
 
-  // Handle PIN Update
   const handleChangePin = (e: React.FormEvent) => {
     e.preventDefault();
     setPinChangeError('');
@@ -467,7 +453,6 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
       return;
     }
 
-    // Persist new PIN
     setMasterPin(cleanNew);
     if (typeof window !== 'undefined') {
       localStorage.setItem(MASTER_PIN_STORAGE_KEY, cleanNew);
@@ -488,7 +473,6 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
     sessionStorage.removeItem(PIN_STORAGE_KEY);
   };
 
-  // Open WhatsApp in new tab with pre-filled message
   const openWhatsAppForOrder = (order: CateringOrder, eventType: 'accepted' | 'ready' | 'rejected') => {
     const phone = formatWhatsAppPhone(order.phone_number);
     if (!phone) {
@@ -500,7 +484,6 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
     window.open(url, '_blank');
   };
 
-  // Deny / Reject Order handler: Triggers WhatsApp rejection message and deletes from Supabase & KDS
   const handleDenyOrder = async (order: CateringOrder) => {
     const shortId = order.id ? order.id.slice(0, 8).toUpperCase() : '';
     const confirmDeny = window.confirm(
@@ -508,51 +491,38 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
     );
     if (!confirmDeny) return;
 
-    // 1. Delete from known IDs ref so polling won't re-trigger notification or re-add
     knownOrderIdsRef.current.delete(order.id);
-
-    // 2. Optimistic UI update: remove from active screen state immediately
     setAllOrders(prev => prev.filter(o => o.id !== order.id));
-
-    // 3. Trigger WhatsApp rejection notification to customer
     openWhatsAppForOrder(order, 'rejected');
-
-    // 4. Delete entry from Supabase & local storage
     await deleteOrderFromSupabase(order.id);
   };
 
-  // Status transition handler
   const handleStatusChange = async (orderId: string, newStatus: OrderStatus) => {
-    // Optimistic UI update
     setAllOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: newStatus } : o));
     await updateOrderStatus(orderId, newStatus);
   };
 
   // Orders filtered by the currently selected date tab ('all' or specific YYYY-MM-DD)
-  // Sorted chronologically from left to right: fulfillment_date ASC, fulfillment_time ASC
   const ordersForSelectedDate = useMemo(() => {
     const list = selectedDate === 'all'
       ? [...allOrders]
       : allOrders.filter(o => o.fulfillment_date === selectedDate);
 
     return list.sort((a, b) => {
-      // 1. Sort by fulfillment_date ascending (earliest date first / on left)
       const dateA = a.fulfillment_date || '';
       const dateB = b.fulfillment_date || '';
       const dateCmp = dateA.localeCompare(dateB);
       if (dateCmp !== 0) return dateCmp;
 
-      // 2. Sort by fulfillment_time ascending within same date
       const timeA = parseTimeToMinutes(a.fulfillment_time);
       const timeB = parseTimeToMinutes(b.fulfillment_time);
       if (timeA !== timeB) return timeA - timeB;
 
-      // 3. Fallback to order creation time
       return (a.created_at || '').localeCompare(b.created_at || '');
     });
   }, [allOrders, selectedDate]);
 
-  // Order counts grouped by date for badge counters on date buttons (active uncompleted orders)
+  // Order counts grouped by date for badge counters on date buttons
   const orderCountsByDate = useMemo(() => {
     const map = new Map<string, number>();
     allOrders.filter(o => o.status !== 'cancelled' && o.status !== 'completed').forEach(o => {
@@ -573,8 +543,7 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
       accepted: 0,
       preparing: 0,
       ready: 0,
-      completed: 0,
-      cancelled: 0
+      completed: 0
     };
     ordersForSelectedDate.forEach(o => {
       if (o.status !== 'cancelled' && o.status !== 'completed') {
@@ -585,25 +554,47 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
       else if (o.status === 'preparing') counts.preparing++;
       else if (o.status === 'ready') counts.ready++;
       else if (o.status === 'completed') counts.completed++;
-      else if (o.status === 'cancelled') counts.cancelled++;
     });
     return counts;
   }, [ordersForSelectedDate]);
 
-  // Filtered orders list by status (new, preparing, ready, completed, all active)
-  // When statusFilter is 'all': only show active uncompleted orders (completed orders are moved to the 'completed' tab)
+  // Filtered orders list by status, station, and search query
   const activeOrders = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+
     return ordersForSelectedDate.filter(o => {
-      if (statusFilter === 'all') return o.status !== 'cancelled' && o.status !== 'completed';
-      return o.status === statusFilter;
+      // 1. Status filter
+      if (statusFilter === 'all') {
+        if (o.status === 'cancelled' || o.status === 'completed') return false;
+      } else if (o.status !== statusFilter) {
+        return false;
+      }
+
+      // 2. Station / Category filter
+      if (stationFilter !== 'all') {
+        const hasStationItem = (o.items || []).some(
+          item => classifyOrderItemSegment(item) === stationFilter
+        );
+        if (!hasStationItem) return false;
+      }
+
+      // 3. Search query filter
+      if (q) {
+        const matchName = (o.customer_name || '').toLowerCase().includes(q);
+        const matchPhone = (o.phone_number || '').toLowerCase().includes(q);
+        const matchId = (o.id || '').toLowerCase().includes(q);
+        const matchDish = (o.items || []).some(i => (i.name || '').toLowerCase().includes(q));
+        if (!matchName && !matchPhone && !matchId && !matchDish) return false;
+      }
+
+      return true;
     });
-  }, [ordersForSelectedDate, statusFilter]);
+  }, [ordersForSelectedDate, statusFilter, stationFilter, searchQuery]);
 
   // KPI Header Calculations for currently viewed date selection
   const nonCancelledOrders = ordersForSelectedDate.filter(o => o.status !== 'cancelled');
   const totalOrdersInView = nonCancelledOrders.length;
 
-  // Total Trays to Prep (Sum of 1/3, Half, Full across all active orders in view)
   const totalTraysToPrep = nonCancelledOrders.reduce((sum, order) => {
     const traysInOrder = order.items
       .filter(item => item.selectionType === 'third' || item.selectionType === 'half' || item.selectionType === 'full')
@@ -611,7 +602,6 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
     return sum + traysInOrder;
   }, 0);
 
-  // Bifurcated Financials in view (excluding cancelled)
   const totalNetFoodRevenueInView = nonCancelledOrders.reduce((sum, order) => {
     const foodBase = order.food_subtotal || 0;
     const discount = order.discount_amount || 0;
@@ -625,7 +615,6 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
   const reconciledOrdersCountInView = nonCancelledOrders.filter(o => o.reconciled_to_qbo).length;
   const sampleQboDocId = nonCancelledOrders.find(o => o.qbo_doc_id)?.qbo_doc_id;
 
-  // QBO Manual Trigger State
   const [isSyncingQbo, setIsSyncingQbo] = useState(false);
   const [syncResultMsg, setSyncResultMsg] = useState<string | null>(null);
 
@@ -643,10 +632,10 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
       });
       const data = await res.json();
       if (res.ok && data.success) {
-        setSyncResultMsg(data.message || `QBO Reconciliation completed successfully!`);
+        setSyncResultMsg(data.message || `QBO Reconciliation completed!`);
         loadOrders();
       } else {
-        setSyncResultMsg(data.error || data.message || `Sync returned status ${res.status}`);
+        setSyncResultMsg(data.error || data.message || `Sync status ${res.status}`);
       }
     } catch (err: any) {
       setSyncResultMsg(`Sync error: ${err?.message || 'Connection failed'}`);
@@ -656,7 +645,7 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
     }
   };
 
-  // Aggregated Prep Sheet Data
+  // Upgraded Aggregated Prep Sheet Data (Supports Trays, Tiffins, Containers, Breads, Gallons & Custom Cakes)
   const prepSheetSummary = useMemo(() => {
     const map = new Map<string, {
       name: string;
@@ -665,57 +654,56 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
       thirdCount: number;
       halfCount: number;
       fullCount: number;
-      packsCount: number;
-      gallonsCount: number;
-      cakesCount: number;
+      tiffinCount: number;
+      otherUnits: string[];
     }>();
 
     nonCancelledOrders.forEach(order => {
       order.items.forEach(item => {
-        const key = item.menuItemId;
+        const cleanName = normalizeDishName(item.name);
+        const key = cleanName.toLowerCase();
         if (!map.has(key)) {
           map.set(key, {
-            name: item.name,
+            name: cleanName,
             category: item.categoryLabel,
             tier: item.tier,
             thirdCount: 0,
             halfCount: 0,
             fullCount: 0,
-            packsCount: 0,
-            gallonsCount: 0,
-            cakesCount: 0
+            tiffinCount: 0,
+            otherUnits: []
           });
         }
         const record = map.get(key)!;
         if (item.selectionType === 'third') record.thirdCount += item.quantity;
         else if (item.selectionType === 'half') record.halfCount += item.quantity;
         else if (item.selectionType === 'full') record.fullCount += item.quantity;
-        else if (item.selectionType === 'pack_30') record.packsCount += item.quantity;
-        else if (item.selectionType === 'gallon') record.gallonsCount += item.quantity;
-        else if (item.selectionType === 'cake_custom') record.cakesCount += item.quantity;
+        else if (item.selectionType.startsWith('tiffin_')) record.tiffinCount += item.quantity;
+        else {
+          record.otherUnits.push(`${item.quantity}× ${item.selectionLabel || item.selectionType}`);
+        }
       });
     });
 
     return Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name));
   }, [nonCancelledOrders]);
 
-  // Include Today + next 7 upcoming days in quick date tabs
   const upcomingDateOptions = getUpcomingDates(8, true);
 
   // ── PIN AUTHENTICATION MODAL ──
   if (!isUnlocked) {
     return (
       <div className="min-h-[70vh] flex items-center justify-center p-4 bg-[#fbfbfa] font-sans">
-        <div className="w-full max-w-md bg-white rounded-2xl shadow-xl border border-[#775a19]/20 p-8 text-center animate-fade-in">
-          <div className="w-32 h-32 rounded-3xl overflow-hidden shadow-xl border-4 border-[#ffdea5] mx-auto mb-5 bg-[#00346f] flex items-center justify-center p-1 ring-4 ring-[#00346f]/10">
+        <div className="w-full max-w-md bg-white rounded-2xl shadow-xl border border-[#775a19]/20 p-7 text-center animate-fade-in">
+          <div className="w-24 h-24 rounded-3xl overflow-hidden shadow-lg border-4 border-[#ffdea5] mx-auto mb-4 bg-[#00346f] flex items-center justify-center p-1">
             <img src="/bluebonnet_oms_logo.jpg" alt="BlueBonnet Logo" className="w-full h-full object-cover rounded-2xl" />
           </div>
 
-          <h2 className="font-serif text-xl sm:text-2xl font-bold text-[#00346f] leading-snug">
-            BlueBonnet Order Management &amp; Financial Reconciliation System
+          <h2 className="font-serif text-xl font-bold text-[#00346f] leading-snug">
+            BlueBonnet Kitchen Display &amp; Analytics
           </h2>
-          <p className="text-xs text-gray-500 mt-1 mb-6">
-            Authorized BlueBonnet Whisk staff only. Please enter your security access PIN.
+          <p className="text-xs text-gray-500 mt-1 mb-5">
+            Authorized staff only. Enter security PIN to unlock.
           </p>
 
           <form onSubmit={handlePinSubmit} className="space-y-4">
@@ -730,21 +718,20 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
                   setPinInput(e.target.value.replace(/\D/g, ''));
                   setPinError(false);
                 }}
-                className={`w-52 text-center text-3xl font-mono tracking-widest py-3 border rounded-xl focus:outline-none focus:ring-2 ${
+                className={`w-48 text-center text-2xl font-mono tracking-widest py-2.5 border rounded-xl focus:outline-none focus:ring-2 ${
                   pinError 
                     ? 'border-rose-500 focus:ring-rose-200 bg-rose-50' 
                     : 'border-gray-300 focus:ring-[#00346f]/20 focus:border-[#00346f]'
                 }`}
               />
               {pinError && (
-                <p className="text-xs text-rose-600 mt-2 font-semibold">
+                <p className="text-xs text-rose-600 mt-1.5 font-semibold">
                   Incorrect PIN. Please try again.
                 </p>
               )}
             </div>
 
-            {/* Quick keypad for touch tablets */}
-            <div className="grid grid-cols-3 gap-2 max-w-[220px] mx-auto pt-2">
+            <div className="grid grid-cols-3 gap-2 max-w-[210px] mx-auto">
               {[1, 2, 3, 4, 5, 6, 7, 8, 9, 'Clear', 0, 'Enter'].map((val, i) => (
                 <button
                   key={i}
@@ -756,28 +743,28 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
                       if (pinInput.length < 8) setPinInput(prev => prev + val);
                     }
                   }}
-                  className="py-2.5 rounded-lg bg-gray-50 hover:bg-gray-150 border border-gray-200 text-sm font-bold text-gray-800 transition-colors cursor-pointer"
+                  className="py-2 rounded-lg bg-gray-50 hover:bg-gray-150 border border-gray-200 text-sm font-bold text-gray-800 transition-colors cursor-pointer"
                 >
                   {val}
                 </button>
               ))}
             </div>
 
-            <div className="pt-4 flex flex-col gap-2">
+            <div className="pt-2 flex flex-col gap-2">
               <button
                 type="submit"
-                className="w-full bg-[#00346f] hover:bg-[#00224d] text-white py-3 rounded-xl font-bold text-xs uppercase tracking-wider transition-all shadow-md cursor-pointer"
+                className="w-full bg-[#00346f] hover:bg-[#00224d] text-white py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider transition-all shadow-md cursor-pointer"
               >
-                Unlock Order System
+                Unlock Kitchen KDS
               </button>
               {onBackToOrder && (
                 <button
                   type="button"
                   onClick={onBackToOrder}
-                  className="text-xs text-gray-500 hover:text-[#00346f] pt-2 flex items-center justify-center gap-1.5 mx-auto transition-colors cursor-pointer"
+                  className="text-xs text-gray-500 hover:text-[#00346f] pt-1 flex items-center justify-center gap-1.5 mx-auto transition-colors cursor-pointer"
                 >
                   <ArrowLeft className="w-3.5 h-3.5" />
-                  <span>Exit to Bluebonnet Whisk Website</span>
+                  <span>Exit to Website</span>
                 </button>
               )}
             </div>
@@ -789,35 +776,98 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
 
   // ── UNLOCKED SYSTEM SCREEN ──
   return (
-    <div className="min-h-screen bg-[#f7f8fa] p-3 sm:p-5 lg:p-8 font-sans">
-      <div className="max-w-7xl mx-auto space-y-5">
+    <div className="min-h-screen bg-[#f7f8fa] p-3 sm:p-5 lg:p-6 font-sans">
+      <div className="max-w-7xl mx-auto space-y-4">
         
-        {/* ── TOP NAV & COMMAND DASHBOARD HEADER ── */}
-        <div className="bg-white rounded-2xl border border-gray-200 p-4 sm:p-5 shadow-xs flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-          <div className="flex items-center gap-3.5">
-            <div className="w-14 h-14 sm:w-18 sm:h-18 rounded-2xl overflow-hidden border-2 border-[#ffdea5] shadow-md shrink-0 bg-[#00346f] flex items-center justify-center p-1 ring-2 ring-[#00346f]/10">
-              <img src="/bluebonnet_oms_logo.jpg" alt="BlueBonnet Logo" className="w-full h-full object-cover rounded-xl" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2 flex-wrap">
-                <h1 className="font-serif text-lg sm:text-xl font-bold text-[#00346f] leading-tight">
-                  BlueBonnet Order Management &amp; Financial Reconciliation System
-                </h1>
-                <span className="flex items-center gap-1 bg-emerald-100 text-emerald-800 text-[10px] font-extrabold px-2.5 py-0.5 rounded-full uppercase tracking-wider">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                  Supabase &amp; QBO Live Sync
-                </span>
+        {/* ── LEAN COMMAND HEADER & PRIMARY MODE TABS ── */}
+        <div className="bg-white rounded-2xl border border-gray-200 p-3.5 sm:p-4 shadow-xs space-y-3">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+            {/* Brand & Primary View Switcher */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between lg:justify-start gap-3">
+              <div className="flex items-center gap-3">
+                <div className="w-11 h-11 rounded-xl overflow-hidden border-2 border-[#ffdea5] shadow-xs shrink-0 bg-[#00346f] flex items-center justify-center p-0.5">
+                  <img src="/bluebonnet_oms_logo.jpg" alt="BlueBonnet Logo" className="w-full h-full object-cover rounded-lg" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h1 className="font-serif text-base sm:text-lg font-bold text-[#00346f] leading-tight">
+                      BlueBonnet Kitchen KDS
+                    </h1>
+                    <span className="inline-flex items-center gap-1 bg-emerald-100 text-emerald-800 text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                      Live
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-gray-500">
+                    {new Date().toLocaleDateString('en-US', { timeZone: 'America/Chicago', weekday: 'short', month: 'short', day: 'numeric' })} CT • <strong className="text-[#00346f]">{totalActiveOrdersCount} Active</strong>
+                  </p>
+                </div>
               </div>
-              <p className="text-xs text-gray-500 mt-0.5">
-                Real-time Cloud Database • Central Time: <strong>{new Date().toLocaleDateString('en-US', { timeZone: 'America/Chicago', weekday: 'short', month: 'short', day: 'numeric' })}</strong> • <strong className="text-[#00346f] font-bold">{allOrders.filter(o => o.status !== 'cancelled').length} Active Orders</strong>
-              </p>
-            </div>
-          </div>
 
-          {/* Header Quick Dock Action Buttons */}
-          <div className="flex flex-wrap items-center gap-2">
-            {/* Sound / Bell Alert Toggle & Test */}
-            <div className="inline-flex items-center rounded-xl border border-gray-200 bg-gray-50/90 p-0.5 shadow-2xs">
+              {/* Primary Mode Switcher: [ Live Orders | Analytics ] */}
+              <div className="inline-flex items-center bg-gray-100 p-1 rounded-xl border border-gray-200 self-start sm:self-auto">
+                <button
+                  type="button"
+                  onClick={() => setActiveKdsTab('orders')}
+                  className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-extrabold transition-all cursor-pointer ${
+                    activeKdsTab === 'orders'
+                      ? 'bg-[#00346f] text-white shadow-xs'
+                      : 'text-gray-600 hover:text-gray-900'
+                  }`}
+                >
+                  <ClipboardList className="w-3.5 h-3.5" />
+                  <span>Live Orders</span>
+                  {totalActiveOrdersCount > 0 && (
+                    <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-black ${
+                      activeKdsTab === 'orders' ? 'bg-[#ffdea5] text-[#00346f]' : 'bg-gray-200 text-gray-800'
+                    }`}>
+                      {totalActiveOrdersCount}
+                    </span>
+                  )}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setActiveKdsTab('analytics')}
+                  className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-extrabold transition-all cursor-pointer ${
+                    activeKdsTab === 'analytics'
+                      ? 'bg-[#00346f] text-white shadow-xs'
+                      : 'text-gray-600 hover:text-gray-900'
+                  }`}
+                >
+                  <BarChart3 className="w-3.5 h-3.5" />
+                  <span>Analytics</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Compact Action Toolbar */}
+            <div className="flex flex-wrap items-center gap-1.5">
+              <button
+                onClick={() => setShowPrepSheet(true)}
+                className="inline-flex items-center gap-1.5 bg-[#775a19] hover:bg-[#5e4612] text-white px-3 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-2xs cursor-pointer min-h-[34px]"
+              >
+                <Printer className="w-3.5 h-3.5" />
+                <span>Prep Sheet</span>
+              </button>
+
+              <button
+                onClick={() => setShowTiffinModal(true)}
+                className="inline-flex items-center gap-1.5 border border-purple-300 bg-purple-50/50 hover:bg-purple-100 text-purple-900 px-2.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer min-h-[34px]"
+              >
+                <ImageIcon className="w-3.5 h-3.5 text-purple-700" />
+                <span>Tiffin Menu</span>
+              </button>
+
+              <button
+                onClick={() => setShowBlackoutModal(true)}
+                className="inline-flex items-center gap-1 border border-rose-200 hover:bg-rose-50 text-rose-900 px-2.5 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer min-h-[34px]"
+                title="Manage Blackout Dates"
+              >
+                <Ban className="w-3.5 h-3.5 text-rose-600" />
+                <span className="hidden sm:inline">Blackouts</span>
+              </button>
+
               <button
                 type="button"
                 onClick={() => {
@@ -826,197 +876,131 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
                   localStorage.setItem('bbw_kds_sound_enabled', String(next));
                   if (next) playKitchenChime();
                 }}
-                className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition cursor-pointer min-h-[38px] ${
+                className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-semibold border transition cursor-pointer min-h-[34px] ${
                   soundEnabled 
-                    ? 'bg-emerald-50 text-emerald-800 border border-emerald-200 shadow-2xs' 
-                    : 'text-gray-400 hover:text-gray-600'
+                    ? 'bg-emerald-50 text-emerald-800 border-emerald-200' 
+                    : 'bg-gray-50 text-gray-400 border-gray-200'
                 }`}
-                title={soundEnabled ? "Order chime active (Click to mute)" : "Order chime muted (Click to unmute)"}
+                title={soundEnabled ? "Chime ON (Tap to mute)" : "Chime Muted"}
               >
-                {soundEnabled ? <Volume2 className="w-3.5 h-3.5 text-emerald-600" /> : <VolumeX className="w-3.5 h-3.5 text-gray-400" />}
-                <span>{soundEnabled ? 'Bell ON' : 'Muted'}</span>
+                {soundEnabled ? <Volume2 className="w-3.5 h-3.5 text-emerald-600" /> : <VolumeX className="w-3.5 h-3.5" />}
+                <span className="hidden md:inline">{soundEnabled ? 'Bell' : 'Muted'}</span>
               </button>
 
-              {soundEnabled && (
+              <button
+                onClick={loadOrders}
+                disabled={isRefreshing}
+                className="inline-flex items-center gap-1 bg-gray-100 hover:bg-gray-200 text-gray-700 px-2.5 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer min-h-[34px]"
+                title="Refresh Orders"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
+              </button>
+
+              <button
+                onClick={() => {
+                  setShowChangePinModal(true);
+                  setCurrentPinInput('');
+                  setNewPinInput('');
+                  setConfirmPinInput('');
+                  setPinChangeError('');
+                  setPinChangeSuccess(false);
+                }}
+                className="inline-flex items-center gap-1 border border-gray-200 hover:bg-gray-100 text-gray-600 px-2.5 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer min-h-[34px]"
+                title="Change PIN"
+              >
+                <KeyRound className="w-3.5 h-3.5 text-amber-700" />
+              </button>
+
+              <button
+                onClick={handleLock}
+                className="inline-flex items-center gap-1 border border-gray-200 hover:bg-gray-100 text-gray-600 px-2.5 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer min-h-[34px]"
+                title="Lock KDS"
+              >
+                <Lock className="w-3.5 h-3.5" />
+              </button>
+
+              {onBackToOrder && (
                 <button
                   type="button"
-                  onClick={() => playKitchenChime()}
-                  className="px-2.5 py-2 text-[11px] font-bold text-gray-500 hover:text-[#00346f] transition cursor-pointer min-h-[38px]"
-                  title="Test Kitchen Bell Sound"
+                  onClick={onBackToOrder}
+                  className="inline-flex items-center gap-1 bg-[#00346f] hover:bg-[#00224d] text-white px-2.5 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer min-h-[34px]"
+                  title="Return to Website"
                 >
-                  Test
+                  <ArrowLeft className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">Exit</span>
                 </button>
               )}
             </div>
-
-            {/* Native Push Notifications Enable */}
-            {notificationPermission !== 'granted' && (
-              <button
-                type="button"
-                onClick={handleEnableAlerts}
-                className="inline-flex items-center gap-1.5 bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-900 px-3 py-2 rounded-xl text-xs font-semibold transition cursor-pointer min-h-[38px]"
-                title="Enable browser notifications and test kitchen chime"
-              >
-                <BellRing className="w-3.5 h-3.5 text-blue-600 animate-pulse" />
-                <span>Enable Alerts</span>
-              </button>
-            )}
-
-            <button
-              onClick={() => setShowPrepSheet(true)}
-              className="inline-flex items-center gap-1.5 bg-[#775a19] hover:bg-[#5e4612] text-white px-3.5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-xs cursor-pointer min-h-[38px]"
-            >
-              <Printer className="w-4 h-4" />
-              <span>Prep Sheet</span>
-            </button>
-
-            <button
-              onClick={() => setShowTiffinModal(true)}
-              className="inline-flex items-center gap-1.5 border border-purple-300 hover:bg-purple-50 text-purple-900 px-3 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer min-h-[38px]"
-              title="Upload / Update Weekly Tiffin Menu Flyer & Saturday Specials"
-            >
-              <ImageIcon className="w-3.5 h-3.5 text-purple-700" />
-              <span>Tiffin Flyer</span>
-            </button>
-
-            <button
-              onClick={() => setShowBlackoutModal(true)}
-              className="inline-flex items-center gap-1.5 border border-rose-300 hover:bg-rose-50 text-rose-900 px-3 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer min-h-[38px]"
-              title="Manage Kitchen Blackout Dates & Recurring Schedule"
-            >
-              <Ban className="w-3.5 h-3.5 text-rose-700" />
-              <span>Blackouts</span>
-            </button>
-
-            <button
-              onClick={() => {
-                setShowChangePinModal(true);
-                setCurrentPinInput('');
-                setNewPinInput('');
-                setConfirmPinInput('');
-                setPinChangeError('');
-                setPinChangeSuccess(false);
-              }}
-              className="inline-flex items-center gap-1.5 border border-amber-300 hover:bg-amber-50 text-amber-900 px-3 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer min-h-[38px]"
-              title="Change Kitchen Access PIN"
-            >
-              <KeyRound className="w-3.5 h-3.5 text-amber-700" />
-              <span>PIN</span>
-            </button>
-
-            <button
-              onClick={loadOrders}
-              disabled={isRefreshing}
-              className="inline-flex items-center gap-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer min-h-[38px]"
-              title="Refresh Orders"
-            >
-              <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
-              <span className="hidden sm:inline">Refresh</span>
-            </button>
-
-            <button
-              onClick={handleLock}
-              className="inline-flex items-center gap-1.5 border border-gray-300 hover:bg-gray-100 text-gray-600 px-3 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer min-h-[38px]"
-              title="Lock Screen"
-            >
-              <Lock className="w-3.5 h-3.5" />
-              <span>Lock</span>
-            </button>
-
-            {onBackToOrder && (
-              <button
-                type="button"
-                onClick={onBackToOrder}
-                className="inline-flex items-center gap-1.5 bg-[#00346f] hover:bg-[#00224d] text-white px-3.5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-xs cursor-pointer min-h-[38px]"
-                title="Return to Bluebonnet Whisk Website"
-              >
-                <ArrowLeft className="w-3.5 h-3.5" />
-                <span>Exit</span>
-              </button>
-            )}
           </div>
+
+          {/* Sleek 1-Line Browser Notification Prompt (if not granted & not dismissed) */}
+          {notificationPermission !== 'granted' && !dismissedAlertPrompt && (
+            <div className="bg-blue-50/90 border border-blue-200 rounded-xl px-3 py-2 flex items-center justify-between gap-2 text-xs">
+              <div className="flex items-center gap-2 text-blue-950 min-w-0">
+                <BellRing className="w-4 h-4 text-blue-600 shrink-0 animate-pulse" />
+                <span className="truncate">
+                  <strong>Live Kitchen Alerts:</strong> Enable push notifications &amp; audio chime for incoming orders.
+                </span>
+              </div>
+              <div className="flex items-center gap-1.5 shrink-0">
+                <button
+                  type="button"
+                  onClick={handleEnableAlerts}
+                  className="px-2.5 py-1 bg-[#00346f] hover:bg-[#00224d] text-white text-[11px] font-bold rounded-lg cursor-pointer"
+                >
+                  Enable
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setDismissedAlertPrompt(true)}
+                  className="p-1 text-gray-400 hover:text-gray-700 cursor-pointer"
+                  aria-label="Dismiss"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+          )}
         </div>
-
-        {/* ── BROWSER NOTIFICATION BANNER ── */}
-        {notificationPermission !== 'granted' && (
-          <div className="bg-gradient-to-r from-blue-50 via-indigo-50 to-amber-50 border border-blue-200 rounded-2xl p-4 sm:p-5 shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-4 animate-fade-in">
-            <div className="flex items-start gap-3">
-              <div className="w-10 h-10 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center shrink-0 mt-0.5 shadow-2xs">
-                <BellRing className="w-5 h-5 text-blue-600 animate-pulse" />
-              </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <h4 className="font-bold text-sm text-blue-950">
-                    Enable Live Order Alerts &amp; Kitchen Chime
-                  </h4>
-                  <span className="text-[10px] bg-blue-200 text-blue-900 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">
-                    Chrome • Safari • Mobile
-                  </span>
-                </div>
-                <p className="text-xs text-blue-800/90 mt-1 leading-relaxed">
-                  Allow browser notifications and audio to hear a restaurant chime and receive instant desktop/mobile popups whenever a customer punches an order.
-                  <span className="text-gray-500 block text-[11px] mt-0.5">
-                    💡 iPhone/iPad Safari users: Tap Share ➔ &quot;Add to Home Screen&quot; to receive system push alerts.
-                  </span>
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2 shrink-0 md:self-center">
-              <button
-                type="button"
-                onClick={handleEnableAlerts}
-                className="px-5 py-2.5 bg-[#00346f] hover:bg-[#00224d] text-white text-xs font-bold uppercase tracking-wider rounded-xl shadow-xs transition-all cursor-pointer flex items-center gap-2 hover:scale-101 min-h-[44px]"
-              >
-                <BellRing className="w-4 h-4" />
-                <span>Enable Alerts &amp; Test Chime</span>
-              </button>
-            </div>
-          </div>
-        )}
 
         {/* ── NEW ORDER LIVE ALERT BANNER ── */}
         {newOrderAlert && (
-          <div className="bg-gradient-to-r from-amber-500 via-orange-500 to-rose-600 text-white rounded-2xl p-4 sm:p-5 shadow-xl border-2 border-white/40 flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="bg-gradient-to-r from-amber-500 via-orange-500 to-rose-600 text-white rounded-2xl p-4 shadow-xl border-2 border-white/40 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-xl bg-white/20 backdrop-blur-md flex items-center justify-center shrink-0">
-                <BellRing className="w-6 h-6 text-white animate-bounce" />
+              <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
+                <BellRing className="w-5 h-5 text-white animate-bounce" />
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="bg-white text-rose-700 text-xs font-black uppercase px-2 py-0.5 rounded-full tracking-wider">
-                    🔔 New Order Punched!
+                  <span className="bg-white text-rose-700 text-[10px] font-black uppercase px-2 py-0.5 rounded-full tracking-wider">
+                    🔔 New Order!
                   </span>
-                  <span className="text-xs font-semibold text-white/90">
-                    Just Now
+                  <span className="text-sm font-bold">
+                    {newOrderAlert.customer_name} • ${newOrderAlert.total_amount.toFixed(2)} ({newOrderAlert.items.length} items)
                   </span>
                 </div>
-                <div className="text-base sm:text-lg font-bold mt-0.5">
-                  {newOrderAlert.customer_name} • ${newOrderAlert.total_amount.toFixed(2)} ({newOrderAlert.items.length} items)
-                </div>
-                <p className="text-xs text-white/90">
-                  Scheduled for: <strong className="text-white">{newOrderAlert.fulfillment_date}</strong> at <strong className="text-white">{newOrderAlert.fulfillment_time || 'Pending time'}</strong> • {newOrderAlert.is_delivery ? '🚚 Delivery' : '🏪 Pickup'}
+                <p className="text-xs text-white/90 mt-0.5">
+                  Scheduled: <strong>{newOrderAlert.fulfillment_date}</strong> @ <strong>{newOrderAlert.fulfillment_time || 'TBD'}</strong> • {newOrderAlert.is_delivery ? '🚚 Delivery' : '🏪 Pickup'}
                 </p>
               </div>
             </div>
 
             <div className="flex items-center gap-2 shrink-0">
-              {selectedDate !== newOrderAlert.fulfillment_date && (
-                <button
-                  onClick={() => {
-                    setSelectedDate(newOrderAlert.fulfillment_date);
-                    setNewOrderAlert(null);
-                  }}
-                  className="bg-white hover:bg-amber-50 text-rose-700 px-3.5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-md cursor-pointer flex items-center gap-1.5 min-h-[44px]"
-                >
-                  <span>Switch to {newOrderAlert.fulfillment_date}</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </button>
-              )}
+              <button
+                onClick={() => {
+                  setActiveKdsTab('orders');
+                  setSelectedDate(newOrderAlert.fulfillment_date);
+                  setNewOrderAlert(null);
+                }}
+                className="bg-white hover:bg-amber-50 text-rose-700 px-3 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-sm cursor-pointer flex items-center gap-1"
+              >
+                <span>View Order</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </button>
               <button
                 onClick={() => setNewOrderAlert(null)}
-                className="bg-black/20 hover:bg-black/40 text-white p-2 rounded-xl text-xs font-semibold transition-all cursor-pointer min-h-[44px] min-w-[44px] flex items-center justify-center"
-                title="Dismiss Alert"
+                className="bg-black/20 hover:bg-black/40 text-white p-1.5 rounded-xl cursor-pointer"
+                title="Dismiss"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -1024,637 +1008,682 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
           </div>
         )}
 
-        {/* ── DATE PICKER & STATUS PIPELINE TABS ── */}
-        <div className="bg-white rounded-2xl border border-gray-200 p-3.5 sm:p-4 shadow-xs space-y-3">
-          
-          {/* 1. Schedule Ribbon (Row 1 with Responsive Flex & Smooth Scroll) */}
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-2.5 pb-2.5 border-b border-gray-150">
-            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none snap-x snap-mandatory min-w-0 flex-1 pr-2">
-              <span className="text-xs font-bold text-gray-500 mr-1.5 flex items-center gap-1 shrink-0">
-                <CalendarIcon className="w-3.5 h-3.5 text-[#00346f]" />
-                <span>Schedule:</span>
-              </span>
-
-              {/* All Orders Button */}
-              <button
-                type="button"
-                onClick={() => setSelectedDate('all')}
-                className={`px-3 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5 shrink-0 snap-start min-h-[38px] ${
-                  selectedDate === 'all'
-                    ? 'bg-[#00346f] text-white shadow-xs'
-                    : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
-                }`}
-              >
-                <span>All Orders</span>
-                {totalActiveOrdersCount > 0 && (
-                  <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-black ${
-                    selectedDate === 'all' ? 'bg-[#ffdea5] text-[#00346f]' : 'bg-gray-200 text-gray-800'
-                  }`}>
-                    {totalActiveOrdersCount}
+        {/* ── TAB 2: ANALYTICS & MONTHLY INSIGHTS ── */}
+        {activeKdsTab === 'analytics' ? (
+          <KDSAnalyticsTab orders={allOrders} />
+        ) : (
+          <>
+            {/* ── TAB 1: LIVE ORDERS SCHEDULE, STATION FILTER & SEARCH ── */}
+            <div className="bg-white rounded-2xl border border-gray-200 p-3.5 shadow-xs space-y-2.5">
+              
+              {/* Row 1: Schedule Date Ribbon */}
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 pb-2.5 border-b border-gray-150">
+                <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 scrollbar-none min-w-0 flex-1">
+                  <span className="text-[11px] font-bold text-gray-500 mr-1 flex items-center gap-1 shrink-0">
+                    <CalendarIcon className="w-3.5 h-3.5 text-[#00346f]" />
+                    <span>Date:</span>
                   </span>
-                )}
-              </button>
 
-              {upcomingDateOptions.map(opt => {
-                const isSelected = selectedDate === opt.dateStr;
-                const isToday = opt.dateStr === todayDateStr;
-                const count = orderCountsByDate.get(opt.dateStr) || 0;
-
-                return (
-                  <button
-                    key={opt.dateStr}
-                    type="button"
-                    onClick={() => setSelectedDate(opt.dateStr)}
-                    className={`px-3 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5 shrink-0 snap-start min-h-[38px] ${
-                      isSelected
-                        ? isToday
-                          ? 'bg-amber-600 text-white shadow-xs ring-2 ring-amber-300'
-                          : 'bg-[#00346f] text-white shadow-xs'
-                        : isToday
-                        ? count > 0
-                          ? 'bg-amber-100 text-amber-950 border border-amber-300 hover:bg-amber-200 font-extrabold shadow-2xs'
-                          : 'bg-amber-50 text-amber-900 border border-amber-200 hover:bg-amber-100 font-bold'
-                        : count > 0
-                        ? 'bg-blue-50 border border-blue-200 text-[#00346f] hover:bg-blue-100'
-                        : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
-                    }`}
-                  >
-                    <span>{isToday ? 'Today' : `${opt.dayOfWeek} ${opt.label}`}</span>
-                    {count > 0 && (
-                      <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-black ${
-                        isSelected
-                          ? 'bg-[#ffdea5] text-[#00346f]'
-                          : isToday
-                          ? 'bg-amber-700 text-white'
-                          : 'bg-[#00346f] text-white'
-                      }`}>
-                        {count}
-                      </span>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-
-            <div className="flex items-center gap-1.5 shrink-0 pt-1 md:pt-0 self-end md:self-auto">
-              <span className="text-[11px] font-medium text-gray-500 whitespace-nowrap">Pick date:</span>
-              <input
-                type="date"
-                value={selectedDate === 'all' ? todayDateStr : selectedDate}
-                onChange={(e) => setSelectedDate(e.target.value)}
-                className="px-2.5 py-1.5 bg-gray-50 border border-gray-300 rounded-lg text-xs text-gray-700 focus:outline-none shrink-0 min-h-[38px]"
-              />
-            </div>
-          </div>
-
-          {/* 2. Status Pipeline Filter Ribbon (Row 2) */}
-          <div className="pt-2 border-t border-gray-150 flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none snap-x snap-mandatory w-full">
-            <span className="text-xs font-bold text-gray-500 mr-1.5 flex items-center gap-1 shrink-0">
-              <span>Status:</span>
-            </span>
-
-            <div className="flex items-center gap-1.5 bg-gray-100 p-1 rounded-xl shrink-0 overflow-x-auto">
-              {[
-                { key: 'all', label: 'All Orders', count: statusCounts.all },
-                { key: 'new', label: 'New', count: statusCounts.new },
-                { key: 'accepted', label: 'Accepted', count: statusCounts.accepted },
-                { key: 'preparing', label: 'Preparing', count: statusCounts.preparing },
-                { key: 'ready', label: 'Ready', count: statusCounts.ready },
-                { key: 'completed', label: 'Completed', count: statusCounts.completed },
-                { key: 'cancelled', label: 'Cancelled', count: statusCounts.cancelled }
-              ].map(tab => (
-                <button
-                  key={tab.key}
-                  type="button"
-                  onClick={() => setStatusFilter(tab.key)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 snap-start min-h-[36px] ${
-                    statusFilter === tab.key
-                      ? 'bg-white text-[#00346f] shadow-xs ring-1 ring-black/5 font-extrabold'
-                      : 'text-gray-600 hover:text-gray-900'
-                  }`}
-                >
-                  <span>{tab.label}</span>
-                  {tab.count > 0 && (
-                    <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
-                      statusFilter === tab.key
-                        ? tab.key === 'completed'
-                          ? 'bg-emerald-100 text-emerald-800'
-                          : 'bg-[#ffdea5] text-[#00346f]'
-                        : 'bg-gray-200 text-gray-700'
-                    }`}>
-                      {tab.count}
-                    </span>
-                  )}
-                </button>
-              ))}
-            </div>
-          </div>
-
-        </div>
-
-        {/* ── LIVE ORDER CARDS GRID ── */}
-        {isLoading ? (
-          <div className="py-20 text-center text-gray-400">
-            <RefreshCw className="w-8 h-8 mx-auto animate-spin mb-2 text-[#00346f]" />
-            <p className="text-xs font-semibold">Loading live kitchen orders...</p>
-          </div>
-        ) : activeOrders.length === 0 ? (
-          <div className="bg-white rounded-2xl border border-gray-200 p-8 sm:p-12 text-center shadow-xs space-y-4">
-            <ChefHat className="w-12 h-12 mx-auto text-gray-300" />
-            <div>
-              <h3 className="font-serif text-lg font-bold text-gray-800">
-                No orders found for {selectedDate === 'all' ? 'All Orders schedule' : selectedDate === todayDateStr ? 'Today' : selectedDate}
-              </h3>
-              <p className="text-xs text-gray-500 mt-1">
-                {statusFilter !== 'all' 
-                  ? `No orders matching status "${statusFilter}". Try switching to "All Orders".`
-                  : 'No catering orders or estimates scheduled for this day.'}
-              </p>
-            </div>
-
-            {selectedDate !== 'all' && totalActiveOrdersCount > 0 && (
-              <div className="pt-2">
-                <div className="p-3 bg-blue-50 border border-blue-200 rounded-xl inline-block max-w-md mx-auto text-xs text-[#00346f] mb-3">
-                  <strong>Notice:</strong> You have <strong>{totalActiveOrdersCount} active orders</strong> scheduled on other dates!
-                </div>
-                <div>
                   <button
                     type="button"
                     onClick={() => setSelectedDate('all')}
-                    className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#00346f] hover:bg-[#00224d] text-white text-xs font-bold uppercase tracking-wider rounded-xl shadow-xs transition cursor-pointer min-h-[44px]"
+                    className={`px-2.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5 shrink-0 ${
+                      selectedDate === 'all'
+                        ? 'bg-[#00346f] text-white shadow-2xs'
+                        : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+                    }`}
                   >
-                    <span>View All {totalActiveOrdersCount} Orders</span>
-                    <ArrowRight className="w-4 h-4" />
+                    <span>All Upcoming</span>
+                    {totalActiveOrdersCount > 0 && (
+                      <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-black ${
+                        selectedDate === 'all' ? 'bg-[#ffdea5] text-[#00346f]' : 'bg-gray-200 text-gray-800'
+                      }`}>
+                        {totalActiveOrdersCount}
+                      </span>
+                    )}
+                  </button>
+
+                  {upcomingDateOptions.map(opt => {
+                    const isSelected = selectedDate === opt.dateStr;
+                    const isToday = opt.dateStr === todayDateStr;
+                    const count = orderCountsByDate.get(opt.dateStr) || 0;
+
+                    return (
+                      <button
+                        key={opt.dateStr}
+                        type="button"
+                        onClick={() => setSelectedDate(opt.dateStr)}
+                        className={`px-2.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5 shrink-0 ${
+                          isSelected
+                            ? isToday
+                              ? 'bg-amber-600 text-white shadow-2xs ring-2 ring-amber-300'
+                              : 'bg-[#00346f] text-white shadow-2xs'
+                            : isToday
+                            ? count > 0
+                              ? 'bg-amber-100 text-amber-950 border border-amber-300 font-extrabold'
+                              : 'bg-amber-50 text-amber-900 border border-amber-200 font-bold'
+                            : count > 0
+                            ? 'bg-blue-50 border border-blue-200 text-[#00346f]'
+                            : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+                        }`}
+                      >
+                        <span>{isToday ? 'Today' : `${opt.dayOfWeek} ${opt.label}`}</span>
+                        {count > 0 && (
+                          <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-black ${
+                            isSelected
+                              ? 'bg-[#ffdea5] text-[#00346f]'
+                              : isToday
+                              ? 'bg-amber-700 text-white'
+                              : 'bg-[#00346f] text-white'
+                          }`}>
+                            {count}
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <input
+                    type="date"
+                    value={selectedDate === 'all' ? todayDateStr : selectedDate}
+                    onChange={(e) => setSelectedDate(e.target.value)}
+                    className="px-2.5 py-1 bg-gray-50 border border-gray-300 rounded-lg text-xs text-gray-700 focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              {/* Row 2: Status Pipeline + Kitchen Station Filter + Quick Search */}
+              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-2.5">
+                {/* Status Tabs */}
+                <div className="flex items-center gap-1 bg-gray-100 p-1 rounded-xl overflow-x-auto scrollbar-none">
+                  {[
+                    { key: 'all', label: 'Active', count: statusCounts.all },
+                    { key: 'new', label: 'New', count: statusCounts.new },
+                    { key: 'accepted', label: 'Accepted', count: statusCounts.accepted },
+                    { key: 'preparing', label: 'Prep', count: statusCounts.preparing },
+                    { key: 'ready', label: 'Ready', count: statusCounts.ready },
+                    { key: 'completed', label: 'Done', count: statusCounts.completed }
+                  ].map(tab => (
+                    <button
+                      key={tab.key}
+                      type="button"
+                      onClick={() => setStatusFilter(tab.key)}
+                      className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap flex items-center gap-1 ${
+                        statusFilter === tab.key
+                          ? 'bg-white text-[#00346f] shadow-2xs font-extrabold'
+                          : 'text-gray-600 hover:text-gray-900'
+                      }`}
+                    >
+                      <span>{tab.label}</span>
+                      {tab.count > 0 && (
+                        <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
+                          statusFilter === tab.key
+                            ? tab.key === 'completed'
+                              ? 'bg-emerald-100 text-emerald-800'
+                              : 'bg-[#ffdea5] text-[#00346f]'
+                            : 'bg-gray-200 text-gray-700'
+                        }`}>
+                          {tab.count}
+                        </span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Station Filter & Search Input */}
+                <div className="flex flex-wrap sm:flex-nowrap items-center gap-2">
+                  {/* Station Pills */}
+                  <div className="inline-flex items-center bg-gray-100 p-1 rounded-xl text-xs">
+                    {[
+                      { key: 'all', label: 'All' },
+                      { key: 'tiffin', label: '🍱 Tiffin' },
+                      { key: 'catering', label: '🍛 Catering' },
+                      { key: 'cakes', label: '🎂 Cakes' }
+                    ].map(st => (
+                      <button
+                        key={st.key}
+                        type="button"
+                        onClick={() => setStationFilter(st.key as 'all' | PrimarySegment)}
+                        className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition cursor-pointer whitespace-nowrap ${
+                          stationFilter === st.key
+                            ? 'bg-[#00346f] text-white shadow-2xs'
+                            : 'text-gray-600 hover:text-gray-900'
+                        }`}
+                      >
+                        {st.label}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Quick Search */}
+                  <div className="relative flex-1 sm:w-48">
+                    <Search className="w-3.5 h-3.5 text-gray-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                    <input
+                      type="text"
+                      value={searchQuery}
+                      onChange={e => setSearchQuery(e.target.value)}
+                      placeholder="Search name, #ID, dish..."
+                      className="w-full pl-8 pr-7 py-1.5 bg-gray-50 border border-gray-200 rounded-xl text-xs focus:outline-none focus:bg-white focus:border-[#00346f]"
+                    />
+                    {searchQuery && (
+                      <button
+                        type="button"
+                        onClick={() => setSearchQuery('')}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700 cursor-pointer"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* ── LIVE ORDER CARDS GRID ── */}
+            {isLoading ? (
+              <div className="py-16 text-center text-gray-400">
+                <RefreshCw className="w-7 h-7 mx-auto animate-spin mb-2 text-[#00346f]" />
+                <p className="text-xs font-semibold">Loading live kitchen orders...</p>
+              </div>
+            ) : activeOrders.length === 0 ? (
+              <div className="bg-white rounded-2xl border border-gray-200 p-8 sm:p-10 text-center shadow-xs space-y-3">
+                <ChefHat className="w-10 h-10 mx-auto text-gray-300" />
+                <div>
+                  <h3 className="font-serif text-base sm:text-lg font-bold text-gray-800">
+                    No matching orders for {selectedDate === 'all' ? 'All Upcoming' : selectedDate === todayDateStr ? 'Today' : selectedDate}
+                  </h3>
+                  <p className="text-xs text-gray-500 mt-0.5">
+                    {statusFilter !== 'all' || stationFilter !== 'all' || searchQuery
+                      ? 'Try clearing your status, station, or search filter.'
+                      : 'No orders scheduled for this date.'}
+                  </p>
+                </div>
+
+                {(statusFilter !== 'all' || stationFilter !== 'all' || searchQuery) && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setStatusFilter('all');
+                      setStationFilter('all');
+                      setSearchQuery('');
+                    }}
+                    className="inline-flex items-center gap-1.5 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-800 text-xs font-bold rounded-xl cursor-pointer"
+                  >
+                    Reset Filters
+                  </button>
+                )}
+
+                {selectedDate !== 'all' && totalActiveOrdersCount > 0 && (
+                  <div className="pt-1">
+                    <button
+                      type="button"
+                      onClick={() => setSelectedDate('all')}
+                      className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#00346f] hover:bg-[#00224d] text-white text-xs font-bold uppercase tracking-wider rounded-xl shadow-xs transition cursor-pointer"
+                    >
+                      <span>View All {totalActiveOrdersCount} Active Orders</span>
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {activeOrders.map(order => {
+                  const totalTraysInThisOrder = order.items
+                    .filter(i => i.selectionType === 'third' || i.selectionType === 'half' || i.selectionType === 'full')
+                    .reduce((sum, i) => sum + i.quantity, 0);
+
+                  const totalUnitsInOrder = order.items.reduce((s, i) => s + i.quantity, 0);
+
+                  // Determine which stations are represented in this order
+                  const orderSegments = Array.from(
+                    new Set((order.items || []).map(i => classifyOrderItemSegment(i)))
+                  );
+
+                  const hasSatvik = order.dietary_notes?.toLowerCase().includes('satvik') || 
+                                    order.dietary_notes?.toLowerCase().includes('jain');
+
+                  const stepIndex = order.status === 'new' ? 1 
+                                  : order.status === 'accepted' ? 2 
+                                  : order.status === 'preparing' ? 3 
+                                  : order.status === 'ready' || order.status === 'completed' ? 4 : 0;
+
+                  return (
+                    <div
+                      key={order.id}
+                      className={`bg-white rounded-2xl border transition-all flex flex-col justify-between shadow-xs hover:shadow-md ${
+                        order.status === 'new'
+                          ? 'border-blue-400 ring-2 ring-blue-100'
+                          : order.status === 'accepted'
+                          ? 'border-emerald-500 ring-2 ring-emerald-100'
+                          : order.status === 'preparing'
+                          ? 'border-amber-400 ring-2 ring-amber-100'
+                          : order.status === 'ready'
+                          ? 'border-teal-500 ring-2 ring-teal-100'
+                          : 'border-gray-200'
+                      }`}
+                    >
+                      {/* High-Visibility Saffron Satvik / Allergen Banner */}
+                      {hasSatvik && (
+                        <div className="bg-amber-500 text-black px-3.5 py-1 text-[11px] font-black uppercase tracking-wider rounded-t-2xl flex items-center justify-between border-b border-amber-600">
+                          <div className="flex items-center gap-1.5">
+                            <AlertTriangle className="w-3.5 h-3.5 text-black shrink-0" />
+                            <span>SATVIK / NO ONION NO GARLIC</span>
+                          </div>
+                          <span className="text-[9px] bg-black text-amber-400 px-1.5 py-0.5 rounded font-mono font-bold">STRICT</span>
+                        </div>
+                      )}
+
+                      {/* Card Header */}
+                      <div className="p-4 border-b border-gray-150 space-y-2">
+                        {/* 4-Step Pipeline Bar */}
+                        <div className="flex items-center gap-1 w-full">
+                          {['New', 'Accepted', 'Prep', 'Ready'].map((stepLabel, idx) => {
+                            const stepNum = idx + 1;
+                            const isCurrent = stepIndex === stepNum;
+                            const isPast = stepIndex > stepNum;
+                            return (
+                              <div key={stepLabel} className="flex-1 flex flex-col items-center gap-0.5">
+                                <div className={`h-1.5 w-full rounded-full transition-all ${
+                                  isPast ? 'bg-emerald-500' : isCurrent ? 'bg-[#00346f]' : 'bg-gray-200'
+                                }`} />
+                                <span className={`text-[8px] font-bold uppercase tracking-widest ${
+                                  isCurrent ? 'text-[#00346f]' : isPast ? 'text-emerald-700' : 'text-gray-400'
+                                }`}>
+                                  {stepLabel}
+                                </span>
+                              </div>
+                            );
+                          })}
+                        </div>
+
+                        {/* Order ID, Station Badges & Status */}
+                        <div className="flex items-center justify-between gap-1.5 pt-0.5 flex-wrap">
+                          <div className="flex items-center gap-1.5">
+                            <span className="font-mono text-xs font-extrabold text-gray-500">
+                              #{order.id.slice(0, 8).toUpperCase()}
+                            </span>
+                            {orderSegments.map(seg => (
+                              <span
+                                key={seg}
+                                className={`px-1.5 py-0.5 rounded text-[9px] font-extrabold uppercase ${
+                                  seg === 'tiffin'
+                                    ? 'bg-amber-100 text-amber-900'
+                                    : seg === 'cakes'
+                                    ? 'bg-pink-100 text-pink-900'
+                                    : 'bg-blue-50 text-[#00346f]'
+                                }`}
+                              >
+                                {seg === 'tiffin' ? '🍱 Tiffin' : seg === 'cakes' ? '🎂 Cake' : '🍛 Catering'}
+                              </span>
+                            ))}
+                          </div>
+
+                          <div className="flex items-center gap-1">
+                            {order.order_type === 'estimate' && (
+                              <span className="px-1.5 py-0.5 bg-purple-100 text-purple-800 rounded text-[9px] font-extrabold uppercase">
+                                Estimate
+                              </span>
+                            )}
+                            <span className={`px-2 py-0.5 rounded text-[10px] font-extrabold uppercase tracking-wider ${
+                              order.status === 'new'
+                                ? 'bg-blue-100 text-blue-900'
+                                : order.status === 'accepted'
+                                ? 'bg-emerald-100 text-emerald-900'
+                                : order.status === 'preparing'
+                                ? 'bg-amber-100 text-amber-900'
+                                : order.status === 'ready'
+                                ? 'bg-teal-100 text-teal-900'
+                                : 'bg-gray-100 text-gray-700'
+                            }`}>
+                              {order.status === 'new' ? 'New' : order.status}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Customer Name & Time Slot */}
+                        <div className="flex items-start justify-between gap-2">
+                          <div>
+                            <h3 className="font-serif font-bold text-base text-gray-900 leading-tight">
+                              {order.customer_name}
+                            </h3>
+                            <a
+                              href={`tel:${order.phone_number}`}
+                              className="inline-flex items-center gap-1 text-xs text-gray-600 hover:text-[#00346f] font-semibold mt-0.5"
+                            >
+                              <Phone className="w-3 h-3 text-gray-400" />
+                              <span>{order.phone_number}</span>
+                            </a>
+                          </div>
+
+                          <div className="text-right shrink-0">
+                            <span className="font-mono text-sm font-black text-[#00346f] bg-blue-50 px-2 py-0.5 rounded-lg border border-blue-200 block">
+                              {order.fulfillment_time || 'TBD'}
+                            </span>
+                            <span className={`text-[10px] font-bold px-1.5 py-0.2 rounded mt-1 inline-block ${
+                              order.fulfillment_date === todayDateStr
+                                ? 'bg-amber-100 text-amber-900'
+                                : 'text-gray-500'
+                            }`}>
+                              {order.fulfillment_date === todayDateStr ? 'Today' : order.fulfillment_date}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Compact Delivery / Pickup Pill */}
+                        <div className="text-[11px]">
+                          {order.is_delivery ? (
+                            <div className="flex items-start gap-1.5 text-amber-950 bg-amber-50/80 px-2.5 py-1.5 rounded-xl border border-amber-200">
+                              <Truck className="w-3.5 h-3.5 text-amber-700 shrink-0 mt-0.5" />
+                              <span className="leading-snug">
+                                <strong className="font-bold">Delivery:</strong> {order.delivery_address || 'Address on file'}
+                              </span>
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-1.5 text-gray-600 bg-gray-50 px-2.5 py-1 rounded-xl">
+                              <Store className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+                              <span>Self-Pickup (Deerwood Dr, Little Elm)</span>
+                            </div>
+                          )}
+                        </div>
+
+                        {order.dietary_notes && !hasSatvik && (
+                          <div className="text-[11px] text-amber-900 bg-amber-50/60 px-2.5 py-1.5 rounded-xl border border-amber-200/70 italic">
+                            &quot;{order.dietary_notes}&quot;
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Itemized List */}
+                      <div className="p-4 flex-1 space-y-1.5">
+                        <div className="flex justify-between items-center text-[10px] font-extrabold text-gray-500 uppercase tracking-wider pb-1 border-b border-gray-100">
+                          <span>Items ({order.items.length})</span>
+                          <span className="bg-gray-100 px-2 py-0.5 rounded text-gray-800 font-mono">
+                            {totalTraysInThisOrder > 0 ? `${totalTraysInThisOrder} Trays` : `${totalUnitsInOrder} Units`}
+                          </span>
+                        </div>
+
+                        <div className="space-y-1.5 text-xs max-h-44 overflow-y-auto pr-1">
+                          {order.items.map((item, idx) => (
+                            <div key={idx} className="flex justify-between items-start gap-2 py-1 border-b border-gray-100 last:border-0">
+                              <div className="min-w-0">
+                                <span className="font-bold text-gray-900 block leading-snug">
+                                  {item.name}
+                                </span>
+                                <span className="text-[10px] text-gray-500 font-medium block">
+                                  {item.selectionLabel} {item.tier ? `• ${item.tier}` : ''}
+                                  {item.notes ? ` • ${item.notes}` : ''}
+                                </span>
+                              </div>
+                              <span className="font-mono font-extrabold text-[#00346f] px-2 py-0.5 bg-blue-50 border border-blue-100 rounded text-xs shrink-0">
+                                &times;{item.quantity}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Card Footer */}
+                      <div className="p-3.5 bg-gray-50 border-t border-gray-150 rounded-b-2xl space-y-2">
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex items-baseline gap-2">
+                            <span className="text-sm font-extrabold text-gray-900 font-mono">
+                              ${order.total_amount.toFixed(2)}
+                            </span>
+                            {Boolean((order.discount_amount && order.discount_amount > 0) || (order.rebate_amount && order.rebate_amount > 0)) && (
+                              <span className="text-[10px] text-purple-700 font-bold">
+                                {order.discount_amount ? `-$${order.discount_amount.toFixed(2)} Disc` : ''}
+                              </span>
+                            )}
+                          </div>
+
+                          {order.reconciled_to_qbo ? (
+                            <span className="inline-flex items-center gap-1 bg-emerald-100 text-emerald-800 text-[10px] font-extrabold px-2 py-0.5 rounded-md border border-emerald-300">
+                              <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                              <span>QBO #{order.qbo_doc_id || 'OK'}</span>
+                            </span>
+                          ) : (
+                            <span className="text-[10px] font-semibold text-gray-400">
+                              QBO Pending
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Touch Action Bar */}
+                        <div className="flex items-center justify-between gap-1.5 pt-1 border-t border-gray-200">
+                          <button
+                            type="button"
+                            onClick={() => setEditingOrder(order)}
+                            className="inline-flex items-center gap-1 px-2.5 py-2 rounded-xl border border-gray-300 hover:bg-gray-100 text-gray-700 text-xs font-bold cursor-pointer transition-colors"
+                            title="Edit order"
+                          >
+                            <FileEdit className="w-3.5 h-3.5 text-[#00346f]" />
+                            <span>Edit</span>
+                          </button>
+
+                          {order.status === 'new' && (
+                            <div className="flex items-center gap-1.5 flex-1 justify-end">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  handleStatusChange(order.id, 'accepted');
+                                  openWhatsAppForOrder(order, 'accepted');
+                                }}
+                                className="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-2 rounded-xl text-xs font-extrabold transition-all shadow-2xs cursor-pointer flex items-center justify-center gap-1 flex-1"
+                              >
+                                <Check className="w-3.5 h-3.5" />
+                                <span>Accept</span>
+                                <MessageCircle className="w-3 h-3 text-emerald-200" />
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={() => handleDenyOrder(order)}
+                                className="bg-rose-600 hover:bg-rose-700 text-white px-2.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1"
+                                title="Deny order"
+                              >
+                                <Ban className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          )}
+
+                          {order.status === 'accepted' && (
+                            <div className="flex items-center gap-1.5 flex-1 justify-end">
+                              <button
+                                type="button"
+                                onClick={() => openWhatsAppForOrder(order, 'accepted')}
+                                className="bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 px-2.5 py-2 rounded-xl text-xs font-bold cursor-pointer"
+                                title="Resend WhatsApp confirmation"
+                              >
+                                <MessageCircle className="w-3.5 h-3.5 text-emerald-700" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleStatusChange(order.id, 'preparing')}
+                                className="bg-amber-600 hover:bg-amber-700 text-white px-3 py-2 rounded-xl text-xs font-extrabold transition-all cursor-pointer flex items-center justify-center gap-1 flex-1"
+                              >
+                                <span>Start Prep</span>
+                                <ArrowRight className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          )}
+
+                          {order.status === 'preparing' && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                handleStatusChange(order.id, 'ready');
+                                openWhatsAppForOrder(order, 'ready');
+                              }}
+                              className="bg-teal-600 hover:bg-teal-700 text-white px-3 py-2 rounded-xl text-xs font-extrabold transition-all cursor-pointer flex items-center justify-center gap-1.5 flex-1"
+                            >
+                              <CheckCircle2 className="w-3.5 h-3.5" />
+                              <span>Mark Ready</span>
+                              <MessageCircle className="w-3 h-3 text-teal-200" />
+                            </button>
+                          )}
+
+                          {order.status === 'ready' && (
+                            <div className="flex items-center gap-1.5 flex-1 justify-end">
+                              <button
+                                type="button"
+                                onClick={() => openWhatsAppForOrder(order, 'ready')}
+                                className="bg-teal-50 hover:bg-teal-100 text-teal-800 border border-teal-300 px-2.5 py-2 rounded-xl text-xs font-bold cursor-pointer"
+                                title="Resend Ready WhatsApp"
+                              >
+                                <MessageCircle className="w-3.5 h-3.5 text-teal-700" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleStatusChange(order.id, 'completed')}
+                                className="bg-[#00346f] hover:bg-[#00224d] text-white px-3 py-2 rounded-xl text-xs font-extrabold transition-all cursor-pointer flex-1"
+                              >
+                                <span>Complete</span>
+                              </button>
+                            </div>
+                          )}
+
+                          {order.status === 'completed' && (
+                            <button
+                              type="button"
+                              onClick={() => handleStatusChange(order.id, 'ready')}
+                              className="text-[11px] text-gray-500 hover:text-gray-800 underline cursor-pointer px-2"
+                            >
+                              Reopen
+                            </button>
+                          )}
+
+                          {order.status !== 'cancelled' && order.status !== 'completed' && order.status !== 'new' && (
+                            <button
+                              type="button"
+                              onClick={() => handleDenyOrder(order)}
+                              className="text-[10px] text-rose-500 hover:text-rose-700 font-semibold underline cursor-pointer px-1"
+                            >
+                              Deny
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* ── COMPACT FINANCIAL & QBO RECONCILIATION FOOTER ── */}
+            <div className="space-y-3 pt-3 border-t border-gray-200">
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+                <div className="bg-white rounded-xl border border-gray-200 p-3 shadow-2xs flex items-center gap-2.5">
+                  <div className="p-2 rounded-lg bg-blue-50 text-[#00346f] shrink-0">
+                    <Package className="w-4 h-4" />
+                  </div>
+                  <div className="min-w-0">
+                    <span className="text-[9px] font-bold uppercase tracking-wider text-gray-500 block truncate">
+                      Orders in View
+                    </span>
+                    <div className="font-serif text-lg font-bold text-gray-900">
+                      {totalOrdersInView}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-white rounded-xl border border-gray-200 p-3 shadow-2xs flex items-center gap-2.5">
+                  <div className="p-2 rounded-lg bg-amber-50 text-[#775a19] shrink-0">
+                    <ChefHat className="w-4 h-4" />
+                  </div>
+                  <div className="min-w-0">
+                    <span className="text-[9px] font-bold uppercase tracking-wider text-gray-500 block truncate">
+                      Trays to Prep
+                    </span>
+                    <div className="font-serif text-lg font-bold text-[#775a19]">
+                      {totalTraysToPrep}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-white rounded-xl border border-gray-200 p-3 shadow-2xs flex items-center gap-2.5">
+                  <div className="p-2 rounded-lg bg-indigo-50 text-indigo-700 shrink-0">
+                    <DollarSign className="w-4 h-4" />
+                  </div>
+                  <div className="min-w-0">
+                    <span className="text-[9px] font-bold uppercase tracking-wider text-gray-500 block truncate">
+                      Net Food Base
+                    </span>
+                    <div className="font-serif text-lg font-bold text-indigo-900">
+                      ${totalNetFoodRevenueInView.toFixed(2)}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-white rounded-xl border border-gray-200 p-3 shadow-2xs flex items-center gap-2.5">
+                  <div className="p-2 rounded-lg bg-purple-50 text-purple-700 shrink-0">
+                    <DollarSign className="w-4 h-4" />
+                  </div>
+                  <div className="min-w-0">
+                    <span className="text-[9px] font-bold uppercase tracking-wider text-gray-500 block truncate">
+                      Sales Tax
+                    </span>
+                    <div className="font-serif text-lg font-bold text-purple-900">
+                      ${totalTaxInView.toFixed(2)}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="col-span-2 sm:col-span-1 bg-white rounded-xl border border-gray-200 p-3 shadow-2xs flex items-center gap-2.5">
+                  <div className="p-2 rounded-lg bg-emerald-50 text-emerald-700 shrink-0">
+                    <DollarSign className="w-4 h-4" />
+                  </div>
+                  <div className="min-w-0">
+                    <span className="text-[9px] font-bold uppercase tracking-wider text-gray-500 block truncate">
+                      Grand Total
+                    </span>
+                    <div className="font-serif text-lg font-bold text-emerald-900">
+                      ${totalRevenueInView.toFixed(2)}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* QBO Status Bar */}
+              <div className="bg-gradient-to-r from-[#00346f]/5 to-blue-50/60 rounded-xl border border-[#00346f]/15 px-3.5 py-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+                <div className="flex items-center gap-2.5">
+                  <CheckCircle2 className={`w-4 h-4 shrink-0 ${reconciledOrdersCountInView > 0 ? 'text-emerald-600' : 'text-[#00346f]'}`} />
+                  <div>
+                    <span className="font-bold text-gray-900">QuickBooks Online (QBO): </span>
+                    {reconciledOrdersCountInView > 0 ? (
+                      <span className="text-emerald-800 font-semibold">
+                        Reconciled ({reconciledOrdersCountInView}/{totalOrdersInView}) {sampleQboDocId ? `• Doc #${sampleQboDocId}` : ''}
+                      </span>
+                    ) : (
+                      <span className="text-gray-600">
+                        Scheduled for 11:59 PM CT nightly sync
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 shrink-0">
+                  {syncResultMsg && (
+                    <span className="text-[11px] font-semibold text-[#00346f]">
+                      {syncResultMsg}
+                    </span>
+                  )}
+                  <button
+                    type="button"
+                    onClick={handleManualQBOReconcile}
+                    disabled={isSyncingQbo}
+                    className="px-3 py-1.5 rounded-lg bg-[#00346f] hover:bg-[#00224d] text-white text-[11px] font-bold uppercase tracking-wider transition-all disabled:opacity-50 cursor-pointer flex items-center gap-1.5"
+                  >
+                    <RefreshCw className={`w-3 h-3 ${isSyncingQbo ? 'animate-spin' : ''}`} />
+                    <span>{isSyncingQbo ? 'Syncing...' : 'Sync QBO'}</span>
                   </button>
                 </div>
               </div>
-            )}
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {activeOrders.map(order => {
-              const totalTraysInThisOrder = order.items
-                .filter(i => i.selectionType === 'third' || i.selectionType === 'half' || i.selectionType === 'full')
-                .reduce((sum, i) => sum + i.quantity, 0);
-
-              const hasSatvik = order.dietary_notes?.toLowerCase().includes('satvik') || 
-                                order.dietary_notes?.toLowerCase().includes('jain');
-
-              // 4-step pipeline progress calculation
-              const stepIndex = order.status === 'new' ? 1 
-                              : order.status === 'accepted' ? 2 
-                              : order.status === 'preparing' ? 3 
-                              : order.status === 'ready' || order.status === 'completed' ? 4 : 0;
-
-              return (
-                <div
-                  key={order.id}
-                  className={`bg-white rounded-2xl border transition-all flex flex-col justify-between shadow-xs hover:shadow-md ${
-                    order.status === 'new'
-                      ? 'border-blue-400 ring-2 ring-blue-100'
-                      : order.status === 'accepted'
-                      ? 'border-emerald-500 ring-2 ring-emerald-100'
-                      : order.status === 'preparing'
-                      ? 'border-amber-400 ring-2 ring-amber-100'
-                      : order.status === 'ready'
-                      ? 'border-teal-500 ring-2 ring-teal-100'
-                      : order.status === 'cancelled'
-                      ? 'border-rose-200 opacity-60'
-                      : 'border-gray-200'
-                  }`}
-                >
-                  {/* High-Visibility Saffron Satvik / Allergen Banner */}
-                  {hasSatvik && (
-                    <div className="bg-amber-500 text-black px-4 py-1.5 text-xs font-black uppercase tracking-wider rounded-t-2xl flex items-center justify-between border-b border-amber-600 shadow-2xs">
-                      <div className="flex items-center gap-1.5">
-                        <AlertTriangle className="w-4 h-4 text-black shrink-0 animate-pulse" />
-                        <span>SATVIK / NO ONION NO GARLIC</span>
-                      </div>
-                      <span className="text-[10px] bg-black text-amber-400 px-2 py-0.5 rounded font-mono font-bold">STRICT PREP</span>
-                    </div>
-                  )}
-
-                  {/* Card Header & 4-Step Pipeline Stepper */}
-                  <div className="p-4 sm:p-5 border-b border-gray-150 space-y-2.5">
-                    {/* Pipeline Visual Stepper Bar */}
-                    <div className="flex items-center gap-1 w-full pb-1">
-                      {['New', 'Accepted', 'Prep', 'Ready'].map((stepLabel, idx) => {
-                        const stepNum = idx + 1;
-                        const isCurrent = stepIndex === stepNum;
-                        const isPast = stepIndex > stepNum;
-                        return (
-                          <div key={stepLabel} className="flex-1 flex flex-col items-center gap-1">
-                            <div className={`h-1.5 w-full rounded-full transition-all ${
-                              isPast ? 'bg-emerald-500' : isCurrent ? 'bg-[#00346f] ring-2 ring-[#00346f]/30' : 'bg-gray-200'
-                            }`} />
-                            <span className={`text-[9px] font-bold uppercase tracking-widest ${
-                              isCurrent ? 'text-[#00346f]' : isPast ? 'text-emerald-700' : 'text-gray-400'
-                            }`}>
-                              {stepLabel}
-                            </span>
-                          </div>
-                        );
-                      })}
-                    </div>
-
-                    <div className="flex items-center justify-between gap-2 pt-1">
-                      <span className="font-mono text-xs font-extrabold text-gray-500">
-                        #{order.id.slice(0, 8).toUpperCase()}
-                      </span>
-
-                      <div className="flex items-center gap-1.5">
-                        {order.order_type === 'estimate' && (
-                          <span className="px-2 py-0.5 bg-purple-100 text-purple-800 rounded text-[10px] font-extrabold uppercase">
-                            Estimate
-                          </span>
-                        )}
-                        <span className={`px-2.5 py-0.5 rounded text-[10px] font-extrabold uppercase tracking-wider ${
-                          order.status === 'new'
-                            ? 'bg-blue-100 text-blue-900'
-                            : order.status === 'accepted'
-                            ? 'bg-emerald-100 text-emerald-900'
-                            : order.status === 'preparing'
-                            ? 'bg-amber-100 text-amber-900'
-                            : order.status === 'ready'
-                            ? 'bg-teal-100 text-teal-900'
-                            : order.status === 'cancelled'
-                            ? 'bg-rose-100 text-rose-800'
-                            : 'bg-gray-100 text-gray-700'
-                        }`}>
-                          {order.status === 'new' ? 'New (Pending)' : order.status}
-                        </span>
-                      </div>
-                    </div>
-
-                    <div>
-                      <div className="flex items-start justify-between gap-2">
-                        <h3 className="font-serif font-bold text-base sm:text-lg text-gray-900 leading-tight">
-                          {order.customer_name}
-                        </h3>
-                        {/* Prominent Monospace Fulfillment Time Stamp */}
-                        <div className="text-right shrink-0">
-                          <span className="font-mono text-base sm:text-lg font-black text-[#00346f] bg-blue-50 px-2.5 py-1 rounded-xl border border-blue-200 block shadow-2xs">
-                            {order.fulfillment_time || 'TBD'}
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center justify-between text-xs text-gray-600 mt-1.5">
-                        <span className="inline-flex items-center gap-1 font-medium">
-                          <Phone className="w-3.5 h-3.5 text-gray-400" />
-                          <a href={`tel:${order.phone_number}`} className="hover:underline text-gray-800 font-semibold">
-                            {order.phone_number}
-                          </a>
-                        </span>
-                        <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-md border ${
-                          order.fulfillment_date === todayDateStr
-                            ? 'bg-amber-100 text-amber-900 border-amber-300'
-                            : 'bg-gray-100 text-gray-700 border-gray-200'
-                        }`}>
-                          📅 {order.fulfillment_date} {order.fulfillment_date === todayDateStr ? '(Today)' : ''}
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Delivery / Pickup Badge */}
-                    <div className="flex items-center gap-2 pt-1 text-xs">
-                      {order.is_delivery ? (
-                        <div className="flex items-start gap-1.5 text-amber-950 bg-amber-50 px-2.5 py-1.5 rounded-xl border border-amber-200 w-full">
-                          <Truck className="w-4 h-4 text-amber-700 shrink-0 mt-0.5" />
-                          <div className="text-[11px] leading-snug font-medium">
-                            <strong className="text-amber-900 font-bold">Delivery:</strong> {order.delivery_address || 'Address provided on file'}
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="flex items-center gap-1.5 text-gray-700 bg-gray-100 px-2.5 py-1.5 rounded-xl text-[11px] w-full font-medium">
-                          <Store className="w-4 h-4 text-gray-500 shrink-0" />
-                          <span>Self-Pickup (Home Kitchen - Deerwood Dr, Little Elm)</span>
-                        </div>
-                      )}
-                    </div>
-
-                    {order.dietary_notes && !hasSatvik && (
-                      <div className="text-[11px] text-gray-700 bg-gray-50 p-2.5 rounded-xl border border-gray-200 italic">
-                        &quot;{order.dietary_notes}&quot;
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Itemized Trays Breakdown */}
-                  <div className="p-4 sm:p-5 flex-1 space-y-2">
-                    <div className="flex justify-between items-center text-[11px] font-extrabold text-gray-500 uppercase tracking-wider pb-1 border-b border-gray-150">
-                      <span>Items to Prepare</span>
-                      <span className="bg-gray-100 px-2 py-0.5 rounded text-gray-800 font-mono">{totalTraysInThisOrder} Trays</span>
-                    </div>
-
-                    <div className="space-y-1.5 text-xs max-h-48 overflow-y-auto pr-1">
-                      {order.items.map((item, idx) => (
-                        <div key={idx} className="flex justify-between items-start gap-2 py-1 border-b border-gray-100 last:border-0">
-                          <div>
-                            <span className="font-bold text-gray-900">
-                              {item.name}
-                            </span>
-                            <div className="text-[10px] text-gray-500 font-medium">
-                              {item.selectionLabel} {item.tier ? `(${item.tier})` : ''}
-                            </div>
-                          </div>
-                          <span className="font-mono font-extrabold text-[#00346f] px-2 py-0.5 bg-blue-50 border border-blue-100 rounded text-xs shrink-0">
-                            &times; {item.quantity}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Order Footer: Price, QBO Status Pill, & Touch Action Controls */}
-                  <div className="p-3.5 sm:p-4 bg-gray-50 border-t border-gray-150 rounded-b-2xl space-y-2.5">
-                    <div className="flex items-center justify-between gap-2">
-                      <div>
-                        <span className="text-sm font-extrabold text-gray-900 block font-mono">${order.total_amount.toFixed(2)}</span>
-                        {Boolean((order.discount_amount && order.discount_amount > 0) || (order.rebate_amount && order.rebate_amount > 0)) && (
-                          <span className="text-[10px] text-purple-700 block font-bold">
-                            {order.discount_amount ? `-${order.discount_amount.toFixed(2)} Disc` : ''}
-                            {order.rebate_amount ? ` -${order.rebate_amount.toFixed(2)} Reb` : ''}
-                          </span>
-                        )}
-                      </div>
-
-                      {/* Per-Card QBO Status Pill */}
-                      <div>
-                        {order.reconciled_to_qbo ? (
-                          <span className="inline-flex items-center gap-1 bg-emerald-100 text-emerald-800 text-[10px] font-extrabold px-2 py-0.5 rounded-md border border-emerald-300">
-                            <CheckCircle2 className="w-3 h-3 text-emerald-600" />
-                            <span>QBO #{order.qbo_doc_id || 'OK'}</span>
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1 bg-blue-50 text-[#00346f] text-[10px] font-semibold px-2 py-0.5 rounded-md border border-blue-200">
-                            <span>QBO Pending</span>
-                          </span>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Touch Control Buttons Bar */}
-                    <div className="flex items-center justify-between gap-2 pt-1 border-t border-gray-200">
-                      <button
-                        type="button"
-                        onClick={() => setEditingOrder(order)}
-                        className="inline-flex items-center gap-1 px-3 py-2 rounded-xl border border-gray-300 hover:bg-gray-100 text-gray-700 text-xs font-bold cursor-pointer transition-colors min-h-[42px]"
-                        title="Edit items, quantities, discounts, and rebates"
-                      >
-                        <FileEdit className="w-3.5 h-3.5 text-[#00346f]" />
-                        <span>Edit</span>
-                      </button>
-
-                      {/* Status: new -> Accept Order OR Deny Order */}
-                      {order.status === 'new' && (
-                        <div className="flex items-center gap-1.5 flex-1 justify-end">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              handleStatusChange(order.id, 'accepted');
-                              openWhatsAppForOrder(order, 'accepted');
-                            }}
-                            className="bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-2 rounded-xl text-xs font-extrabold transition-all shadow-xs cursor-pointer flex items-center justify-center gap-1.5 flex-1 min-h-[42px]"
-                            title="Accept order and notify customer via WhatsApp"
-                          >
-                            <Check className="w-4 h-4" />
-                            <span>Accept Order</span>
-                            <MessageCircle className="w-3.5 h-3.5 text-emerald-200" />
-                          </button>
-
-                          <button
-                            type="button"
-                            onClick={() => handleDenyOrder(order)}
-                            className="bg-rose-600 hover:bg-rose-700 text-white px-3 py-2 rounded-xl text-xs font-bold transition-all shadow-xs cursor-pointer flex items-center justify-center gap-1 min-h-[42px]"
-                            title="Deny order, send WhatsApp rejection message to customer, and delete entry from Supabase"
-                          >
-                            <Ban className="w-3.5 h-3.5" />
-                            <span>Deny</span>
-                          </button>
-                        </div>
-                      )}
-
-                      {/* Status: accepted -> Start Prep */}
-                      {order.status === 'accepted' && (
-                        <div className="flex items-center gap-1.5 flex-1 justify-end">
-                          <button
-                            type="button"
-                            onClick={() => openWhatsAppForOrder(order, 'accepted')}
-                            className="bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 px-2.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1 min-h-[42px]"
-                            title="Resend WhatsApp confirmation to customer"
-                          >
-                            <MessageCircle className="w-3.5 h-3.5 text-emerald-700" />
-                            <span className="hidden sm:inline">WhatsApp</span>
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleStatusChange(order.id, 'preparing')}
-                            className="bg-amber-600 hover:bg-amber-700 text-white px-3.5 py-2 rounded-xl text-xs font-extrabold transition-all shadow-xs cursor-pointer flex items-center justify-center gap-1 flex-1 min-h-[42px]"
-                          >
-                            <span>Start Prep</span>
-                            <ArrowRight className="w-4 h-4" />
-                          </button>
-                        </div>
-                      )}
-
-                      {/* Status: preparing -> Mark Ready */}
-                      {order.status === 'preparing' && (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            handleStatusChange(order.id, 'ready');
-                            openWhatsAppForOrder(order, 'ready');
-                          }}
-                          className="bg-teal-600 hover:bg-teal-700 text-white px-3.5 py-2 rounded-xl text-xs font-extrabold transition-all shadow-xs cursor-pointer flex items-center justify-center gap-1.5 flex-1 min-h-[42px]"
-                          title="Mark order ready and notify customer via WhatsApp"
-                        >
-                          <CheckCircle2 className="w-4 h-4" />
-                          <span>Mark Ready</span>
-                          <MessageCircle className="w-3.5 h-3.5 text-teal-200" />
-                        </button>
-                      )}
-
-                      {/* Status: ready -> Complete & Archive */}
-                      {order.status === 'ready' && (
-                        <div className="flex items-center gap-1.5 flex-1 justify-end">
-                          <button
-                            type="button"
-                            onClick={() => openWhatsAppForOrder(order, 'ready')}
-                            className="bg-teal-50 hover:bg-teal-100 text-teal-800 border border-teal-300 px-2.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1 min-h-[42px]"
-                            title="Resend Ready WhatsApp message to customer"
-                          >
-                            <MessageCircle className="w-3.5 h-3.5 text-teal-700" />
-                            <span className="hidden sm:inline">WhatsApp</span>
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleStatusChange(order.id, 'completed')}
-                            className="bg-[#00346f] hover:bg-[#00224d] text-white px-3.5 py-2 rounded-xl text-xs font-extrabold transition-all shadow-xs cursor-pointer flex-1 min-h-[42px]"
-                          >
-                            <span>Complete</span>
-                          </button>
-                        </div>
-                      )}
-
-                      {order.status === 'completed' && (
-                        <button
-                          type="button"
-                          onClick={() => handleStatusChange(order.id, 'ready')}
-                          className="text-[10px] text-gray-500 hover:text-gray-800 underline cursor-pointer p-1"
-                        >
-                          Reopen
-                        </button>
-                      )}
-
-                      {order.status !== 'cancelled' && order.status !== 'completed' && order.status !== 'new' && (
-                        <button
-                          type="button"
-                          onClick={() => handleDenyOrder(order)}
-                          className="text-[10px] text-rose-500 hover:text-rose-700 font-semibold underline cursor-pointer p-1"
-                          title="Deny order, notify customer via WhatsApp, and delete from Supabase"
-                        >
-                          Deny
-                        </button>
-                      )}
-                    </div>
-                  </div>
-
-                </div>
-              );
-            })}
-          </div>
+            </div>
+          </>
         )}
-
-        {/* ── BIFURCATED FINANCIAL & SUMMARY METRICS + QBO RECONCILIATION ── */}
-        <div className="space-y-4 pt-4 border-t border-gray-200">
-          
-          {/* Top Row: Volume & Financial Metrics Cards */}
-          <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 sm:gap-4">
-            
-            <div className="bg-white rounded-2xl border border-gray-200 p-4 shadow-xs flex items-center gap-3">
-              <div className="p-2.5 rounded-xl bg-blue-50 text-[#00346f] shrink-0">
-                <Package className="w-5 h-5" />
-              </div>
-              <div className="min-w-0">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500 block truncate">
-                  Total Orders
-                </span>
-                <div className="font-serif text-xl sm:text-2xl font-bold text-gray-900 leading-tight">
-                  {totalOrdersInView}
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-2xl border border-gray-200 p-4 shadow-xs flex items-center gap-3">
-              <div className="p-2.5 rounded-xl bg-amber-50 text-[#775a19] shrink-0">
-                <ChefHat className="w-5 h-5" />
-              </div>
-              <div className="min-w-0">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500 block truncate">
-                  Trays to Prep
-                </span>
-                <div className="font-serif text-xl sm:text-2xl font-bold text-[#775a19] leading-tight">
-                  {totalTraysToPrep}
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-2xl border border-gray-200 p-4 shadow-xs flex items-center gap-3">
-              <div className="p-2.5 rounded-xl bg-indigo-50 text-indigo-700 shrink-0">
-                <DollarSign className="w-5 h-5" />
-              </div>
-              <div className="min-w-0">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500 block truncate">
-                  Total Food Base Revenue
-                </span>
-                <div className="font-serif text-xl sm:text-2xl font-bold text-indigo-900 leading-tight">
-                  ${totalNetFoodRevenueInView.toFixed(2)}
-                </div>
-                <span className="text-[9px] text-indigo-600 font-semibold block truncate">
-                  (After discounts &amp; adjustments)
-                </span>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-2xl border border-gray-200 p-4 shadow-xs flex items-center gap-3">
-              <div className="p-2.5 rounded-xl bg-purple-50 text-purple-700 shrink-0">
-                <DollarSign className="w-5 h-5" />
-              </div>
-              <div className="min-w-0">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500 block truncate">
-                  Texas Sales Tax
-                </span>
-                <div className="font-serif text-xl sm:text-2xl font-bold text-purple-900 leading-tight">
-                  ${totalTaxInView.toFixed(2)}
-                </div>
-              </div>
-            </div>
-
-            <div className="col-span-2 sm:col-span-1 bg-white rounded-2xl border border-gray-200 p-4 shadow-xs flex items-center gap-3">
-              <div className="p-2.5 rounded-xl bg-emerald-50 text-emerald-800 shrink-0">
-                <DollarSign className="w-5 h-5" />
-              </div>
-              <div className="min-w-0">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500 block truncate">
-                  Grand Total
-                </span>
-                <div className="font-serif text-xl sm:text-2xl font-bold text-emerald-900 leading-tight">
-                  ${totalRevenueInView.toFixed(2)}
-                </div>
-              </div>
-            </div>
-
-          </div>
-
-          {/* Bottom Banner: QuickBooks Online (QBO) Reconciliation Status */}
-          <div className="bg-gradient-to-r from-[#00346f]/5 to-blue-50/60 rounded-2xl border border-[#00346f]/15 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
-            <div className="flex items-center gap-3">
-              <div className={`p-2 rounded-xl shrink-0 ${reconciledOrdersCountInView > 0 ? 'bg-emerald-100 text-emerald-800' : 'bg-blue-100 text-[#00346f]'}`}>
-                <CheckCircle2 className="w-5 h-5" />
-              </div>
-              <div>
-                <div className="font-bold text-gray-900 flex items-center gap-2">
-                  <span>QuickBooks Online (QBO) Reconciliation Status</span>
-                  {reconciledOrdersCountInView > 0 ? (
-                    <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] uppercase font-extrabold tracking-wider">
-                      Reconciled ({reconciledOrdersCountInView}/{totalOrdersInView})
-                    </span>
-                  ) : (
-                    <span className="px-2 py-0.5 rounded-full bg-blue-100 text-[#00346f] text-[10px] uppercase font-extrabold tracking-wider">
-                      Scheduled for 11:59 PM CT Cron
-                    </span>
-                  )}
-                </div>
-                <div className="text-gray-600 text-[11px] mt-0.5">
-                  {reconciledOrdersCountInView > 0 && sampleQboDocId ? (
-                    <span>Sales Receipt created in QBO (Doc #{sampleQboDocId})</span>
-                  ) : (
-                    <span>Automated EOD consolidation running nightly via Vercel Cron (`/api/cron/reconcile-qbo`)</span>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2 shrink-0">
-              {syncResultMsg && (
-                <span className="text-[11px] font-semibold text-[#00346f] animate-fade-in">
-                  {syncResultMsg}
-                </span>
-              )}
-              <button
-                type="button"
-                onClick={handleManualQBOReconcile}
-                disabled={isSyncingQbo}
-                className="min-h-[38px] px-3.5 py-1.5 rounded-xl bg-[#00346f] hover:bg-[#00224d] text-white text-xs font-bold uppercase tracking-wider transition-all shadow-xs disabled:opacity-50 cursor-pointer flex items-center gap-1.5"
-              >
-                <RefreshCw className={`w-3.5 h-3.5 ${isSyncingQbo ? 'animate-spin' : ''}`} />
-                <span>{isSyncingQbo ? 'Syncing...' : 'Sync QBO Now'}</span>
-              </button>
-            </div>
-          </div>
-
-        </div>
 
       </div>
 
@@ -1663,66 +1692,62 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-xs p-3 sm:p-4 overflow-y-auto animate-fade-in font-sans">
           <div className="relative w-full max-w-3xl bg-white rounded-2xl shadow-2xl border border-gray-200 overflow-hidden my-6 max-h-[92vh] flex flex-col">
             
-            {/* Modal Controls */}
-            <div className="bg-[#00346f] text-white px-6 py-4 flex items-center justify-between shrink-0 print:hidden">
+            <div className="bg-[#00346f] text-white px-5 py-3.5 flex items-center justify-between shrink-0 print:hidden">
               <div className="flex items-center gap-2">
                 <ChefHat className="w-5 h-5 text-[#ffdea5]" />
-                <h3 className="font-serif font-bold text-lg">
-                  Daily Kitchen Prep Sheet — {selectedDate === 'all' ? 'All Upcoming Schedule' : selectedDate === todayDateStr ? `Today (${selectedDate})` : selectedDate}
+                <h3 className="font-serif font-bold text-base sm:text-lg">
+                  Kitchen Prep Sheet — {selectedDate === 'all' ? 'All Upcoming' : selectedDate === todayDateStr ? `Today (${selectedDate})` : selectedDate}
                 </h3>
               </div>
 
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => window.print()}
-                  className="inline-flex items-center gap-1.5 bg-white/20 hover:bg-white/30 text-white px-3.5 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-colors cursor-pointer"
+                  className="inline-flex items-center gap-1.5 bg-white/20 hover:bg-white/30 text-white px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-colors cursor-pointer"
                 >
                   <Printer className="w-3.5 h-3.5" />
-                  <span>Print Prep Sheet</span>
+                  <span>Print</span>
                 </button>
                 <button
                   onClick={() => setShowPrepSheet(false)}
-                  className="p-1 rounded-full text-white/80 hover:text-white hover:bg-white/10"
+                  className="p-1 rounded-full text-white/80 hover:text-white hover:bg-white/10 cursor-pointer"
                 >
                   <X className="w-5 h-5" />
                 </button>
               </div>
             </div>
 
-            {/* PRINTABLE PREP SHEET CANVAS */}
-            <div id="kitchen-prep-sheet-print" className="p-6 sm:p-8 overflow-y-auto space-y-6 text-gray-900">
-              
-              <div className="border-b border-gray-200 pb-4 flex justify-between items-start">
+            <div id="kitchen-prep-sheet-print" className="p-5 sm:p-7 overflow-y-auto space-y-5 text-gray-900">
+              <div className="border-b border-gray-200 pb-3 flex justify-between items-start">
                 <div>
                   <span className="text-[10px] font-bold uppercase tracking-widest text-[#775a19]">
                     BLUEBONNET WHISK — DESI DABBA
                   </span>
-                  <h2 className="font-serif text-2xl font-bold text-[#00346f]">
+                  <h2 className="font-serif text-xl font-bold text-[#00346f]">
                     Aggregated Kitchen Prep Sheet
                   </h2>
                   <p className="text-xs text-gray-500 mt-0.5">
-                    Fulfillment Date: <strong className="text-gray-900">{selectedDate === 'all' ? 'All Upcoming Schedule' : selectedDate === todayDateStr ? `Today (${selectedDate})` : selectedDate}</strong> • Total Orders: {totalOrdersInView}
+                    Date: <strong className="text-gray-900">{selectedDate === 'all' ? 'All Upcoming' : selectedDate}</strong> • Active Orders: {totalOrdersInView}
                   </p>
                 </div>
 
                 <div className="text-right text-xs">
-                  <div className="font-bold text-[#00346f]">Total Trays to Prep: {totalTraysToPrep}</div>
-                  <div className="text-gray-400 text-[10px]">Generated at {new Date().toLocaleTimeString()}</div>
+                  <div className="font-bold text-[#00346f]">Total Trays: {totalTraysToPrep}</div>
+                  <div className="text-gray-400 text-[10px]">{new Date().toLocaleTimeString()}</div>
                 </div>
               </div>
 
-              {/* Aggregated Dish Quantities Table */}
               <div>
                 <table className="w-full text-left text-xs border border-gray-200 rounded-xl overflow-hidden">
                   <thead className="bg-gray-100 text-[10px] font-bold text-gray-600 uppercase tracking-wider border-b border-gray-200">
                     <tr>
-                      <th className="py-2.5 px-3">Dish / Item Name</th>
-                      <th className="py-2.5 px-3">Category</th>
-                      <th className="py-2.5 px-3 text-center">1/3 Tray</th>
-                      <th className="py-2.5 px-3 text-center">Half Tray</th>
-                      <th className="py-2.5 px-3 text-center">Full Tray</th>
-                      <th className="py-2.5 px-3 text-center">Breads / Gallons / Custom</th>
-                      <th className="py-2.5 px-3 text-center font-bold text-gray-900">Status</th>
+                      <th className="py-2 px-3">Dish / Item Name</th>
+                      <th className="py-2 px-3">Category</th>
+                      <th className="py-2 px-2 text-center">1/3 Tray</th>
+                      <th className="py-2 px-2 text-center">Half</th>
+                      <th className="py-2 px-2 text-center">Full</th>
+                      <th className="py-2 px-2 text-center">Tiffins</th>
+                      <th className="py-2 px-3 text-center">Other Units / Cakes</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-150">
@@ -1735,28 +1760,25 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
                     ) : (
                       prepSheetSummary.map((dish, i) => (
                         <tr key={i} className="hover:bg-gray-50">
-                          <td className="py-2.5 px-3 font-bold text-gray-900">
+                          <td className="py-2 px-3 font-bold text-gray-900">
                             {dish.name}
                             {dish.tier && <span className="text-[10px] font-normal text-gray-500 block">{dish.tier} Tier</span>}
                           </td>
-                          <td className="py-2.5 px-3 text-gray-500 text-[11px]">{dish.category}</td>
-                          <td className="py-2.5 px-3 text-center font-bold text-[#00346f]">
-                            {dish.thirdCount > 0 ? `${dish.thirdCount}` : '-'}
+                          <td className="py-2 px-3 text-gray-500 text-[11px]">{dish.category}</td>
+                          <td className="py-2 px-2 text-center font-bold text-[#00346f]">
+                            {dish.thirdCount > 0 ? dish.thirdCount : '-'}
                           </td>
-                          <td className="py-2.5 px-3 text-center font-bold text-[#00346f]">
-                            {dish.halfCount > 0 ? `${dish.halfCount}` : '-'}
+                          <td className="py-2 px-2 text-center font-bold text-[#00346f]">
+                            {dish.halfCount > 0 ? dish.halfCount : '-'}
                           </td>
-                          <td className="py-2.5 px-3 text-center font-bold text-[#00346f]">
-                            {dish.fullCount > 0 ? `${dish.fullCount}` : '-'}
+                          <td className="py-2 px-2 text-center font-bold text-[#00346f]">
+                            {dish.fullCount > 0 ? dish.fullCount : '-'}
                           </td>
-                          <td className="py-2.5 px-3 text-center font-medium text-gray-700">
-                            {dish.packsCount > 0 && <span>{dish.packsCount * 30} pcs ({dish.packsCount} packs)</span>}
-                            {dish.gallonsCount > 0 && <span>{dish.gallonsCount} Gallons</span>}
-                            {dish.cakesCount > 0 && <span>{dish.cakesCount} Custom Cake(s)</span>}
-                            {dish.packsCount === 0 && dish.gallonsCount === 0 && dish.cakesCount === 0 && '-'}
+                          <td className="py-2 px-2 text-center font-bold text-amber-800">
+                            {dish.tiffinCount > 0 ? dish.tiffinCount : '-'}
                           </td>
-                          <td className="py-2.5 px-3 text-center">
-                            <span className="inline-block w-4 h-4 border border-gray-400 rounded-sm" />
+                          <td className="py-2 px-3 text-center font-medium text-gray-700 text-[11px]">
+                            {dish.otherUnits.length > 0 ? dish.otherUnits.join(', ') : '-'}
                           </td>
                         </tr>
                       ))
@@ -1765,10 +1787,9 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
                 </table>
               </div>
 
-              {/* Special dietary alert list on prep sheet */}
-              <div className="bg-amber-50 border border-amber-200 p-4 rounded-xl text-xs space-y-1">
+              <div className="bg-amber-50 border border-amber-200 p-3.5 rounded-xl text-xs space-y-1">
                 <span className="font-bold text-amber-900 block uppercase tracking-wider text-[10px]">
-                  Dietary / Satvik Precautions for Today:
+                  Dietary / Satvik Precautions:
                 </span>
                 {nonCancelledOrders.filter(o => o.dietary_notes).map((o, idx) => (
                   <p key={idx} className="text-amber-800 text-[11px]">
@@ -1779,18 +1800,7 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
                   <p className="text-gray-500 italic text-[11px]">No custom dietary restrictions flagged.</p>
                 )}
               </div>
-
             </div>
-
-            <div className="bg-gray-50 p-4 border-t border-gray-200 flex justify-end shrink-0 print:hidden">
-              <button
-                onClick={() => setShowPrepSheet(false)}
-                className="bg-[#00346f] text-white px-5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-[#00224d] cursor-pointer"
-              >
-                Close Prep Sheet
-              </button>
-            </div>
-
           </div>
         </div>
       )}
@@ -1798,8 +1808,7 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
       {/* ── CHANGE MASTER PIN MODAL ── */}
       {showChangePinModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-xs p-4 animate-fade-in font-sans">
-          <div className="relative w-full max-w-md bg-white rounded-2xl shadow-2xl border border-gray-200 overflow-hidden p-6 sm:p-7">
-            
+          <div className="relative w-full max-w-md bg-white rounded-2xl shadow-2xl border border-gray-200 overflow-hidden p-6">
             <button
               onClick={() => setShowChangePinModal(false)}
               className="absolute top-4 right-4 p-1 rounded-full text-gray-400 hover:text-gray-700"
@@ -1813,7 +1822,7 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
                 <KeyRound className="w-6 h-6" />
               </div>
               <div>
-                <h3 className="font-serif font-bold text-lg sm:text-xl">Update Kitchen PIN</h3>
+                <h3 className="font-serif font-bold text-lg">Update Kitchen PIN</h3>
                 <p className="text-xs text-gray-500">Change your master kitchen passcode</p>
               </div>
             </div>
@@ -1824,11 +1833,9 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
                   <CheckCircle2 className="w-8 h-8" />
                 </div>
                 <h4 className="font-bold text-sm text-emerald-900">PIN Updated Successfully!</h4>
-                <p className="text-xs text-emerald-700">New passcode has been stored securely.</p>
               </div>
             ) : (
-              <form onSubmit={handleChangePin} className="space-y-4 text-xs">
-                
+              <form onSubmit={handleChangePin} className="space-y-3.5 text-xs">
                 {pinChangeError && (
                   <div className="p-2.5 bg-rose-50 border border-rose-200 text-rose-800 rounded-xl text-xs flex items-center gap-2">
                     <AlertTriangle className="w-4 h-4 shrink-0 text-rose-600" />
@@ -1837,14 +1844,11 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
                 )}
 
                 <div>
-                  <label className="block text-xs font-semibold text-gray-700 mb-1">
-                    Current PIN
-                  </label>
+                  <label className="block text-xs font-semibold text-gray-700 mb-1">Current PIN</label>
                   <input
                     type="password"
                     maxLength={8}
                     required
-                    placeholder="Enter current PIN"
                     value={currentPinInput}
                     onChange={(e) => setCurrentPinInput(e.target.value.replace(/\D/g, ''))}
                     className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs focus:outline-none focus:bg-white focus:border-[#00346f]"
@@ -1852,14 +1856,11 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-gray-700 mb-1">
-                    New PIN (4–8 digits)
-                  </label>
+                  <label className="block text-xs font-semibold text-gray-700 mb-1">New PIN (4–8 digits)</label>
                   <input
                     type="password"
                     maxLength={8}
                     required
-                    placeholder="Enter new PIN"
                     value={newPinInput}
                     onChange={(e) => setNewPinInput(e.target.value.replace(/\D/g, ''))}
                     className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs focus:outline-none focus:bg-white focus:border-[#00346f]"
@@ -1867,14 +1868,11 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-gray-700 mb-1">
-                    Confirm New PIN
-                  </label>
+                  <label className="block text-xs font-semibold text-gray-700 mb-1">Confirm New PIN</label>
                   <input
                     type="password"
                     maxLength={8}
                     required
-                    placeholder="Re-enter new PIN"
                     value={confirmPinInput}
                     onChange={(e) => setConfirmPinInput(e.target.value.replace(/\D/g, ''))}
                     className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs focus:outline-none focus:bg-white focus:border-[#00346f]"
@@ -1891,15 +1889,13 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
                   </button>
                   <button
                     type="submit"
-                    className="bg-[#00346f] hover:bg-[#00224d] text-white px-5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-xs cursor-pointer"
+                    className="bg-[#00346f] hover:bg-[#00224d] text-white px-5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer"
                   >
-                    Update Passcode
+                    Update PIN
                   </button>
                 </div>
-
               </form>
             )}
-
           </div>
         </div>
       )}
@@ -1913,7 +1909,7 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
         }}
       />
 
-      {/* ── EDIT ORDER MODAL (ITEMS, QUANTITIES, DISCOUNTS, REBATES) ── */}
+      {/* ── EDIT ORDER MODAL ── */}
       {editingOrder && (
         <KDSEditOrderModal
           order={editingOrder}
@@ -1924,7 +1920,7 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
         />
       )}
 
-      {/* ── TIFFIN FLYER & SATURDAY SPECIALS MODAL ── */}
+      {/* ── TIFFIN FLYER & WEEKLY MENU MODAL ── */}
       {showTiffinModal && (
         <KDSTiffinMenuModal
           onClose={() => setShowTiffinModal(false)}
