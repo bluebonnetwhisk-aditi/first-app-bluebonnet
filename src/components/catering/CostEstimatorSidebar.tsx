@@ -6,7 +6,9 @@ import {
   Clock, 
   ChevronDown, 
   ChevronUp,
-  X
+  X,
+  Plus,
+  Minus
 } from 'lucide-react';
 import type { CartItem } from '../../types/catering';
 import { getRequiredNoticeHours } from '../../utils/centralTime';
@@ -18,6 +20,7 @@ interface CostEstimatorSidebarProps {
   onClearCart: () => void;
   onProceedToCheckout: () => void;
   onRemoveItem?: (id: string) => void;
+  onUpdateItemQuantity?: (id: string, delta: number) => void;
   activeSubTab?: 'order' | 'cake' | 'tiffin' | 'kitchen';
 }
 
@@ -28,6 +31,7 @@ export default function CostEstimatorSidebar({
   onClearCart,
   onProceedToCheckout,
   onRemoveItem,
+  onUpdateItemQuantity,
   activeSubTab
 }: CostEstimatorSidebarProps) {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -152,15 +156,15 @@ export default function CostEstimatorSidebar({
             {/* List of items */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2.5 max-h-48 overflow-y-auto pr-1">
               {cart.map(item => (
-                <div key={item.id} className="bg-white p-3 rounded-xl border border-gray-200 shadow-2xs flex items-start justify-between gap-2 text-xs">
+                <div key={item.id} className="bg-white p-3 rounded-xl border border-gray-200 shadow-2xs flex items-center justify-between gap-2 text-xs">
                   <div className="flex-1 min-w-0">
                     <div className="font-semibold text-gray-900 truncate">
                       {item.name}
                     </div>
                     <div className="text-[11px] text-gray-500">
                       {item.selectionType === 'pieces'
-                        ? `${item.quantity} pieces @ $${item.unitPrice.toFixed(2)}/pc`
-                        : `${item.selectionLabel} × ${item.quantity}`}
+                        ? `${item.quantity} pcs @ $${item.unitPrice.toFixed(2)}/pc`
+                        : `${item.selectionLabel}`}
                     </div>
                     {item.notes && (
                       <div className="text-[10px] text-gray-400 italic truncate mt-0.5">
@@ -168,13 +172,36 @@ export default function CostEstimatorSidebar({
                       </div>
                     )}
                   </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    <span className="font-bold text-gray-900">${item.totalPrice.toFixed(2)}</span>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    {onUpdateItemQuantity && (
+                      <div className="flex items-center bg-gray-100 rounded-lg border border-gray-200 p-0.5">
+                        <button
+                          type="button"
+                          onClick={() => onUpdateItemQuantity(item.id, -1)}
+                          className="w-6 h-6 rounded flex items-center justify-center hover:bg-white text-gray-700 cursor-pointer"
+                          title="Decrease quantity"
+                        >
+                          <Minus className="w-3 h-3" />
+                        </button>
+                        <span className="w-6 text-center font-bold text-[11px] text-gray-900">
+                          {item.quantity}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => onUpdateItemQuantity(item.id, 1)}
+                          className="w-6 h-6 rounded flex items-center justify-center hover:bg-white text-gray-700 cursor-pointer"
+                          title="Increase quantity"
+                        >
+                          <Plus className="w-3 h-3" />
+                        </button>
+                      </div>
+                    )}
+                    <span className="font-bold text-gray-900 min-w-[48px] text-right">${item.totalPrice.toFixed(2)}</span>
                     {onRemoveItem && (
                       <button
                         type="button"
                         onClick={() => onRemoveItem(item.id)}
-                        className="text-gray-400 hover:text-rose-600 p-0.5 cursor-pointer"
+                        className="text-gray-400 hover:text-rose-600 p-1 cursor-pointer"
                         title="Remove"
                       >
                         <Trash2 className="w-3.5 h-3.5" />

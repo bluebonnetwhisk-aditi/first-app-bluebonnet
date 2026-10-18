@@ -123,6 +123,10 @@ function buildWhatsAppMessage(order: CateringOrder, eventType: 'accepted' | 'rea
   const dateStr = order.fulfillment_date || '';
   const timeStr = order.fulfillment_time || '';
   
+  const cleanDescriptionFallback = (order.order_description || 'Catering items')
+    .replace(/^\[ACCEPTED\]\s*/i, '')
+    .replace(/\s*\[DISC:[^\]]+\]/gi, '');
+
   const itemsText = order.items && order.items.length > 0
     ? order.items.map(i => {
         const sizeStr = i.selectionLabel ? ` (${i.selectionLabel})` : '';
@@ -130,13 +134,14 @@ function buildWhatsAppMessage(order: CateringOrder, eventType: 'accepted' | 'rea
         const unitPriceStr = i.unitPrice > 0 ? ` @ $${i.unitPrice.toFixed(2)} ea` : '';
         return `• ${i.name}${sizeStr}${notesStr}\n  Qty: ${i.quantity}${unitPriceStr} = $${i.totalPrice.toFixed(2)}`;
       }).join('\n')
-    : (order.order_description || 'Catering items');
+    : cleanDescriptionFallback;
 
   const locationText = order.is_delivery
     ? `Delivery destination: ${order.delivery_address || 'Address on file'}`
     : `Self-Pickup: 2437 Deerwood Dr, Little Elm, TX`;
 
   const foodSubtotal = order.food_subtotal || 0;
+  const discountAmount = order.discount_amount || 0;
   const deliveryFee = order.delivery_fee || 0;
   const taxAmount = order.tax_amount || 0;
   const processingFee = order.processing_fee || 0;
@@ -145,6 +150,7 @@ function buildWhatsAppMessage(order: CateringOrder, eventType: 'accepted' | 'rea
   const financialSummaryLines = [
     `FINANCIAL SUMMARY`,
     `• Food Subtotal: $${foodSubtotal.toFixed(2)}`,
+    discountAmount > 0 ? `• Discount Applied: -$${discountAmount.toFixed(2)}${order.discount_reason ? ` (${order.discount_reason})` : ''}` : null,
     order.is_delivery && deliveryFee > 0 ? `• Delivery Fee: $${deliveryFee.toFixed(2)}` : null,
     `• Texas Sales Tax (8.25%): $${taxAmount.toFixed(2)}`,
     processingFee > 0 ? `• Card Processing Fee (3.5%): $${processingFee.toFixed(2)}` : null,
@@ -603,10 +609,7 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
   }, 0);
 
   const totalNetFoodRevenueInView = nonCancelledOrders.reduce((sum, order) => {
-    const foodBase = order.food_subtotal || 0;
-    const discount = order.discount_amount || 0;
-    const rebate = order.rebate_amount || 0;
-    return sum + Math.max(0, foodBase - discount - rebate);
+    return sum + Math.max(0, order.food_subtotal || 0);
   }, 0);
   const totalTaxInView = nonCancelledOrders.reduce((sum, order) => sum + (order.tax_amount || 0), 0);
   const totalRevenueInView = nonCancelledOrders.reduce((sum, order) => sum + (order.total_amount || 0), 0);
@@ -1914,7 +1917,15 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
         <KDSEditOrderModal
           order={editingOrder}
           onClose={() => setEditingOrder(null)}
-          onOrderUpdated={() => {
+          onOrderUpdated={(updatedOrder) => {
+            if (updatedOrder) {
+              setAllOrders(prev => {
+                if (updatedOrder.status === 'cancelled') {
+                  return prev.filter(o => o.id !== updatedOrder.id);
+                }
+                return prev.map(o => (o.id === updatedOrder.id ? updatedOrder : o));
+              });
+            }
             loadOrders();
           }}
         />

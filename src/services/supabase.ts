@@ -686,6 +686,56 @@ export async function createOrder(orderPayload: Omit<CateringOrder, 'id' | 'crea
   return { data: newOrder, error: null };
 }
 
+const LOCAL_EDITED_ORDERS_KEY = 'bbw_kds_order_edits_v1';
+
+function getLocalOrderEdits(): Record<string, Partial<CateringOrder> & { updatedAt: number }> {
+  try {
+    const raw = localStorage.getItem(LOCAL_EDITED_ORDERS_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch {
+    return {};
+  }
+}
+
+function saveLocalOrderEdit(orderId: string, updates: Partial<CateringOrder>): void {
+  try {
+    const current = getLocalOrderEdits();
+    current[orderId] = {
+      ...(current[orderId] || {}),
+      ...updates,
+      updatedAt: Date.now()
+    };
+    localStorage.setItem(LOCAL_EDITED_ORDERS_KEY, JSON.stringify(current));
+  } catch {
+    // ignore
+  }
+}
+
+function normalizeFetchedOrder(rawOrder: CateringOrder): CateringOrder {
+  const localEdits = getLocalOrderEdits()[rawOrder.id];
+  const merged: CateringOrder = localEdits ? { ...rawOrder, ...localEdits } : { ...rawOrder };
+
+  let desc = merged.order_description || '';
+
+  // Map [ACCEPTED] flag in order_description to 'accepted' status when DB status is 'new'
+  if (merged.status === 'new' && desc.includes('[ACCEPTED]')) {
+    merged.status = 'accepted';
+  }
+
+  // Extract encoded [DISC:amount|reason] if present in order_description
+  const discMatch = desc.match(/\[DISC:(\d+(?:\.\d{1,2})?)\|([^\]]*)\]/);
+  if (discMatch) {
+    if (merged.discount_amount === undefined || merged.discount_amount === 0) {
+      merged.discount_amount = parseFloat(discMatch[1]) || 0;
+    }
+    if (!merged.discount_reason && discMatch[2]) {
+      merged.discount_reason = discMatch[2];
+    }
+  }
+
+  return merged;
+}
+
 /**
  * Fetch orders for a specific fulfillment date (or all active if date not provided)
  */
@@ -698,21 +748,27 @@ export async function fetchOrders(fulfillmentDate?: string): Promise<CateringOrd
       }
       const { data, error } = await query;
       if (!error && data) {
-        // Map [ACCEPTED] flag in order_description to 'accepted' status
         const parsed = (data as CateringOrder[])
-          .filter(o => o.status !== 'cancelled')
-          .map(o => {
-            if (o.status === 'new' && o.order_description?.includes('[ACCEPTED]')) {
-              return { ...o, status: 'accepted' as OrderStatus };
-            }
-            return o;
-          });
+          .map(normalizeFetchedOrder)
+          .filter(o => o.status !== 'cancelled');
 
-        // Cache live Supabase orders into localStorage
+        // Merge any purely local orders that haven't synced yet
+        const localStored = getStoredOrders();
+        const remoteIds = new Set(parsed.map(o => o.id));
+        const localOnly = localStored
+          .filter(o => !remoteIds.has(o.id) && o.status !== 'cancelled')
+          .map(normalizeFetchedOrder);
+
+        const combined = [...parsed, ...localOnly];
+
         try {
-          localStorage.setItem(LOCAL_STORAGE_ORDERS_KEY, JSON.stringify(parsed));
+          localStorage.setItem(LOCAL_STORAGE_ORDERS_KEY, JSON.stringify(combined));
         } catch {}
-        return parsed;
+
+        if (fulfillmentDate) {
+          return combined.filter(o => o.fulfillment_date === fulfillmentDate);
+        }
+        return combined;
       }
       if (error) {
         console.error('Supabase fetchOrders error:', error);
@@ -725,13 +781,8 @@ export async function fetchOrders(fulfillmentDate?: string): Promise<CateringOrd
   // Local fallback
   const all = getStoredOrders();
   const parsed = all
-    .filter(o => o.status !== 'cancelled')
-    .map(o => {
-      if (o.status === 'new' && o.order_description?.includes('[ACCEPTED]')) {
-        return { ...o, status: 'accepted' as OrderStatus };
-      }
-      return o;
-    });
+    .map(normalizeFetchedOrder)
+    .filter(o => o.status !== 'cancelled');
 
   if (fulfillmentDate) {
     return parsed.filter(o => o.fulfillment_date === fulfillmentDate);
@@ -745,16 +796,17 @@ export async function fetchOrders(fulfillmentDate?: string): Promise<CateringOrd
 export async function updateOrderStatus(orderId: string, status: OrderStatus): Promise<boolean> {
   let updatedSuccessfully = false;
 
+  // Save status in local edits map immediately so any subsequent fetch preserves it
+  saveLocalOrderEdit(orderId, { status });
+
   if (supabase) {
     try {
       if (status === 'accepted') {
-        // Postgres check constraint expects status IN ('new', 'preparing', 'ready', 'completed', 'cancelled')
-        // We preserve 'new' in Postgres status and store [ACCEPTED] in order_description
         const { data: currentOrder } = await supabase
           .from('orders')
           .select('order_description')
           .eq('id', orderId)
-          .single();
+          .maybeSingle();
         
         const curDesc = currentOrder?.order_description || '';
         const newDesc = curDesc.includes('[ACCEPTED]') ? curDesc : `[ACCEPTED] ${curDesc}`;
@@ -769,12 +821,11 @@ export async function updateOrderStatus(orderId: string, status: OrderStatus): P
         
         if (!error) updatedSuccessfully = true;
       } else {
-        // Moving to preparing, ready, completed, or cancelled: clean up [ACCEPTED] marker
         const { data: currentOrder } = await supabase
           .from('orders')
           .select('order_description')
           .eq('id', orderId)
-          .single();
+          .maybeSingle();
         
         const curDesc = currentOrder?.order_description || '';
         const cleanDesc = curDesc.replace(/\[ACCEPTED\]\s*/g, '').trim();
@@ -823,16 +874,14 @@ export interface OrderEventInfo {
  * Subscribe to realtime orders updates.
  */
 export function subscribeToOrders(onUpdate: (eventInfo?: OrderEventInfo) => void): () => void {
-  // Local event listener for mock / offline updates
   const handleLocalUpdate = (e: Event) => {
     const customEvt = e as CustomEvent<OrderEventInfo>;
     onUpdate(customEvt.detail);
   };
   window.addEventListener('bbw_orders_updated', handleLocalUpdate);
 
-  // Cross-tab storage updates
   const handleStorageUpdate = (e: StorageEvent) => {
-    if (e.key === LOCAL_STORAGE_ORDERS_KEY) {
+    if (e.key === LOCAL_STORAGE_ORDERS_KEY || e.key === LOCAL_EDITED_ORDERS_KEY) {
       onUpdate({ eventType: 'STORAGE' });
     }
   };
@@ -867,43 +916,81 @@ export function subscribeToOrders(onUpdate: (eventInfo?: OrderEventInfo) => void
 }
 
 /**
- * Updates full order details (items, subtotal, tax, discounts, rebates, totals)
+ * Updates full order details (items, subtotal, tax, discounts, rebates, totals, date, time, status)
  * and synchronizes with Supabase public.orders and local storage.
  */
 export async function updateOrderDetails(orderId: string, updates: Partial<CateringOrder>): Promise<boolean> {
-  let updatedSuccessfully = false;
+  // 1. Encode [ACCEPTED] and [DISC:amount|reason] into order_description so Supabase persists them reliably
+  let cleanDesc = (updates.order_description || '')
+    .replace(/\[ACCEPTED\]\s*/g, '')
+    .replace(/\s*\[DISC:[^\]]*\]/g, '')
+    .trim();
 
-  if (supabase) {
-    try {
-      const payloadToUpdate: any = { ...updates };
-      delete payloadToUpdate.id;
-      delete payloadToUpdate.created_at;
-
-      const { error } = await supabase
-        .from('orders')
-        .update(payloadToUpdate)
-        .eq('id', orderId);
-
-      if (!error) {
-        updatedSuccessfully = true;
-      } else {
-        console.warn('Supabase updateOrderDetails error:', error);
-      }
-    } catch (err) {
-      console.warn('Supabase updateOrderDetails connection failed, persisting to local cache', err);
-    }
+  if (updates.discount_amount && updates.discount_amount > 0) {
+    cleanDesc = `${cleanDesc} [DISC:${updates.discount_amount.toFixed(2)}|${updates.discount_reason || ''}]`.trim();
   }
 
-  // Always update local cache
+  if (updates.status === 'accepted') {
+    cleanDesc = `[ACCEPTED] ${cleanDesc}`.trim();
+  }
+
+  const normalizedUpdates: Partial<CateringOrder> = {
+    ...updates,
+    order_description: cleanDesc
+  };
+
+  // 2. Always persist in local edits override cache & stored orders cache first
+  saveLocalOrderEdit(orderId, normalizedUpdates);
+
   const all = getStoredOrders();
   const index = all.findIndex(o => o.id === orderId);
   if (index !== -1) {
-    all[index] = { ...all[index], ...updates };
+    all[index] = { ...all[index], ...normalizedUpdates };
     saveStoredOrders(all);
-    updatedSuccessfully = true;
+  } else {
+    window.dispatchEvent(new CustomEvent('bbw_orders_updated', { detail: { eventType: 'UPDATE' } }));
   }
 
-  return updatedSuccessfully;
+  // 3. Persist valid schema columns to Supabase public.orders
+  if (supabase) {
+    try {
+      const dbStatus = updates.status === 'accepted' ? 'new' : updates.status;
+
+      // Only include columns that exist on public.orders in Supabase
+      const allowedColumns: Record<string, any> = {};
+      if (updates.customer_name !== undefined) allowedColumns.customer_name = updates.customer_name;
+      if (updates.phone_number !== undefined) allowedColumns.phone_number = updates.phone_number;
+      if (updates.email !== undefined) allowedColumns.email = updates.email;
+      if (updates.is_delivery !== undefined) allowedColumns.is_delivery = updates.is_delivery;
+      if (updates.delivery_address !== undefined) allowedColumns.delivery_address = updates.delivery_address;
+      if (updates.delivery_fee !== undefined) allowedColumns.delivery_fee = updates.delivery_fee;
+      if (updates.food_subtotal !== undefined) allowedColumns.food_subtotal = updates.food_subtotal;
+      if (updates.tax_amount !== undefined) allowedColumns.tax_amount = updates.tax_amount;
+      if (updates.payment_method !== undefined) allowedColumns.payment_method = updates.payment_method;
+      if (updates.processing_fee !== undefined) allowedColumns.processing_fee = updates.processing_fee;
+      if (updates.total_amount !== undefined) allowedColumns.total_amount = updates.total_amount;
+      if (cleanDesc) allowedColumns.order_description = cleanDesc;
+      if (updates.fulfillment_date !== undefined) allowedColumns.fulfillment_date = updates.fulfillment_date;
+      if (updates.fulfillment_time !== undefined) allowedColumns.fulfillment_time = updates.fulfillment_time;
+      if (updates.dietary_notes !== undefined) allowedColumns.dietary_notes = updates.dietary_notes;
+      if (updates.order_type !== undefined) allowedColumns.order_type = updates.order_type;
+      if (dbStatus !== undefined) allowedColumns.status = dbStatus;
+      if (updates.items !== undefined) allowedColumns.items = updates.items;
+
+      const { error } = await supabase
+        .from('orders')
+        .update(allowedColumns)
+        .eq('id', orderId);
+
+      if (error) {
+        console.warn('Supabase updateOrderDetails warning (saved locally):', error);
+      }
+    } catch (err) {
+      console.warn('Supabase updateOrderDetails connection warning (saved locally):', err);
+    }
+  }
+
+  return true;
 }
 
 /**
@@ -1157,15 +1244,6 @@ export async function fetchTiffinMenuSettings(): Promise<TiffinMenuSettings> {
   const sanitizeSpecials = (rawSpecials?: TiffinSpecialDish[]): TiffinSpecialDish[] => {
     if (!Array.isArray(rawSpecials) || rawSpecials.length === 0) {
       return DEFAULT_WEEKEND_FLYER_SPECIALS;
-    }
-    // Check if key flyer dishes (like Dal Makhni / Paneer Lababdar) are missing
-    const hasDalMakhni = rawSpecials.some(s => s.title.toLowerCase().includes('dal makhn'));
-    const hasPaneerLababdar = rawSpecials.some(s => s.title.toLowerCase().includes('paneer lababdar'));
-    if (!hasDalMakhni || !hasPaneerLababdar || rawSpecials.length < 7) {
-      const missingDefaults = DEFAULT_WEEKEND_FLYER_SPECIALS.filter(
-        def => !rawSpecials.some(s => s.title.toLowerCase().includes(def.title.toLowerCase().slice(0, 10)))
-      );
-      return [...rawSpecials, ...missingDefaults];
     }
     return rawSpecials;
   };

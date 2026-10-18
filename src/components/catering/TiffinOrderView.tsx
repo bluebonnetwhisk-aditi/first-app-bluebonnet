@@ -41,6 +41,7 @@ interface TiffinOrderViewProps {
     customNotes?: string
   ) => void;
   onRemoveCartItem?: (cartItemId: string) => void;
+  onChangeCartItemQuantity?: (cartItemId: string, delta: number) => void;
   onProceedToCheckout?: () => void;
 }
 
@@ -62,6 +63,7 @@ export default function TiffinOrderView({
   selectedGlobalDate: _selectedGlobalDate,
   onUpdateCartItem,
   onRemoveCartItem,
+  onChangeCartItemQuantity,
   onProceedToCheckout
 }: TiffinOrderViewProps) {
   const [settings, setSettings] = useState<TiffinMenuSettings>(DEFAULT_TIFFIN_SETTINGS);
@@ -2161,18 +2163,41 @@ export default function TiffinOrderView({
 
           <div className="space-y-2">
             {tiffinCartItems.map(item => (
-              <div key={item.id} className="p-3 bg-white rounded-xl border border-gray-200 flex items-center justify-between gap-3 text-xs">
-                <div>
-                  <span className="font-bold text-gray-900">{item.name}</span>
+              <div key={item.id} className="p-3 bg-white rounded-xl border border-gray-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 text-xs">
+                <div className="min-w-0 flex-1">
+                  <span className="font-bold text-gray-900 block">{item.name}</span>
                   <span className="text-gray-500 block text-[11px]">
-                    {item.selectionLabel} &times; {item.quantity}
+                    {item.selectionLabel}
                   </span>
                   {item.notes && (
                     <span className="text-[11px] text-gray-600 block mt-0.5 italic">{item.notes}</span>
                   )}
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className="font-mono font-bold text-gray-900">${item.totalPrice.toFixed(2)}</span>
+                <div className="flex items-center justify-between sm:justify-end gap-2 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-gray-100">
+                  {onChangeCartItemQuantity && (
+                    <div className="flex items-center bg-gray-100 rounded-lg border border-gray-200 p-0.5">
+                      <button
+                        type="button"
+                        onClick={() => onChangeCartItemQuantity(item.id, -1)}
+                        className="w-7 h-7 rounded flex items-center justify-center hover:bg-white text-gray-700 cursor-pointer"
+                        title="Decrease quantity"
+                      >
+                        <Minus className="w-3.5 h-3.5" />
+                      </button>
+                      <span className="w-6 text-center font-bold text-xs text-gray-900">
+                        {item.quantity}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => onChangeCartItemQuantity(item.id, 1)}
+                        className="w-7 h-7 rounded flex items-center justify-center hover:bg-white text-gray-700 cursor-pointer"
+                        title="Increase quantity"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  )}
+                  <span className="font-mono font-bold text-gray-900 min-w-[52px] text-right">${item.totalPrice.toFixed(2)}</span>
                   {onRemoveCartItem && (
                     <button
                       type="button"

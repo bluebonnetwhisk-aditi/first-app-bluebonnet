@@ -126,15 +126,18 @@ export default function CateringContainer() {
   // Update item in cart handler
   const handleUpdateCartItem = (
     menuItem: MenuItem,
-    selectionType: TraySize | 'pack_30' | 'pieces' | 'gallon' | 'cake_custom' | 'tiffin_single' | 'tiffin_family' | 'tiffin_weekly' | 'container_16oz',
+    selectionType: TraySize | 'pack_30' | 'pieces' | 'gallon' | 'cake_custom' | 'tiffin_single' | 'tiffin_family' | 'tiffin_weekly' | 'container_8oz' | 'container_16oz',
     quantity: number,
     selectionLabel: string,
     unitPrice: number,
     customNotes?: string
   ) => {
     setCart(prev => {
-      const existingIdx = prev.findIndex(
-        item => item.menuItemId === menuItem.id && item.selectionType === selectionType && (customNotes ? item.notes === customNotes : true)
+      // Custom cakes can have multiple distinct configurations (different flavors/inscriptions) for the same tier+size
+      const existingIdx = prev.findIndex(item =>
+        selectionType === 'cake_custom'
+          ? item.menuItemId === menuItem.id && item.selectionType === selectionType && item.notes === customNotes
+          : item.menuItemId === menuItem.id && item.selectionType === selectionType
       );
 
       if (quantity <= 0) {
@@ -144,9 +147,12 @@ export default function CateringContainer() {
         return prev;
       }
 
+      const existingItem = existingIdx !== -1 ? prev[existingIdx] : null;
       const updatedItem: CartItem = {
-        id: customNotes 
-          ? `${menuItem.id}-${selectionType}-${Date.now().toString(36)}` 
+        id: existingItem
+          ? existingItem.id
+          : selectionType === 'cake_custom' && customNotes
+          ? `${menuItem.id}-${selectionType}-${Date.now().toString(36)}`
           : `${menuItem.id}-${selectionType}`,
         menuItemId: menuItem.id,
         name: menuItem.name,
@@ -164,12 +170,64 @@ export default function CateringContainer() {
       };
 
       if (existingIdx !== -1) {
-        const copy = [...prev];
-        copy[existingIdx] = updatedItem;
-        return copy;
+        return prev.map((item, idx) => (idx === existingIdx ? updatedItem : item));
       } else {
         return [...prev, updatedItem];
       }
+    });
+  };
+
+  // Universal quantity stepper handler for cart drawer, checkout modal, tiffin summary, and cake list
+  const handleChangeCartItemQuantity = (cartItemId: string, delta: number) => {
+    setCart(prev => {
+      const target = prev.find(i => i.id === cartItemId);
+      if (!target) return prev;
+
+      // Bread pieces have minimum piece rules (8 pcs for Extra Pav, 30 pcs for Poori/Naan/Roti)
+      if (target.selectionType === 'pieces' && target.category === 'breads') {
+        const isPav = target.menuItemId === 'bread-extra-pav' || target.name.toLowerCase().includes('pav');
+        const minPieces = isPav ? 8 : 30;
+        const step = isPav ? 4 : 5;
+        const nextQty = delta > 0 ? target.quantity + step : target.quantity - step;
+
+        if (nextQty < minPieces) {
+          return prev.filter(i => i.id !== cartItemId);
+        }
+
+        return prev.map(i =>
+          i.id === cartItemId
+            ? {
+                ...i,
+                quantity: nextQty,
+                selectionLabel: `${nextQty} pieces ($${i.unitPrice.toFixed(2)}/pc)`,
+                totalPrice: Math.round(i.unitPrice * nextQty * 100) / 100
+              }
+            : i
+        );
+      }
+
+      const nextQty = target.quantity + delta;
+      if (nextQty <= 0) {
+        return prev.filter(i => i.id !== cartItemId);
+      }
+
+      let updatedNotes = target.notes;
+      if (updatedNotes) {
+        updatedNotes = updatedNotes
+          .replace(/\(Qty:\s*\d+\)/i, `(Qty: ${nextQty})`)
+          .replace(/Total:\s*\d+\s*hot meals/i, `Total: ${5 * nextQty} hot meals`);
+      }
+
+      return prev.map(i =>
+        i.id === cartItemId
+          ? {
+              ...i,
+              quantity: nextQty,
+              totalPrice: Math.round(i.unitPrice * nextQty * 100) / 100,
+              notes: updatedNotes
+            }
+          : i
+      );
     });
   };
 
@@ -451,6 +509,7 @@ export default function CateringContainer() {
                     onAddCake={handleAddCakeFromConfigurator}
                     cartCakes={cart.filter(i => i.category === 'cakes')}
                     onRemoveCake={handleRemoveCartItem}
+                    onUpdateCakeQuantity={handleChangeCartItemQuantity}
                     onProceedToCheckout={() => setIsCheckoutOpen(true)}
                   />
                   {/* 4 Differentiators at end of page */}
@@ -465,6 +524,7 @@ export default function CateringContainer() {
                   selectedGlobalDate={selectedGlobalDate}
                   onUpdateCartItem={handleUpdateCartItem}
                   onRemoveCartItem={handleRemoveCartItem}
+                  onChangeCartItemQuantity={handleChangeCartItemQuantity}
                   onProceedToCheckout={() => setIsCheckoutOpen(true)}
                 />
               )}
@@ -480,6 +540,7 @@ export default function CateringContainer() {
             onClearCart={handleClearCart}
             onProceedToCheckout={() => setIsCheckoutOpen(true)}
             onRemoveItem={handleRemoveCartItem}
+            onUpdateItemQuantity={handleChangeCartItemQuantity}
             activeSubTab={subTab}
           />
 
@@ -499,6 +560,8 @@ export default function CateringContainer() {
           blackoutDates={blackoutDates}
           initialFulfillmentDate={selectedGlobalDate}
           subTab={subTab}
+          onRemoveItem={handleRemoveCartItem}
+          onUpdateItemQuantity={handleChangeCartItemQuantity}
         />
       </ErrorBoundary>
 

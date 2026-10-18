@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { 
   Cake as CakeIcon, 
   Sparkles, 
@@ -9,7 +9,8 @@ import {
   AlertCircle,
   Trash2,
   Leaf,
-  ArrowRight
+  ArrowRight,
+  FileEdit
 } from 'lucide-react';
 import type { CartItem } from '../../types/catering';
 
@@ -128,6 +129,7 @@ interface CakeConfiguratorProps {
   }) => void;
   cartCakes?: CartItem[];
   onRemoveCake?: (cartItemId: string) => void;
+  onUpdateCakeQuantity?: (cartItemId: string, delta: number) => void;
   onProceedToCheckout?: () => void;
 }
 
@@ -135,8 +137,10 @@ export default function CakeConfigurator({
   onAddCake,
   cartCakes = [],
   onRemoveCake,
+  onUpdateCakeQuantity,
   onProceedToCheckout
 }: CakeConfiguratorProps) {
+  const configuratorTopRef = useRef<HTMLDivElement>(null);
   const [selectedSize, setSelectedSize] = useState<CakeSize>('6inch');
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>('classic');
   const [selectedFlavor, setSelectedFlavor] = useState<string>('Pineapple');
@@ -147,6 +151,7 @@ export default function CakeConfigurator({
   const [isEggless, setIsEggless] = useState<boolean>(false);
   const [quantity, setQuantity] = useState<number>(1);
   const [addedAlert, setAddedAlert] = useState<boolean>(false);
+  const [isEditingCake, setIsEditingCake] = useState<boolean>(false);
 
   // Active category definition
   const currentCategory = CAKE_CATEGORIES.find(c => c.id === selectedCategoryId) || CAKE_CATEGORIES[0];
@@ -175,6 +180,58 @@ export default function CakeConfigurator({
     }
   };
 
+  // Load an existing configured cake back into the configurator form for editing
+  const handleEditCake = (cake: CartItem) => {
+    const idParts = (cake.menuItemId || '').split('-');
+    // Format: cake-<size>-<categoryId>-<flavor>...
+    const maybeSize = idParts[1] as CakeSize;
+    if (['6inch', '8inch', '2tier', '3tier'].includes(maybeSize)) {
+      setSelectedSize(maybeSize);
+    }
+
+    const maybeCatId = idParts[2];
+    if (CAKE_CATEGORIES.some(c => c.id === maybeCatId)) {
+      setSelectedCategoryId(maybeCatId);
+    }
+
+    // Parse notes segments: "Flavor: X | Dietary: ... | Inscription: "Y" | Custom Theme: Z | Notes: W"
+    const rawNotes = cake.notes || '';
+    const flavorMatch = rawNotes.match(/Flavor:\s*([^|]+)/i);
+    if (flavorMatch) {
+      const flv = flavorMatch[1].trim();
+      setSelectedFlavor(flv);
+      const matchingCat = CAKE_CATEGORIES.find(c => c.flavors.includes(flv));
+      if (matchingCat) setSelectedCategoryId(matchingCat.id);
+    }
+
+    setIsEggless(/eggless/i.test(rawNotes) || /eggless/i.test(cake.name));
+
+    const inscMatch = rawNotes.match(/Inscription:\s*"([^"]*)"/i);
+    setInscription(inscMatch ? inscMatch[1] : '');
+
+    const themeMatch = rawNotes.match(/Custom Theme:\s*([^|]+)/i);
+    if (themeMatch) {
+      setRequestCustomTheme(true);
+      const val = themeMatch[1].trim();
+      setCustomThemeDetails(val === 'Quote Requested' ? '' : val);
+    } else {
+      setRequestCustomTheme(false);
+      setCustomThemeDetails('');
+    }
+
+    const notesMatch = rawNotes.match(/Notes:\s*([^|]+)/i);
+    setDesignNotes(notesMatch ? notesMatch[1].trim() : '');
+
+    setQuantity(Math.max(1, cake.quantity));
+    setIsEditingCake(true);
+
+    if (onRemoveCake) {
+      onRemoveCake(cake.id);
+    }
+
+    configuratorTopRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
   const handleAddToCart = () => {
     const sizeConfig = CAKE_SIZES.find(s => s.id === selectedSize)!;
     const egglessSuffix = isEggless ? '-eggless' : '';
@@ -200,6 +257,7 @@ export default function CakeConfigurator({
 
     // Reset inputs & show alert
     setAddedAlert(true);
+    setIsEditingCake(false);
     setInscription('');
     setDesignNotes('');
     setRequestCustomTheme(false);
@@ -210,7 +268,7 @@ export default function CakeConfigurator({
   };
 
   return (
-    <div className="w-full bg-white rounded-2xl border border-gray-200 shadow-xs overflow-hidden font-sans">
+    <div ref={configuratorTopRef} className="w-full bg-white rounded-2xl border border-gray-200 shadow-xs overflow-hidden font-sans scroll-mt-36">
       
       {/* Header Banner */}
       <div className="bg-linear-to-r from-[#00346f] via-[#002855] to-[#1e3a5f] text-white p-3.5 sm:p-6">
@@ -536,14 +594,14 @@ export default function CakeConfigurator({
               </button>
             </div>
 
-            {/* Add to Order Button */}
+            {/* Add / Save Cake Button */}
             <button
               type="button"
               onClick={handleAddToCart}
               className="min-h-[44px] bg-[#00346f] hover:bg-[#00224d] text-white px-4 sm:px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-sm cursor-pointer inline-flex items-center justify-center gap-1.5 flex-1 sm:flex-none"
             >
               <Sparkles className="w-4 h-4 text-[#ffdea5]" />
-              <span>Add Cake</span>
+              <span>{isEditingCake ? 'Save Cake Changes' : 'Add Cake'}</span>
             </button>
 
             {/* Direct Add & Checkout Button */}
@@ -558,7 +616,7 @@ export default function CakeConfigurator({
                 }}
                 className="min-h-[44px] bg-emerald-700 hover:bg-emerald-800 text-white px-4 sm:px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-sm cursor-pointer inline-flex items-center justify-center gap-1.5 flex-1 sm:flex-none"
               >
-                <span>Add &amp; Checkout</span>
+                <span>{isEditingCake ? 'Save & Checkout' : 'Add & Checkout'}</span>
                 <ArrowRight className="w-4 h-4" />
               </button>
             )}
@@ -600,11 +658,11 @@ export default function CakeConfigurator({
 
             <div className="space-y-2">
               {cartCakes.map(cake => (
-                <div key={cake.id} className="p-3 bg-blue-50/40 rounded-xl border border-blue-200/60 flex items-start justify-between gap-3 text-xs">
-                  <div>
-                    <span className="font-bold text-[#00346f]">{cake.name}</span>
+                <div key={cake.id} className="p-3 bg-blue-50/40 rounded-xl border border-blue-200/60 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 text-xs">
+                  <div className="min-w-0 flex-1">
+                    <span className="font-bold text-[#00346f] block">{cake.name}</span>
                     <span className="text-gray-500 block text-[11px] mt-0.5">
-                      {cake.selectionLabel} &times; {cake.quantity}
+                      {cake.selectionLabel}
                     </span>
                     {cake.notes && (
                       <span className="text-[11px] text-gray-600 italic block mt-0.5">
@@ -612,13 +670,48 @@ export default function CakeConfigurator({
                       </span>
                     )}
                   </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    <span className="font-black text-gray-900">${cake.totalPrice.toFixed(2)}</span>
+                  <div className="flex items-center justify-between sm:justify-end gap-2 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-blue-200/50">
+                    {onUpdateCakeQuantity && (
+                      <div className="flex items-center bg-white rounded-lg border border-blue-200 p-0.5">
+                        <button
+                          type="button"
+                          onClick={() => onUpdateCakeQuantity(cake.id, -1)}
+                          className="w-7 h-7 rounded flex items-center justify-center hover:bg-blue-50 text-gray-700 cursor-pointer"
+                          title="Decrease quantity"
+                        >
+                          <Minus className="w-3.5 h-3.5" />
+                        </button>
+                        <span className="w-6 text-center font-bold text-xs text-gray-900">
+                          {cake.quantity}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => onUpdateCakeQuantity(cake.id, 1)}
+                          className="w-7 h-7 rounded flex items-center justify-center hover:bg-blue-50 text-gray-700 cursor-pointer"
+                          title="Increase quantity"
+                        >
+                          <Plus className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    )}
+
+                    <span className="font-black text-gray-900 min-w-[52px] text-right">${cake.totalPrice.toFixed(2)}</span>
+
+                    <button
+                      type="button"
+                      onClick={() => handleEditCake(cake)}
+                      className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-white border border-blue-200 hover:bg-blue-50 text-[#00346f] font-bold text-[11px] cursor-pointer"
+                      title="Edit cake flavor, size or inscription"
+                    >
+                      <FileEdit className="w-3.5 h-3.5" />
+                      <span>Edit</span>
+                    </button>
+
                     {onRemoveCake && (
                       <button
                         type="button"
                         onClick={() => onRemoveCake(cake.id)}
-                        className="w-9 h-9 min-w-[36px] min-h-[36px] rounded-lg text-rose-500 hover:text-rose-700 hover:bg-rose-50 flex items-center justify-center cursor-pointer"
+                        className="w-8 h-8 rounded-lg text-rose-500 hover:text-rose-700 hover:bg-rose-50 flex items-center justify-center cursor-pointer"
                         title="Remove cake"
                         aria-label={`Remove ${cake.name}`}
                       >

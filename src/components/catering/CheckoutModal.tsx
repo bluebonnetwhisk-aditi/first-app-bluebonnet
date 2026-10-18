@@ -12,7 +12,10 @@ import {
   QrCode,
   User,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  Plus,
+  Minus,
+  Trash2
 } from 'lucide-react';
 import type { CartItem, CateringOrder, OrderType, PaymentMethod } from '../../types/catering';
 import { 
@@ -38,6 +41,8 @@ interface CheckoutModalProps {
   blackoutDates?: string[];
   initialFulfillmentDate?: string;
   subTab?: 'order' | 'cake' | 'tiffin';
+  onRemoveItem?: (id: string) => void;
+  onUpdateItemQuantity?: (id: string, delta: number) => void;
 }
 
 const SAVED_CUSTOMER_KEY = 'bbw_customer_checkout_profile_v1';
@@ -51,7 +56,9 @@ export default function CheckoutModal({
   onOrderSuccess,
   blackoutDates = [],
   initialFulfillmentDate,
-  subTab
+  subTab,
+  onRemoveItem,
+  onUpdateItemQuantity
 }: CheckoutModalProps) {
   const modalBodyRef = useRef<HTMLDivElement>(null);
 
@@ -915,15 +922,15 @@ export default function CheckoutModal({
               </div>
             )}
 
-            {/* Compact Order Total Box with Expandable Itemized Details */}
+            {/* Compact Order Total Box with Expandable Itemized Details & Edit Controls */}
             <div className="bg-gray-50 rounded-xl p-3 border border-gray-200 space-y-2 text-xs">
               <div className="flex items-center justify-between">
                 <button
                   type="button"
                   onClick={() => setShowItemizedBreakdown(!showItemizedBreakdown)}
-                  className="text-xs font-bold text-[#00346f] flex items-center gap-1 cursor-pointer"
+                  className="text-xs font-bold text-[#00346f] flex items-center gap-1 cursor-pointer hover:underline"
                 >
-                  <span>Order Summary ({totalItemQty} {totalItemQty === 1 ? 'item' : 'items'})</span>
+                  <span>Order Summary &amp; Edit ({totalItemQty} {totalItemQty === 1 ? 'item' : 'items'})</span>
                   {showItemizedBreakdown ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
                 </button>
                 <span className="text-[11px] text-gray-600">
@@ -937,9 +944,47 @@ export default function CheckoutModal({
               {showItemizedBreakdown && (
                 <div className="pt-2 border-t border-gray-200 space-y-1.5 text-[11px] text-gray-600 animate-fade-in">
                   {cart.map(item => (
-                    <div key={item.id} className="flex justify-between gap-2">
-                      <span className="truncate">{item.quantity}&times; {item.name} ({item.selectionLabel})</span>
-                      <span className="font-semibold text-gray-900 shrink-0">${item.totalPrice.toFixed(2)}</span>
+                    <div key={item.id} className="flex items-center justify-between gap-2 bg-white px-2.5 py-1.5 rounded-lg border border-gray-200">
+                      <div className="min-w-0 flex-1">
+                        <span className="font-semibold text-gray-900 block truncate">{item.name}</span>
+                        <span className="text-[10px] text-gray-500 block truncate">{item.selectionLabel}</span>
+                      </div>
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        {onUpdateItemQuantity && (
+                          <div className="flex items-center bg-gray-100 rounded-md border border-gray-200 p-0.5">
+                            <button
+                              type="button"
+                              onClick={() => onUpdateItemQuantity(item.id, -1)}
+                              className="w-5 h-5 rounded flex items-center justify-center hover:bg-white text-gray-700 cursor-pointer"
+                              title="Decrease quantity"
+                            >
+                              <Minus className="w-2.5 h-2.5" />
+                            </button>
+                            <span className="w-5 text-center font-bold text-[10px] text-gray-900">
+                              {item.quantity}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => onUpdateItemQuantity(item.id, 1)}
+                              className="w-5 h-5 rounded flex items-center justify-center hover:bg-white text-gray-700 cursor-pointer"
+                              title="Increase quantity"
+                            >
+                              <Plus className="w-2.5 h-2.5" />
+                            </button>
+                          </div>
+                        )}
+                        <span className="font-semibold text-gray-900 min-w-[44px] text-right">${item.totalPrice.toFixed(2)}</span>
+                        {onRemoveItem && (
+                          <button
+                            type="button"
+                            onClick={() => onRemoveItem(item.id)}
+                            className="text-gray-400 hover:text-rose-600 p-0.5 cursor-pointer"
+                            title="Remove item"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </button>
+                        )}
+                      </div>
                     </div>
                   ))}
                   <div className="pt-1.5 border-t border-gray-200/80 space-y-0.5">

@@ -23,7 +23,7 @@ import { updateOrderDetails } from '../../services/supabase';
 interface KDSEditOrderModalProps {
   order: CateringOrder;
   onClose: () => void;
-  onOrderUpdated: () => void;
+  onOrderUpdated: (updatedOrder?: CateringOrder) => void;
 }
 
 function parseInitialOrderItems(order: CateringOrder): CartItem[] {
@@ -72,7 +72,10 @@ function parseInitialOrderItems(order: CateringOrder): CartItem[] {
   }
 
   if (order.order_description && typeof order.order_description === 'string') {
-    const segments = order.order_description.split(/;|\n/).map(s => s.trim()).filter(Boolean);
+    const cleanDesc = order.order_description
+      .replace(/^\[ACCEPTED\]\s*/i, '')
+      .replace(/\s*\[DISC:[^\]]+\]/gi, '');
+    const segments = cleanDesc.split(/;|\n/).map(s => s.trim()).filter(Boolean);
     const extracted: CartItem[] = [];
 
     for (let i = 0; i < segments.length; i++) {
@@ -122,10 +125,18 @@ export default function KDSEditOrderModal({
 }: KDSEditOrderModalProps) {
   const [items, setItems] = useState<CartItem[]>(() => parseInitialOrderItems(order));
 
-  // Date, Time & Status state
+  // Customer, Schedule, Delivery & Status state
+  const [customerName, setCustomerName] = useState<string>(order.customer_name || '');
+  const [phoneNumber, setPhoneNumber] = useState<string>(order.phone_number || '');
   const [fulfillmentDate, setFulfillmentDate] = useState<string>(order.fulfillment_date || '');
   const [fulfillmentTime, setFulfillmentTime] = useState<string>(order.fulfillment_time || '');
   const [orderStatus, setOrderStatus] = useState<OrderStatus>(order.status || 'new');
+  const [isDelivery, setIsDelivery] = useState<boolean>(Boolean(order.is_delivery));
+  const [deliveryAddress, setDeliveryAddress] = useState<string>(order.delivery_address || '');
+  const [deliveryFeeInput, setDeliveryFeeInput] = useState<string>(
+    order.delivery_fee !== undefined && order.delivery_fee !== null ? String(order.delivery_fee) : '0'
+  );
+  const [dietaryNotes, setDietaryNotes] = useState<string>(order.dietary_notes || '');
 
   // Two discount sections: Percent (%) discount and Fixed Amount ($) discount
   const [percentDiscountInput, setPercentDiscountInput] = useState<string>('');
@@ -163,7 +174,7 @@ export default function KDSEditOrderModal({
     .reduce((sum, item) => sum + (item.unitPrice * item.quantity), 0);
 
   const grossFood = tiffinTotal + cakeSubtotal + cateringSubtotal;
-  const deliveryFee = order.delivery_fee || 0;
+  const deliveryFee = isDelivery ? Math.max(0, parseFloat(deliveryFeeInput) || 0) : 0;
   
   // Percent discount calculation
   const percentVal = Math.max(0, parseFloat(percentDiscountInput) || 0);
@@ -196,37 +207,52 @@ export default function KDSEditOrderModal({
   
   const grandTotal = Math.round((netBeforeCardFee + processingFee) * 100) / 100;
 
-  // Change name of item
+  // Pure immutable item update helpers
   const handleItemNameChange = (idx: number, newName: string) => {
-    setItems(prev => {
-      const copy = [...prev];
-      copy[idx].name = newName;
-      return copy;
-    });
+    setItems(prev => prev.map((item, i) => (i === idx ? { ...item, name: newName } : item)));
   };
 
-  // Change quantity of item
+  const handleItemPortionChange = (idx: number, newPortion: string) => {
+    setItems(prev => prev.map((item, i) => (i === idx ? { ...item, selectionLabel: newPortion } : item)));
+  };
+
+  const handleItemNotesChange = (idx: number, newNotes: string) => {
+    setItems(prev => prev.map((item, i) => (i === idx ? { ...item, notes: newNotes } : item)));
+  };
+
   const handleItemQtyChange = (idx: number, delta: number) => {
     setItems(prev => {
-      const copy = [...prev];
-      const newQty = copy[idx].quantity + delta;
+      const target = prev[idx];
+      if (!target) return prev;
+      const newQty = target.quantity + delta;
       if (newQty <= 0) {
-        return copy.filter((_, i) => i !== idx);
+        return prev.filter((_, i) => i !== idx);
       }
-      copy[idx].quantity = newQty;
-      copy[idx].totalPrice = Math.round(copy[idx].unitPrice * newQty * 100) / 100;
-      return copy;
+      return prev.map((item, i) =>
+        i === idx
+          ? {
+              ...item,
+              quantity: newQty,
+              totalPrice: Math.round(item.unitPrice * newQty * 100) / 100
+            }
+          : item
+      );
     });
   };
 
-  // Change unit price of item
   const handleItemUnitPriceChange = (idx: number, newPrice: number) => {
-    setItems(prev => {
-      const copy = [...prev];
-      copy[idx].unitPrice = Math.max(0, newPrice);
-      copy[idx].totalPrice = Math.round(copy[idx].unitPrice * copy[idx].quantity * 100) / 100;
-      return copy;
-    });
+    const cleanPrice = Math.max(0, newPrice);
+    setItems(prev =>
+      prev.map((item, i) =>
+        i === idx
+          ? {
+              ...item,
+              unitPrice: cleanPrice,
+              totalPrice: Math.round(cleanPrice * item.quantity * 100) / 100
+            }
+          : item
+      )
+    );
   };
 
   // Delete item
@@ -238,19 +264,23 @@ export default function KDSEditOrderModal({
   const handleAddNewItem = () => {
     if (!newItemName.trim()) return;
 
+    const matchedMenu = DESI_DABBA_ITEMS.find(
+      m => m.name.toLowerCase() === newItemName.trim().toLowerCase()
+    );
+
     const newItem: CartItem = {
-      id: `kds-custom-${Date.now().toString(36)}`,
-      menuItemId: `custom-${Date.now()}`,
+      id: `kds-custom-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`,
+      menuItemId: matchedMenu?.id || `custom-${Date.now()}`,
       name: newItemName.trim(),
-      category: 'mains',
-      categoryLabel: 'Mains',
+      category: matchedMenu?.category || 'mains',
+      categoryLabel: matchedMenu?.categoryLabel || 'Mains',
       selectionType: 'pieces',
       selectionLabel: newItemPortion.trim() || 'Half Tray',
-      quantity: newItemQty,
-      unitPrice: newItemPrice,
-      totalPrice: Math.round(newItemPrice * newItemQty * 100) / 100,
-      allergens: [],
-      leadTimeHours: 0,
+      quantity: Math.max(1, newItemQty),
+      unitPrice: Math.max(0, newItemPrice),
+      totalPrice: Math.round(Math.max(0, newItemPrice) * Math.max(1, newItemQty) * 100) / 100,
+      allergens: matchedMenu?.allergens || [],
+      leadTimeHours: matchedMenu?.leadTimeHours || 0,
       notes: newItemNotes.trim() || undefined
     };
 
@@ -264,7 +294,7 @@ export default function KDSEditOrderModal({
     setShowMenuDropdown(false);
   };
 
-  // Save changes to Supabase
+  // Save changes to Supabase & local KDS state
   const handleSaveChanges = async () => {
     setIsSaving(true);
     setErrorMessage(null);
@@ -279,6 +309,12 @@ export default function KDSEditOrderModal({
     ].filter(Boolean).join(' + ');
 
     const updates: Partial<CateringOrder> = {
+      customer_name: customerName.trim() || order.customer_name,
+      phone_number: phoneNumber.trim() || order.phone_number,
+      is_delivery: isDelivery,
+      delivery_address: isDelivery ? (deliveryAddress.trim() || null) : null,
+      delivery_fee: deliveryFee,
+      dietary_notes: dietaryNotes.trim() || null,
       items,
       food_subtotal: Math.round(foodSubtotal * 100) / 100,
       tax_amount: taxAmount,
@@ -297,11 +333,15 @@ export default function KDSEditOrderModal({
     try {
       const ok = await updateOrderDetails(order.id, updates);
       if (ok) {
+        const updatedOrder: CateringOrder = {
+          ...order,
+          ...updates
+        };
         setSaveSuccess(true);
+        onOrderUpdated(updatedOrder);
         setTimeout(() => {
-          onOrderUpdated();
           onClose();
-        }, 1200);
+        }, 600);
       } else {
         throw new Error('Could not persist changes to Supabase');
       }
@@ -355,56 +395,174 @@ export default function KDSEditOrderModal({
             </div>
           )}
 
-          {/* ── 0. ORDER FULFILLMENT DATE, TIME & STATUS ── */}
-          <div className="p-4 rounded-xl bg-blue-50/70 border border-blue-200 grid grid-cols-1 sm:grid-cols-3 gap-3.5">
-            {/* Fulfillment Date */}
-            <div className="space-y-1.5">
-              <label className="block text-xs font-bold text-[#00346f] flex items-center gap-1.5">
-                <Calendar className="w-3.5 h-3.5 text-[#00346f]" />
-                <span>Fulfillment Date</span>
-              </label>
-              <input
-                type="date"
-                value={fulfillmentDate}
-                onChange={(e) => setFulfillmentDate(e.target.value)}
-                className="w-full px-2.5 py-1.5 text-xs bg-white border border-blue-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 font-semibold text-gray-900"
-              />
+          {/* ── 0. CUSTOMER, SCHEDULE, DELIVERY & STATUS ── */}
+          <div className="p-4 rounded-xl bg-blue-50/70 border border-blue-200 space-y-3.5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-[11px] font-bold text-[#00346f] mb-1">
+                  Customer Name
+                </label>
+                <input
+                  type="text"
+                  value={customerName}
+                  onChange={(e) => setCustomerName(e.target.value)}
+                  className="w-full px-2.5 py-1.5 text-xs bg-white border border-blue-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 font-semibold text-gray-900"
+                />
+              </div>
+              <div>
+                <label className="block text-[11px] font-bold text-[#00346f] mb-1">
+                  Phone Number
+                </label>
+                <input
+                  type="text"
+                  value={phoneNumber}
+                  onChange={(e) => setPhoneNumber(e.target.value)}
+                  className="w-full px-2.5 py-1.5 text-xs bg-white border border-blue-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 font-semibold text-gray-900"
+                />
+              </div>
             </div>
 
-            {/* Fulfillment Time */}
-            <div className="space-y-1.5">
-              <label className="block text-xs font-bold text-[#00346f] flex items-center gap-1.5">
-                <Clock className="w-3.5 h-3.5 text-[#00346f]" />
-                <span>Fulfillment Time</span>
-              </label>
-              <input
-                type="text"
-                placeholder="e.g. 1:00 PM"
-                value={fulfillmentTime}
-                onChange={(e) => setFulfillmentTime(e.target.value)}
-                className="w-full px-2.5 py-1.5 text-xs bg-white border border-blue-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 font-semibold text-gray-900"
-              />
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              {/* Fulfillment Date */}
+              <div className="space-y-1">
+                <label className="block text-[11px] font-bold text-[#00346f] flex items-center gap-1.5">
+                  <Calendar className="w-3.5 h-3.5 text-[#00346f]" />
+                  <span>Fulfillment Date</span>
+                </label>
+                <input
+                  type="date"
+                  value={fulfillmentDate}
+                  onChange={(e) => setFulfillmentDate(e.target.value)}
+                  className="w-full px-2.5 py-1.5 text-xs bg-white border border-blue-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 font-semibold text-gray-900"
+                />
+              </div>
+
+              {/* Fulfillment Time */}
+              <div className="space-y-1">
+                <label className="block text-[11px] font-bold text-[#00346f] flex items-center gap-1.5">
+                  <Clock className="w-3.5 h-3.5 text-[#00346f]" />
+                  <span>Fulfillment Time</span>
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. 1:00 PM"
+                  value={fulfillmentTime}
+                  onChange={(e) => setFulfillmentTime(e.target.value)}
+                  className="w-full px-2.5 py-1.5 text-xs bg-white border border-blue-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 font-semibold text-gray-900"
+                />
+              </div>
+
+              {/* Order Status */}
+              <div className="space-y-1">
+                <label className="block text-[11px] font-bold text-[#00346f] flex items-center gap-1.5">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-[#00346f]" />
+                  <span>Order Status</span>
+                </label>
+                <select
+                  value={orderStatus}
+                  onChange={(e) => setOrderStatus(e.target.value as OrderStatus)}
+                  className="w-full px-2.5 py-1.5 text-xs bg-white border border-blue-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 font-bold text-gray-900 cursor-pointer"
+                >
+                  <option value="new">🆕 New Order</option>
+                  <option value="accepted">✅ Accepted</option>
+                  <option value="preparing">🍳 Preparing in Kitchen</option>
+                  <option value="ready">📦 Ready for Pickup/Delivery</option>
+                  <option value="completed">🎉 Completed</option>
+                  <option value="cancelled">❌ Cancelled</option>
+                </select>
+              </div>
             </div>
 
-            {/* Order Status */}
-            <div className="space-y-1.5">
-              <label className="block text-xs font-bold text-[#00346f] flex items-center gap-1.5">
-                <CheckCircle2 className="w-3.5 h-3.5 text-[#00346f]" />
-                <span>Order Status</span>
-              </label>
-              <select
-                value={orderStatus}
-                onChange={(e) => setOrderStatus(e.target.value as OrderStatus)}
-                className="w-full px-2.5 py-1.5 text-xs bg-white border border-blue-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 font-bold text-gray-900 cursor-pointer"
-              >
-                <option value="new">🆕 New Order</option>
-                <option value="accepted">✅ Accepted</option>
-                <option value="preparing">🍳 Preparing in Kitchen</option>
-                <option value="ready">📦 Ready for Pickup/Delivery</option>
-                <option value="completed">🎉 Completed</option>
-                <option value="cancelled">❌ Cancelled</option>
-              </select>
+            {/* Pickup vs Delivery & Dietary Notes */}
+            <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 pt-1 border-t border-blue-200/70">
+              <div className="sm:col-span-4 space-y-1">
+                <label className="block text-[11px] font-bold text-[#00346f]">
+                  Fulfillment Method
+                </label>
+                <div className="grid grid-cols-2 gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => setIsDelivery(false)}
+                    className={`py-1.5 px-2 rounded-lg text-xs font-bold border transition cursor-pointer ${
+                      !isDelivery
+                        ? 'bg-[#00346f] text-white border-[#00346f]'
+                        : 'bg-white text-gray-700 border-blue-200 hover:bg-blue-50'
+                    }`}
+                  >
+                    🏪 Pickup
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsDelivery(true)}
+                    className={`py-1.5 px-2 rounded-lg text-xs font-bold border transition cursor-pointer ${
+                      isDelivery
+                        ? 'bg-[#00346f] text-white border-[#00346f]'
+                        : 'bg-white text-gray-700 border-blue-200 hover:bg-blue-50'
+                    }`}
+                  >
+                    🚚 Delivery
+                  </button>
+                </div>
+              </div>
+
+              {isDelivery ? (
+                <>
+                  <div className="sm:col-span-5 space-y-1">
+                    <label className="block text-[11px] font-bold text-[#00346f]">
+                      Delivery Address
+                    </label>
+                    <input
+                      type="text"
+                      value={deliveryAddress}
+                      onChange={(e) => setDeliveryAddress(e.target.value)}
+                      placeholder="Street, City, TX ZIP"
+                      className="w-full px-2.5 py-1.5 text-xs bg-white border border-blue-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 font-medium text-gray-900"
+                    />
+                  </div>
+                  <div className="sm:col-span-3 space-y-1">
+                    <label className="block text-[11px] font-bold text-[#00346f]">
+                      Delivery Fee ($)
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={deliveryFeeInput}
+                      onChange={(e) => setDeliveryFeeInput(e.target.value)}
+                      className="w-full px-2.5 py-1.5 text-xs bg-white border border-blue-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 font-mono font-bold text-gray-900"
+                    />
+                  </div>
+                </>
+              ) : (
+                <div className="sm:col-span-8 space-y-1">
+                  <label className="block text-[11px] font-bold text-[#00346f]">
+                    Dietary / Kitchen Notes (e.g. Satvik, No Onion/Garlic)
+                  </label>
+                  <input
+                    type="text"
+                    value={dietaryNotes}
+                    onChange={(e) => setDietaryNotes(e.target.value)}
+                    placeholder="Optional dietary or prep instructions..."
+                    className="w-full px-2.5 py-1.5 text-xs bg-white border border-blue-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 text-gray-900"
+                  />
+                </div>
+              )}
             </div>
+
+            {isDelivery && (
+              <div>
+                <label className="block text-[11px] font-bold text-[#00346f] mb-1">
+                  Dietary / Kitchen Notes (e.g. Satvik, No Onion/Garlic)
+                </label>
+                <input
+                  type="text"
+                  value={dietaryNotes}
+                  onChange={(e) => setDietaryNotes(e.target.value)}
+                  placeholder="Optional dietary or prep instructions..."
+                  className="w-full px-2.5 py-1.5 text-xs bg-white border border-blue-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 text-gray-900"
+                />
+              </div>
+            )}
           </div>
 
           {/* ── 1. ITEMIZED ORDER DISHES & QUANTITIES ── */}
@@ -567,28 +725,14 @@ export default function KDSEditOrderModal({
                         <input
                           type="text"
                           value={item.selectionLabel || ''}
-                          onChange={(e) => {
-                            const val = e.target.value;
-                            setItems(prev => {
-                              const copy = [...prev];
-                              copy[idx].selectionLabel = val;
-                              return copy;
-                            });
-                          }}
+                          onChange={(e) => handleItemPortionChange(idx, e.target.value)}
                           placeholder="Portion Size (e.g. Half Tray / 16 oz)"
                           className="w-full text-xs text-gray-700 bg-gray-50 border border-gray-250 rounded-lg px-2 py-1 focus:bg-white focus:border-[#00346f] focus:outline-none"
                         />
                         <input
                           type="text"
                           value={item.notes || ''}
-                          onChange={(e) => {
-                            const val = e.target.value;
-                            setItems(prev => {
-                              const copy = [...prev];
-                              copy[idx].notes = val;
-                              return copy;
-                            });
-                          }}
+                          onChange={(e) => handleItemNotesChange(idx, e.target.value)}
                           placeholder="Notes / Description"
                           className="w-full text-xs text-gray-600 bg-gray-50 border border-gray-250 rounded-lg px-2 py-1 focus:bg-white focus:border-[#00346f] focus:outline-none"
                         />
