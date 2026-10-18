@@ -659,5 +659,70 @@
     "imagePath": "/gallery/gallery_57.jpg",
     "isCustomEdited": true,
     "autoDescription": "Hand-piped buttercream cupcakes accompanied by matching hand-decorated chocolate cake pops."
+  },
+  {
+    "id": "item-58",
+    "title": "Satvik Veg Pakora (No Onion, No Garlic)",
+    "visible": true,
+    "category": [
+      "Specialty Culinary Fare"
+    ],
+    "createdAt": "2026-10-18T23:52:00.000Z",
+    "imagePath": "/gallery/gallery_58.jpg",
+    "originalImagePath": "/gallery/gallery_58.jpg",
+    "isCustomEdited": true,
+    "autoDescription": "Pure Satvik vegetable pakoras prepared without onion or garlic — crisp golden gram-flour fritters loaded with fresh spinach, potatoes, and roasted spices."
+  },
+  {
+    "id": "item-59",
+    "title": "Satvik Kadhi Pakora (No Onion, No Garlic)",
+    "visible": true,
+    "category": [
+      "Specialty Culinary Fare"
+    ],
+    "createdAt": "2026-10-18T23:52:01.000Z",
+    "imagePath": "/gallery/gallery_59.jpg",
+    "originalImagePath": "/gallery/gallery_59.jpg",
+    "isCustomEdited": true,
+    "autoDescription": "Traditional slow-simmered Satvik yogurt and besan kadhi crafted without onion or garlic, studded with soft gram-flour pakoras and finished with a whole red chili, cumin, and hing tadka."
+  },
+  {
+    "id": "item-60",
+    "title": "Satvik Aalu Gobhi (No Onion, No Garlic)",
+    "visible": true,
+    "category": [
+      "Specialty Culinary Fare"
+    ],
+    "createdAt": "2026-10-18T23:52:02.000Z",
+    "imagePath": "/gallery/gallery_60.jpg",
+    "originalImagePath": "/gallery/gallery_60.jpg",
+    "isCustomEdited": true,
+    "autoDescription": "Homestyle Satvik dry sabzi of fresh cauliflower florets and tender potatoes roasted with ginger, turmeric, cumin, and hand-ground spices — 100% pure vegetarian without onion or garlic."
+  },
+  {
+    "id": "item-61",
+    "title": "Satvik Chole Masala (No Onion, No Garlic)",
+    "visible": true,
+    "category": [
+      "Specialty Culinary Fare"
+    ],
+    "createdAt": "2026-10-18T23:52:03.000Z",
+    "imagePath": "/gallery/gallery_61.jpg",
+    "originalImagePath": "/gallery/gallery_61.jpg",
+    "isCustomEdited": true,
+    "autoDescription": "Rich, slow-simmered Satvik chickpea masala infused with roasted whole spices, anardana, and warm aromatics without onion or garlic, garnished with fresh cilantro and served with green chutney."
+  },
+  {
+    "id": "item-62",
+    "title": "Satvik Moong Dal Halwa",
+    "visible": true,
+    "category": [
+      "Heritage Sweets & Confectionery"
+    ],
+    "createdAt": "2026-10-18T23:52:04.000Z",
+    "imagePath": "/gallery/gallery_62.jpg",
+    "originalImagePath": "/gallery/gallery_62.jpg",
+    "isCustomEdited": true,
+    "autoDescription": "Pure Satvik slow-roasted yellow moong dal halwa simmered in desi ghee, saffron, and warm cardamom, generously garnished with toasted almonds, raisins, and melon seeds."
   }
 ]

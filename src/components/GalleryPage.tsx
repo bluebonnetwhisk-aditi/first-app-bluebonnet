@@ -136,6 +136,14 @@ const mergeWithInitialData = (sourceItems: any[]): GalleryItem[] => {
   let baseList: any[] = sourceItems;
   if (!Array.isArray(sourceItems) || sourceItems.length === 0) {
     baseList = initialGalleryData as GalleryItem[];
+  } else {
+    const existingIds = new Set(sourceItems.map((i: any) => i?.id));
+    const missingInitial = (initialGalleryData as any[]).filter(
+      (initItem: any) => initItem?.id && !existingIds.has(initItem.id) && !deletedSet.has(initItem.id)
+    );
+    if (missingInitial.length > 0) {
+      baseList = [...sourceItems, ...missingInitial];
+    }
   }
 
   const initMap = new Map((initialGalleryData as any[]).map(i => [i.id, i]));
