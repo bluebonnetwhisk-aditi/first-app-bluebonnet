@@ -377,6 +377,123 @@ export default function CheckoutModal({
 
       const formattedContactNumber = `${countryCode} ${phoneNumber.trim()}`.trim();
 
+      // Helper to compute exact financial breakdown for any subset of cart items
+      const computeCartSubsetFinancials = (subsetItems: CartItem[], includeDeliveryFee: boolean) => {
+        const subTiffinTotal = subsetItems
+          .filter(item => item.category === 'tiffin' || (item.menuItemId && item.menuItemId.includes('tiffin')))
+          .reduce((sum, item) => sum + item.totalPrice, 0);
+        const subTiffinBase = Math.round((subTiffinTotal / 1.0825) * 100) / 100;
+        const subTiffinTax = Math.round((subTiffinTotal - subTiffinBase) * 100) / 100;
+
+        const subCakeSubtotal = subsetItems
+          .filter(item => item.category === 'cakes')
+          .reduce((sum, item) => sum + item.totalPrice, 0);
+
+        const subCateringSubtotal = subsetItems
+          .filter(item => item.category !== 'cakes' && item.category !== 'tiffin' && (!item.menuItemId || !item.menuItemId.includes('tiffin')))
+          .reduce((sum, item) => sum + item.totalPrice, 0);
+
+        const subDeliveryFee = includeDeliveryFee && isDelivery ? 50.00 : 0.00;
+        const subCateringTaxable = subCateringSubtotal + (subCateringSubtotal > 0 && includeDeliveryFee && isDelivery ? subDeliveryFee : 0);
+        const subCateringTax = Math.round(subCateringTaxable * 0.0825 * 100) / 100;
+
+        const subTaxAmount = Math.round((subTiffinTax + subCateringTax) * 100) / 100;
+        const subFoodSubtotal = Math.round((subTiffinBase + subCateringSubtotal + subCakeSubtotal) * 100) / 100;
+        const subPreCardTotal = Math.round((subFoodSubtotal + subDeliveryFee + subTaxAmount) * 100) / 100;
+        const subProcessingFee = paymentMethod === 'credit_card'
+          ? Math.round(subPreCardTotal * 0.035 * 100) / 100
+          : 0.00;
+        const subTotalAmount = Math.round((subPreCardTotal + subProcessingFee) * 100) / 100;
+
+        return {
+          delivery_fee: subDeliveryFee,
+          food_subtotal: subFoodSubtotal,
+          tax_amount: subTaxAmount,
+          processing_fee: subProcessingFee,
+          total_amount: subTotalAmount
+        };
+      };
+
+      // If this order spans multiple scheduled days (e.g. Multi-Day Tiffin or 5-Day Weekly Plan),
+      // create an individual daily order record for EACH day so KDS displays and tracks every day on its own date tab.
+      if (distinctCartDateGroups.length > 1 && !showAlternativeDatePicker) {
+        const datedItemIds = new Set(distinctCartDateGroups.flatMap(g => g.items.map(i => i.id)));
+        const undatedItems = cart.filter(i => !datedItemIds.has(i.id));
+        const totalDays = distinctCartDateGroups.length;
+        const createdDailyOrders: CateringOrder[] = [];
+
+        for (let idx = 0; idx < totalDays; idx++) {
+          const group = distinctCartDateGroups[idx];
+          const dayItems = idx === 0 && undatedItems.length > 0
+            ? [...group.items, ...undatedItems]
+            : group.items;
+          const dayTime = sameTimeForAllDays
+            ? fulfillmentTime
+            : (perDayTimes[group.dateStr] || fulfillmentTime);
+
+          const dayFinancials = computeCartSubsetFinancials(dayItems, idx === 0);
+          const dayScheduleTag = `[Weekly/Multi-Day Tiffin: Day ${idx + 1} of ${totalDays} (${group.displayLabel} @ ${dayTime})]`;
+          const dayDietaryNotes = [
+            isSatvikRequested ? 'SATVIK / JAIN-FRIENDLY REQUESTED (No Onion, No Garlic)' : '',
+            dayScheduleTag,
+            dietaryNotes.trim()
+          ].filter(Boolean).join(' | ');
+
+          const dayPayload = {
+            customer_name: customerName.trim(),
+            phone_number: formattedContactNumber,
+            email: email.trim(),
+            is_delivery: isDelivery,
+            delivery_address: fullDeliveryAddress,
+            delivery_fee: dayFinancials.delivery_fee,
+            food_subtotal: dayFinancials.food_subtotal,
+            tax_amount: dayFinancials.tax_amount,
+            payment_method: paymentMethod,
+            processing_fee: dayFinancials.processing_fee,
+            total_amount: dayFinancials.total_amount,
+            order_description: dayItems.map(i => `${i.name}${i.notes ? ` [${i.notes}]` : ''} (${i.selectionLabel} × ${i.quantity}) [$${i.totalPrice.toFixed(2)}]`).join('; '),
+            fulfillment_date: group.dateStr,
+            fulfillment_time: dayTime,
+            dietary_notes: dayDietaryNotes || null,
+            order_type: orderType,
+            status: 'new' as any,
+            items: dayItems
+          };
+
+          const dayResult = await createOrder(dayPayload);
+          if (dayResult.data) {
+            createdDailyOrders.push(dayResult.data);
+          } else {
+            throw new Error(dayResult.error?.message || `Failed to save order for ${group.displayLabel}`);
+          }
+        }
+
+        // Build a combined summary order object for the customer's single WhatsApp confirmation & receipt modal
+        const combinedSummaryOrder: CateringOrder = {
+          ...createdDailyOrders[0],
+          delivery_fee: deliveryFee,
+          food_subtotal: foodSubtotal,
+          tax_amount: taxAmount,
+          processing_fee: processingFee,
+          total_amount: totalAmount,
+          order_description: cart.map(i => `${i.name}${i.notes ? ` [${i.notes}]` : ''} (${i.selectionLabel} × ${i.quantity}) [$${i.totalPrice.toFixed(2)}]`).join('; '),
+          fulfillment_date: effectiveFulfillmentDate,
+          fulfillment_time: effectiveFulfillmentTime,
+          dietary_notes: fullDietaryNotes || null,
+          items: cart
+        };
+
+        try {
+          const waUrl = buildOrderWhatsAppUrl(combinedSummaryOrder);
+          window.open(waUrl, '_blank');
+        } catch (e) {
+          console.warn('Auto notification popup prevented by browser', e);
+        }
+        onOrderSuccess(combinedSummaryOrder, orderType === 'estimate');
+        onClose();
+        return;
+      }
+
       const payload = {
         customer_name: customerName.trim(),
         phone_number: formattedContactNumber,

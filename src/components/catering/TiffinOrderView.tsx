@@ -632,38 +632,58 @@ export default function TiffinOrderView({
     triggerAddedAlert(`✓ Added ${qty} × ${dish.title}${sizeSuffix} ($${lineTotal.toFixed(2)})!`);
   };
 
-  // Add Weekly Dabba to Cart
+  // Add Weekly Dabba to Cart (adds 5 individual daily Single Dabba items so Checkout & KDS track each day independently)
   const handleAddWeeklyDabba = () => {
     if (!activeWeeklyPlan || !weeklyPlanInfo) return;
-    const unitPrice = weeklyPrice;
+    const totalWeeklyUnitCost = weeklyPrice;
     const planRange = weeklyPlanInfo.shortRange;
-    const daysSummary = weeklyPlanInfo.targetDays.map(d => `${d.dayName} (${d.displayDate})`).join(', ');
-    const itemId = `tiffin-weekly-${weeklyPlanInfo.targetDays[0]?.dateStr || activeWeeklyPlan.monDateStr}`;
+    const targetDays = weeklyPlanInfo.targetDays;
+    if (targetDays.length === 0) return;
 
-    const menuItem: MenuItem = {
-      id: itemId,
-      name: `Weekly Dabba Plan (${planRange})`,
-      category: 'tiffin',
-      categoryLabel: 'Desi Dabba Daily Tiffin',
-      description: `5 Daily Complete Meals: ${planRange} (${daysSummary}) with fresh roti, rice, dal & sabzi.`,
-      allergens: ['G', 'D'],
-      pricingType: 'tiffin',
-      leadTimeHours: 0,
-      isSatvikAvailable: true
-    };
+    // Split weeklyPrice across the 5 days with cent-exact precision so the 5 daily items sum to weeklyPrice
+    const baseDailyPrice = Math.floor((totalWeeklyUnitCost / targetDays.length) * 100) / 100;
+    const remainderCents = Math.round((totalWeeklyUnitCost - baseDailyPrice * targetDays.length) * 100);
 
-    const notes = `Weekly Subscription (${planRange}): 1 Single Dabba on ${daysSummary}. Total: ${5 * weeklyQty} hot meals.`;
+    targetDays.forEach((dayInfo, idx) => {
+      const dayUnitPrice = idx === targetDays.length - 1
+        ? Math.round((baseDailyPrice + remainderCents / 100) * 100) / 100
+        : baseDailyPrice;
 
-    onUpdateCartItem(
-      menuItem,
-      'tiffin_weekly',
-      weeklyQty,
-      `Weekly Plan (${planRange})`,
-      unitPrice,
-      notes
-    );
+      // Look up the day's scheduled Dal & Sabzi if available in the active schedule
+      const scheduledDay = schedule.find(s => s.dateStr === dayInfo.dateStr);
+      const activeMenus = isWeekMenuUploaded ? (settings.weekdayMenus || DEFAULT_WEEKDAY_MENUS) : {};
+      const fallbackMenu = activeMenus[dayInfo.dayName] || { dal: 'Homestyle Dal/Curry', sabzi: 'Fresh Seasonal Sabzi', description: '' };
+      const dalOrCurry = (scheduledDay?.dalOrCurry || fallbackMenu.dal || 'Homestyle Dal/Curry').trim();
+      const sabzi = (scheduledDay?.sabzi || fallbackMenu.sabzi || 'Fresh Seasonal Sabzi').trim();
 
-    triggerAddedAlert(`✓ Added ${weeklyQty} × Weekly Dabba Plan for ${planRange} ($${(unitPrice * weeklyQty).toFixed(2)})!`);
+      const itemId = `tiffin-weekly-day-${dayInfo.dateStr}`;
+      const sizeName = `Single Dabba (Weekly Plan • Day ${idx + 1}/5)`;
+
+      const menuItem: MenuItem = {
+        id: itemId,
+        name: sizeName,
+        category: 'tiffin',
+        categoryLabel: 'Desi Dabba Weekly Plan',
+        description: `${dayInfo.dayName} (${dayInfo.displayDate}): ${dalOrCurry} & ${sabzi}`,
+        allergens: ['G', 'D'],
+        pricingType: 'tiffin',
+        leadTimeHours: 0,
+        isSatvikAvailable: true
+      };
+
+      const notes = `${dayInfo.dayName}, ${dayInfo.displayDate} Menu (${planRange} Weekly Plan Day ${idx + 1}/5): ${dalOrCurry} + ${sabzi} (1 cup rice, 1 cup curry/dal, 1/2 cup sabzi, 2 tawa roti)`;
+
+      onUpdateCartItem(
+        menuItem,
+        'tiffin_weekly',
+        weeklyQty,
+        `Weekly Plan Day ${idx + 1}/5 - ${dayInfo.dayName} (${dayInfo.displayDate})`,
+        dayUnitPrice,
+        notes
+      );
+    });
+
+    triggerAddedAlert(`✓ Added ${weeklyQty} × 5-Day Weekly Dabba Plan for ${planRange} ($${(totalWeeklyUnitCost * weeklyQty).toFixed(2)})!`);
   };
 
   // Add Dynamic 8oz/16oz Container to Cart
@@ -707,14 +727,16 @@ export default function TiffinOrderView({
     unitPrice: number,
     qty: number
   ) => {
-    const itemId = `tiffin-addon-${addonName.toLowerCase().replace(/[^a-z0-9]/g, '-')}`;
+    const daySuffix = activeDay?.dateStr ? `-${activeDay.dateStr}` : '';
+    const dayDisplay = activeDay?.displayDate ? ` (${activeDay.displayDate})` : '';
+    const itemId = `tiffin-addon-${addonName.toLowerCase().replace(/[^a-z0-9]/g, '-')}${daySuffix}`;
 
     const menuItem: MenuItem = {
       id: itemId,
-      name: `${addonName} [${portionLabel}]`,
+      name: `${addonName} [${portionLabel}]${dayDisplay}`,
       category: 'tiffin',
       categoryLabel: 'Tiffin Side & Add-on',
-      description: `${portionLabel} of ${addonName}`,
+      description: `${portionLabel} of ${addonName}${activeDay ? ` for ${activeDay.dayName} (${activeDay.displayDate})` : ''}`,
       allergens: ['G', 'D'],
       pricingType: 'tiffin',
       leadTimeHours: 0,
@@ -725,12 +747,12 @@ export default function TiffinOrderView({
       menuItem,
       'container_16oz',
       qty,
-      portionLabel,
+      `${portionLabel}${dayDisplay}`,
       unitPrice,
-      `Tiffin Side: ${addonName} (${portionLabel})`
+      `Tiffin Side${activeDay ? ` (${activeDay.dayName}, ${activeDay.displayDate})` : ''}: ${addonName} (${portionLabel})`
     );
 
-    triggerAddedAlert(`✨ Added ${qty} × ${addonName} [${portionLabel}] ($${(unitPrice * qty).toFixed(2)})!`);
+    triggerAddedAlert(`✨ Added ${qty} × ${addonName} [${portionLabel}]${dayDisplay} ($${(unitPrice * qty).toFixed(2)})!`);
   };
 
   // Cart items under tiffin category

@@ -490,29 +490,101 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
     window.open(url, '_blank');
   };
 
+  // Extract real Supabase UUID if an order is a virtual daily slice (e.g. "uuid::2026-10-20")
+  const getBaseOrderId = (orderId: string) => orderId.split('::')[0];
+
   const handleDenyOrder = async (order: CateringOrder) => {
-    const shortId = order.id ? order.id.slice(0, 8).toUpperCase() : '';
+    const baseId = getBaseOrderId(order.id);
+    const shortId = baseId ? baseId.slice(0, 8).toUpperCase() : '';
     const confirmDeny = window.confirm(
       `Are you sure you want to DENY / REJECT order #${shortId} for ${order.customer_name}?\n\nThis will trigger a rejection WhatsApp message to the customer, and permanently delete the order entry from Supabase and KDS.`
     );
     if (!confirmDeny) return;
 
-    knownOrderIdsRef.current.delete(order.id);
-    setAllOrders(prev => prev.filter(o => o.id !== order.id));
+    knownOrderIdsRef.current.delete(baseId);
+    setAllOrders(prev => prev.filter(o => o.id !== baseId));
     openWhatsAppForOrder(order, 'rejected');
-    await deleteOrderFromSupabase(order.id);
+    await deleteOrderFromSupabase(baseId);
   };
 
   const handleStatusChange = async (orderId: string, newStatus: OrderStatus) => {
-    setAllOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: newStatus } : o));
-    await updateOrderStatus(orderId, newStatus);
+    const baseId = getBaseOrderId(orderId);
+    setAllOrders(prev => prev.map(o => o.id === baseId ? { ...o, status: newStatus } : o));
+    await updateOrderStatus(baseId, newStatus);
   };
+
+  // Normalize orders so any single order row containing items across multiple YYYY-MM-DD dates
+  // is automatically split day-by-day in KDS (one card per date with only that day's items).
+  const kdsNormalizedOrders = useMemo(() => {
+    const expanded: CateringOrder[] = [];
+
+    for (const order of allOrders) {
+      const items = order.items || [];
+      const dateGroups = new Map<string, typeof items>();
+      const undatedItems: typeof items = [];
+
+      for (const item of items) {
+        const match =
+          item.id?.match(/\d{4}-\d{2}-\d{2}/) ||
+          item.menuItemId?.match(/\d{4}-\d{2}-\d{2}/) ||
+          item.notes?.match(/\d{4}-\d{2}-\d{2}/);
+        if (match) {
+          const dStr = match[0];
+          if (!dateGroups.has(dStr)) dateGroups.set(dStr, []);
+          dateGroups.get(dStr)!.push(item);
+        } else {
+          undatedItems.push(item);
+        }
+      }
+
+      if (dateGroups.size <= 1) {
+        if (dateGroups.size === 1) {
+          const [onlyDate] = Array.from(dateGroups.keys());
+          if (onlyDate && onlyDate !== order.fulfillment_date) {
+            expanded.push({ ...order, fulfillment_date: onlyDate });
+            continue;
+          }
+        }
+        expanded.push(order);
+      } else {
+        const sortedDates = Array.from(dateGroups.keys()).sort();
+        const totalDays = sortedDates.length;
+
+        sortedDates.forEach((dStr, idx) => {
+          const dayItems = idx === 0 && undatedItems.length > 0
+            ? [...(dateGroups.get(dStr) || []), ...undatedItems]
+            : (dateGroups.get(dStr) || []);
+
+          const dayGross = Math.round(dayItems.reduce((s, i) => s + (i.totalPrice || 0), 0) * 100) / 100;
+          const dayFoodBase = Math.round((dayGross / 1.0825) * 100) / 100;
+          const dayTax = Math.round((dayGross - dayFoodBase) * 100) / 100;
+
+          const cleanedTime = (order.fulfillment_time || '').replace(/\s*\(All \d+ Days\)/i, '').trim() || order.fulfillment_time;
+
+          expanded.push({
+            ...order,
+            id: idx === 0 ? order.id : `${order.id}::${dStr}`,
+            fulfillment_date: dStr,
+            fulfillment_time: cleanedTime,
+            items: dayItems,
+            food_subtotal: dayFoodBase,
+            tax_amount: dayTax,
+            total_amount: dayGross,
+            order_description: dayItems.map(i => `${i.name}${i.notes ? ` [${i.notes}]` : ''} (${i.selectionLabel} × ${i.quantity}) [$${i.totalPrice.toFixed(2)}]`).join('; '),
+            dietary_notes: `[Day ${idx + 1} of ${totalDays} • Weekly Tiffin]${order.dietary_notes ? ` | ${order.dietary_notes}` : ''}`
+          });
+        });
+      }
+    }
+
+    return expanded;
+  }, [allOrders]);
 
   // Orders filtered by the currently selected date tab ('all' or specific YYYY-MM-DD)
   const ordersForSelectedDate = useMemo(() => {
     const list = selectedDate === 'all'
-      ? [...allOrders]
-      : allOrders.filter(o => o.fulfillment_date === selectedDate);
+      ? [...kdsNormalizedOrders]
+      : kdsNormalizedOrders.filter(o => o.fulfillment_date === selectedDate);
 
     return list.sort((a, b) => {
       const dateA = a.fulfillment_date || '';
@@ -526,20 +598,20 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
 
       return (a.created_at || '').localeCompare(b.created_at || '');
     });
-  }, [allOrders, selectedDate]);
+  }, [kdsNormalizedOrders, selectedDate]);
 
   // Order counts grouped by date for badge counters on date buttons
   const orderCountsByDate = useMemo(() => {
     const map = new Map<string, number>();
-    allOrders.filter(o => o.status !== 'cancelled' && o.status !== 'completed').forEach(o => {
+    kdsNormalizedOrders.filter(o => o.status !== 'cancelled' && o.status !== 'completed').forEach(o => {
       map.set(o.fulfillment_date, (map.get(o.fulfillment_date) || 0) + 1);
     });
     return map;
-  }, [allOrders]);
+  }, [kdsNormalizedOrders]);
 
   const totalActiveOrdersCount = useMemo(() => {
-    return allOrders.filter(o => o.status !== 'cancelled' && o.status !== 'completed').length;
-  }, [allOrders]);
+    return kdsNormalizedOrders.filter(o => o.status !== 'cancelled' && o.status !== 'completed').length;
+  }, [kdsNormalizedOrders]);
 
   // Status counts for the selected date schedule
   const statusCounts = useMemo(() => {
@@ -1458,7 +1530,10 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
                         <div className="flex items-center justify-between gap-1.5 pt-1 border-t border-gray-200">
                           <button
                             type="button"
-                            onClick={() => setEditingOrder(order)}
+                            onClick={() => {
+                              const baseOrder = allOrders.find(o => o.id === getBaseOrderId(order.id)) || order;
+                              setEditingOrder(baseOrder);
+                            }}
                             className="inline-flex items-center gap-1 px-2.5 py-2 rounded-xl border border-gray-300 hover:bg-gray-100 text-gray-700 text-xs font-bold cursor-pointer transition-colors"
                             title="Edit order"
                           >
