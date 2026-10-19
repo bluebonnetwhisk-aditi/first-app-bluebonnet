@@ -260,6 +260,32 @@ export default function KDSAnalyticsTab({ orders }: KDSAnalyticsTabProps) {
     const totalItemUnits =
       segmentUnits.tiffin + segmentUnits.catering + segmentUnits.cakes;
 
+    // Customer Repeat Rate & Satvik / Jain Dietary Share
+    const customerMap = new Map<string, { name: string; phone: string; orders: number; spend: number }>();
+    let satvikOrders = 0;
+
+    monthOrders.forEach(o => {
+      const key = (o.phone_number || '').replace(/\D/g, '').slice(-10) || (o.customer_name || '').toLowerCase().trim();
+      if (key) {
+        const prev = customerMap.get(key) || { name: o.customer_name, phone: o.phone_number, orders: 0, spend: 0 };
+        prev.orders += 1;
+        prev.spend += o.total_amount || 0;
+        customerMap.set(key, prev);
+      }
+      if (
+        (o.dietary_notes || '').toLowerCase().includes('satvik') ||
+        (o.dietary_notes || '').toLowerCase().includes('jain')
+      ) {
+        satvikOrders += 1;
+      }
+    });
+
+    const uniqueCustomers = customerMap.size;
+    const repeatCustomers = Array.from(customerMap.values()).filter(c => c.orders > 1).length;
+    const repeatRatePct = uniqueCustomers > 0 ? Math.round((repeatCustomers / uniqueCustomers) * 100) : 0;
+    const satvikSharePct = orderCount > 0 ? Math.round((satvikOrders / orderCount) * 100) : 0;
+    const topCustomer = Array.from(customerMap.values()).sort((a, b) => b.spend - a.spend)[0] || null;
+
     return {
       grossRevenue,
       netFoodRevenue,
@@ -273,9 +299,17 @@ export default function KDSAnalyticsTab({ orders }: KDSAnalyticsTabProps) {
       segmentRevenue,
       segmentUnits,
       totalItemRevenue,
-      totalItemUnits
+      totalItemUnits,
+      uniqueCustomers,
+      repeatCustomers,
+      repeatRatePct,
+      satvikOrders,
+      satvikSharePct,
+      topCustomer
     };
   }, [monthOrders, prevMonthOrders]);
+
+  const [showFullMatrix, setShowFullMatrix] = useState<boolean>(false);
 
   // Daily / Monthly Trend Series for the Chart
   const trendSeries = useMemo(() => {
@@ -812,6 +846,53 @@ export default function KDSAnalyticsTab({ orders }: KDSAnalyticsTabProps) {
         </div>
       </div>
 
+      {/* ── 2B. ACTIONABLE KITCHEN & CUSTOMER INTELLIGENCE PILLS ── */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div className="bg-white rounded-2xl border border-gray-200 p-3.5 shadow-2xs flex items-center justify-between gap-3">
+          <div>
+            <span className="text-[10px] font-extrabold uppercase tracking-wider text-gray-500 block">
+              Customer Retention &amp; Repeat Rate
+            </span>
+            <span className="font-serif font-bold text-base text-[#00346f] block mt-0.5">
+              {kpis.repeatRatePct}% Repeat ({kpis.repeatCustomers}/{kpis.uniqueCustomers} clients)
+            </span>
+          </div>
+          <span className="px-2.5 py-1 rounded-xl bg-blue-50 text-[#00346f] text-xs font-extrabold">
+            Loyalty
+          </span>
+        </div>
+
+        <div className="bg-white rounded-2xl border border-gray-200 p-3.5 shadow-2xs flex items-center justify-between gap-3">
+          <div>
+            <span className="text-[10px] font-extrabold uppercase tracking-wider text-amber-800 block">
+              Satvik / No-Onion-Garlic Demand
+            </span>
+            <span className="font-serif font-bold text-base text-amber-900 block mt-0.5">
+              {kpis.satvikOrders} Orders ({kpis.satvikSharePct}% of total)
+            </span>
+          </div>
+          <span className="px-2.5 py-1 rounded-xl bg-amber-100 text-amber-900 text-xs font-extrabold">
+            Satvik Share
+          </span>
+        </div>
+
+        <div className="bg-white rounded-2xl border border-gray-200 p-3.5 shadow-2xs flex items-center justify-between gap-3">
+          <div className="min-w-0">
+            <span className="text-[10px] font-extrabold uppercase tracking-wider text-emerald-800 block">
+              Top VIP Patron ({formatMonthLabel(selectedMonth)})
+            </span>
+            <span className="font-serif font-bold text-base text-gray-900 truncate block mt-0.5">
+              {kpis.topCustomer ? `${kpis.topCustomer.name} ($${kpis.topCustomer.spend.toFixed(0)})` : 'No orders in period'}
+            </span>
+          </div>
+          {kpis.topCustomer && (
+            <span className="px-2.5 py-1 rounded-xl bg-emerald-100 text-emerald-900 text-xs font-extrabold shrink-0">
+              {kpis.topCustomer.orders} ord
+            </span>
+          )}
+        </div>
+      </div>
+
       {/* ── 3. MONTHLY TREND CHART & WEEKDAY DEMAND ── */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Daily / Monthly Trend Bar Chart (2 Columns on Desktop) */}
@@ -1089,49 +1170,58 @@ export default function KDSAnalyticsTab({ orders }: KDSAnalyticsTabProps) {
         </div>
       </div>
 
-      {/* ── 5. DEEP-DIVE DISH QUANTITY & REVENUE MATRIX BY CATEGORY & SUB-CATEGORY ── */}
+      {/* ── 5. COLLAPSIBLE DEEP-DIVE DISH QUANTITY & REVENUE MATRIX ── */}
       <div className="bg-white rounded-2xl border border-gray-200 p-4 sm:p-5 shadow-xs space-y-4">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 pb-3 border-b border-gray-150">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <h3 className="font-serif font-bold text-base sm:text-lg text-[#00346f]">
-              Complete Dish Quantity &amp; Revenue Breakdown by Category
+              Complete Dish Quantity &amp; Revenue Matrix ({dishAnalytics.allDishes.length} Dishes)
             </h3>
             <p className="text-xs text-gray-500">
-              Filter by category or sub-category to inspect exact unit volume, revenue contribution, and average unit price per dish
+              Inspect exact unit volume, revenue contribution, and average unit price across every dish
             </p>
           </div>
 
-          {/* Primary Category Filter Tabs */}
-          <div className="flex flex-wrap items-center gap-1.5 bg-gray-100 p-1 rounded-xl">
-            {[
-              { key: 'all', label: 'All Categories', units: kpis.totalItemUnits, rev: kpis.totalItemRevenue },
-              { key: 'tiffin', label: '🍱 Tiffin', units: kpis.segmentUnits.tiffin, rev: kpis.segmentRevenue.tiffin },
-              { key: 'catering', label: '🍛 Catering', units: kpis.segmentUnits.catering, rev: kpis.segmentRevenue.catering },
-              { key: 'cakes', label: '🎂 Cakes', units: kpis.segmentUnits.cakes, rev: kpis.segmentRevenue.cakes }
-            ].map(tab => (
-              <button
-                key={tab.key}
-                type="button"
-                onClick={() => {
-                  setMatrixCategory(tab.key as 'all' | PrimarySegment);
-                  setMatrixSubCategory('all');
-                }}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
-                  matrixCategory === tab.key
-                    ? 'bg-[#00346f] text-white shadow-2xs'
-                    : 'text-gray-600 hover:text-gray-900'
-                }`}
-              >
-                <span>{tab.label}</span>
-                <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono ${
-                  matrixCategory === tab.key ? 'bg-[#ffdea5] text-[#00346f] font-black' : 'bg-gray-200 text-gray-700'
-                }`}>
-                  {tab.units}u • ${tab.rev.toFixed(0)}
-                </span>
-              </button>
-            ))}
-          </div>
+          <button
+            type="button"
+            onClick={() => setShowFullMatrix(prev => !prev)}
+            className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 text-[#00346f] text-xs font-extrabold transition cursor-pointer self-start sm:self-auto"
+          >
+            <span>{showFullMatrix ? 'Hide Full Matrix Table' : 'Expand Full Dish Matrix'}</span>
+          </button>
         </div>
+
+        {showFullMatrix && (
+          <>
+            <div className="flex flex-wrap items-center gap-1.5 bg-gray-100 p-1 rounded-xl pt-2 border-t border-gray-150">
+              {[
+                { key: 'all', label: 'All Categories', units: kpis.totalItemUnits, rev: kpis.totalItemRevenue },
+                { key: 'tiffin', label: '🍱 Tiffin', units: kpis.segmentUnits.tiffin, rev: kpis.segmentRevenue.tiffin },
+                { key: 'catering', label: '🍛 Catering', units: kpis.segmentUnits.catering, rev: kpis.segmentRevenue.catering },
+                { key: 'cakes', label: '🎂 Cakes', units: kpis.segmentUnits.cakes, rev: kpis.segmentRevenue.cakes }
+              ].map(tab => (
+                <button
+                  key={tab.key}
+                  type="button"
+                  onClick={() => {
+                    setMatrixCategory(tab.key as 'all' | PrimarySegment);
+                    setMatrixSubCategory('all');
+                  }}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
+                    matrixCategory === tab.key
+                      ? 'bg-[#00346f] text-white shadow-2xs'
+                      : 'text-gray-600 hover:text-gray-900'
+                  }`}
+                >
+                  <span>{tab.label}</span>
+                  <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono ${
+                    matrixCategory === tab.key ? 'bg-[#ffdea5] text-[#00346f] font-black' : 'bg-gray-200 text-gray-700'
+                  }`}>
+                    {tab.units}u • ${tab.rev.toFixed(0)}
+                  </span>
+                </button>
+              ))}
+            </div>
 
         {/* Sub-Category Quantity & Revenue Summary Cards */}
         {availableMatrixSubCategories.length > 0 && (
@@ -1334,6 +1424,8 @@ export default function KDSAnalyticsTab({ orders }: KDSAnalyticsTabProps) {
               </tbody>
             </table>
           </div>
+        )}
+          </>
         )}
       </div>
     </div>

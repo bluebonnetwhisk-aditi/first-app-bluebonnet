@@ -26,7 +26,8 @@ import {
   MessageCircle,
   BarChart3,
   ClipboardList,
-  Search
+  Search,
+  Sparkles
 } from 'lucide-react';
 import type { CateringOrder, OrderStatus } from '../../types/catering';
 import { getCentralTimeNow, getUpcomingDates } from '../../utils/centralTime';
@@ -35,6 +36,7 @@ import KDSBlackoutManager from './KDSBlackoutManager';
 import KDSEditOrderModal from './KDSEditOrderModal';
 import KDSTiffinMenuModal from './KDSTiffinMenuModal';
 import KDSAnalyticsTab, { classifyOrderItemSegment, normalizeDishName, type PrimarySegment } from './KDSAnalyticsTab';
+import KDSTiffinPlannerTab from './KDSTiffinPlannerTab';
 
 interface KitchenKDSProps {
   onBackToOrder?: () => void;
@@ -227,8 +229,8 @@ Desi Dabba | BlueBonnet Whisk`
 }
 
 export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
-  // Primary KDS Tab: 'orders' (Live Queue) vs 'analytics' (Monthly Trends & Top Dishes)
-  const [activeKdsTab, setActiveKdsTab] = useState<'orders' | 'analytics'>('orders');
+  // Primary KDS Tab: 'orders' (Live Queue), 'planner' (Next Week Menu & Specials Planner), 'analytics' (Monthly Trends & Top Dishes)
+  const [activeKdsTab, setActiveKdsTab] = useState<'orders' | 'planner' | 'analytics'>('orders');
 
   // Authentication PIN state
   const [masterPin, setMasterPin] = useState<string>(() => {
@@ -879,18 +881,18 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
                 </div>
               </div>
 
-              {/* Primary Mode Switcher: [ Live Orders | Analytics ] */}
-              <div className="inline-flex items-center bg-gray-100 p-1 rounded-xl border border-gray-200 self-start sm:self-auto">
+              {/* Primary Mode Switcher: [ Live Orders | Menu Planner | Analytics ] */}
+              <div className="inline-flex items-center bg-gray-100 p-1 rounded-xl border border-gray-200 w-full sm:w-auto overflow-x-auto scrollbar-none">
                 <button
                   type="button"
                   onClick={() => setActiveKdsTab('orders')}
-                  className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-extrabold transition-all cursor-pointer ${
+                  className={`flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-3 py-2 sm:py-1.5 rounded-lg text-xs font-extrabold transition-all cursor-pointer whitespace-nowrap min-h-[38px] sm:min-h-[34px] ${
                     activeKdsTab === 'orders'
                       ? 'bg-[#00346f] text-white shadow-xs'
                       : 'text-gray-600 hover:text-gray-900'
                   }`}
                 >
-                  <ClipboardList className="w-3.5 h-3.5" />
+                  <ClipboardList className="w-3.5 h-3.5 shrink-0" />
                   <span>Live Orders</span>
                   {totalActiveOrdersCount > 0 && (
                     <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-black ${
@@ -903,24 +905,37 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
 
                 <button
                   type="button"
+                  onClick={() => setActiveKdsTab('planner')}
+                  className={`flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-3 py-2 sm:py-1.5 rounded-lg text-xs font-extrabold transition-all cursor-pointer whitespace-nowrap min-h-[38px] sm:min-h-[34px] ${
+                    activeKdsTab === 'planner'
+                      ? 'bg-[#00346f] text-white shadow-xs'
+                      : 'text-gray-600 hover:text-gray-900'
+                  }`}
+                >
+                  <Sparkles className="w-3.5 h-3.5 shrink-0 text-amber-500" />
+                  <span>Menu Planner</span>
+                </button>
+
+                <button
+                  type="button"
                   onClick={() => setActiveKdsTab('analytics')}
-                  className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-extrabold transition-all cursor-pointer ${
+                  className={`flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-3 py-2 sm:py-1.5 rounded-lg text-xs font-extrabold transition-all cursor-pointer whitespace-nowrap min-h-[38px] sm:min-h-[34px] ${
                     activeKdsTab === 'analytics'
                       ? 'bg-[#00346f] text-white shadow-xs'
                       : 'text-gray-600 hover:text-gray-900'
                   }`}
                 >
-                  <BarChart3 className="w-3.5 h-3.5" />
+                  <BarChart3 className="w-3.5 h-3.5 shrink-0" />
                   <span>Analytics</span>
                 </button>
               </div>
             </div>
 
-            {/* Compact Action Toolbar */}
-            <div className="flex flex-wrap items-center gap-1.5">
+            {/* Compact Mobile/Tablet Action Toolbar (Horizontal Scrollable on Small Screens) */}
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 scrollbar-none">
               <button
                 onClick={() => setShowPrepSheet(true)}
-                className="inline-flex items-center gap-1.5 bg-[#775a19] hover:bg-[#5e4612] text-white px-3 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-2xs cursor-pointer min-h-[34px]"
+                className="inline-flex items-center gap-1.5 bg-[#775a19] hover:bg-[#5e4612] text-white px-3 py-2 sm:py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-2xs cursor-pointer min-h-[38px] sm:min-h-[34px] shrink-0"
               >
                 <Printer className="w-3.5 h-3.5" />
                 <span>Prep Sheet</span>
@@ -928,15 +943,15 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
 
               <button
                 onClick={() => setShowTiffinModal(true)}
-                className="inline-flex items-center gap-1.5 border border-purple-300 bg-purple-50/50 hover:bg-purple-100 text-purple-900 px-2.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer min-h-[34px]"
+                className="inline-flex items-center gap-1.5 border border-purple-300 bg-purple-50/50 hover:bg-purple-100 text-purple-900 px-2.5 py-2 sm:py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer min-h-[38px] sm:min-h-[34px] shrink-0"
               >
                 <ImageIcon className="w-3.5 h-3.5 text-purple-700" />
-                <span>Tiffin Menu</span>
+                <span>Flyer Studio</span>
               </button>
 
               <button
                 onClick={() => setShowBlackoutModal(true)}
-                className="inline-flex items-center gap-1 border border-rose-200 hover:bg-rose-50 text-rose-900 px-2.5 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer min-h-[34px]"
+                className="inline-flex items-center gap-1 border border-rose-200 hover:bg-rose-50 text-rose-900 px-2.5 py-2 sm:py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer min-h-[38px] sm:min-h-[34px] shrink-0"
                 title="Manage Blackout Dates"
               >
                 <Ban className="w-3.5 h-3.5 text-rose-600" />
@@ -951,7 +966,7 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
                   localStorage.setItem('bbw_kds_sound_enabled', String(next));
                   if (next) playKitchenChime();
                 }}
-                className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-semibold border transition cursor-pointer min-h-[34px] ${
+                className={`inline-flex items-center gap-1 px-2.5 py-2 sm:py-1.5 rounded-xl text-xs font-semibold border transition cursor-pointer min-h-[38px] sm:min-h-[34px] shrink-0 ${
                   soundEnabled 
                     ? 'bg-emerald-50 text-emerald-800 border-emerald-200' 
                     : 'bg-gray-50 text-gray-400 border-gray-200'
@@ -965,7 +980,7 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
               <button
                 onClick={loadOrders}
                 disabled={isRefreshing}
-                className="inline-flex items-center gap-1 bg-gray-100 hover:bg-gray-200 text-gray-700 px-2.5 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer min-h-[34px]"
+                className="inline-flex items-center gap-1 bg-gray-100 hover:bg-gray-200 text-gray-700 px-2.5 py-2 sm:py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer min-h-[38px] sm:min-h-[34px] shrink-0"
                 title="Refresh Orders"
               >
                 <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
@@ -980,7 +995,7 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
                   setPinChangeError('');
                   setPinChangeSuccess(false);
                 }}
-                className="inline-flex items-center gap-1 border border-gray-200 hover:bg-gray-100 text-gray-600 px-2.5 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer min-h-[34px]"
+                className="inline-flex items-center gap-1 border border-gray-200 hover:bg-gray-100 text-gray-600 px-2.5 py-2 sm:py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer min-h-[38px] sm:min-h-[34px] shrink-0"
                 title="Change PIN"
               >
                 <KeyRound className="w-3.5 h-3.5 text-amber-700" />
@@ -988,7 +1003,7 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
 
               <button
                 onClick={handleLock}
-                className="inline-flex items-center gap-1 border border-gray-200 hover:bg-gray-100 text-gray-600 px-2.5 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer min-h-[34px]"
+                className="inline-flex items-center gap-1 border border-gray-200 hover:bg-gray-100 text-gray-600 px-2.5 py-2 sm:py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer min-h-[38px] sm:min-h-[34px] shrink-0"
                 title="Lock KDS"
               >
                 <Lock className="w-3.5 h-3.5" />
@@ -998,7 +1013,7 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
                 <button
                   type="button"
                   onClick={onBackToOrder}
-                  className="inline-flex items-center gap-1 bg-[#00346f] hover:bg-[#00224d] text-white px-2.5 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer min-h-[34px]"
+                  className="inline-flex items-center gap-1 bg-[#00346f] hover:bg-[#00224d] text-white px-2.5 py-2 sm:py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer min-h-[38px] sm:min-h-[34px] shrink-0"
                   title="Return to Website"
                 >
                   <ArrowLeft className="w-3.5 h-3.5" />
@@ -1083,13 +1098,20 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
           </div>
         )}
 
-        {/* ── TAB 2: ANALYTICS & MONTHLY INSIGHTS ── */}
-        {activeKdsTab === 'analytics' ? (
+        {/* ── TAB 2: SMART TIFFIN & WEEKEND SPECIALS MENU PLANNER ── */}
+        {activeKdsTab === 'planner' ? (
+          <KDSTiffinPlannerTab
+            orders={allOrders}
+            onOpenFullFlyerModal={() => setShowTiffinModal(true)}
+            onSettingsPublished={() => loadOrders()}
+          />
+        ) : activeKdsTab === 'analytics' ? (
+          /* ── TAB 3: ANALYTICS & MONTHLY INSIGHTS ── */
           <KDSAnalyticsTab orders={allOrders} />
         ) : (
           <>
-            {/* ── TAB 1: LIVE ORDERS SCHEDULE, STATION FILTER & SEARCH ── */}
-            <div className="bg-white rounded-2xl border border-gray-200 p-3.5 shadow-xs space-y-2.5">
+            {/* ── TAB 1: LIVE ORDERS SCHEDULE, STATION FILTER & SEARCH (Sticky on Mobile/Tablet) ── */}
+            <div className="sticky top-2 z-20 bg-white/95 backdrop-blur-md rounded-2xl border border-gray-200 p-3 sm:p-3.5 shadow-sm space-y-2.5">
               
               {/* Row 1: Schedule Date Ribbon */}
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 pb-2.5 border-b border-gray-150">
