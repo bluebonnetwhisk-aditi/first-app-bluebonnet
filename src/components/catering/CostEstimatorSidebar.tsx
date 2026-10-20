@@ -336,13 +336,13 @@ export default function CostEstimatorSidebar({
         <div className="flex items-center gap-6">
           <div className="text-right">
             <span className="text-[10px] uppercase font-bold tracking-wider text-gray-500 block">
-              Estimated Total
+              Total Amount
             </span>
             <div className="font-serif font-bold text-2xl text-[#00346f] leading-none">
               ${totalAmount.toFixed(2)}
             </div>
             <span className="text-[10px] text-gray-500 block mt-0.5">
-              Tax included • No prepayment
+              No upfront prepayment
             </span>
           </div>
 

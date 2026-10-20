@@ -140,18 +140,18 @@ export default function EstimateReceiptModal({ order, onClose }: EstimateReceipt
           {/* Totals Summary */}
           <div className="flex justify-end pt-2">
             <div className="w-full sm:w-64 space-y-2 text-xs bg-gray-50 p-4 rounded-xl border border-gray-200">
-              <div className="flex justify-between text-gray-600">
-                <span>Food Subtotal:</span>
-                <span className="font-semibold text-gray-900">${order.food_subtotal.toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between text-gray-600">
-                <span>Delivery Fee:</span>
-                <span className="font-semibold text-gray-900">${order.delivery_fee.toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between text-gray-600">
-                <span>Texas Tax (8.25%):</span>
-                <span className="font-semibold text-gray-900">${order.tax_amount.toFixed(2)}</span>
-              </div>
+              {order.discount_amount && order.discount_amount > 0 ? (
+                <div className="flex justify-between text-purple-800 font-semibold">
+                  <span>Discount Applied{order.discount_reason ? ` (${order.discount_reason})` : ''}:</span>
+                  <span>-${order.discount_amount.toFixed(2)}</span>
+                </div>
+              ) : null}
+              {order.is_delivery && (order.delivery_fee || 0) > 0 ? (
+                <div className="flex justify-between text-gray-600">
+                  <span>Delivery Fee:</span>
+                  <span className="font-semibold text-gray-900">${order.delivery_fee.toFixed(2)}</span>
+                </div>
+              ) : null}
               {order.processing_fee && order.processing_fee > 0 ? (
                 <div className="flex justify-between text-amber-800">
                   <span>Card Fee (3.5%):</span>

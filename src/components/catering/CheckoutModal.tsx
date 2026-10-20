@@ -1051,10 +1051,9 @@ export default function CheckoutModal({
                   {showItemizedBreakdown ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
                 </button>
                 <span className="text-[11px] text-gray-600">
-                  Subtotal: <strong>${foodSubtotal.toFixed(2)}</strong>
-                  {deliveryFee > 0 ? ` • Delivery: $${deliveryFee.toFixed(0)}` : ''}
-                  {taxAmount > 0 ? ` • Tax: $${taxAmount.toFixed(2)}` : ''}
-                  {processingFee > 0 ? ` • Card Fee: $${processingFee.toFixed(2)}` : ''}
+                  {deliveryFee > 0 ? `Delivery: $${deliveryFee.toFixed(0)} • ` : ''}
+                  {processingFee > 0 ? `Card Fee: $${processingFee.toFixed(2)} • ` : ''}
+                  <strong>${totalAmount.toFixed(2)}</strong>
                 </span>
               </div>
 
@@ -1104,28 +1103,22 @@ export default function CheckoutModal({
                       </div>
                     </div>
                   ))}
-                  <div className="pt-1.5 border-t border-gray-200/80 space-y-0.5">
-                    <div className="flex justify-between">
-                      <span>Food Subtotal:</span>
-                      <span>${foodSubtotal.toFixed(2)}</span>
+                  {(isDelivery || processingFee > 0) && (
+                    <div className="pt-1.5 border-t border-gray-200/80 space-y-0.5">
+                      {isDelivery && (
+                        <div className="flex justify-between">
+                          <span>Venue Delivery Fee:</span>
+                          <span>${deliveryFee.toFixed(2)}</span>
+                        </div>
+                      )}
+                      {processingFee > 0 && (
+                        <div className="flex justify-between text-amber-800 font-semibold">
+                          <span>Card Processing Fee (3.5%):</span>
+                          <span>+${processingFee.toFixed(2)}</span>
+                        </div>
+                      )}
                     </div>
-                    {isDelivery && (
-                      <div className="flex justify-between">
-                        <span>Venue Delivery Fee:</span>
-                        <span>${deliveryFee.toFixed(2)}</span>
-                      </div>
-                    )}
-                    <div className="flex justify-between">
-                      <span>Sales Tax (8.25%):</span>
-                      <span>${taxAmount.toFixed(2)}</span>
-                    </div>
-                    {processingFee > 0 && (
-                      <div className="flex justify-between text-amber-800 font-semibold">
-                        <span>Card Processing Fee (3.5%):</span>
-                        <span>+${processingFee.toFixed(2)}</span>
-                      </div>
-                    )}
-                  </div>
+                  )}
                 </div>
               )}
 
