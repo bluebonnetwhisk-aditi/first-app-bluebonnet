@@ -18,46 +18,52 @@ export function getPaymentMethodLabel(method?: string): string {
 
 /**
  * Builds formatted text for a catering order or formal estimate.
+ * Uses WhatsApp best practices: concise mobile scanning, no separate tax line item,
+ * and a clear all-inclusive Total Amount with payment instructions.
  */
 export function buildOrderNotificationText(order: CateringOrder): string {
   const isDelivery = order.is_delivery;
+  const shortId = order.id ? order.id.slice(0, 8).toUpperCase() : '';
   const itemsText = order.items && order.items.length > 0
     ? order.items
         .map(i => {
           const sizeStr = i.selectionLabel ? ` (${i.selectionLabel})` : '';
           const notesStr = i.notes ? ` [${i.notes}]` : '';
-          const unitPriceStr = i.unitPrice > 0 ? ` @ $${i.unitPrice.toFixed(2)} ea` : '';
-          return `• ${i.name}${sizeStr}${notesStr} — Qty: ${i.quantity}${unitPriceStr} = $${i.totalPrice.toFixed(2)}`;
+          return `• *${i.quantity}x ${i.name}*${sizeStr}${notesStr} — $${i.totalPrice.toFixed(2)}`;
         })
         .join('\n')
     : (order.order_description || 'Catering items');
 
+  const discountAmount = order.discount_amount || 0;
+  const deliveryFee = order.delivery_fee || 0;
+  const processingFee = order.processing_fee || 0;
+  const grandTotal = order.total_amount || 0;
+
   const lines = [
-    `*🎉 New Desi Dabba Catering Submission!*`,
+    `*🍱 NEW ORDER • DESI DABBA | BLUEBONNET WHISK*`,
+    `*Ref:* #${shortId} (${order.order_type === 'estimate' ? 'Estimate Request' : 'Confirmed Order Request'})`,
     ``,
-    `*Reference #:* #${order.id ? order.id.slice(0, 8).toUpperCase() : ''}`,
-    `*Submission Type:* ${order.order_type === 'estimate' ? 'SAVED ESTIMATE' : 'OFFICIAL CATERING ORDER'}`,
-    `*Customer Name:* ${order.customer_name}`,
-    `*Phone:* ${order.phone_number}`,
-    `*Email:* ${order.email || 'Not Provided'}`,
-    `*Payment Method:* ${getPaymentMethodLabel(order.payment_method)}`,
+    `👤 *Customer:* ${order.customer_name}`,
+    `📞 *Phone:* ${order.phone_number}`,
+    order.email ? `✉️ *Email:* ${order.email}` : null,
     ``,
-    `*Fulfillment:* ${isDelivery ? 'Venue Delivery (+$50 Flat Fee)' : 'Client Self-Pickup (Little Elm Kitchen)'}`,
-    isDelivery && order.delivery_address ? `*Delivery Destination:* ${order.delivery_address}` : null,
-    `*Fulfillment Date:* ${order.fulfillment_date}`,
-    `*Target Window:* ${order.fulfillment_time} (US Central Time)`,
-    order.dietary_notes ? `*Dietary / Satvik Notes:* ${order.dietary_notes}` : null,
+    `📅 *Date:* ${order.fulfillment_date}`,
+    `⏰ *Window:* ${order.fulfillment_time} (CT)`,
+    isDelivery
+      ? `🚚 *Delivery:* ${order.delivery_address || 'Address on file'}`
+      : `🏪 *Pickup:* 2437 Deerwood Dr, Little Elm, TX`,
+    order.dietary_notes ? `🌿 *Dietary / Notes:* ${order.dietary_notes}` : null,
     ``,
-    `*Itemized Trays & Dishes (Item, Size, Qty & Price):*`,
+    `*🛍️ ORDERED ITEMS:*`,
     itemsText,
     ``,
-    `*Food Subtotal:* $${(order.food_subtotal || 0).toFixed(2)}`,
-    isDelivery && (order.delivery_fee || 0) > 0 ? `*Delivery Fee:* $${(order.delivery_fee || 0).toFixed(2)}` : null,
-    `*Texas Tax (8.25%):* $${(order.tax_amount || 0).toFixed(2)}`,
-    (order.processing_fee && order.processing_fee > 0) 
-      ? `*Card Processing Fee (3.5%):* $${order.processing_fee.toFixed(2)}` 
+    discountAmount > 0
+      ? `*Discount Applied:* -$${discountAmount.toFixed(2)}${order.discount_reason ? ` (${order.discount_reason})` : ''}`
       : null,
-    `*Grand Total:* $${(order.total_amount || 0).toFixed(2)}`,
+    isDelivery && deliveryFee > 0 ? `*Delivery Fee:* $${deliveryFee.toFixed(2)}` : null,
+    processingFee > 0 ? `*Card Processing Fee (3.5%):* $${processingFee.toFixed(2)}` : null,
+    `💰 *Total Amount:* *$${grandTotal.toFixed(2)}*`,
+    `💳 *Payment:* ${getPaymentMethodLabel(order.payment_method)}`,
     ``,
     `_Sent via Bluebonnet Whisk Online Order Portal (bluebonnetwhisk.com)_`
   ];

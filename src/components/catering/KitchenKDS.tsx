@@ -117,10 +117,12 @@ function parseTimeToMinutes(timeStr?: string): number {
 }
 
 /**
- * Generates WhatsApp message template for Order Accepted, Order Ready, or Order Declined
+ * Generates WhatsApp message template for Order Accepted, Order Ready, or Order Declined.
+ * Follows hospitality WhatsApp best practices: omits separate tax/subtotal lines and
+ * presents a clean, all-inclusive Total Amount with clear fulfillment & payment details.
  */
 function buildWhatsAppMessage(order: CateringOrder, eventType: 'accepted' | 'ready' | 'rejected'): string {
-  const shortId = order.id ? order.id.slice(0, 8).toUpperCase() : '';
+  const shortId = order.id ? order.id.split('::')[0].slice(0, 8).toUpperCase() : '';
   const customerName = order.customer_name || 'Valued Customer';
   const dateStr = order.fulfillment_date || '';
   const timeStr = order.fulfillment_time || '';
@@ -133,81 +135,82 @@ function buildWhatsAppMessage(order: CateringOrder, eventType: 'accepted' | 'rea
     ? order.items.map(i => {
         const sizeStr = i.selectionLabel ? ` (${i.selectionLabel})` : '';
         const notesStr = i.notes ? ` [${i.notes}]` : '';
-        const unitPriceStr = i.unitPrice > 0 ? ` @ $${i.unitPrice.toFixed(2)} ea` : '';
-        return `• ${i.name}${sizeStr}${notesStr}\n  Qty: ${i.quantity}${unitPriceStr} = $${i.totalPrice.toFixed(2)}`;
+        return `• *${i.quantity}x ${i.name}*${sizeStr}${notesStr} — $${i.totalPrice.toFixed(2)}`;
       }).join('\n')
     : cleanDescriptionFallback;
 
   const locationText = order.is_delivery
-    ? `Delivery destination: ${order.delivery_address || 'Address on file'}`
-    : `Self-Pickup: 2437 Deerwood Dr, Little Elm, TX`;
+    ? `🚚 *Delivery:* ${order.delivery_address || 'Address on file'}`
+    : `🏪 *Pickup:* 2437 Deerwood Dr, Little Elm, TX`;
 
-  const foodSubtotal = order.food_subtotal || 0;
   const discountAmount = order.discount_amount || 0;
   const deliveryFee = order.delivery_fee || 0;
-  const taxAmount = order.tax_amount || 0;
   const processingFee = order.processing_fee || 0;
   const grandTotal = order.total_amount || 0;
 
+  const paymentNote =
+    order.payment_method === 'cash'
+      ? 'Cash upon fulfillment'
+      : order.payment_method === 'credit_card'
+      ? 'Credit Card'
+      : 'Zelle (945-527-4566)';
+
   const financialSummaryLines = [
-    `FINANCIAL SUMMARY`,
-    `• Food Subtotal: $${foodSubtotal.toFixed(2)}`,
-    discountAmount > 0 ? `• Discount Applied: -$${discountAmount.toFixed(2)}${order.discount_reason ? ` (${order.discount_reason})` : ''}` : null,
-    order.is_delivery && deliveryFee > 0 ? `• Delivery Fee: $${deliveryFee.toFixed(2)}` : null,
-    `• Texas Sales Tax (8.25%): $${taxAmount.toFixed(2)}`,
-    processingFee > 0 ? `• Card Processing Fee (3.5%): $${processingFee.toFixed(2)}` : null,
-    `• Total Amount: $${grandTotal.toFixed(2)}`
+    discountAmount > 0 ? `• *Discount Applied:* -$${discountAmount.toFixed(2)}${order.discount_reason ? ` (${order.discount_reason})` : ''}` : null,
+    order.is_delivery && deliveryFee > 0 ? `• *Delivery Fee:* $${deliveryFee.toFixed(2)}` : null,
+    processingFee > 0 ? `• *Card Processing Fee (3.5%):* $${processingFee.toFixed(2)}` : null,
+    `💰 *Total Amount:* *$${grandTotal.toFixed(2)}*`,
+    `💳 *Payment:* ${paymentNote}`
   ].filter(Boolean).join('\n');
 
   if (eventType === 'rejected') {
     return (
-`─ ORDER CANNOT BE FULFILLED ─
-Ref: #${shortId} | Customer: ${customerName}
+`*⚠️ ORDER UPDATE • #${shortId}*
 
-Hi ${customerName}, we regret that order #${shortId} for ${dateStr} (${timeStr}) cannot be accepted as we are sold to capacity.
+Hi ${customerName}, thank you for thinking of us! Unfortunately, we are fully booked to capacity for *${dateStr} (${timeStr})* and cannot fulfill order *#${shortId}*.
 
-REQUESTED ITEMS
+*REQUESTED ITEMS*
 ${itemsText}
 
 ${financialSummaryLines}
 
-───────────────
-Apologies for the inconvenience.
-Reschedule via the web ordering portal.`
+We sincerely apologize for the inconvenience and hope to serve you on a future date at bluebonnetwhisk.com.
+*Desi Dabba | BlueBonnet Whisk*`
     );
   } else if (eventType === 'accepted') {
     return (
-`─ ORDER CONFIRMED ─
-Ref: #${shortId} | Customer: ${customerName}
+`*✅ ORDER CONFIRMED • #${shortId}*
 
-SCHEDULE
-Date: ${dateStr}
-Window: ${timeStr} (Central Time)
+Hi ${customerName}, your order with *Desi Dabba | BlueBonnet Whisk* is confirmed!
+
+📅 *Date:* ${dateStr}
+⏰ *Window:* ${timeStr} (CT)
 ${locationText}
 
-ORDERED ITEMS
+*🛍️ ORDERED ITEMS*
 ${itemsText}
 
 ${financialSummaryLines}
 
-───────────────
-Thank you for supporting a local woman owned small business.
-Desi Dabba | BlueBonnet Whisk`
+Thank you for supporting our local woman-owned kitchen! 🙏
+*Desi Dabba | BlueBonnet Whisk*`
     );
   } else {
-    const statusHeader = order.is_delivery ? '🚗 Order Out for Delivery!' : '🍱 Order Ready for Pickup!';
+    const statusHeader = order.is_delivery
+      ? `*🚗 ORDER OUT FOR DELIVERY • #${shortId}*`
+      : `*🍱 ORDER READY FOR PICKUP • #${shortId}*`;
     const actionText = order.is_delivery
-      ? `your order #${shortId} is fresh & on its way for delivery!`
-      : `your order #${shortId} is fresh & ready for pickup!`;
+      ? `your order *#${shortId}* is freshly packed and on its way for delivery!`
+      : `your order *#${shortId}* is hot, fresh, and ready for pickup!`;
     const addressBlock = order.is_delivery
-      ? `📍 Delivery Destination:\n${order.delivery_address || 'Address on file'}`
-      : `📍 Pickup Location:\n2437 Deerwood Dr, Little Elm, TX`;
+      ? `📍 *Delivery Destination:*\n${order.delivery_address || 'Address on file'}`
+      : `📍 *Pickup Location:*\n2437 Deerwood Dr, Little Elm, TX`;
 
     const cleanItemsText = order.items && order.items.length > 0
       ? order.items.map(i => {
           const sizeStr = i.selectionLabel ? ` (${i.selectionLabel})` : '';
           const notesStr = i.notes ? ` [${i.notes}]` : '';
-          return `• ${i.name}${sizeStr}${notesStr} (Qty: ${i.quantity})`;
+          return `• *${i.quantity}x ${i.name}*${sizeStr}${notesStr}`;
         }).join('\n')
       : (order.order_description || 'Catering items');
 
@@ -218,12 +221,13 @@ Hi ${customerName}, ${actionText}
 
 ${addressBlock}
 
-🛍️ Items:
+*🛍️ ITEMS*
 ${cleanItemsText}
 
-Thank you for your business! We hope you enjoy your meal. Please don't hesitate to share your feedback with us—we'd love to hear how everything was!
+💰 *Total Amount:* *$${grandTotal.toFixed(2)}*
 
-Desi Dabba | BlueBonnet Whisk`
+Thank you for your business! We hope you enjoy your meal—we'd love to hear your feedback! 🙏
+*Desi Dabba | BlueBonnet Whisk*`
     );
   }
 }
