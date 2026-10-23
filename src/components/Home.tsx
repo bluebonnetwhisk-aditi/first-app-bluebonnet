@@ -2,7 +2,8 @@ import { useState, useEffect, useRef } from "react";
 import { motion, useScroll, useTransform, useMotionValueEvent } from "motion/react";
 import heroVideo from "../assets/videos/hero.mp4";
 import celebrationCakesImg from "../assets/images/custom_celebration_cakes_1781194977914.jpg";
-import cateringBuffetImg from "../assets/images/BlueBonnet Catering.jpeg";
+import cateringMenuFlyerImg from "../assets/images/catering_flyer_page_2.png";
+import cateringCoverFlyerImg from "../assets/images/catering_flyer_page_1.png";
 import partyPackagesImg from "../assets/images/BlueBonnet India.jpg";
 import { 
   ArrowRight, 
@@ -30,6 +31,7 @@ export default function Home({ onOpenBaker: _onOpenBaker, onNavigate }: HomeProp
 
   const [activeFaq, setActiveFaq] = useState<number | null>(null);
   const [activeStage, setActiveStage] = useState<number>(0);
+  const [cateringFlyerPage, setCateringFlyerPage] = useState<1 | 2>(2);
 
   // Programmatically triggered video autoplay optimized for Samsung Internet, Chrome Android S25+, iOS Safari
   useEffect(() => {
@@ -287,10 +289,10 @@ export default function Home({ onOpenBaker: _onOpenBaker, onNavigate }: HomeProp
               },
               {
                 title: "Catering",
-                desc: "Whether it's a birthday, corporate event, or family gathering, we've got the menu covered.",
+                desc: "Whether it's a birthday, corporate event, or family gathering, we've got the menu covered with our 4-tier tray pricing.",
                 tab: "Catering",
-                image: cateringBuffetImg,
-                imageLabel: "Catering Buffet Detail"
+                image: cateringFlyerPage === 1 ? cateringCoverFlyerImg : cateringMenuFlyerImg,
+                imageLabel: cateringFlyerPage === 1 ? "Desi Dabba Catering Cover & Allergens" : "Desi Dabba Catering Menu & Tray Pricing"
               },
               {
                 title: "Custom Party Packages",
@@ -323,16 +325,51 @@ export default function Home({ onOpenBaker: _onOpenBaker, onNavigate }: HomeProp
                     <p className="text-gray-200 text-xs sm:text-sm leading-relaxed mt-2">{item.desc}</p>
                     
                     {/* Inline Image for Mobile & Tablet only */}
-                    <div className="lg:hidden mt-4 rounded-xl overflow-hidden border border-white/10 aspect-video relative">
+                    <div className="lg:hidden mt-4 rounded-xl overflow-hidden border border-white/10 aspect-video relative bg-[#FAF8F5]">
                       <img 
                         src={item.image} 
                         alt={item.title}
                         loading="lazy"
                         decoding="async"
-                        className="w-full h-full object-cover"
+                        className={`w-full h-full ${idx === 1 ? 'object-contain' : 'object-cover'}`}
                         referrerPolicy="no-referrer"
                       />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-transparent to-transparent flex items-end p-3">
+
+                      {/* Mobile Catering Page Switcher Toggle */}
+                      {idx === 1 && (
+                        <div className="absolute top-2 right-2 z-10 flex items-center gap-1 bg-black/80 backdrop-blur-md p-0.5 rounded-lg border border-white/20">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setCateringFlyerPage(2);
+                            }}
+                            className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
+                              cateringFlyerPage === 2
+                                ? 'bg-[#775a19] text-white'
+                                : 'text-gray-300'
+                            }`}
+                          >
+                            Menu
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setCateringFlyerPage(1);
+                            }}
+                            className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
+                              cateringFlyerPage === 1
+                                ? 'bg-[#775a19] text-white'
+                                : 'text-gray-300'
+                            }`}
+                          >
+                            Cover
+                          </button>
+                        </div>
+                      )}
+
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-transparent to-transparent flex items-end p-3 pointer-events-none">
                         <span className="font-serif text-xs font-semibold text-brand-cream">
                           {item.imageLabel}
                         </span>
@@ -360,7 +397,7 @@ export default function Home({ onOpenBaker: _onOpenBaker, onNavigate }: HomeProp
           <div className="hidden lg:block lg:col-span-7 lg:sticky lg:top-28 h-[550px] relative rounded-2xl overflow-hidden border border-white/10 shadow-2xl bg-black">
             {[
               celebrationCakesImg,
-              cateringBuffetImg,
+              cateringFlyerPage === 1 ? cateringCoverFlyerImg : cateringMenuFlyerImg,
               partyPackagesImg
             ].map((src, idx) => (
               <motion.div
@@ -375,12 +412,51 @@ export default function Home({ onOpenBaker: _onOpenBaker, onNavigate }: HomeProp
                   alt="Walkthrough Detail Showcase" 
                   loading="lazy"
                   decoding="async"
-                  className="w-full h-full object-cover scale-101"
+                  className={`w-full h-full ${idx === 1 ? 'object-contain bg-[#FAF8F5]' : 'object-cover'} scale-101`}
                   referrerPolicy="no-referrer"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex items-end p-5">
+
+                {/* Catering Flyer Page Switcher Toggle (Desktop) */}
+                {idx === 1 && activeStage === 1 && (
+                  <div className="absolute top-4 right-4 z-20 flex items-center gap-1 bg-black/80 backdrop-blur-md p-1 rounded-xl border border-white/20 shadow-lg">
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setCateringFlyerPage(2);
+                      }}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all cursor-pointer ${
+                        cateringFlyerPage === 2
+                          ? 'bg-[#775a19] text-white shadow-xs'
+                          : 'text-gray-300 hover:text-white'
+                      }`}
+                    >
+                      Menu &amp; Pricing
+                    </button>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setCateringFlyerPage(1);
+                      }}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all cursor-pointer ${
+                        cateringFlyerPage === 1
+                          ? 'bg-[#775a19] text-white shadow-xs'
+                          : 'text-gray-300 hover:text-white'
+                      }`}
+                    >
+                      Cover &amp; Allergens
+                    </button>
+                  </div>
+                )}
+
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex items-end p-5 pointer-events-none">
                   <span className="font-serif text-xs font-semibold text-brand-cream">
-                    {idx === 0 ? "Designer Cake Detail" : idx === 1 ? "Catering Buffet Detail" : "Custom Party Setup Detail"}
+                    {idx === 0 
+                      ? "Designer Cake Detail" 
+                      : idx === 1 
+                      ? (cateringFlyerPage === 1 ? "Desi Dabba Catering Cover & Allergens" : "Desi Dabba Catering Menu & Tray Pricing") 
+                      : "Custom Party Setup Detail"}
                   </span>
                 </div>
               </motion.div>
