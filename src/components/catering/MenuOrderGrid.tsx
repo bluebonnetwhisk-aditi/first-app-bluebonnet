@@ -236,8 +236,8 @@ export default function MenuOrderGrid({
         </div>
       )}
 
-      {/* ── FILTER & SEARCH BAR ── */}
-      <div className="bg-white rounded-2xl border border-gray-200 p-3 sm:p-4 shadow-xs">
+      {/* ── FILTER & SEARCH BAR (Sticky on scroll for fast thumb navigation) ── */}
+      <div className="sticky top-[100px] lg:top-[124px] z-20 bg-white/95 backdrop-blur-md rounded-2xl border border-gray-200 p-3 sm:p-4 shadow-sm transition-all">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-2.5 sm:gap-4">
           
           {/* Search Input + Mobile Filter Toggle */}

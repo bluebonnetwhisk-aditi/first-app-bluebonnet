@@ -137,6 +137,31 @@ img, video, canvas, svg, iframe {
   box-shadow: 0 10px 30px -8px rgba(119, 90, 25, 0.15);
 }
 
+/* ── 2026 LIQUID GLASS TOKENS (MOBILE & TABLET OPTIMIZED) ── */
+.glass-nav-pill {
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(18px) saturate(160%);
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
+  border: 1px solid rgba(212, 175, 55, 0.35);
+  box-shadow: 0 8px 32px 0 rgba(0, 52, 111, 0.08);
+}
+
+.glass-floating-dock {
+  background: rgba(11, 25, 44, 0.92);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border-top: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 0 -10px 35px 0 rgba(0, 25, 60, 0.25);
+}
+
+.glass-card-warm {
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(212, 175, 55, 0.22);
+  box-shadow: 0 10px 30px -10px rgba(119, 90, 25, 0.10);
+}
+
 /* 3D Card Hover Perspective */
 .card-3d-wrapper {
   perspective: 1000px;

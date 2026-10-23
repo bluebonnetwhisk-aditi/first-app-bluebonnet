@@ -12,6 +12,17 @@ export default function CakesPage({ onOpenBaker, onCreateQuote }: CakesPageProps
   const [selectedSizeId, setSelectedSizeId] = useState<string>("6inch");
   const [selectedFlavor, setSelectedFlavor] = useState<string>("Rasmalai Fusion");
   const [isEggless, setIsEggless] = useState<boolean>(false);
+  const handleProceedToConfigurator = () => {
+    try {
+      sessionStorage.setItem('bbw_preselected_cake', JSON.stringify({
+        size: selectedSizeId,
+        flavor: selectedFlavor,
+        isEggless
+      }));
+    } catch {}
+    onCreateQuote?.();
+  };
+
   return (
     <div className="animate-fade-in bg-brand-cream-light min-h-screen">
       
@@ -24,7 +35,7 @@ export default function CakesPage({ onOpenBaker, onCreateQuote }: CakesPageProps
           </div>
           <div className="flex items-center gap-3 w-full sm:w-auto justify-center sm:justify-end">
             <button
-              onClick={onCreateQuote}
+              onClick={handleProceedToConfigurator}
               className="flex-1 sm:flex-none min-h-[40px] inline-flex items-center justify-center bg-[#775a19] hover:bg-[#5d4201] text-white font-sans text-xs uppercase tracking-wider font-bold px-5 py-2 rounded-lg shadow-sm transition-all text-center cursor-pointer"
             >
               Create A Quote
@@ -67,7 +78,7 @@ export default function CakesPage({ onOpenBaker, onCreateQuote }: CakesPageProps
 
           <div className="flex flex-col sm:flex-row items-center gap-4">
             <button
-              onClick={onCreateQuote}
+              onClick={handleProceedToConfigurator}
               className="w-full sm:w-auto min-h-[44px] inline-flex items-center justify-center bg-[#00346f] hover:bg-[#00224d] text-white font-sans text-xs uppercase tracking-widest font-bold px-8 py-3.5 rounded-xl shadow-lg transition-all duration-300 cursor-pointer"
             >
               Create A Quote

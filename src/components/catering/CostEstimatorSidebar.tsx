@@ -122,7 +122,7 @@ export default function CostEstimatorSidebar({
   }
 
   return (
-    <div className="fixed bottom-0 inset-x-0 z-40 bg-white border-t border-gray-200 shadow-2xl font-sans">
+    <div className="fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur-xl border-t border-[#D4AF37]/35 shadow-[0_-8px_30px_rgba(0,52,111,0.12)] font-sans">
       
       {/* ── Expandable Slide-Up Cart Drawer ── */}
       {isExpanded && (
@@ -257,7 +257,7 @@ export default function CostEstimatorSidebar({
       {/* ── Main Sticky Bottom Bar ── */}
       
       {/* 1. Mobile Screen Layout (< md): Single sleek horizontal thumb bar */}
-      <div className="md:hidden px-3 pt-2 pb-[max(0.625rem,env(safe-area-inset-bottom,0px))] bg-white flex items-center justify-between gap-2.5">
+      <div className="md:hidden px-3.5 pt-2.5 pb-[max(0.75rem,env(safe-area-inset-bottom,0px))] bg-white/92 backdrop-blur-xl flex items-center justify-between gap-3">
         {/* Left: Cart toggle + Total */}
         <button
           type="button"
@@ -269,12 +269,12 @@ export default function CostEstimatorSidebar({
           </div>
           <div className="min-w-0">
             <div className="flex items-center gap-1.5">
-              <span className="font-serif font-black text-base text-[#00346f] leading-none">
+              <span className="font-serif font-black text-lg text-[#00346f] leading-none">
                 ${totalAmount.toFixed(2)}
               </span>
               {isExpanded ? <ChevronDown className="w-3.5 h-3.5 text-[#00346f] shrink-0" /> : <ChevronUp className="w-3.5 h-3.5 text-[#00346f] shrink-0" />}
             </div>
-            <div className="text-[10px] text-gray-500 truncate mt-0.5">
+            <div className="text-[11px] text-gray-500 font-medium truncate mt-0.5">
               {totalItemCount} {totalItemCount === 1 ? 'item' : 'items'} • Tap to view cart
             </div>
           </div>
@@ -284,10 +284,10 @@ export default function CostEstimatorSidebar({
         <button
           type="button"
           onClick={onProceedToCheckout}
-          className="flex items-center justify-center gap-1.5 min-h-[44px] py-2.5 px-4 rounded-xl bg-[#00346f] active:bg-[#00224d] text-white text-xs font-bold uppercase tracking-wider shadow-md cursor-pointer transition-transform active:scale-[0.99] shrink-0"
+          className="flex items-center justify-center gap-1.5 min-h-[44px] py-2.5 px-5 rounded-xl bg-[#00346f] hover:bg-[#00224d] active:scale-98 text-white text-xs font-bold uppercase tracking-wider shadow-md cursor-pointer transition-all shrink-0"
         >
           <span>Checkout</span>
-          <ArrowRight className="w-4 h-4" />
+          <ArrowRight className="w-4 h-4 text-[#ffdea5]" />
         </button>
       </div>
 

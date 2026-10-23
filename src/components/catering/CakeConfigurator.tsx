@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { 
   Cake as CakeIcon, 
   Sparkles, 
@@ -152,6 +152,34 @@ export default function CakeConfigurator({
   const [quantity, setQuantity] = useState<number>(1);
   const [addedAlert, setAddedAlert] = useState<boolean>(false);
   const [isEditingCake, setIsEditingCake] = useState<boolean>(false);
+
+  // Auto-load preselected cake configuration from CakesPage showcase if user clicked "Create Quote"
+  useEffect(() => {
+    try {
+      const saved = sessionStorage.getItem('bbw_preselected_cake');
+      if (saved) {
+        sessionStorage.removeItem('bbw_preselected_cake');
+        const parsed = JSON.parse(saved);
+        if (['6inch', '8inch', '2tier', '3tier'].includes(parsed.size)) {
+          setSelectedSize(parsed.size);
+        }
+        if (parsed.flavor) {
+          const cleanFlavor = String(parsed.flavor).replace(/ fusion/i, '').trim();
+          const matchCat = CAKE_CATEGORIES.find(c =>
+            c.flavors.some(f => f.toLowerCase().includes(cleanFlavor.toLowerCase()) || cleanFlavor.toLowerCase().includes(f.toLowerCase()))
+          );
+          if (matchCat) {
+            setSelectedCategoryId(matchCat.id);
+            const exactFlv = matchCat.flavors.find(f => f.toLowerCase().includes(cleanFlavor.toLowerCase()) || cleanFlavor.toLowerCase().includes(f.toLowerCase()));
+            if (exactFlv) setSelectedFlavor(exactFlv);
+          }
+        }
+        if (typeof parsed.isEggless === 'boolean') {
+          setIsEggless(parsed.isEggless);
+        }
+      }
+    } catch {}
+  }, []);
 
   // Active category definition
   const currentCategory = CAKE_CATEGORIES.find(c => c.id === selectedCategoryId) || CAKE_CATEGORIES[0];

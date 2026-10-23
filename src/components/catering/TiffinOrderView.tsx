@@ -907,7 +907,7 @@ export default function TiffinOrderView({
                   key={day.dayName}
                   type="button"
                   onClick={() => setSelectedDayTab(day.dateStr)}
-                  className={`flex-1 min-w-[68px] sm:min-w-[110px] p-2 sm:p-3 rounded-xl sm:rounded-2xl border text-left transition-all cursor-pointer ${
+                  className={`flex-1 min-w-[72px] sm:min-w-[110px] p-2.5 sm:p-3 rounded-xl sm:rounded-2xl border text-left transition-all cursor-pointer ${
                     isSelected
                       ? 'bg-[#00346f] text-white border-[#00346f] shadow-md ring-2 ring-[#ffdea5]/50'
                       : day.isSelectable
@@ -918,11 +918,11 @@ export default function TiffinOrderView({
                   }`}
                 >
                   <div className="flex items-center justify-between gap-1">
-                    <span className={`text-[11px] sm:text-xs font-bold ${isSelected ? 'text-white' : 'text-gray-900'}`}>
+                    <span className={`text-xs sm:text-xs font-bold ${isSelected ? 'text-white' : 'text-gray-900'}`}>
                       {day.dayName.slice(0, 3)}
                     </span>
                     {!isWeekMenuUploaded ? (
-                      <span className={`text-[8px] sm:text-[9px] font-bold px-1 rounded ${
+                      <span className={`text-[10px] sm:text-[11px] font-bold px-1.5 py-0.2 rounded ${
                         isSelected ? 'bg-[#ffdea5] text-[#00346f]' : 'bg-gray-200 text-gray-600'
                       }`}>
                         Soon
@@ -930,21 +930,21 @@ export default function TiffinOrderView({
                     ) : (
                       <>
                         {day.isSaturdaySpecial && (
-                          <span className={`text-[8px] sm:text-[9px] font-black uppercase px-1 rounded ${
+                          <span className={`text-[10px] sm:text-[11px] font-black uppercase px-1.5 py-0.2 rounded ${
                             isSelected ? 'bg-[#ffdea5] text-[#00346f]' : 'bg-purple-100 text-purple-800'
                           }`}>
                             Spec
                           </span>
                         )}
                         {day.isSundayClosed && (
-                          <span className="text-[8px] sm:text-[9px] font-bold text-amber-800">
+                          <span className="text-[10px] sm:text-[11px] font-bold text-amber-800">
                             Off
                           </span>
                         )}
                       </>
                     )}
                   </div>
-                  <span className={`text-[10px] sm:text-[11px] block mt-0.5 font-semibold whitespace-nowrap ${isSelected ? 'text-gray-200' : 'text-gray-600'}`}>
+                  <span className={`text-[11px] sm:text-xs block mt-0.5 font-semibold whitespace-nowrap ${isSelected ? 'text-gray-200' : 'text-gray-600'}`}>
                     {day.displayDate}
                   </span>
                 </button>

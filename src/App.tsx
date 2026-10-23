@@ -253,19 +253,19 @@ export default function App() {
       </div>
 
       {/* Header / Navbar */}
-      <nav ref={navRef} className="sticky top-0 z-45 bg-[#fbfbfa]/95 backdrop-blur-md border-b border-gray-150 py-2 shadow-sm">
+      <nav ref={navRef} className="sticky top-0 z-45 bg-[#fbfbfa]/90 backdrop-blur-xl border-b border-[#D4AF37]/25 py-1 sm:py-2 shadow-xs">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-20 sm:h-24 gap-6">
+          <div className="flex items-center justify-between h-14 sm:h-20 lg:h-24 gap-4 sm:gap-6">
             
             {/* Logo Brand */}
             <div 
               onClick={() => handleNavigate("Home", "/")} 
-              className="shrink-0 flex items-center cursor-pointer group py-1"
+              className="shrink-0 flex items-center cursor-pointer group py-0.5 sm:py-1"
             >
               <img 
                 src={brandLogo} 
                 alt="Bluebonnet Whisk" 
-                className="h-16 sm:h-20 max-h-20 w-auto object-contain transition-transform duration-300 group-hover:scale-105 filter drop-shadow-sm"
+                className="h-10 sm:h-16 lg:h-20 max-h-20 w-auto object-contain transition-transform duration-300 group-hover:scale-105 filter drop-shadow-sm"
               />
             </div>
 
@@ -298,10 +298,10 @@ export default function App() {
             <div className="lg:hidden flex items-center gap-2">
               <button
                 onClick={() => handleNavigate("Catering", "/catering/food")}
-                className="bg-[#00346f] hover:bg-[#00224d] text-white font-sans text-[11px] uppercase tracking-wider font-bold px-3 py-1.5 rounded-lg shadow-sm transition-all cursor-pointer whitespace-nowrap flex items-center gap-1"
+                className="bg-[#00346f] hover:bg-[#00224d] text-white font-sans text-xs uppercase tracking-wider font-bold px-3 py-1.5 rounded-xl shadow-sm transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5"
               >
-                <ShoppingBag className="w-3 h-3 text-[#ffdea5]" />
-                <span>Create Order</span>
+                <ShoppingBag className="w-3.5 h-3.5 text-[#ffdea5]" />
+                <span>Order</span>
               </button>
             </div>
 
@@ -309,13 +309,13 @@ export default function App() {
         </div>
 
         {/* Secondary Mobile/Tablet Toolbar (under 1024px) */}
-        <div className="lg:hidden bg-[#fbfbfa] border-t border-gray-150 py-1.5 mt-1 overflow-x-auto scrollbar-none">
-          <div className="flex px-4 space-x-4 whitespace-nowrap min-w-max">
+        <div className="lg:hidden bg-[#fbfbfa]/95 border-t border-gray-150 py-1 overflow-x-auto scrollbar-none">
+          <div className="flex px-4 space-x-3 whitespace-nowrap min-w-max">
             {navLinks.map((link) => (
               <button
                 key={link.id}
                 onClick={() => handleNavigate(link.id, link.path)}
-                className={`font-sans text-xs uppercase tracking-widest font-semibold min-h-[36px] px-2 py-1 flex items-center transition-all border-b-2 cursor-pointer ${
+                className={`font-sans text-[11px] sm:text-xs uppercase tracking-wider font-semibold min-h-[34px] px-2 py-0.5 flex items-center transition-all border-b-2 cursor-pointer ${
                   activeTab === link.id
                     ? "text-[#00346f] border-[#00346f] font-bold"
                     : "text-gray-500 border-transparent hover:text-gray-900"
