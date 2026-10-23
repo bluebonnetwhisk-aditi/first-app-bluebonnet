@@ -2,9 +2,10 @@ import { useState, useEffect, useRef } from "react";
 import { motion, useScroll, useTransform, useMotionValueEvent } from "motion/react";
 import heroVideo from "../assets/videos/hero.mp4";
 import celebrationCakesImg from "../assets/images/custom_celebration_cakes_1781194977914.jpg";
+import cateringBuffetImg from "../assets/images/catering_buffet_showcase.jpg";
 import cateringMenuFlyerImg from "../assets/images/catering_flyer_page_2.png";
 import cateringCoverFlyerImg from "../assets/images/catering_flyer_page_1.png";
-import partyPackagesImg from "../assets/images/BlueBonnet India.jpg";
+import partyPackagesImg from "../assets/images/custom_party_packages_showcase.jpg";
 import { 
   ArrowRight, 
   ChevronDown, 
@@ -31,7 +32,21 @@ export default function Home({ onOpenBaker: _onOpenBaker, onNavigate }: HomeProp
 
   const [activeFaq, setActiveFaq] = useState<number | null>(null);
   const [activeStage, setActiveStage] = useState<number>(0);
-  const [cateringFlyerPage, setCateringFlyerPage] = useState<1 | 2>(2);
+  const [cateringViewMode, setCateringViewMode] = useState<'feast' | 'menu' | 'cover'>('feast');
+
+  const cateringImage = 
+    cateringViewMode === 'menu' 
+      ? cateringMenuFlyerImg 
+      : cateringViewMode === 'cover' 
+      ? cateringCoverFlyerImg 
+      : cateringBuffetImg;
+
+  const cateringImageLabel = 
+    cateringViewMode === 'menu' 
+      ? "Desi Dabba Catering Menu & Tray Pricing" 
+      : cateringViewMode === 'cover' 
+      ? "Desi Dabba Catering Cover & Allergens" 
+      : "Desi Dabba Luxury Catering Feast";
 
   // Programmatically triggered video autoplay optimized for Samsung Internet, Chrome Android S25+, iOS Safari
   useEffect(() => {
@@ -289,17 +304,17 @@ export default function Home({ onOpenBaker: _onOpenBaker, onNavigate }: HomeProp
               },
               {
                 title: "Catering",
-                desc: "Whether it's a birthday, corporate event, or family gathering, we've got the menu covered with our 4-tier tray pricing.",
+                desc: "Whether it's a birthday, corporate event, or family gathering, we've got the menu covered with our 4-tier tray pricing and authentic homestyle delicacies.",
                 tab: "Catering",
-                image: cateringFlyerPage === 1 ? cateringCoverFlyerImg : cateringMenuFlyerImg,
-                imageLabel: cateringFlyerPage === 1 ? "Desi Dabba Catering Cover & Allergens" : "Desi Dabba Catering Menu & Tray Pricing"
+                image: cateringImage,
+                imageLabel: cateringImageLabel
               },
               {
                 title: "Custom Party Packages",
-                desc: "Bring Your Celebration to Life with Our Custom Party Packages",
+                desc: "Bring your celebration to life with interactive live stations, chaat counters, hot jalebi & rabri, and complete event setups.",
                 tab: "Live Counters",
                 image: partyPackagesImg,
-                imageLabel: "Custom Party Setup Detail"
+                imageLabel: "Custom Party Setup & Live Food Stations"
               }
             ].map((item, idx) => {
               const isActive = activeStage === idx;
@@ -331,21 +346,35 @@ export default function Home({ onOpenBaker: _onOpenBaker, onNavigate }: HomeProp
                         alt={item.title}
                         loading="lazy"
                         decoding="async"
-                        className={`w-full h-full ${idx === 1 ? 'object-contain' : 'object-cover'}`}
+                        className={`w-full h-full ${idx === 1 && cateringViewMode !== 'feast' ? 'object-contain' : 'object-cover'}`}
                         referrerPolicy="no-referrer"
                       />
 
-                      {/* Mobile Catering Page Switcher Toggle */}
+                      {/* Mobile Catering Mode Switcher Toggle */}
                       {idx === 1 && (
-                        <div className="absolute top-2 right-2 z-10 flex items-center gap-1 bg-black/80 backdrop-blur-md p-0.5 rounded-lg border border-white/20">
+                        <div className="absolute top-2 right-2 z-10 flex items-center gap-1 bg-black/80 backdrop-blur-md p-0.5 rounded-lg border border-white/20 shadow-md">
                           <button
                             type="button"
                             onClick={(e) => {
                               e.stopPropagation();
-                              setCateringFlyerPage(2);
+                              setCateringViewMode('feast');
                             }}
                             className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
-                              cateringFlyerPage === 2
+                              cateringViewMode === 'feast'
+                                ? 'bg-[#775a19] text-white'
+                                : 'text-gray-300'
+                            }`}
+                          >
+                            Feast
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setCateringViewMode('menu');
+                            }}
+                            className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
+                              cateringViewMode === 'menu'
                                 ? 'bg-[#775a19] text-white'
                                 : 'text-gray-300'
                             }`}
@@ -356,10 +385,10 @@ export default function Home({ onOpenBaker: _onOpenBaker, onNavigate }: HomeProp
                             type="button"
                             onClick={(e) => {
                               e.stopPropagation();
-                              setCateringFlyerPage(1);
+                              setCateringViewMode('cover');
                             }}
                             className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
-                              cateringFlyerPage === 1
+                              cateringViewMode === 'cover'
                                 ? 'bg-[#775a19] text-white'
                                 : 'text-gray-300'
                             }`}
@@ -397,7 +426,7 @@ export default function Home({ onOpenBaker: _onOpenBaker, onNavigate }: HomeProp
           <div className="hidden lg:block lg:col-span-7 lg:sticky lg:top-28 h-[550px] relative rounded-2xl overflow-hidden border border-white/10 shadow-2xl bg-black">
             {[
               celebrationCakesImg,
-              cateringFlyerPage === 1 ? cateringCoverFlyerImg : cateringMenuFlyerImg,
+              cateringImage,
               partyPackagesImg
             ].map((src, idx) => (
               <motion.div
@@ -412,21 +441,35 @@ export default function Home({ onOpenBaker: _onOpenBaker, onNavigate }: HomeProp
                   alt="Walkthrough Detail Showcase" 
                   loading="lazy"
                   decoding="async"
-                  className={`w-full h-full ${idx === 1 ? 'object-contain bg-[#FAF8F5]' : 'object-cover'} scale-101`}
+                  className={`w-full h-full ${idx === 1 && cateringViewMode !== 'feast' ? 'object-contain bg-[#FAF8F5]' : 'object-cover'} scale-101`}
                   referrerPolicy="no-referrer"
                 />
 
-                {/* Catering Flyer Page Switcher Toggle (Desktop) */}
+                {/* Catering Mode Switcher Toggle (Desktop) */}
                 {idx === 1 && activeStage === 1 && (
                   <div className="absolute top-4 right-4 z-20 flex items-center gap-1 bg-black/80 backdrop-blur-md p-1 rounded-xl border border-white/20 shadow-lg">
                     <button
                       type="button"
                       onClick={(e) => {
                         e.stopPropagation();
-                        setCateringFlyerPage(2);
+                        setCateringViewMode('feast');
                       }}
                       className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all cursor-pointer ${
-                        cateringFlyerPage === 2
+                        cateringViewMode === 'feast'
+                          ? 'bg-[#775a19] text-white shadow-xs'
+                          : 'text-gray-300 hover:text-white'
+                      }`}
+                    >
+                      Feast Spread
+                    </button>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setCateringViewMode('menu');
+                      }}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all cursor-pointer ${
+                        cateringViewMode === 'menu'
                           ? 'bg-[#775a19] text-white shadow-xs'
                           : 'text-gray-300 hover:text-white'
                       }`}
@@ -437,10 +480,10 @@ export default function Home({ onOpenBaker: _onOpenBaker, onNavigate }: HomeProp
                       type="button"
                       onClick={(e) => {
                         e.stopPropagation();
-                        setCateringFlyerPage(1);
+                        setCateringViewMode('cover');
                       }}
                       className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all cursor-pointer ${
-                        cateringFlyerPage === 1
+                        cateringViewMode === 'cover'
                           ? 'bg-[#775a19] text-white shadow-xs'
                           : 'text-gray-300 hover:text-white'
                       }`}
@@ -455,8 +498,8 @@ export default function Home({ onOpenBaker: _onOpenBaker, onNavigate }: HomeProp
                     {idx === 0 
                       ? "Designer Cake Detail" 
                       : idx === 1 
-                      ? (cateringFlyerPage === 1 ? "Desi Dabba Catering Cover & Allergens" : "Desi Dabba Catering Menu & Tray Pricing") 
-                      : "Custom Party Setup Detail"}
+                      ? cateringImageLabel 
+                      : "Custom Party Setup & Live Food Stations"}
                   </span>
                 </div>
               </motion.div>

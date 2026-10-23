@@ -55,7 +55,60 @@ interface DaySchedule {
   isSaturdaySpecial?: boolean;
   isSundayClosed?: boolean;
   isSelectable: boolean;
+  hasDabbaMenu: boolean;
   statusLabel?: string;
+}
+
+/**
+ * Validates whether a menu entry is an actual culinary dish or is blank / NA / closed
+ */
+export function isDishAvailable(dish?: string | null): boolean {
+  if (!dish) return false;
+  const trimmed = dish.trim();
+  if (trimmed.length === 0) return false;
+
+  const lower = trimmed.toLowerCase();
+
+  const invalidExact = [
+    'na',
+    'n/a',
+    'n.a.',
+    'n.a',
+    'n / a',
+    'na.',
+    'none',
+    'nil',
+    '-',
+    '--',
+    '---',
+    'null',
+    'undefined',
+    'not available',
+    'no dish',
+    'no tiffin',
+    'off',
+    'closed',
+    'kitchen closed',
+    'rest day',
+    'rest & clean day',
+    'clean day',
+    'holiday',
+    'tbd',
+    'tba'
+  ];
+  if (invalidExact.includes(lower)) return false;
+
+  if (/^(n\/?a|n\.a\.|none|nil|closed|off|holiday|tbd|tba)\b/i.test(lower)) {
+    return false;
+  }
+  if (/^no\s+(dish|tiffin|menu|food|sabzi|curry|dal|cooking)/i.test(lower)) {
+    return false;
+  }
+  if (lower.includes('clean day') || lower.includes('kitchen closed') || lower.includes('not available')) {
+    return false;
+  }
+
+  return true;
 }
 
 export default function TiffinOrderView({
@@ -343,6 +396,15 @@ export default function TiffinOrderView({
       // 3. Skip blackout dates!
       if (blackoutDates.includes(d.dateStr)) return false;
 
+      // 4. If week menu is uploaded, skip days where menu is blank/NA!
+      if (isWeekMenuUploaded) {
+        const activeMenus = settings.weekdayMenus || DEFAULT_WEEKDAY_MENUS;
+        const menu = activeMenus[d.dayName];
+        if (menu && (!isDishAvailable(menu.dal) || !isDishAvailable(menu.sabzi))) {
+          return false;
+        }
+      }
+
       return true;
     });
 
@@ -394,8 +456,29 @@ export default function TiffinOrderView({
       const isWeekendClosed = isWeekend && !hasWeekendSpecialMenu;
 
       const isTodayOrLater = dateStr >= todayStr;
-      // If week menu has not been uploaded via KDS, ordering individual dishes is disabled
-      const isSelectable = isWeekUploaded && isTodayOrLater && !isWeekendClosed && !isBlackout;
+
+      const activeMenus = isWeekUploaded ? (settings.weekdayMenus || DEFAULT_WEEKDAY_MENUS) : {};
+      const menu = activeMenus[dayName] || { dal: '', sabzi: '', description: '' };
+
+      const dalOrCurry = isWeekUploaded
+        ? (isSaturday ? (settings.saturdaySpecialTitle || menu.dal || '') : (menu.dal || ''))
+        : '';
+      const sabzi = isWeekUploaded
+        ? (isSaturday ? (settings.saturdaySpecialDescription || menu.sabzi || '') : (menu.sabzi || ''))
+        : '';
+
+      const hasDabbaMenu = isDishAvailable(dalOrCurry) && isDishAvailable(sabzi);
+
+      const hasWeekdaySpecial = isWeekUploaded && !isWeekend && specialsList.some(s => {
+        const activeDays = (s.availableDays && s.availableDays.length > 0)
+          ? s.availableDays
+          : [];
+        return activeDays.includes(dayName);
+      });
+
+      const hasAnyMenuForDay = hasDabbaMenu || hasWeekendSpecialMenu || hasWeekdaySpecial;
+      // If week menu has not been uploaded, or day is past/blackout/closed/empty, ordering is disabled
+      const isSelectable = isWeekUploaded && isTodayOrLater && !isWeekendClosed && !isBlackout && hasAnyMenuForDay;
 
       let statusLabel = 'Available to Order';
       if (isBlackout) {
@@ -412,17 +495,9 @@ export default function TiffinOrderView({
         statusLabel = 'Saturday Special Available';
       } else if (dateStr < todayStr) {
         statusLabel = 'Past Date';
+      } else if (!hasDabbaMenu) {
+        statusLabel = hasWeekdaySpecial ? 'Chef Specials Available' : 'No Menu Scheduled';
       }
-
-      const activeMenus = isWeekUploaded ? (settings.weekdayMenus || DEFAULT_WEEKDAY_MENUS) : {};
-      const menu = activeMenus[dayName] || { dal: '', sabzi: '', description: '' };
-
-      const dalOrCurry = isWeekUploaded
-        ? (isSaturday ? (settings.saturdaySpecialTitle || menu.dal || '') : (menu.dal || ''))
-        : '';
-      const sabzi = isWeekUploaded
-        ? (isSaturday ? (settings.saturdaySpecialDescription || menu.sabzi || '') : (menu.sabzi || ''))
-        : '';
 
       result.push({
         dayName,
@@ -434,6 +509,7 @@ export default function TiffinOrderView({
         isSaturdaySpecial: isWeekend && isWeekUploaded && Boolean(hasWeekendSpecialMenu),
         isSundayClosed: isSunday && isWeekendClosed,
         isSelectable,
+        hasDabbaMenu,
         statusLabel
       });
     }
@@ -474,11 +550,12 @@ export default function TiffinOrderView({
   useEffect(() => {
     if (schedule.length > 0) {
       const existsInSchedule = schedule.some(s => s.dateStr === selectedDayTab);
-      if (!existsInSchedule) {
+      const currentSelectedDay = schedule.find(s => s.dateStr === selectedDayTab);
+      if (!existsInSchedule || (currentSelectedDay && !currentSelectedDay.isSelectable)) {
         const firstOpen = schedule.find(s => s.isSelectable);
         if (firstOpen) {
           setSelectedDayTab(firstOpen.dateStr);
-        } else {
+        } else if (!existsInSchedule) {
           setSelectedDayTab(schedule[0].dateStr);
         }
       }
@@ -506,6 +583,10 @@ export default function TiffinOrderView({
 
   // Add Daily Dabba to Cart
   const handleAddDailyDabba = (type: 'single' | 'family', day: DaySchedule) => {
+    // Both dal/curry and dry sabzi must be valid and present on the menu
+    if (!day.hasDabbaMenu || !isDishAvailable(day.dalOrCurry) || !isDishAvailable(day.sabzi)) {
+      return;
+    }
     const isFamily = type === 'family';
     const unitPrice = isFamily ? familyPrice : singlePrice;
     const qty = isFamily ? getFamilyQty(day.dateStr) : getSingleQty(day.dateStr);
@@ -941,6 +1022,13 @@ export default function TiffinOrderView({
                             Off
                           </span>
                         )}
+                        {!day.isSundayClosed && !day.isSaturdaySpecial && !day.hasDabbaMenu && (
+                          <span className={`text-[10px] sm:text-[11px] font-bold px-1.5 py-0.2 rounded ${
+                            isSelected ? 'bg-amber-300 text-amber-950' : 'bg-gray-200 text-gray-600'
+                          }`}>
+                            Off
+                          </span>
+                        )}
                       </>
                     )}
                   </div>
@@ -1290,176 +1378,194 @@ export default function TiffinOrderView({
               ) : (
                 /* Weekdays Mon-Fri */
                 <>
-                  <div className="grid grid-cols-2 gap-2.5 sm:gap-4">
-                    <div className="p-3 sm:p-4 bg-amber-50/50 rounded-2xl border border-amber-200/70 flex items-start gap-2 sm:gap-3">
-                      <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center shrink-0">
-                        <Flame className="w-4 h-4 sm:w-5 sm:h-5" />
-                      </div>
-                      <div className="min-w-0">
-                        <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-amber-800 block">Dal / Curry</span>
-                        <span className="font-bold text-xs sm:text-sm text-gray-900 block mt-0.5 leading-snug">{activeDay.dalOrCurry}</span>
-                        <span className="hidden sm:block text-xs text-gray-500 mt-0.5">Slow-simmered, rich homestyle spices</span>
-                      </div>
-                    </div>
-
-                    <div className="p-3 sm:p-4 bg-emerald-50/50 rounded-2xl border border-emerald-200/70 flex items-start gap-2 sm:gap-3">
-                      <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center shrink-0">
-                        <Utensils className="w-4 h-4 sm:w-5 sm:h-5" />
-                      </div>
-                      <div className="min-w-0">
-                        <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-emerald-800 block">Dry Sabzi</span>
-                        <span className="font-bold text-xs sm:text-sm text-gray-900 block mt-0.5 leading-snug">{activeDay.sabzi}</span>
-                        <span className="hidden sm:block text-xs text-gray-500 mt-0.5">Fresh seasonal vegetables sauteed with jeera &amp; herbs</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Meal Contents Pill */}
-                  <div className="p-2.5 sm:p-3 bg-blue-50/70 border border-blue-200/80 rounded-xl flex flex-wrap items-center justify-between gap-1.5 sm:gap-2 text-[11px] sm:text-xs text-[#00346f]">
-                    <span className="font-bold">Each Dabba includes:</span>
-                    <div className="flex flex-wrap items-center gap-2 sm:gap-3 font-medium">
-                      <span>🍚 Rice</span>
-                      <span>🫓 2 Roti</span>
-                      <span>🥘 Dal/Curry</span>
-                      <span>🥗 Sabzi</span>
-                    </div>
-                  </div>
-
-                  {/* Single vs Family Dabba Options */}
-                  {activeDay.isSelectable ? (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 pt-1">
-                      {/* Single Dabba */}
-                      {(() => {
-                        const qty = getSingleQty(activeDay.dateStr);
-                        return (
-                          <div className="p-4 sm:p-5 bg-white rounded-2xl border border-gray-300 hover:border-[#00346f] transition-all flex flex-col justify-between shadow-2xs space-y-3 sm:space-y-4">
-                            <div>
-                              <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-2">
-                                  <h4 className="font-serif font-bold text-base sm:text-lg text-gray-900">Single Dabba</h4>
-                                  <span className="px-2 py-0.5 bg-gray-100 rounded text-[10px] font-bold uppercase text-gray-600">Serves 1</span>
-                                </div>
-                                <span className="font-serif text-xl sm:text-2xl font-black text-[#00346f]">${singlePrice.toFixed(2)}</span>
-                              </div>
-                              <p className="hidden sm:block text-xs text-gray-500 mt-1 leading-relaxed">
-                                1 complete meal: 1 cup rice, 1 cup curry, 1/2 cup sabzi, 2 tawa roti. Perfect for individual dinner!
-                              </p>
-                            </div>
-
-                            <div className="space-y-2 pt-2 border-t border-gray-150">
-                              <div className="flex items-center justify-between">
-                                <span className="text-[11px] font-semibold text-gray-600">Quantity:</span>
-                                <div className="flex items-center bg-gray-100 rounded-lg p-0.5 border border-gray-200">
-                                  <button
-                                    type="button"
-                                    onClick={() => updateSingleQty(activeDay.dateStr, -1)}
-                                    className="w-8 h-8 rounded-md flex items-center justify-center hover:bg-white text-gray-700 cursor-pointer"
-                                  >
-                                    <Minus className="w-4 h-4" />
-                                  </button>
-                                  <span className="w-7 text-center font-bold text-xs">{qty}</span>
-                                  <button
-                                    type="button"
-                                    onClick={() => updateSingleQty(activeDay.dateStr, 1)}
-                                    className="w-8 h-8 rounded-md flex items-center justify-center hover:bg-white text-gray-700 cursor-pointer"
-                                  >
-                                    <Plus className="w-4 h-4" />
-                                  </button>
-                                </div>
-                              </div>
-
-                              <button
-                                type="button"
-                                onClick={() => handleAddDailyDabba('single', activeDay)}
-                                className="w-full min-h-[42px] sm:min-h-[44px] inline-flex items-center justify-center gap-2 bg-[#00346f] hover:bg-[#00224d] text-white py-2.5 px-4 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-xs cursor-pointer"
-                              >
-                                <Plus className="w-4 h-4 text-[#ffdea5]" />
-                                <span>Add Single Dabba • ${(singlePrice * qty).toFixed(2)}</span>
-                              </button>
-                            </div>
+                  {activeDay.hasDabbaMenu ? (
+                    <>
+                      <div className="grid grid-cols-2 gap-2.5 sm:gap-4">
+                        <div className="p-3 sm:p-4 bg-amber-50/50 rounded-2xl border border-amber-200/70 flex items-start gap-2 sm:gap-3">
+                          <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center shrink-0">
+                            <Flame className="w-4 h-4 sm:w-5 sm:h-5" />
                           </div>
-                        );
-                      })()}
-
-                      {/* Family Dabba */}
-                      {(() => {
-                        const qty = getFamilyQty(activeDay.dateStr);
-                        return (
-                          <div className="p-4 sm:p-5 bg-white rounded-2xl border border-gray-300 hover:border-[#00346f] transition-all flex flex-col justify-between shadow-2xs space-y-3 sm:space-y-4">
-                            <div>
-                              <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-2">
-                                  <h4 className="font-serif font-bold text-base sm:text-lg text-gray-900">Family Dabba</h4>
-                                  <span className="px-2 py-0.5 bg-[#ffdea5]/40 text-[#775a19] rounded text-[10px] font-bold uppercase">Serves 4</span>
-                                </div>
-                                <span className="font-serif text-xl sm:text-2xl font-black text-[#00346f]">${familyPrice.toFixed(2)}</span>
-                              </div>
-                              <p className="hidden sm:block text-xs text-gray-500 mt-1 leading-relaxed">
-                                4 complete meals: larger family portions of dal/curry, sabzi, 4 cups rice, 8 tawa rotis. Ideal for family!
-                              </p>
-                            </div>
-
-                            <div className="space-y-2 pt-2 border-t border-gray-150">
-                              <div className="flex items-center justify-between">
-                                <span className="text-[11px] font-semibold text-gray-600">Quantity:</span>
-                                <div className="flex items-center bg-gray-100 rounded-lg p-0.5 border border-gray-200">
-                                  <button
-                                    type="button"
-                                    onClick={() => updateFamilyQty(activeDay.dateStr, -1)}
-                                    className="w-8 h-8 rounded-md flex items-center justify-center hover:bg-white text-gray-700 cursor-pointer"
-                                  >
-                                    <Minus className="w-4 h-4" />
-                                  </button>
-                                  <span className="w-7 text-center font-bold text-xs">{qty}</span>
-                                  <button
-                                    type="button"
-                                    onClick={() => updateFamilyQty(activeDay.dateStr, 1)}
-                                    className="w-8 h-8 rounded-md flex items-center justify-center hover:bg-white text-gray-700 cursor-pointer"
-                                  >
-                                    <Plus className="w-4 h-4" />
-                                  </button>
-                                </div>
-                              </div>
-
-                              <button
-                                type="button"
-                                onClick={() => handleAddDailyDabba('family', activeDay)}
-                                className="w-full min-h-[42px] sm:min-h-[44px] inline-flex items-center justify-center gap-2 bg-[#775a19] hover:bg-[#5e4612] text-white py-2.5 px-4 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-xs cursor-pointer"
-                              >
-                                <Plus className="w-4 h-4 text-[#ffdea5]" />
-                                <span>Add Family Dabba • ${(familyPrice * qty).toFixed(2)}</span>
-                              </button>
-                            </div>
-                          </div>
-                        );
-                      })()}
-                    </div>
-                  ) : (
-                    (() => {
-                      const isBlackoutDate = blackoutDates.includes(activeDay.dateStr);
-                      return (
-                        <div className="p-8 bg-amber-50/80 rounded-3xl border-2 border-dashed border-amber-300 text-center space-y-3">
-                          <div className="text-4xl">{isBlackoutDate ? '🔥🍱' : '👨‍🍳😴'}</div>
-                          <h4 className="font-serif font-bold text-lg text-[#0B192C]">
-                            {isBlackoutDate 
-                              ? `Order Capacity Full — We Are Oversold for ${activeDay.displayDate}!` 
-                              : activeDay.isSundayClosed 
-                              ? 'Kitchen Closed on Sundays' 
-                              : 'Chef Desi Dabba is Resting Today!'}
-                          </h4>
-                          <p className="text-xs sm:text-sm text-gray-700 max-w-md mx-auto leading-relaxed">
-                            {isBlackoutDate
-                              ? `We are currently oversold and at maximum kitchen capacity for ${activeDay.displayDate}. Ordering is closed for this date. Please pick an open date!`
-                              : activeDay.isSundayClosed
-                              ? 'Our kitchen is closed on Sundays for deep sanitation, maintenance, and fresh market prep.'
-                              : 'To ensure fresh preparation from scratch, orders must be placed at least 24 hours in advance.'}
-                          </p>
-                          <div className="inline-block bg-[#0B192C] text-[#D4AF37] px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider">
-                            {isBlackoutDate ? `Sold Out (Oversold) for ${activeDay.displayDate}` : `Ordering Disabled for ${activeDay.dayName} (${activeDay.displayDate})`}
+                          <div className="min-w-0">
+                            <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-amber-800 block">Dal / Curry</span>
+                            <span className="font-bold text-xs sm:text-sm text-gray-900 block mt-0.5 leading-snug">{activeDay.dalOrCurry}</span>
+                            <span className="hidden sm:block text-xs text-gray-500 mt-0.5">Slow-simmered, rich homestyle spices</span>
                           </div>
                         </div>
-                      );
-                    })()
+
+                        <div className="p-3 sm:p-4 bg-emerald-50/50 rounded-2xl border border-emerald-200/70 flex items-start gap-2 sm:gap-3">
+                          <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center shrink-0">
+                            <Utensils className="w-4 h-4 sm:w-5 sm:h-5" />
+                          </div>
+                          <div className="min-w-0">
+                            <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-emerald-800 block">Dry Sabzi</span>
+                            <span className="font-bold text-xs sm:text-sm text-gray-900 block mt-0.5 leading-snug">{activeDay.sabzi}</span>
+                            <span className="hidden sm:block text-xs text-gray-500 mt-0.5">Fresh seasonal vegetables sauteed with jeera &amp; herbs</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Meal Contents Pill */}
+                      <div className="p-2.5 sm:p-3 bg-blue-50/70 border border-blue-200/80 rounded-xl flex flex-wrap items-center justify-between gap-1.5 sm:gap-2 text-[11px] sm:text-xs text-[#00346f]">
+                        <span className="font-bold">Each Dabba includes:</span>
+                        <div className="flex flex-wrap items-center gap-2 sm:gap-3 font-medium">
+                          <span>🍚 Rice</span>
+                          <span>🫓 2 Roti</span>
+                          <span>🥘 Dal/Curry</span>
+                          <span>🥗 Sabzi</span>
+                        </div>
+                      </div>
+
+                      {/* Single vs Family Dabba Options */}
+                      {activeDay.isSelectable ? (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 pt-1">
+                          {/* Single Dabba */}
+                          {(() => {
+                            const qty = getSingleQty(activeDay.dateStr);
+                            return (
+                              <div className="p-4 sm:p-5 bg-white rounded-2xl border border-gray-300 hover:border-[#00346f] transition-all flex flex-col justify-between shadow-2xs space-y-3 sm:space-y-4">
+                                <div>
+                                  <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                      <h4 className="font-serif font-bold text-base sm:text-lg text-gray-900">Single Dabba</h4>
+                                      <span className="px-2 py-0.5 bg-gray-100 rounded text-[10px] font-bold uppercase text-gray-600">Serves 1</span>
+                                    </div>
+                                    <span className="font-serif text-xl sm:text-2xl font-black text-[#00346f]">${singlePrice.toFixed(2)}</span>
+                                  </div>
+                                  <p className="hidden sm:block text-xs text-gray-500 mt-1 leading-relaxed">
+                                    1 complete meal: 1 cup rice, 1 cup curry, 1/2 cup sabzi, 2 tawa roti. Perfect for individual dinner!
+                                  </p>
+                                </div>
+
+                                <div className="space-y-2 pt-2 border-t border-gray-150">
+                                  <div className="flex items-center justify-between">
+                                    <span className="text-[11px] font-semibold text-gray-600">Quantity:</span>
+                                    <div className="flex items-center bg-gray-100 rounded-lg p-0.5 border border-gray-200">
+                                      <button
+                                        type="button"
+                                        onClick={() => updateSingleQty(activeDay.dateStr, -1)}
+                                        className="w-8 h-8 rounded-md flex items-center justify-center hover:bg-white text-gray-700 cursor-pointer"
+                                      >
+                                        <Minus className="w-4 h-4" />
+                                      </button>
+                                      <span className="w-7 text-center font-bold text-xs">{qty}</span>
+                                      <button
+                                        type="button"
+                                        onClick={() => updateSingleQty(activeDay.dateStr, 1)}
+                                        className="w-8 h-8 rounded-md flex items-center justify-center hover:bg-white text-gray-700 cursor-pointer"
+                                      >
+                                        <Plus className="w-4 h-4" />
+                                      </button>
+                                    </div>
+                                  </div>
+
+                                  <button
+                                    type="button"
+                                    onClick={() => handleAddDailyDabba('single', activeDay)}
+                                    className="w-full min-h-[42px] sm:min-h-[44px] inline-flex items-center justify-center gap-2 bg-[#00346f] hover:bg-[#00224d] text-white py-2.5 px-4 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-xs cursor-pointer"
+                                  >
+                                    <Plus className="w-4 h-4 text-[#ffdea5]" />
+                                    <span>Add Single Dabba • ${(singlePrice * qty).toFixed(2)}</span>
+                                  </button>
+                                </div>
+                              </div>
+                            );
+                          })()}
+
+                          {/* Family Dabba */}
+                          {(() => {
+                            const qty = getFamilyQty(activeDay.dateStr);
+                            return (
+                              <div className="p-4 sm:p-5 bg-white rounded-2xl border border-gray-300 hover:border-[#00346f] transition-all flex flex-col justify-between shadow-2xs space-y-3 sm:space-y-4">
+                                <div>
+                                  <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                      <h4 className="font-serif font-bold text-base sm:text-lg text-gray-900">Family Dabba</h4>
+                                      <span className="px-2 py-0.5 bg-[#ffdea5]/40 text-[#775a19] rounded text-[10px] font-bold uppercase">Serves 4</span>
+                                    </div>
+                                    <span className="font-serif text-xl sm:text-2xl font-black text-[#00346f]">${familyPrice.toFixed(2)}</span>
+                                  </div>
+                                  <p className="hidden sm:block text-xs text-gray-500 mt-1 leading-relaxed">
+                                    4 complete meals: larger family portions of dal/curry, sabzi, 4 cups rice, 8 tawa rotis. Ideal for family!
+                                  </p>
+                                </div>
+
+                                <div className="space-y-2 pt-2 border-t border-gray-150">
+                                  <div className="flex items-center justify-between">
+                                    <span className="text-[11px] font-semibold text-gray-600">Quantity:</span>
+                                    <div className="flex items-center bg-gray-100 rounded-lg p-0.5 border border-gray-200">
+                                      <button
+                                        type="button"
+                                        onClick={() => updateFamilyQty(activeDay.dateStr, -1)}
+                                        className="w-8 h-8 rounded-md flex items-center justify-center hover:bg-white text-gray-700 cursor-pointer"
+                                      >
+                                        <Minus className="w-4 h-4" />
+                                      </button>
+                                      <span className="w-7 text-center font-bold text-xs">{qty}</span>
+                                      <button
+                                        type="button"
+                                        onClick={() => updateFamilyQty(activeDay.dateStr, 1)}
+                                        className="w-8 h-8 rounded-md flex items-center justify-center hover:bg-white text-gray-700 cursor-pointer"
+                                      >
+                                        <Plus className="w-4 h-4" />
+                                      </button>
+                                    </div>
+                                  </div>
+
+                                  <button
+                                    type="button"
+                                    onClick={() => handleAddDailyDabba('family', activeDay)}
+                                    className="w-full min-h-[42px] sm:min-h-[44px] inline-flex items-center justify-center gap-2 bg-[#775a19] hover:bg-[#5e4612] text-white py-2.5 px-4 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-xs cursor-pointer"
+                                  >
+                                    <Plus className="w-4 h-4 text-[#ffdea5]" />
+                                    <span>Add Family Dabba • ${(familyPrice * qty).toFixed(2)}</span>
+                                  </button>
+                                </div>
+                              </div>
+                            );
+                          })()}
+                        </div>
+                      ) : (
+                        (() => {
+                          const isBlackoutDate = blackoutDates.includes(activeDay.dateStr);
+                          return (
+                            <div className="p-8 bg-amber-50/80 rounded-3xl border-2 border-dashed border-amber-300 text-center space-y-3">
+                              <div className="text-4xl">{isBlackoutDate ? '🔥🍱' : '👨‍🍳😴'}</div>
+                              <h4 className="font-serif font-bold text-lg text-[#0B192C]">
+                                {isBlackoutDate 
+                                  ? `Order Capacity Full — We Are Oversold for ${activeDay.displayDate}!` 
+                                  : activeDay.isSundayClosed 
+                                  ? 'Kitchen Closed on Sundays' 
+                                  : 'Chef Desi Dabba is Resting Today!'}
+                              </h4>
+                              <p className="text-xs sm:text-sm text-gray-700 max-w-md mx-auto leading-relaxed">
+                                {isBlackoutDate
+                                  ? `We are currently oversold and at maximum kitchen capacity for ${activeDay.displayDate}. Ordering is closed for this date. Please pick an open date!`
+                                  : activeDay.isSundayClosed
+                                  ? 'Our kitchen is closed on Sundays for deep sanitation, maintenance, and fresh market prep.'
+                                  : 'To ensure fresh preparation from scratch, orders must be placed at least 24 hours in advance.'}
+                              </p>
+                              <div className="inline-block bg-[#0B192C] text-[#D4AF37] px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider">
+                                {isBlackoutDate ? `Sold Out (Oversold) for ${activeDay.displayDate}` : `Ordering Disabled for ${activeDay.dayName} (${activeDay.displayDate})`}
+                              </div>
+                            </div>
+                          );
+                        })()
+                      )}
+                    </>
+                  ) : (
+                    /* When dal/curry or dry sabzi is blank or NA */
+                    <div className="p-8 bg-amber-50/70 rounded-3xl border-2 border-dashed border-amber-300 text-center space-y-3">
+                      <div className="text-4xl">🥘📋</div>
+                      <h4 className="font-serif font-bold text-lg text-[#00346f]">
+                        No Tiffin Scheduled for {activeDay.dayName} ({activeDay.displayDate})
+                      </h4>
+                      <p className="text-xs sm:text-sm text-gray-700 max-w-md mx-auto leading-relaxed">
+                        Single Dabba and Family Dabba are not available for this date because the menu (Dal/Curry and Dry Sabzi) is not scheduled or marked unavailable. Please select another open day on our weekly menu!
+                      </p>
+                      <div className="inline-block bg-[#00346f] text-[#ffdea5] px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider">
+                        Menu Unavailable for {activeDay.displayDate}
+                      </div>
+                    </div>
                   )}
 
                   {/* Weekday Special Dish Card - ONLY renders if there are active specials for this weekday */}
@@ -1687,7 +1793,7 @@ export default function TiffinOrderView({
 
               <div className="px-3 py-1.5 bg-blue-50 border border-blue-200 rounded-xl text-xs font-semibold text-[#00346f] self-start sm:self-auto">
                 {isWeekMenuUploaded
-                  ? `Menu: ${activeDay?.dalOrCurry} • ${activeDay?.sabzi}`
+                  ? (activeDay?.hasDabbaMenu ? `Menu: ${activeDay?.dalOrCurry} • ${activeDay?.sabzi}` : 'Menu: Not Scheduled / Kitchen Off')
                   : 'Menu: Chef Finalizing Delicacies'}
               </div>
             </div>
@@ -1797,7 +1903,9 @@ export default function TiffinOrderView({
 
               // Check if tiffin/tub ordering is closed on this active day
               const isClosed = !activeDay.isSelectable || blackoutDates.includes(activeDay.dateStr);
-              const hasFlyerMenu = Boolean(activeDay.dalOrCurry || activeDay.sabzi);
+              const hasCurry = isDishAvailable(activeDay.dalOrCurry);
+              const hasSabzi = isDishAvailable(activeDay.sabzi);
+              const hasFlyerMenu = hasCurry || hasSabzi;
 
               if (isClosed || !hasFlyerMenu) {
                 const isBlackoutDate = blackoutDates.includes(activeDay.dateStr);
@@ -1857,36 +1965,41 @@ export default function TiffinOrderView({
                 );
               }
 
-              const curryName = activeDay.dalOrCurry || 'Special Curry';
-              const sabziName = activeDay.sabzi || 'Seasonal Sabzi';
+              const curryName = activeDay.dalOrCurry;
+              const sabziName = activeDay.sabzi;
 
-              const isDalRajmaChole = /dal|rajma|chole|kadhi|chana/i.test(curryName);
+              const isDalRajmaChole = /dal|rajma|chole|kadhi|chana/i.test(curryName || '');
               const curry8ozPrice = isDalRajmaChole ? 6.99 : 8.99;
               const curry16ozPrice = isDalRajmaChole ? 11.49 : 14.99;
 
-              const containerItems = [
-                {
+              const containerItems = [];
+              if (hasCurry) {
+                containerItems.push({
                   id: `curry-${activeDay.dateStr}`,
                   name: curryName,
                   tag: isDalRajmaChole ? 'Dal / Kadhi / Legume Gravy' : 'Special Curry',
                   p8oz: curry8ozPrice,
                   p16oz: curry16ozPrice
-                },
-                {
+                });
+              }
+              if (hasSabzi) {
+                containerItems.push({
                   id: `sabzi-${activeDay.dateStr}`,
                   name: sabziName,
                   tag: 'Dry Sabzi of the Day',
                   p8oz: 6.99,
                   p16oz: 10.99
-                },
-                {
+                });
+              }
+              if (hasCurry || hasSabzi) {
+                containerItems.push({
                   id: `rice-${activeDay.dateStr}`,
                   name: 'Fragrant Basmati Rice',
                   tag: 'Steamed Rice',
                   p8oz: 2.99,
                   p16oz: 4.99
-                }
-              ];
+                });
+              }
 
               return (
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

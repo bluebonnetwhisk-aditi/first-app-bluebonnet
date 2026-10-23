@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Cake, Users, Heart, Gift, ArrowRight, MessageSquare, Check, Sparkles, Send } from "lucide-react";
 import ImageWithShimmer from "./ImageWithShimmer";
+import partyPackagesHeroImg from "../assets/images/custom_party_packages_showcase.jpg";
 
 interface LiveCountersPageProps {}
 
@@ -98,7 +99,7 @@ export default function LiveCountersPage({}: LiveCountersPageProps = {}) {
         {/* Dark Glassmorphic Gradients */}
         <div className="absolute inset-0 z-0 opacity-40">
           <ImageWithShimmer 
-            src="src/assets/images/BlueBonnet India.jpg" 
+            src={partyPackagesHeroImg} 
             alt="Custom Party setup background" 
             className="w-full h-full object-cover filter brightness-50 contrast-105"
             containerClassName="w-full h-full"
