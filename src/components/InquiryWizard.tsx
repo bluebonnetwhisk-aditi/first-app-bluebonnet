@@ -561,7 +561,7 @@ export default function InquiryWizard({
                 </a>
               </div>
               <p className="text-[10px] text-gray-500 text-center font-mono">
-                Direct Kitchen Line: <strong>+1 (945) 527-4566</strong>
+                Reach our kitchen directly using the Call or SMS buttons above.
               </p>
             </div>
 

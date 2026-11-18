@@ -26,8 +26,8 @@ export const DIFFERENTIATOR_CARDS = [
     icon: 'Droplet'
   },
   {
-    title: 'Organic Ingredients',
-    description: 'Fresh produce & whole spices, sourced with care',
+    title: 'Organic & Farmers Market',
+    description: 'Locally sourced, hand-picked organic produce & farmers market ingredients — never bulk commercial shortcuts',
     icon: 'Leaf'
   },
   {

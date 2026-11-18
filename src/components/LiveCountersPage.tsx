@@ -13,12 +13,12 @@ export default function LiveCountersPage({}: LiveCountersPageProps = {}) {
   ]);
 
   const liveStationsList = [
-    { id: "jalebi", name: "Live Jalebi & Rabri", desc: "Crispy hot jalebis served with rich saffron rabri", icon: "✨" },
-    { id: "chaat", name: "Pani Puri & Chaat Bar", desc: "Interactive customized golgappas & dahi bhalla", icon: "🌶️" },
-    { id: "pizza", name: "Wood-Fired Pizza Station", desc: "Fresh artisanal pizzas baked live at your venue", icon: "🍕" },
-    { id: "waffles", name: "Belgian Waffle & Crepe Bar", desc: "Warm waffles topped with Nutella, berries & ice cream", icon: "🧇" },
-    { id: "jars", name: "Fusion Dessert Jar Bar", desc: "Rasmalai, Biscoff, and Gulab Jamun jar displays", icon: "🧁" },
-    { id: "kathi", name: "Live Kathi Roll Counter", desc: "Flaky paneer & chicken rolls made fresh to order", icon: "🌯" }
+    { id: "jalebi", name: "Live Jalebi & Rabri", desc: "Crispy hot jalebis served with rich saffron rabri" },
+    { id: "chaat", name: "Pani Puri & Chaat Bar", desc: "Interactive customized golgappas & dahi bhalla" },
+    { id: "pizza", name: "Wood-Fired Pizza Station", desc: "Fresh artisanal pizzas baked live at your venue" },
+    { id: "waffles", name: "Belgian Waffle & Crepe Bar", desc: "Warm waffles topped with Nutella, berries & ice cream" },
+    { id: "jars", name: "Fusion Dessert Jar Bar", desc: "Rasmalai, Biscoff, and Gulab Jamun jar displays" },
+    { id: "kathi", name: "Live Kathi Roll Counter", desc: "Flaky paneer & vegetable rolls made fresh to order" }
   ];
 
   const toggleStation = (name: string) => {
@@ -92,7 +92,7 @@ export default function LiveCountersPage({}: LiveCountersPageProps = {}) {
   ];
 
   return (
-    <div className="bg-brand-cream-light min-h-screen animate-fade-in font-sans pb-16 lg:pb-0">
+    <div className="royal-dark-page bg-[#050a1a] min-h-screen animate-fade-in font-sans pb-16 lg:pb-0">
       
       {/* Elegant Hero Section with background layout */}
       <header className="relative py-24 lg:py-32 overflow-hidden bg-[#050a1a] text-white">
@@ -170,8 +170,8 @@ export default function LiveCountersPage({}: LiveCountersPageProps = {}) {
                       onClick={() => toggleStation(station.name)}
                       className={`p-4 rounded-2xl border transition-all cursor-pointer flex items-start gap-3.5 card-3d-wrapper ${
                         isSelected
-                          ? "bg-amber-50/70 border-[#775a19] shadow-sm"
-                          : "bg-gray-50/80 hover:bg-gray-100/80 border-gray-200"
+                          ? "bg-[#16244d] border-[#D4AF37] shadow-sm"
+                          : "bg-[#0a1128] hover:bg-[#111d42] border-gray-200"
                       }`}
                     >
                       <div className={`h-6 w-6 rounded-lg flex items-center justify-center shrink-0 border mt-0.5 transition-colors ${
@@ -181,7 +181,7 @@ export default function LiveCountersPage({}: LiveCountersPageProps = {}) {
                       </div>
                       <div>
                         <div className="text-xs font-bold font-sans text-[#00346f] flex items-center gap-1.5">
-                          <span>{station.icon}</span>
+                          <Sparkles className="h-3.5 w-3.5 text-[#775a19] shrink-0" />
                           <span>{station.name}</span>
                         </div>
                         <p className="text-[11px] text-gray-500 font-sans mt-0.5 leading-snug">{station.desc}</p>

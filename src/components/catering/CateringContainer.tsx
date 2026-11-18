@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, Suspense } from 'react';
+import { Utensils, Sparkles, Cake } from 'lucide-react';
 import { TrayPricingHeader, CateringDifferentiators } from './BrandHeader';
 import CakeBrandHeader from './CakeBrandHeader';
 import CostEstimatorSidebar from './CostEstimatorSidebar';
@@ -104,6 +105,7 @@ export default function CateringContainer() {
       else if (tab === 'tiffin') newPath = '/catering/tiffin';
 
       window.history.pushState(null, '', newPath);
+      window.dispatchEvent(new CustomEvent('popstate'));
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
@@ -122,7 +124,11 @@ export default function CateringContainer() {
     };
     syncRoute();
     window.addEventListener('popstate', syncRoute);
-    return () => window.removeEventListener('popstate', syncRoute);
+    window.addEventListener('bbw_route_change', syncRoute);
+    return () => {
+      window.removeEventListener('popstate', syncRoute);
+      window.removeEventListener('bbw_route_change', syncRoute);
+    };
   }, []);
 
   // Update item in cart handler
@@ -306,10 +312,10 @@ export default function CateringContainer() {
   const tiffinCount = cart.filter(i => i.category === 'tiffin').reduce((s, i) => s + i.quantity, 0);
 
   return (
-    <div className="w-full bg-[#FAF8F5] min-h-screen font-sans selection:bg-[#D4AF37]/20 overflow-x-hidden text-[#1E293B]">
+    <div className="royal-dark-page w-full bg-[#050a1a] min-h-screen font-sans selection:bg-[#D4AF37]/20 overflow-x-hidden text-[#fbfbfa]">
       
       {/* ── 1. SUB-NAVIGATION BAR (Top Experience Switcher: [ 🍱 Daily Tiffin | 🥘 Party Catering | 🎂 Custom Cakes ]) ── */}
-      <div className="sticky top-0 z-40 w-full bg-white/90 backdrop-blur-md border-b border-[#D4AF37]/30 shadow-xs">
+      <div className="sticky top-0 z-40 w-full bg-[#0a1128]/95 backdrop-blur-md border-b border-[#D4AF37]/30 shadow-md">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between min-h-[52px] sm:min-h-[56px] py-1.5 sm:py-2">
             
@@ -324,13 +330,13 @@ export default function CateringContainer() {
                 <button
                   type="button"
                   onClick={() => switchSubTab('tiffin')}
-                  className={`inline-flex items-center justify-center gap-1.5 sm:gap-2 min-h-[44px] px-2.5 sm:px-4 py-2 rounded-xl text-xs sm:text-xs font-bold uppercase tracking-wide sm:tracking-wider transition-all cursor-pointer whitespace-nowrap ${
+                  className={`inline-flex items-center justify-center gap-1.5 sm:gap-2 min-h-[44px] px-2.5 sm:px-4 py-2 rounded-xl text-xs font-bold tracking-wide transition-all cursor-pointer whitespace-nowrap ${
                     subTab === 'tiffin'
-                      ? 'bg-[#0B192C] text-white shadow-md ring-1 ring-[#D4AF37]'
-                      : 'text-[#1E293B] hover:text-[#0B192C] hover:bg-white'
+                      ? 'bg-[#00346f] text-white shadow-md ring-1 ring-[#D4AF37]'
+                      : 'text-[#1E293B] hover:text-[#00346f] hover:bg-white'
                   }`}
                 >
-                  <span className="text-base leading-none">🍱</span>
+                  <Utensils className={`w-3.5 h-3.5 shrink-0 ${subTab === 'tiffin' ? 'text-[#ffdea5]' : 'text-[#775a19]'}`} />
                   <span className="sm:hidden">Tiffin</span>
                   <span className="hidden sm:inline">Daily Tiffin</span>
                   {tiffinCount > 0 && (
@@ -344,13 +350,13 @@ export default function CateringContainer() {
                 <button
                   type="button"
                   onClick={() => switchSubTab('order')}
-                  className={`inline-flex items-center justify-center gap-1.5 sm:gap-2 min-h-[44px] px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-xl text-xs sm:text-xs font-bold uppercase tracking-wide sm:tracking-wider transition-all cursor-pointer whitespace-nowrap ${
+                  className={`inline-flex items-center justify-center gap-1.5 sm:gap-2 min-h-[44px] px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-xl text-xs font-bold tracking-wide transition-all cursor-pointer whitespace-nowrap ${
                     subTab === 'order'
-                      ? 'bg-[#0B192C] text-white shadow-md ring-1 ring-[#D4AF37]'
-                      : 'text-[#1E293B] hover:text-[#0B192C] hover:bg-white'
+                      ? 'bg-[#00346f] text-white shadow-md ring-1 ring-[#D4AF37]'
+                      : 'text-[#1E293B] hover:text-[#00346f] hover:bg-white'
                   }`}
                 >
-                  <span className="text-base leading-none">🥘</span>
+                  <Sparkles className={`w-3.5 h-3.5 shrink-0 ${subTab === 'order' ? 'text-[#ffdea5]' : 'text-[#775a19]'}`} />
                   <span className="sm:hidden">Catering</span>
                   <span className="hidden sm:inline">Party Catering</span>
                   {cateringDishCount > 0 && (
@@ -364,13 +370,13 @@ export default function CateringContainer() {
                 <button
                   type="button"
                   onClick={() => switchSubTab('cake')}
-                  className={`inline-flex items-center justify-center gap-1.5 sm:gap-2 min-h-[44px] px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-xl text-xs sm:text-xs font-bold uppercase tracking-wide sm:tracking-wider transition-all cursor-pointer whitespace-nowrap ${
+                  className={`inline-flex items-center justify-center gap-1.5 sm:gap-2 min-h-[44px] px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-xl text-xs font-bold tracking-wide transition-all cursor-pointer whitespace-nowrap ${
                     subTab === 'cake'
-                      ? 'bg-[#0B192C] text-white shadow-md ring-1 ring-[#D4AF37]'
-                      : 'text-[#1E293B] hover:text-[#0B192C] hover:bg-white'
+                      ? 'bg-[#00346f] text-white shadow-md ring-1 ring-[#D4AF37]'
+                      : 'text-[#1E293B] hover:text-[#00346f] hover:bg-white'
                   }`}
                 >
-                  <span className="text-base leading-none">🎂</span>
+                  <Cake className={`w-3.5 h-3.5 shrink-0 ${subTab === 'cake' ? 'text-[#ffdea5]' : 'text-[#775a19]'}`} />
                   <span className="sm:hidden">Cakes</span>
                   <span className="hidden sm:inline">Custom Cakes</span>
                   {cakeCount > 0 && (

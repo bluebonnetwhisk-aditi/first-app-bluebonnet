@@ -145,8 +145,8 @@ export default function Home({ onOpenBaker: _onOpenBaker, onNavigate }: HomeProp
 
   const faqs = [
     {
-      q: "Are eggless options available for all custom cakes and sweets?",
-      a: "Yes! 100% eggless recipes are standard or available upon request for all custom cakes, fusion jars, and desserts. We take pride in delivering the same exceptional moisture and lightness without eggs."
+      q: "Are eggless options available for custom cakes and sweets?",
+      a: "Yes! 100% eggless recipes are available upon request for an additional charge (+$5 for 6″ cakes, +$10 for 8″ cakes, +$15 for 2-Tier cakes, and +$25 for 3-Tier cakes). We take pride in delivering the same exceptional moisture and lightness without eggs."
     },
     {
       q: "What areas do you serve?",
@@ -248,7 +248,7 @@ export default function Home({ onOpenBaker: _onOpenBaker, onNavigate }: HomeProp
               },
               {
                 title: "Mindful & Inclusive Preparation",
-                desc: "We commit to respecting your dietary traditions. We proudly specialize in strict No-Onion/No-Garlic savory preparations and 100% premium eggless baking, ensuring everyone can eat safely and joyfully.",
+                desc: "We commit to respecting your dietary traditions. We proudly specialize in strict No-Onion/No-Garlic savory preparations and offer 100% eggless baking options (+$) upon request, ensuring everyone can eat safely and joyfully.",
                 icon: "ShieldCheck"
               },
               {
@@ -514,47 +514,40 @@ export default function Home({ onOpenBaker: _onOpenBaker, onNavigate }: HomeProp
         onNavigateToFoodOrder={() => onNavigate("Catering")} 
       />
 
-
-
-
-
-
-
-
       {/* ── LUXURY CLIENT TESTIMONIALS (FROM REVIEWS PAGE) ── */}
       <section className="py-24 border-t border-white/5 bg-[#0a1128]">
         <div className="max-w-7xl mx-auto px-4 space-y-12">
           
           <div className="text-center max-w-xl mx-auto space-y-2">
             <span className="text-[10px] font-bold text-brand-gold-tint tracking-widest uppercase">CLIENT REVIEWS</span>
-            <h2 className="font-serif text-3xl font-bold text-brand-cream">Verified Host Experiences</h2>
-            <p className="text-xs text-gray-400 font-sans">Read authentic reviews from our lovely event hosts across Frisco, Plano, &amp; DFW.</p>
+            <h2 className="font-serif text-3xl font-bold text-brand-cream">Customer Experiences</h2>
+            <p className="text-xs text-gray-400 font-sans">Read reviews from our lovely event hosts across Frisco, Plano, &amp; DFW.</p>
             <div className="h-0.5 w-12 bg-brand-gold-tint mx-auto mt-2" />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {[
               {
-                name: "Ankita & Rahul S.",
-                occasion: "Daughter's 5th Birthday Party • Frisco, TX",
-                itemsOrdered: "Custom 2-Tier Theme Cake + Live Pani Puri Bar & Railway Cutlets",
-                quote: "Finding a baker in Frisco who can pull off a Pinterest-worthy theme cake AND a 100% eggless Rasmalai Biscoff flavor was a miracle! The cake was so soft, not overly sweet like American bakery cakes. The live Pani Puri counter was a massive hit!",
+                name: "Ankita S.",
+                occasion: "Daughter's 5th Birthday • Frisco, TX",
+                itemsOrdered: "2-Tier Eggless Rasmalai Cake, Live Pani Puri & Cutlets",
+                quote: "Ordered a 2-tier eggless Rasmalai cake and live pani puri counter for my daughter's 5th birthday in Frisco. Honestly the cake was super soft and not overly sweet like store bought cakes, everyone went for a second slice. Aditi was very patient with all my small changes. Will definitely order again.",
                 rating: 5,
                 date: "September 24, 2026"
               },
               {
-                name: "Priya & Venkat M.",
-                occasion: "25th Anniversary Dinner Catering • Plano, TX",
-                itemsOrdered: "Grand Catering: Paneer Lababdar, Dal Makhani & Cardamom Kheer",
-                quote: "We hosted 50+ relatives and friends in Plano. The Paneer Lababdar and Dal Makhani tasted like authentic Dilli-style dhaba food—rich, aromatic, but not heavy. My in-laws visiting from Bengaluru praised the cardamom Kheer!",
+                name: "Priya M.",
+                occasion: "25th Anniversary Dinner • Plano, TX",
+                itemsOrdered: "Paneer Lababdar, Dal Makhani, Bhindi Masala & Kheer",
+                quote: "We had around 50 guests at home for our anniversary dinner and got Paneer Lababdar, Dal Makhani, Bhindi Masala and Kheer. Food tasted really fresh and homely, not heavy or oily like restaurant catering. My in-laws are visiting from India and even they loved the dal and kheer!",
                 rating: 5,
                 date: "September 15, 2026"
               },
               {
                 name: "Siddharth P.",
-                occasion: "Weekly Executive Tiffin Service • Irving, TX",
-                itemsOrdered: "Daily Dabba: Aalu Paratha, Sattu Paratha, Homestyle Kadhi & Bharwa Baigan",
-                quote: "Living in Las Colinas and working long tech hours, finding clean ghar-ka-khana was my biggest priority. Bluebonnet Whisk's weekly dabbas feel like mom cooked them—soft phulkas, tangy homestyle Kadhi Pakora, and delicious Sattu parathas!",
+                occasion: "Weekly Tiffin Service • Irving, TX",
+                itemsOrdered: "Weekly Dabba: Stuffed Parathas, Kadhi Pakora & Daily Sabzi",
+                quote: "Been taking their weekly dabba for a few months now. With busy office days it is such a relief to get proper ghar ka khana. Rotis stay soft even for dinner, kadhi pakora and stuffed parathas are my favorite. Less oil and no soda feeling afterwards.",
                 rating: 5,
                 date: "August 28, 2026"
               }
@@ -565,12 +558,10 @@ export default function Home({ onOpenBaker: _onOpenBaker, onNavigate }: HomeProp
               >
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 px-2 py-0.5 rounded-full uppercase tracking-wider">
-                      ✓ Verified Review
-                    </span>
                     <div className="text-brand-gold-tint text-xs font-bold">
                       ★★★★★
                     </div>
+                    <span className="text-[10px] text-gray-400">{t.date}</span>
                   </div>
 
                   <p className="text-gray-300 text-xs lg:text-sm italic leading-relaxed font-sans">
@@ -581,7 +572,6 @@ export default function Home({ onOpenBaker: _onOpenBaker, onNavigate }: HomeProp
                 <div className="mt-6 pt-4 border-t border-white/10 space-y-1">
                   <div className="flex items-center justify-between">
                     <span className="font-serif text-sm font-bold text-brand-cream">{t.name}</span>
-                    <span className="text-[10px] text-gray-400">{t.date}</span>
                   </div>
                   <span className="text-[10px] text-brand-gold-tint font-sans tracking-wide uppercase font-semibold block">{t.occasion}</span>
                   <span className="text-[10px] text-gray-400 font-sans block italic font-light truncate">Ordered: {t.itemsOrdered}</span>
@@ -593,7 +583,7 @@ export default function Home({ onOpenBaker: _onOpenBaker, onNavigate }: HomeProp
           <div className="text-center pt-2">
             <button
               onClick={() => onNavigate("Reviews")}
-              className="inline-flex items-center gap-2 bg-[#00346f] hover:bg-[#00224d] text-white font-sans text-xs uppercase tracking-widest font-bold px-6 py-3 rounded-xl shadow-md transition-all cursor-pointer border border-[#00346f] hover:scale-102"
+              className="inline-flex items-center gap-2 bg-[#775a19] hover:bg-[#5d4201] text-white font-sans text-xs uppercase tracking-widest font-bold px-6 py-3 rounded-xl shadow-md transition-all cursor-pointer border border-[#D4AF37]/40 hover:scale-102"
             >
               <span>Read All Customer Reviews &amp; Submit Feedback</span>
               <ArrowRight className="w-4 h-4 text-[#ffdea5]" />
@@ -619,7 +609,7 @@ export default function Home({ onOpenBaker: _onOpenBaker, onNavigate }: HomeProp
               return (
                 <div 
                   key={idx}
-                  className="rounded-lg border border-white/5 bg-[#0f1938]/30 overflow-hidden transition-all duration-300"
+                  className="rounded-lg border border-white/10 bg-[#0f1938]/50 overflow-hidden transition-all duration-300"
                 >
                   <button
                     onClick={() => setActiveFaq(isOpen ? null : idx)}
@@ -631,7 +621,7 @@ export default function Home({ onOpenBaker: _onOpenBaker, onNavigate }: HomeProp
 
                   <div 
                     className={`transition-all duration-300 ease-in-out overflow-hidden ${
-                      isOpen ? "max-h-[800px] border-t border-white/5" : "max-h-0"
+                      isOpen ? "max-h-[800px] border-t border-white/10" : "max-h-0"
                     }`}
                   >
                     <p className="px-5 sm:px-6 py-4 sm:py-5 text-gray-300 text-xs lg:text-sm font-sans leading-relaxed">

@@ -5,13 +5,13 @@
   --font-serif: "Playfair Display", "Times New Roman", serif;
   --font-sans: "Montserrat", system-ui, -apple-system, sans-serif;
   --font-mono: "JetBrains Mono", monospace;
-  
+
   --color-primary-brand: #00346f;
   --color-secondary-brand: #775a19;
   --color-tertiary-brand: #6c0b2b;
-  
-  --color-brand-cream: #fbfbfa;
-  --color-brand-cream-light: #f9f9ff;
+
+  --color-brand-cream: #FBF8F3;
+  --color-brand-cream-light: #FBF8F3;
   --color-brand-gold-tint: #ffdea5;
   --color-brand-gold-shadow: #785a1a;
   --color-brand-rose: #ffd9de;
@@ -26,35 +26,37 @@
 
 @media (max-width: 1023px) {
   :root {
-    --header-nav-bottom: 137px;
+    --header-nav-bottom: 112px;
   }
 }
 
-html {
-  box-sizing: border-box;
-  -webkit-text-size-adjust: 100%;
-}
+@layer base {
+  html {
+    box-sizing: border-box;
+    -webkit-text-size-adjust: 100%;
+  }
 
-*, *:before, *:after {
-  box-sizing: inherit;
-}
+  *, *:before, *:after {
+    box-sizing: inherit;
+  }
 
-html, body {
-  max-width: 100%;
-  overflow-x: clip;
-}
+  html, body {
+    max-width: 100%;
+    overflow-x: clip;
+  }
 
-body {
-  font-family: var(--font-sans);
-  background-color: var(--color-brand-cream-light);
-  color: #1a1c20;
-  -webkit-tap-highlight-color: transparent;
-}
+  body {
+    font-family: var(--font-sans);
+    background-color: #050a1a;
+    color: #fbfbfa;
+    -webkit-tap-highlight-color: transparent;
+  }
 
-/* Fluid Media Resets */
-img, video, canvas, svg, iframe {
-  max-width: 100%;
-  height: auto;
+  /* Fluid Media Resets inside @layer base so Tailwind height/width utilities work cleanly */
+  img, video, canvas, svg, iframe {
+    max-width: 100%;
+    height: auto;
+  }
 }
 
 /* Universal iOS Safari 16px Mobile Focus Zoom Prevention */
@@ -71,95 +73,303 @@ img, video, canvas, svg, iframe {
   padding-bottom: max(0.75rem, env(safe-area-inset-bottom, 0px));
 }
 
-
-/* Glassmorphism Styles */
+/* Royal Dark Glassmorphism & Surface Styles */
 .glass-panel {
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(15, 25, 56, 0.72);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(212, 175, 55, 0.22);
+  box-shadow: 0 8px 30px -6px rgba(0, 0, 0, 0.45);
 }
 
 .glass-panel-dark {
-  background: rgba(10, 17, 40, 0.7);
+  background: rgba(15, 25, 56, 0.65);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 222, 165, 0.16);
+  box-shadow: 0 12px 36px -8px rgba(0, 0, 0, 0.5);
 }
 
 .glass-panel-light {
-  background: rgba(255, 255, 255, 0.75);
+  background: rgba(15, 25, 56, 0.6);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(119, 90, 25, 0.12);
-  box-shadow: 0 4px 24px 0 rgba(0, 0, 0, 0.03);
+  border: 1px solid rgba(212, 175, 55, 0.18);
+  box-shadow: 0 4px 24px 0 rgba(0, 0, 0, 0.35);
 }
 
 /* Scroll-driven animations fallback */
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(20px); }
+  from { opacity: 0; transform: translateY(16px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
 .animate-fade-in {
-  animation: fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: fadeIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 .bg-grid-pattern {
   background-size: 40px 40px;
   background-image: 
-    linear-gradient(to right, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+    linear-gradient(to right, rgba(255, 222, 165, 0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 222, 165, 0.04) 1px, transparent 1px);
 }
 
-/* ── LUXURY CHIC STYLING EXTENSIONS ── */
+/* ── ROYAL DARK LUXURY STYLING EXTENSIONS ── */
 .bg-silk-cream {
-  background-color: #faf7f2;
-  background-image: radial-gradient(rgba(197, 155, 39, 0.03) 1px, transparent 0);
+  background-color: #0a1128;
+  background-image: radial-gradient(rgba(212, 175, 55, 0.08) 1px, transparent 0);
   background-size: 24px 24px;
 }
 
 .glass-panel-luxury {
-  background: rgba(255, 255, 255, 0.82);
+  background: rgba(15, 25, 56, 0.78);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(197, 155, 39, 0.18);
-  box-shadow: 0 12px 40px -10px rgba(0, 52, 111, 0.08);
+  border: 1px solid rgba(212, 175, 55, 0.25);
+  box-shadow: 0 12px 40px -10px rgba(0, 0, 0, 0.55);
 }
 
 .glass-panel-gold {
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(251, 247, 242, 0.85));
+  background: linear-gradient(135deg, rgba(15, 25, 56, 0.9), rgba(10, 17, 40, 0.85));
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(197, 155, 39, 0.3);
-  box-shadow: 0 10px 30px -8px rgba(119, 90, 25, 0.15);
+  border: 1px solid rgba(212, 175, 55, 0.32);
+  box-shadow: 0 10px 30px -8px rgba(0, 0, 0, 0.5);
 }
 
-/* ── 2026 LIQUID GLASS TOKENS (MOBILE & TABLET OPTIMIZED) ── */
 .glass-nav-pill {
-  background: rgba(255, 255, 255, 0.82);
+  background: rgba(10, 17, 40, 0.9);
   backdrop-filter: blur(18px) saturate(160%);
   -webkit-backdrop-filter: blur(18px) saturate(160%);
-  border: 1px solid rgba(212, 175, 55, 0.35);
-  box-shadow: 0 8px 32px 0 rgba(0, 52, 111, 0.08);
-}
-
-.glass-floating-dock {
-  background: rgba(11, 25, 44, 0.92);
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
-  border-top: 1px solid rgba(255, 255, 255, 0.18);
-  box-shadow: 0 -10px 35px 0 rgba(0, 25, 60, 0.25);
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.45);
 }
 
 .glass-card-warm {
-  background: rgba(255, 255, 255, 0.88);
+  background: rgba(15, 25, 56, 0.75);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
-  border: 1px solid rgba(212, 175, 55, 0.22);
-  box-shadow: 0 10px 30px -10px rgba(119, 90, 25, 0.10);
+  border: 1px solid rgba(212, 175, 55, 0.24);
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.45);
+}
+
+/* Royal Dark Theme Adaptation for Legacy Light Utility Surfaces */
+.royal-dark-page {
+  background-color: #050a1a;
+  color: #fbfbfa;
+}
+
+/* Primary light cards -> Deep Royal Navy */
+.royal-dark-page :is(
+  .bg-white,
+  [class*="bg-white/9"],
+  [class*="bg-white/8"],
+  .bg-\[\#fcfbf9\],
+  .bg-\[\#fbfbfa\]
+) {
+  background-color: #0f1938 !important;
+  color: #f1f5f9;
+}
+
+/* Secondary light surfaces -> Midnight Navy */
+.royal-dark-page :is(
+  .bg-gray-50,
+  [class*="bg-gray-50/"],
+  .bg-\[\#FAF8F5\],
+  [class*="bg-[#FAF8F5]/"],
+  [class*="bg-[#faf7f2]"],
+  .bg-\[\#f7f8fa\],
+  .bg-\[\#faf5ff\]
+) {
+  background-color: #0a1128 !important;
+  color: #e2e8f0;
+}
+
+/* Tertiary / Pill / Button light grey surfaces -> Rich Sapphire Navy */
+.royal-dark-page :is(
+  .bg-gray-100,
+  [class*="bg-gray-100/"],
+  .bg-gray-150,
+  .bg-gray-200,
+  [class*="bg-gray-200/"],
+  .bg-gray-300,
+  [class*="bg-white/50"]
+) {
+  background-color: #16244d !important;
+  color: #f1f5f9;
+}
+
+/* Pastel tinted surfaces -> Translucent Jewel Tones on Dark Navy */
+.royal-dark-page :is(
+  .bg-amber-50, [class*="bg-amber-50/"], .bg-amber-100, .bg-amber-200,
+  .bg-\[\#ffdea5\]\/40
+) {
+  background-color: rgba(180, 130, 30, 0.22) !important;
+  border-color: rgba(212, 175, 55, 0.35) !important;
+  color: #fde68a;
+}
+
+.royal-dark-page :is(
+  .bg-emerald-50, [class*="bg-emerald-50/"], .bg-emerald-100, [class*="bg-emerald-100/"], .bg-emerald-200
+) {
+  background-color: rgba(16, 185, 129, 0.16) !important;
+  border-color: rgba(52, 211, 153, 0.32) !important;
+  color: #6ee7b7;
+}
+
+.royal-dark-page :is(
+  .bg-blue-50, [class*="bg-blue-50/"], .bg-blue-100, [class*="bg-blue-100/"], .bg-indigo-50
+) {
+  background-color: rgba(59, 130, 246, 0.18) !important;
+  border-color: rgba(96, 165, 250, 0.32) !important;
+  color: #93c5fd;
+}
+
+.royal-dark-page :is(
+  .bg-purple-50, [class*="bg-purple-50/"], .bg-purple-100, [class*="bg-purple-100/"], .bg-purple-200, [class*="bg-purple-200/"]
+) {
+  background-color: rgba(168, 85, 247, 0.18) !important;
+  border-color: rgba(192, 132, 252, 0.32) !important;
+  color: #d8b4fe;
+}
+
+.royal-dark-page :is(
+  .bg-rose-50, .bg-rose-100, [class*="bg-rose-100/"], .bg-pink-50, [class*="bg-pink-50/"], .bg-pink-100
+) {
+  background-color: rgba(244, 63, 94, 0.18) !important;
+  border-color: rgba(251, 113, 133, 0.32) !important;
+  color: #fda4af;
+}
+
+.royal-dark-page :is(.bg-teal-50, .bg-teal-100) {
+  background-color: rgba(20, 184, 166, 0.16) !important;
+  border-color: rgba(45, 212, 191, 0.32) !important;
+  color: #5eead4;
+}
+
+/* Light Pastel Gradients -> Royal Dark Gradients */
+.royal-dark-page :is(
+  .from-amber-50,
+  .from-emerald-50,
+  .from-purple-50,
+  [class*="from-indigo-50"],
+  .from-\[\#fffdf7\],
+  .from-\[\#f3f3f9\],
+  .from-brand-cream-light
+) {
+  background-image: linear-gradient(135deg, #0f1938 0%, #16244d 100%) !important;
+  color: #fbfbfa;
+}
+
+/* Hover states on light buttons/cards -> Royal Sapphire Highlight */
+.royal-dark-page :is(
+  .hover\:bg-white:hover,
+  [class*="hover:bg-white/9"]:hover,
+  .hover\:bg-gray-50:hover,
+  [class*="hover:bg-gray-50/"]:hover,
+  .hover\:bg-gray-100:hover,
+  .hover\:bg-gray-150:hover,
+  .hover\:bg-gray-200:hover,
+  .hover\:bg-gray-300:hover,
+  .hover\:bg-amber-50:hover,
+  .hover\:bg-amber-100:hover,
+  .hover\:bg-blue-50:hover,
+  [class*="hover:bg-blue-50/"]:hover,
+  [class*="hover:bg-blue-100"]:hover,
+  .hover\:bg-purple-50:hover,
+  [class*="hover:bg-purple-50/"]:hover,
+  .hover\:bg-purple-100:hover,
+  .hover\:bg-purple-200:hover,
+  .hover\:bg-emerald-100:hover,
+  .hover\:bg-emerald-200:hover,
+  .hover\:bg-indigo-50:hover,
+  .hover\:bg-rose-50:hover,
+  .hover\:bg-teal-100:hover
+) {
+  background-color: #1e3166 !important;
+  color: #ffffff !important;
+}
+
+/* Borders & Dividers */
+.royal-dark-page :is(
+  .border-gray-100,
+  .border-gray-150,
+  .border-gray-200,
+  .border-gray-200\/60,
+  .border-gray-250,
+  .border-gray-300
+) {
+  border-color: rgba(212, 175, 55, 0.22) !important;
+}
+
+.royal-dark-page .divide-gray-100 > :not([hidden]) ~ :not([hidden]),
+.royal-dark-page .divide-gray-150 > :not([hidden]) ~ :not([hidden]) {
+  border-color: rgba(212, 175, 55, 0.16) !important;
+}
+
+/* Crisp High-Contrast Typography on Dark Surfaces */
+.royal-dark-page :is(
+  .text-\[\#00346f\],
+  .text-\[\#0B192C\],
+  .text-primary-brand,
+  .text-gray-900,
+  .text-gray-800,
+  .text-\[\#1E293B\],
+  .text-\[\#1a1c20\]
+) {
+  color: #fbfbfa !important;
+}
+
+.royal-dark-page :is(.text-gray-700, .text-gray-600) {
+  color: #cbd5e1 !important;
+}
+
+.royal-dark-page :is(.text-gray-500, .text-gray-400) {
+  color: #94a3b8 !important;
+}
+
+.royal-dark-page :is(.text-\[\#775a19\], .text-secondary-brand, .text-amber-700, .text-amber-800, .text-amber-900, .text-amber-950) {
+  color: #ffdea5 !important;
+}
+
+.royal-dark-page :is(.text-emerald-600, .text-emerald-700, .text-emerald-800, .text-emerald-900, .text-emerald-950) {
+  color: #6ee7b7 !important;
+}
+
+.royal-dark-page :is(.text-blue-600, .text-blue-800, .text-blue-900, .text-blue-950, .text-indigo-600, .text-indigo-700, .text-indigo-800, .text-indigo-900, .text-indigo-950) {
+  color: #93c5fd !important;
+}
+
+.royal-dark-page :is(.text-purple-600, .text-purple-700, .text-purple-800, .text-purple-900, .text-purple-950) {
+  color: #d8b4fe !important;
+}
+
+.royal-dark-page :is(.text-rose-600, .text-rose-700, .text-rose-800, .text-rose-900, .text-pink-700, .text-pink-800, .text-pink-900, .text-pink-950) {
+  color: #fda4af !important;
+}
+
+.royal-dark-page :is(.text-teal-700, .text-teal-800, .text-teal-900) {
+  color: #5eead4 !important;
+}
+
+/* Solid Gold Badges & Active Chips MUST keep dark navy text for crisp contrast */
+.royal-dark-page :is(.bg-\[\#D4AF37\], .bg-\[\#ffdea5\], .bg-amber-300, .bg-amber-400),
+.royal-dark-page :is(.bg-\[\#D4AF37\], .bg-\[\#ffdea5\], .bg-amber-300, .bg-amber-400) * {
+  color: #050a1a !important;
+}
+
+.royal-dark-page input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+.royal-dark-page select,
+.royal-dark-page textarea {
+  background-color: #080f26 !important;
+  color: #fbfbfa !important;
+  border-color: rgba(212, 175, 55, 0.3) !important;
+}
+
+.royal-dark-page input::placeholder,
+.royal-dark-page textarea::placeholder {
+  color: #64748b !important;
 }
 
 /* 3D Card Hover Perspective */
@@ -168,26 +378,26 @@ img, video, canvas, svg, iframe {
 }
 
 .card-3d-content {
-  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s ease;
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.35s ease;
   transform-style: preserve-3d;
 }
 
 .card-3d-wrapper:hover .card-3d-content {
-  transform: translateY(-6px) rotateX(1.5deg) rotateY(-1.5deg) scale(1.015);
-  box-shadow: 0 24px 48px -12px rgba(0, 52, 111, 0.18);
+  transform: translateY(-4px);
+  box-shadow: 0 20px 40px -12px rgba(0, 52, 111, 0.12);
 }
 
 /* Metallic Gold Foil Badge */
 .badge-gold-foil {
   background: linear-gradient(135deg, #775a19 0%, #c59b27 50%, #775a19 100%);
   color: #ffffff;
-  box-shadow: 0 2px 8px rgba(119, 90, 25, 0.25);
+  box-shadow: 0 2px 8px rgba(119, 90, 25, 0.22);
 }
 
 .badge-satvik {
   background: linear-gradient(135deg, #8b2641 0%, #6c0b2b 100%);
   color: #ffffff;
-  box-shadow: 0 2px 8px rgba(108, 11, 43, 0.3);
+  box-shadow: 0 2px 8px rgba(108, 11, 43, 0.25);
 }
 
 /* Skeleton Shimmer Loading Placeholder */
@@ -201,4 +411,3 @@ img, video, canvas, svg, iframe {
   0% { background-position: -200% 0; }
   100% { background-position: 200% 0; }
 }
-

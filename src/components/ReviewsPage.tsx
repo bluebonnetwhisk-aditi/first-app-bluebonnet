@@ -25,87 +25,79 @@ export interface ReviewItem {
 const INITIAL_REVIEWS: ReviewItem[] = [
   {
     id: "rev-1",
-    name: "Ankita & Rahul S.",
-    occasion: "Daughter's 5th Birthday Party (Frisco, TX)",
-    itemsOrdered: "Custom 2-Tier Theme Cake + Live Pani Puri Bar & Railway Cutlets",
+    name: "Ankita S.",
+    occasion: "Daughter's 5th Birthday (Frisco, TX)",
+    itemsOrdered: "2-Tier Eggless Rasmalai Cake, Live Pani Puri & Cutlets",
     rating: 5,
-    reviewText: "Finding a baker in Frisco who can pull off a Pinterest-worthy theme cake AND a 100% eggless Rasmalai Biscoff flavor was a miracle! The cake was so soft, not overly sweet like American bakery cakes, and our guests couldn't stop asking where we ordered it from. The live Pani Puri counter was a massive hit—the spicy mint water was spot-on. Will definitely be ordering for all our family events!",
-    date: "September 24, 2026",
-    verified: true
+    reviewText: "Ordered a 2-tier eggless Rasmalai cake and live pani puri counter for my daughter's 5th birthday in Frisco. Honestly the cake was super soft and not overly sweet like store bought cakes, everyone went for a second slice. Even the pani puri and cutlets got over so fast! Aditi was very patient with all my small changes. Will definitely order again.",
+    date: "September 24, 2026"
   },
   {
     id: "rev-2",
-    name: "Priya & Venkat M.",
-    occasion: "25th Anniversary Dinner Catering (Plano, TX)",
-    itemsOrdered: "Grand Catering: Paneer Lababdar, Dal Makhani, Bhindi Masala & Cardamom Kheer",
+    name: "Priya M.",
+    occasion: "25th Anniversary Dinner (Plano, TX)",
+    itemsOrdered: "Paneer Lababdar, Dal Makhani, Bhindi Masala & Kheer",
     rating: 5,
-    reviewText: "We hosted 50+ relatives and friends for our anniversary dinner in Plano. The Paneer Lababdar and slow-cooked Dal Makhani tasted like authentic Dilli-style dhaba food—rich, aromatic, but not heavy or excessively oily. My in-laws visiting from Bengaluru praised the cardamom Kheer! Everything arrived hot, neatly labelled in foil containers, making serving so easy for us.",
-    date: "September 15, 2026",
-    verified: true
+    reviewText: "We had around 50 guests at home for our anniversary dinner and got Paneer Lababdar, Dal Makhani, Bhindi Masala and Kheer from Bluebonnet Whisk. Food tasted really fresh and homely, not heavy or oily like restaurant catering. My in-laws are visiting from India and even they loved the dal and kheer! Everything was packed neatly and hot on time.",
+    date: "September 15, 2026"
   },
   {
     id: "rev-3",
     name: "Siddharth P.",
-    occasion: "Weekly Executive Tiffin Service (Irving / Las Colinas, TX)",
-    itemsOrdered: "Daily Dabba: Aalu Paratha, Sattu Paratha, Homestyle Kadhi & Bharwa Baigan",
+    occasion: "Weekly Tiffin Service (Irving / Las Colinas, TX)",
+    itemsOrdered: "Weekly Dabba: Stuffed Parathas, Kadhi Pakora & Daily Sabzi",
     rating: 5,
-    reviewText: "Living in Las Colinas and working long tech hours, finding clean ghar-ka-khana was my biggest priority. Bluebonnet Whisk's weekly dabbas feel like mom cooked them—soft phulkas, tangy homestyle Kadhi Pakora, and delicious Sattu/Gobhi parathas that stay soft even in my lunchbox. Clean ingredients, no heavy soda or excess oil. Total lifesaver!",
-    date: "August 28, 2026",
-    verified: true
+    reviewText: "Been taking their weekly dabba for a few months now. With busy office days it is such a relief to get proper ghar ka khana. Rotis stay soft even for dinner, kadhi pakora and stuffed parathas are my favorite. Less oil and no soda feeling afterwards. Highly recommend if you miss home food.",
+    date: "August 28, 2026"
   },
   {
     id: "rev-4",
-    name: "Dr. Meenakshi R.",
-    occasion: "Raksha Bandhan & Festive Luxe Hampers (Coppell, TX)",
-    itemsOrdered: "25x Custom Rakhi Hampers: Biscoff Cookies, Dry Fruit Sweets & Silk Ribbons",
+    name: "Meenakshi R.",
+    occasion: "Rakhi Gift Boxes (Coppell, TX)",
+    itemsOrdered: "25x Custom Rakhi Boxes: Biscoff Cookies & Sweets",
     rating: 5,
-    reviewText: "Ordered 25 customized luxury Raksha Bandhan gift hampers for our clinic staff and close family in Coppell. The boxes were packed with artisanal Biscoff cookies, fusion sweets, and personalized cards with our family name. The silk ribbon presentation looked super elegant. Everyone messaged me saying it was the best festive hamper they received!",
-    date: "August 24, 2026",
-    verified: true
+    reviewText: "Got 25 Rakhi boxes made for family and clinic staff. The Biscoff cookies and sweets were fresh and the ribbon packing with our family name card looked very nice. Everyone texted me asking where I ordered these from. Very happy with the quality.",
+    date: "August 24, 2026"
   },
   {
     id: "rev-5",
     name: "Swati & Rajesh K.",
-    occasion: "Satvik Ganpati Pooja Catering (McKinney, TX)",
-    itemsOrdered: "100% Satvik Meal: Bedmi Poori, Halwai Waale Aalu, Shahi Paneer & Motichoor Jars",
+    occasion: "Ganpati Pooja Catering (McKinney, TX)",
+    itemsOrdered: "No-Onion/No-Garlic Menu: Bedmi Poori, Aalu, Shahi Paneer & Jars",
     rating: 5,
-    reviewText: "We requested a 100% Satvik (strict No Onion & No Garlic) catering setup for our Ganpati Sthapana pooja in McKinney. Chef Aditi prepared Bedmi Poori with Halwai-style Aalu and Shahi Paneer that tasted out of this world! Knowing it was cooked with complete purity gave us total peace of mind. All our pooja guests were thoroughly impressed!",
-    date: "August 12, 2026",
-    verified: true
+    reviewText: "We needed strict no onion no garlic food for our Ganpati pooja at home. Ordered Bedmi Poori, Aalu sabzi, Shahi Paneer and Motichoor jars. Really appreciate how cleanly everything was made, the aalu poori tasted just like back home halwai style. All our guests appreciated the food.",
+    date: "August 12, 2026"
   },
   {
     id: "rev-6",
-    name: "Kavita & Nitin D.",
-    occasion: "Housewarming Party Catering (Little Elm, TX)",
-    itemsOrdered: "Live Jalebi & Rabri Counter + Railway Cutlets & Stuffed Parathas",
+    name: "Kavita D.",
+    occasion: "Housewarming Party (Little Elm, TX)",
+    itemsOrdered: "Live Jalebi & Rabri, Railway Cutlets & Stuffed Parathas",
     rating: 5,
-    reviewText: "Hosted 40 people for our housewarming in Little Elm. The Railway Cutlets and live Jalebi & Rabri station stole the show! Crisp, piping hot jalebis made right in front of everyone—people were literally taking videos! The ordering process on WhatsApp was smooth, pricing was transparent, and portion sizes were very generous. 10/10 recommendation!",
-    date: "July 30, 2026",
-    verified: true
+    reviewText: "Had our housewarming for about 40 people in Little Elm. The live jalebi rabri was the highlight of the evening, hot crispy jalebis right there and guests kept going back for more! Railway cutlets and parathas were also delicious. Portions were very generous and coordinating on WhatsApp was super easy.",
+    date: "July 30, 2026"
   },
   {
     id: "rev-7",
-    name: "Neha & Ashish G.",
-    occasion: "Son's 1st Birthday Party (Southlake, TX)",
-    itemsOrdered: "Custom Eggless Lion Safari 2-Tier Cake + Mango Chantilly Jars",
+    name: "Neha G.",
+    occasion: "1st Birthday Party (Southlake, TX)",
+    itemsOrdered: "Eggless Jungle Theme 2-Tier Cake & Mango Cups",
     rating: 5,
-    reviewText: "We sent a reference photo from Instagram for a 2-tier lion safari theme cake, and Chef delivered something even more stunning than the photo! We got the eggless Mango & Cardamom Chantilly layer—super moist, delicate sponge, and everyone went for seconds. Honest pricing and fantastic customer service.",
-    date: "July 18, 2026",
-    verified: true
+    reviewText: "Shared a reference picture for my son's 1st birthday jungle theme cake and Aditi made it look even better in person. We opted for eggless mango cream flavor and it was so moist and light. Pricing was very reasonable compared to other custom bakers around DFW.",
+    date: "July 18, 2026"
   },
   {
     id: "rev-8",
-    name: "Deepak & Archana T.",
-    occasion: "Milestone 40th Birthday Celebration (Prosper, TX)",
-    itemsOrdered: "Gulab Jamun Fusion Celebration Cake & Live Chaat Bar",
+    name: "Deepak T.",
+    occasion: "40th Birthday Get-Together (Prosper, TX)",
+    itemsOrdered: "Gulab Jamun Fusion Cake & Chaat Platter",
     rating: 5,
-    reviewText: "From the initial quote to the delivery in Prosper, the experience was 5-star. The Gulab Jamun Fusion Cake was the talk of the evening! Perfect blend of traditional Indian sweet flavor in a high-end patisserie cake format. If you want authentic taste with professional reliability, Bluebonnet Whisk is the one.",
-    date: "May 19, 2026",
-    verified: true
+    reviewText: "Ordered the Gulab Jamun cake and chaat items for my 40th birthday party. First time trying a fusion cake like this and all our friends loved it, not too sweet and nice cardamom flavor. Timely pickup and very good communication throughout. Thank you!",
+    date: "May 19, 2026"
   }
 ];
 
-const REVIEWS_STORAGE_KEY = "bbw_customer_reviews_v5";
+const REVIEWS_STORAGE_KEY = "bbw_customer_reviews_v6";
 
 export default function ReviewsPage() {
   const [reviews, setReviews] = useState<ReviewItem[]>(() => {
@@ -207,20 +199,20 @@ export default function ReviewsPage() {
   ).toFixed(1);
 
   return (
-    <div className="bg-[#fbfbfa] min-h-screen py-10 lg:py-16 font-sans">
+    <div className="royal-dark-page bg-[#050a1a] min-h-screen py-10 lg:py-16 font-sans">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Header Section */}
         <div className="text-center max-w-3xl mx-auto mb-12">
           <div className="inline-flex items-center gap-2 bg-[#ffdea5]/40 text-[#775a19] px-3.5 py-1 rounded-full text-xs font-bold uppercase tracking-widest mb-4 border border-[#775a19]/20">
             <HeartHandshake className="w-3.5 h-3.5 text-[#775a19]" />
-            <span>Verified Customer Feedback</span>
+            <span>Customer Stories &amp; Feedback</span>
           </div>
           <h1 className="font-serif text-3xl sm:text-4xl lg:text-5xl font-bold text-[#00346f] tracking-tight mb-4">
             Guest Reviews &amp; Testimonials
           </h1>
           <p className="text-gray-600 text-sm sm:text-base leading-relaxed">
-            Read authentic experiences from host families and corporate events across Frisco, Plano, Little Elm, and greater Dallas-Fort Worth.
+            Read experiences from host families and corporate events across Frisco, Plano, Little Elm, and greater Dallas-Fort Worth.
           </p>
           <div className="h-0.5 w-16 bg-[#775a19] mt-6 mx-auto" />
         </div>
@@ -238,20 +230,20 @@ export default function ReviewsPage() {
                 ))}
               </div>
               <span className="text-[10px] font-bold uppercase tracking-wider text-gray-200">
-                {reviews.length} Verified Reviews
+                {reviews.length} Customer Reviews
               </span>
             </div>
 
             <div className="space-y-1">
               <h3 className="font-serif text-xl font-bold text-[#00346f]">
-                100% Satisfaction Guarantee
+                Fresh, Scratch-Cooked Quality
               </h3>
               <p className="text-gray-600 text-xs sm:text-sm max-w-md leading-relaxed">
-                Handcrafted daily with fresh ingredients, eggless standard on bakes, and strict 24h/48h notice for hot catering.
+                Handcrafted daily with fresh ingredients, eggless options available on request (+$), and 24h/48h notice for hot catering.
               </p>
               <div className="flex items-center gap-4 pt-2 text-xs font-semibold text-[#775a19]">
                 <span className="inline-flex items-center gap-1">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-600" /> Eggless Standard
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600" /> Eggless Available (+$)
                 </span>
                 <span className="inline-flex items-center gap-1">
                   <CheckCircle2 className="w-4 h-4 text-emerald-600" /> Fresh Daily
@@ -467,11 +459,6 @@ export default function ReviewsPage() {
                     <div>
                       <h4 className="font-serif text-base font-bold text-[#00346f] leading-tight flex items-center gap-1.5">
                         <span>{rev.name}</span>
-                        {rev.verified && (
-                          <span title="Verified Customer">
-                            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                          </span>
-                        )}
                       </h4>
                       <div className="flex items-center gap-2 text-[10px] text-gray-500 font-sans mt-0.5">
                         <span className="flex items-center gap-1">
@@ -512,9 +499,9 @@ export default function ReviewsPage() {
               </div>
 
               <div className="pt-3 border-t border-gray-100 flex items-center justify-between text-[11px] text-gray-400 font-sans">
-                <span>Verified Buyer • Little Elm / Frisco / DFW</span>
-                <span className="text-emerald-700 font-semibold flex items-center gap-1">
-                  <Check className="w-3.5 h-3.5" /> Order Completed
+                <span>Little Elm / Frisco / DFW Guest</span>
+                <span className="text-[#775a19] font-semibold flex items-center gap-1">
+                  <span>★ {rev.rating}.0 Rating</span>
                 </span>
               </div>
 

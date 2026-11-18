@@ -891,7 +891,7 @@ export default function CheckoutModal({
                   <input
                     type="tel"
                     autoComplete="tel"
-                    placeholder="(945) 527-4566"
+                    placeholder="(555) 123-4567"
                     value={phoneNumber}
                     onChange={(e) => handlePhoneChange(e.target.value)}
                     className={`w-full px-3 py-2 min-h-[42px] text-sm sm:text-xs bg-gray-50 border rounded-xl focus:outline-none focus:bg-white transition-all ${
@@ -1034,7 +1034,7 @@ export default function CheckoutModal({
 
             {paymentMethod === 'zelle' && (
               <div className="px-3 py-2 bg-purple-50/70 border border-purple-200 rounded-xl text-[11px] text-purple-900 flex items-center justify-between">
-                <span>Zelle to: <strong>945-527-4566</strong> (Bluebonnet Whisk)</span>
+                <span>Zelle payment details shared upon order confirmation (Bluebonnet Whisk)</span>
                 <span className="font-semibold text-purple-700">0% Fee</span>
               </div>
             )}

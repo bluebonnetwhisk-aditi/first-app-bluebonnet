@@ -441,34 +441,34 @@ export default function GalleryPage({ onNavigateToAdmin: _onNavigateToAdmin }: G
   ];
 
   return (
-    <div className="bg-[#1A1614] text-[#E6DFD5] min-h-screen py-10 lg:py-16 font-sans">
+    <div className="bg-[#050a1a] text-[#fbfbfa] min-h-screen py-10 lg:py-16 font-sans">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Header Section */}
-        <div className="text-center max-w-3xl mx-auto mb-12">
-          <div className="inline-flex items-center gap-2 bg-[#D4AF37]/15 text-[#D4AF37] px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest mb-4 border border-[#D4AF37]/30">
-            <Sparkles className="w-3.5 h-3.5 text-[#D4AF37]" />
+        <div className="text-center max-w-3xl mx-auto mb-10">
+          <div className="inline-flex items-center gap-2 bg-[#ffdea5]/10 text-[#ffdea5] px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest mb-4 border border-[#ffdea5]/25">
+            <Sparkles className="w-3.5 h-3.5 text-[#ffdea5]" />
             <span>Handcrafted Culinary &amp; Patisserie Portfolio</span>
           </div>
 
-          <h1 className="font-serif text-3xl sm:text-4xl lg:text-5xl font-bold text-white tracking-tight mb-4 drop-shadow-sm">
+          <h1 className="font-serif text-3xl sm:text-4xl lg:text-5xl font-bold text-[#fbfbfa] tracking-tight mb-4">
             Curated Visual Gallery
           </h1>
-          <p className="text-gray-300 text-sm sm:text-base leading-relaxed font-light">
-            An authentic showcase of our small-batch celebration cakes, slow-cooked royal gravies, and heritage confections crafted across Dallas-Fort Worth.
+          <p className="text-gray-300 text-sm sm:text-base leading-relaxed">
+            An authentic showcase of our small-batch celebration cakes, slow-cooked royal gravies, and heritage confections crafted in our Little Elm &amp; Frisco kitchen.
           </p>
-          <div className="h-0.5 w-20 bg-[#D4AF37] mt-6 mx-auto" />
+          <div className="h-0.5 w-20 bg-[#ffdea5] mt-6 mx-auto" />
 
           {/* Admin Mode Status & Toggle Bar */}
           {isAdminMode ? (
-            <div className="mt-8 flex flex-wrap items-center justify-center gap-3 bg-[#C85A32]/20 border border-[#C85A32]/50 text-[#ffdea5] p-3 rounded-2xl text-xs font-bold font-sans shadow-lg">
+            <div className="mt-8 flex flex-wrap items-center justify-center gap-3 bg-[#0f1938] border border-[#D4AF37]/40 text-white p-3 rounded-2xl text-xs font-bold font-sans shadow-md">
               <span className="flex items-center gap-1.5 text-emerald-400 font-bold">
                 <Check className="w-4 h-4" /> Admin Controls Unlocked
               </span>
 
               <button
                 onClick={() => setShowAddModal(true)}
-                className="bg-[#D4AF37] hover:bg-[#b5932a] text-[#1A1614] px-3.5 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all cursor-pointer flex items-center gap-1.5 shadow"
+                className="bg-[#775a19] hover:bg-[#5d4201] text-white px-3.5 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all cursor-pointer flex items-center gap-1.5 shadow-xs"
               >
                 <Plus className="w-3.5 h-3.5" /> Add Photo
               </button>
@@ -484,7 +484,7 @@ export default function GalleryPage({ onNavigateToAdmin: _onNavigateToAdmin }: G
                   }
                   setTimeout(() => setSyncStatus(""), 4000);
                 }}
-                className="bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all cursor-pointer flex items-center gap-1.5 shadow"
+                className="bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all cursor-pointer flex items-center gap-1.5 shadow-xs"
                 title="Push current gallery items live to Supabase & all visitors"
               >
                 <RefreshCw className="w-3.5 h-3.5" /> Push &amp; Sync to Site
@@ -504,7 +504,7 @@ export default function GalleryPage({ onNavigateToAdmin: _onNavigateToAdmin }: G
                     setTimeout(() => setSyncStatus(""), 4000);
                   }
                 }}
-                className="bg-purple-700 hover:bg-purple-800 text-white px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all cursor-pointer flex items-center gap-1.5 shadow"
+                className="bg-purple-700 hover:bg-purple-800 text-white px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all cursor-pointer flex items-center gap-1.5 shadow-xs"
                 title="Purge deleted ID history and clean up Supabase storage"
               >
                 <RotateCw className="w-3.5 h-3.5" /> Purge &amp; Clean Supabase
@@ -520,14 +520,14 @@ export default function GalleryPage({ onNavigateToAdmin: _onNavigateToAdmin }: G
                   downloadAnchor.click();
                   downloadAnchor.remove();
                 }}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-3.5 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all cursor-pointer flex items-center gap-1.5 shadow"
+                className="bg-blue-600 hover:bg-blue-700 text-white px-3.5 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all cursor-pointer flex items-center gap-1.5 shadow-xs"
                 title="Export updated gallery items JSON file"
               >
                 <Download className="w-3.5 h-3.5" /> Export JSON
               </button>
 
               <label
-                className="bg-purple-600 hover:bg-purple-700 text-white px-3.5 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all cursor-pointer flex items-center gap-1.5 shadow"
+                className="bg-purple-600 hover:bg-purple-700 text-white px-3.5 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all cursor-pointer flex items-center gap-1.5 shadow-xs"
                 title="Import/restore galleryData.json exported from browser"
               >
                 <RefreshCw className="w-3.5 h-3.5" /> Import JSON
@@ -592,7 +592,7 @@ export default function GalleryPage({ onNavigateToAdmin: _onNavigateToAdmin }: G
               <button
                 type="button"
                 onClick={() => setShowPinModal(true)}
-                className="p-1.5 rounded-md text-gray-600 hover:text-[#D4AF37] transition-all opacity-30 hover:opacity-100 cursor-pointer flex items-center gap-1 text-[10px]"
+                className="p-1.5 rounded-md text-gray-500 hover:text-[#ffdea5] transition-all opacity-40 hover:opacity-100 cursor-pointer flex items-center gap-1 text-[10px]"
                 title="Admin Portal"
                 aria-label="Admin Portal"
               >
@@ -615,10 +615,10 @@ export default function GalleryPage({ onNavigateToAdmin: _onNavigateToAdmin }: G
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`inline-flex items-center gap-2 min-h-[40px] px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer ${
+                className={`inline-flex items-center gap-2 min-h-[42px] px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer ${
                   isActive
-                    ? "bg-[#D4AF37] text-[#1A1614] shadow-md font-bold"
-                    : "bg-[#241E1B] text-gray-300 hover:text-white border border-[#382F2A] hover:border-[#D4AF37]/40"
+                    ? "bg-[#775a19] text-white border border-[#D4AF37]/50 shadow-md font-bold"
+                    : "bg-[#0f1938] text-gray-300 hover:text-white border border-white/10 hover:border-[#D4AF37]/40"
                 }`}
               >
                 <span>{tab.label}</span>
@@ -635,13 +635,13 @@ export default function GalleryPage({ onNavigateToAdmin: _onNavigateToAdmin }: G
               <div
                 key={item.id}
                 onClick={() => setSelectedItem(item)}
-                className={`group bg-[#241E1B] rounded-2xl border ${
-                  item.visible ? "border-[#382F2A] hover:border-[#D4AF37]" : "border-rose-900/60 opacity-60"
-                } overflow-hidden shadow-xl transition-all duration-300 flex flex-col cursor-pointer hover:-translate-y-1 relative`}
+                className={`group bg-[#0f1938] rounded-2xl border ${
+                  item.visible ? "border-white/10 hover:border-[#D4AF37]" : "border-rose-500/60 opacity-60"
+                } overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 flex flex-col cursor-pointer hover:-translate-y-1 relative`}
               >
                 {/* Admin Overlay Controls */}
                 {isAdminMode && (
-                  <div className="absolute top-3 right-3 z-20 flex items-center gap-2 bg-[#1A1614]/90 backdrop-blur-md p-1.5 rounded-xl border border-white/20">
+                  <div className="absolute top-3 right-3 z-20 flex items-center gap-2 bg-[#050a1a]/90 backdrop-blur-md p-1.5 rounded-xl border border-white/20 shadow-sm">
                     <button
                       onClick={(e) => handleToggleVisibility(item.id, e)}
                       className={`p-1.5 rounded-lg text-xs transition-colors cursor-pointer ${
@@ -696,21 +696,20 @@ export default function GalleryPage({ onNavigateToAdmin: _onNavigateToAdmin }: G
                 )}
 
                 {/* Photo Image View */}
-                <div className="relative aspect-[6/5] overflow-hidden bg-[#1A1614] p-2 flex items-center justify-center">
+                <div className="relative aspect-[6/5] overflow-hidden bg-[#050a1a] flex items-center justify-center">
                   <img
                     src={item.imagePath}
                     alt={item.title}
-                    className="w-full h-full object-contain drop-shadow-xl transition-transform duration-500 group-hover:scale-105"
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                     onError={(e) => {
                       (e.target as HTMLImageElement).src = "/gallery/gallery_01.png";
                     }}
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#1A1614]/60 via-transparent to-transparent pointer-events-none" />
 
                   {/* Multi-Category Pills */}
                   <div className="absolute top-3 left-3 flex flex-wrap gap-2 gap-y-1.5 max-w-[85%] z-10">
                     {categoriesList.map((cat) => (
-                      <span key={cat} className="bg-[#1A1614]/90 backdrop-blur-md text-[#D4AF37] border border-[#D4AF37]/30 px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider font-sans shadow-sm">
+                      <span key={cat} className="bg-[#050a1a]/90 backdrop-blur-md text-[#ffdea5] border border-[#D4AF37]/30 px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider font-sans shadow-2xs">
                         {cat}
                       </span>
                     ))}
@@ -718,22 +717,22 @@ export default function GalleryPage({ onNavigateToAdmin: _onNavigateToAdmin }: G
                 </div>
 
                 {/* Card Footer Content */}
-                <div className="p-5 flex-1 flex flex-col justify-between space-y-3 bg-[#241E1B]">
+                <div className="p-5 flex-1 flex flex-col justify-between space-y-3 bg-[#0f1938]">
                   <div>
-                    <h3 className="font-serif text-base sm:text-lg font-bold text-white group-hover:text-[#D4AF37] transition-colors leading-snug">
+                    <h3 className="font-serif text-base sm:text-lg font-bold text-[#fbfbfa] group-hover:text-[#ffdea5] transition-colors leading-snug">
                       {item.title}
                     </h3>
                     {item.autoDescription && (
-                      <p className="text-xs text-gray-300 mt-1.5 line-clamp-2 leading-relaxed font-light">
+                      <p className="text-xs text-gray-300 mt-1.5 line-clamp-2 leading-relaxed">
                         {item.autoDescription}
                       </p>
                     )}
                   </div>
 
-                  <div className="pt-3 border-t border-[#382F2A] flex items-center justify-between text-[11px] text-[#D4AF37] font-serif italic">
-                    <span>Authentic DFW Artistry</span>
-                    <span className="font-sans uppercase text-[10px] font-bold tracking-wider text-gray-400 group-hover:text-[#D4AF37] transition-colors">
-                      Inspect Photo &rarr;
+                  <div className="pt-3 border-t border-white/10 flex items-center justify-between text-[11px] text-[#ffdea5] font-serif italic">
+                    <span>Handcrafted in Little Elm, TX</span>
+                    <span className="font-sans uppercase text-[10px] font-bold tracking-wider text-gray-300 group-hover:text-[#ffdea5] transition-colors not-italic">
+                      View Photo &rarr;
                     </span>
                   </div>
                 </div>
@@ -749,18 +748,18 @@ export default function GalleryPage({ onNavigateToAdmin: _onNavigateToAdmin }: G
             onClick={() => setSelectedItem(null)}
           >
             <div 
-              className="bg-[#241E1B] border border-[#D4AF37]/40 rounded-2xl max-w-3xl w-full overflow-hidden shadow-2xl relative text-[#E6DFD5]"
+              className="bg-[#0f1938] border border-[#D4AF37]/40 rounded-2xl max-w-3xl w-full overflow-hidden shadow-2xl relative text-white"
               onClick={(e) => e.stopPropagation()}
             >
               <button
                 onClick={() => setSelectedItem(null)}
-                className="absolute top-4 right-4 z-10 bg-black/70 hover:bg-black text-white p-2 rounded-full backdrop-blur-md transition-colors cursor-pointer border border-white/20"
+                className="absolute top-4 right-4 z-10 bg-black/70 hover:bg-black text-white p-2 rounded-full shadow-md transition-colors cursor-pointer border border-white/20"
               >
                 <X className="w-5 h-5" />
               </button>
 
               <div className="grid grid-cols-1 sm:grid-cols-2">
-                <div className="relative h-72 sm:h-auto min-h-[320px] bg-black flex items-center justify-center p-2">
+                <div className="relative h-72 sm:h-auto min-h-[320px] bg-[#050a1a] flex items-center justify-center p-3">
                   <img
                     src={selectedItem.originalImagePath || selectedItem.imagePath}
                     alt={selectedItem.title}
@@ -768,7 +767,7 @@ export default function GalleryPage({ onNavigateToAdmin: _onNavigateToAdmin }: G
                   />
                   <div className="absolute top-3 left-3 flex flex-wrap gap-2 gap-y-1.5 max-w-[85%] z-10">
                     {getItemCategories(selectedItem).map((cat) => (
-                      <span key={cat} className="bg-black/70 backdrop-blur-md px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider text-[#D4AF37] border border-[#D4AF37]/30 shadow-sm">
+                      <span key={cat} className="bg-[#050a1a]/90 backdrop-blur-md px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider text-[#ffdea5] border border-[#D4AF37]/30 shadow-2xs">
                         {cat}
                       </span>
                     ))}
@@ -777,29 +776,29 @@ export default function GalleryPage({ onNavigateToAdmin: _onNavigateToAdmin }: G
 
                 <div className="p-6 sm:p-8 flex flex-col justify-between space-y-6">
                   <div className="space-y-3">
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-[#D4AF37] block">
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-[#ffdea5] block">
                       ARTISAN PORTFOLIO ITEM
                     </span>
-                    <h3 className="font-serif text-2xl font-bold text-white leading-tight">
+                    <h3 className="font-serif text-2xl font-bold text-[#fbfbfa] leading-tight">
                       {selectedItem.title}
                     </h3>
-                    <p className="text-xs text-gray-300 leading-relaxed font-light">
+                    <p className="text-xs text-gray-300 leading-relaxed">
                       {selectedItem.autoDescription || "Scratch-cooked with authentic spices and artisanal craftsmanship for special celebrations across Dallas-Fort Worth."}
                     </p>
                   </div>
 
-                  <div className="space-y-4 pt-4 border-t border-[#382F2A]">
-                    <div className="flex items-center gap-2 text-xs text-[#D4AF37]">
-                      <Sparkles className="w-4 h-4 text-[#D4AF37]" />
+                  <div className="space-y-4 pt-4 border-t border-white/10">
+                    <div className="flex items-center gap-2 text-xs text-[#ffdea5] font-medium">
+                      <Sparkles className="w-4 h-4 text-[#ffdea5]" />
                       <span>Freshly Prepared in Little Elm / Frisco, TX</span>
                     </div>
 
                     <a
                       href="/catering/food"
-                      className="w-full min-h-[44px] inline-flex items-center justify-center gap-2 bg-[#D4AF37] hover:bg-[#b5932a] text-[#1A1614] rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-md"
+                      className="w-full min-h-[44px] inline-flex items-center justify-center gap-2 bg-[#775a19] hover:bg-[#5d4201] text-white rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-md"
                     >
                       <MessageSquare className="w-4 h-4" />
-                      <span>Inquire &amp; Order Catering Feast</span>
+                      <span>Inquire &amp; Order This Creation</span>
                     </a>
                   </div>
                 </div>

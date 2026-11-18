@@ -24,10 +24,10 @@ export default function CakesPage({ onOpenBaker, onCreateQuote }: CakesPageProps
   };
 
   return (
-    <div className="animate-fade-in bg-brand-cream-light min-h-screen">
+    <div className="royal-dark-page animate-fade-in bg-[#050a1a] min-h-screen">
       
       {/* ── STICKY FLOATING ACTION BAR FOR CAKES TAB ── */}
-      <div className="sticky top-0 lg:top-[var(--header-nav-bottom,64px)] z-40 bg-[#00346f]/95 backdrop-blur-md text-white border-b border-[#775a19]/30 py-2.5 px-4 shadow-md transition-all">
+      <div className="sticky top-0 lg:top-[var(--header-nav-bottom,64px)] z-40 bg-[#0a1128]/95 backdrop-blur-md text-white border-b border-[#D4AF37]/30 py-2.5 px-4 shadow-md transition-all">
         <div className="max-w-7xl mx-auto flex flex-row items-center justify-between gap-3">
           <div className="hidden sm:flex items-center gap-2 font-serif text-sm font-bold text-brand-cream">
             <Sparkles className="h-4 w-4 text-brand-gold-tint" />
@@ -52,17 +52,17 @@ export default function CakesPage({ onOpenBaker, onCreateQuote }: CakesPageProps
       </div>
 
       {/* Elegant Hero Section */}
-      <header className="relative py-20 lg:py-32 overflow-hidden">
+      <header className="relative py-20 lg:py-32 overflow-hidden bg-[#050a1a]">
         {/* Background with soft luxury overlay */}
         <div className="absolute inset-0 z-0">
           <img 
             src="src/assets/images/hero_cakes_desserts_1781194959946.jpg" 
             alt="Premium Baked goods table" 
-            className="w-full h-full object-cover scale-105 filter brightness-85"
+            className="w-full h-full object-cover scale-105 filter brightness-75"
             referrerPolicy="no-referrer"
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-[#00346f]/60 via-[#00346f]/40 to-[#fbfbfa]/50" />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#fbfbfa] via-[#fbfbfa]/10 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-r from-[#050a1a]/90 via-[#050a1a]/65 to-[#050a1a]/40" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#050a1a] via-[#050a1a]/25 to-transparent" />
         </div>
 
         <div className="relative z-10 max-w-7xl mx-auto px-4 lg:px-6 lg:px-8 text-white lg:text-left">
@@ -120,7 +120,7 @@ export default function CakesPage({ onOpenBaker, onCreateQuote }: CakesPageProps
             <div className="p-6 lg:p-8">
               <h3 className="font-serif text-2xl font-bold text-primary-brand mb-2">Custom Celebration Cakes</h3>
               <p className="text-gray-600 text-xs lg:text-sm font-sans mb-4 leading-normal">
-                Made-to-order cakes for birthdays, anniversaries, and milestones. Theme Cakes, Kids Birthdays, and Elegant Florals. Hand-decorated by master artists.
+                Made-to-order cakes for birthdays, anniversaries, and milestones. Theme Cakes, Kids Birthdays, and Elegant Florals — freshly baked and hand-decorated to order.
               </p>
               <div className="flex flex-wrap gap-2">
                 {["Butterscotch Drizzle", "Racing Legend", "Jungle Adventure", "Berry Chantilly"].map((tag) => (
@@ -424,7 +424,7 @@ export default function CakesPage({ onOpenBaker, onCreateQuote }: CakesPageProps
             {/* Customization Note Banner */}
             <div className="border-t border-gray-100 pt-6">
               <p className="text-gray-700 text-xs font-semibold font-sans italic text-center">
-                Custom themes, personalized designs, and eggless options available.
+                Custom themes, personalized designs, and 100% eggless options available on request (+$5 for 6″ / +$10 for 8″ / +$15 for 2-Tier / +$25 for 3-Tier).
               </p>
             </div>
           </div>
@@ -533,7 +533,7 @@ export default function CakesPage({ onOpenBaker, onCreateQuote }: CakesPageProps
               <div className="p-4 flex-1 flex flex-col justify-between">
                 <div className="space-y-1 mb-3">
                   <h4 className="font-serif text-sm font-bold text-[#00346f] uppercase">Artisan Display</h4>
-                  <p className="text-gray-500 text-[10px] font-sans leading-normal">A daily batch of freshly baked cookies, crafted with premium European butter and organic sugar.</p>
+                  <p className="text-gray-500 text-[10px] font-sans leading-normal">A daily batch of freshly baked cookies made with real unsalted butter, organic flour, and hand-picked ingredients.</p>
                 </div>
               </div>
             </div>
@@ -543,7 +543,7 @@ export default function CakesPage({ onOpenBaker, onCreateQuote }: CakesPageProps
           {/* Cookie Description Banner */}
           <div className="mt-8 bg-[#faf7f2]/55 border border-gray-150 rounded-2xl p-6 text-center">
             <p className="text-gray-700 text-xs lg:text-sm font-sans leading-relaxed max-w-3xl mx-auto font-medium">
-              ★ Our premium thick-style cookies are hand-rolled daily in our Frisco kitchen, using slow-churned butter and organic flour. Perfect for family sweet cravings or custom event cookie boxes.
+              ★ Our thick-style cookies are hand-rolled and baked fresh in small batches using real butter, organic flour, and locally sourced, hand-picked ingredients — top-quality craftsmanship you won&apos;t find in store-bought treats.
             </p>
           </div>
         </div>
@@ -556,7 +556,7 @@ export default function CakesPage({ onOpenBaker, onCreateQuote }: CakesPageProps
           <div className="mb-12 text-center">
             <h2 className="font-serif text-3xl lg:text-4xl font-bold text-primary-brand mb-3">Choose Your Flavor</h2>
             <p className="text-gray-600 font-sans text-xs lg:text-sm max-w-xl mx-auto">
-              Crafting layers of taste with precision and the finest global ingredients.
+              Crafting layers of flavor with locally sourced, organic, and hand-picked farmers market ingredients — never store-bought shortcuts.
             </p>
           </div>
 
@@ -584,17 +584,17 @@ export default function CakesPage({ onOpenBaker, onCreateQuote }: CakesPageProps
             ))}
 
             {/* Recommendation Baker Box */}
-            <div className="border border-brand-gold-tint/40 rounded bg-[#ffdea5] p-6 shadow-xs flex flex-col justify-between text-gray-900 lg:col-span-1">
+            <div className="border border-[#D4AF37]/40 rounded bg-[#16244d] p-6 shadow-xs flex flex-col justify-between text-white lg:col-span-1">
               <div>
-                <span className="text-xs font-serif italic text-brand-gold-shadow font-semibold block mb-2">Heritage Consult</span>
-                <p className="text-gray-800 text-xs lg:text-sm font-sans leading-relaxed mb-4">
+                <span className="text-xs font-serif italic text-[#ffdea5] font-semibold block mb-2">Heritage Consult</span>
+                <p className="text-gray-200 text-xs lg:text-sm font-sans leading-relaxed mb-4">
                   Not sure which flavor to choose? We&apos;d be happy to help you find the perfect match for your celebration.
                 </p>
               </div>
 
               <button
                 onClick={onOpenBaker}
-                className="w-full bg-brand-gold-shadow text-white hover:bg-brand-gold-shadow/90 py-3 text-xs font-bold tracking-widest uppercase rounded shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer font-sans"
+                className="w-full bg-[#775a19] text-white hover:bg-[#5d4201] py-3 text-xs font-bold tracking-widest uppercase rounded shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer font-sans"
               >
                 <MessageSquare className="h-4 w-4" /> TALK TO A BAKER
               </button>
@@ -617,7 +617,7 @@ export default function CakesPage({ onOpenBaker, onCreateQuote }: CakesPageProps
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center bg-white p-6 lg:p-10 rounded-3xl border border-[#c59b27]/20 shadow-xl">
             
             {/* Visual Cake Tier Representation */}
-            <div className="lg:col-span-6 flex flex-col items-center justify-center p-8 bg-gradient-to-b from-[#FAF7F2] to-[#F3EEE3] rounded-2xl border border-gray-150 relative min-h-[340px]">
+            <div className="lg:col-span-6 flex flex-col items-center justify-center p-8 bg-gradient-to-b from-[#0a1128] to-[#050a1a] rounded-2xl border border-gray-150 relative min-h-[340px]">
               
               {/* 3D Tier Silhouettes */}
               <div className="flex flex-col items-center justify-end h-64 gap-1.5 transition-all duration-500">
@@ -721,7 +721,7 @@ export default function CakesPage({ onOpenBaker, onCreateQuote }: CakesPageProps
                   </button>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  {["Rasmalai Fusion", "Belgian Biscoff", "Alphonso Mango", "Belgian Chocolate", "Butterscotch Chantilly"].map((fl) => (
+                  {["Rasmalai Fusion", "Lotus Biscoff", "Mango Cream", "Rich Dark Chocolate", "Butterscotch Chantilly"].map((fl) => (
                     <button
                       key={fl}
                       onClick={() => setSelectedFlavor(fl)}
@@ -738,20 +738,20 @@ export default function CakesPage({ onOpenBaker, onCreateQuote }: CakesPageProps
                 </div>
               </div>
 
-              <div className="p-4 rounded-xl bg-amber-50/60 border border-amber-200/80 flex items-center justify-between">
+              <div className="p-4 rounded-xl bg-[#16244d] border border-[#D4AF37]/30 flex items-center justify-between">
                 <div>
-                  <span className="text-[10px] font-bold text-[#775a19] uppercase block tracking-wider font-sans">Selected Configuration</span>
-                  <div className="text-xs font-serif font-bold text-[#00346f]">
+                  <span className="text-[10px] font-bold text-[#ffdea5] uppercase block tracking-wider font-sans">Selected Configuration</span>
+                  <div className="text-xs font-serif font-bold text-white">
                     {
                       selectedSizeId === '6inch' ? '6″ Single Tier' :
                       selectedSizeId === '8inch' ? '8″ Single Tier' :
                       selectedSizeId === '2tier' ? '2-Tier (6″ + 8″ Tiers)' :
                       '3-Tier (6″ + 8″ + 10″ Tiers)'
-                    } ({selectedFlavor}) {isEggless && <span className="text-emerald-700 font-sans text-[11px] font-bold">[Eggless Recipe]</span>}
+                    } ({selectedFlavor}) {isEggless && <span className="text-emerald-400 font-sans text-[11px] font-bold">[Eggless Recipe]</span>}
                   </div>
                 </div>
                 <button
-                  onClick={onCreateQuote}
+                  onClick={handleProceedToConfigurator}
                   className="min-h-[44px] bg-[#775a19] hover:bg-[#5d4201] text-white text-xs font-bold uppercase tracking-wider px-5 py-2.5 rounded-lg shadow-sm transition-all flex items-center gap-1.5 cursor-pointer font-sans"
                 >
                   <span>Build Quote</span>
@@ -768,7 +768,7 @@ export default function CakesPage({ onOpenBaker, onCreateQuote }: CakesPageProps
       <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-[#00346f]/95 backdrop-blur-md border-t border-[#c59b27]/30 p-3 pb-safe shadow-2xl">
         <div className="flex items-center gap-3">
           <button
-            onClick={onCreateQuote}
+            onClick={handleProceedToConfigurator}
             className="flex-1 min-h-[44px] bg-[#775a19] hover:bg-[#5d4201] text-white font-sans text-xs font-bold uppercase tracking-wider rounded-xl shadow-md flex items-center justify-center gap-2 cursor-pointer"
           >
             <Cake className="h-4 w-4 text-brand-gold-tint" />
@@ -787,4 +787,3 @@ export default function CakesPage({ onOpenBaker, onCreateQuote }: CakesPageProps
     </div>
   );
 }
-

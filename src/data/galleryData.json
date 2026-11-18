@@ -21,7 +21,7 @@
     "createdAt": "2026-09-25T18:56:52.924Z",
     "imagePath": "/gallery/gallery_02.png",
     "isCustomEdited": true,
-    "autoDescription": "Whole black lentils simmered overnight for 16 hours over low heat, finished with fresh butter, organic cream, and aromatic spices."
+    "autoDescription": "Whole black lentils simmered slowly over low heat, finished with fresh butter, heavy cream, and aromatic whole spices."
   },
   {
     "id": "item-3",
@@ -226,7 +226,7 @@
     "createdAt": "2026-09-06T18:56:53.005Z",
     "imagePath": "/gallery/gallery_21.jpg",
     "isCustomEdited": true,
-    "autoDescription": "Bite-sized truffle cake pops dipped in premium Belgian chocolate and decorated with festive sprinkles."
+    "autoDescription": "Bite-sized truffle cake pops dipped in rich dark chocolate and decorated with festive sprinkles."
   },
   {
     "id": "item-22",
@@ -274,7 +274,7 @@
     "createdAt": "2026-09-02T18:56:53.021Z",
     "imagePath": "/gallery/gallery_25.jpg",
     "isCustomEdited": true,
-    "autoDescription": "Multi-tiered Superhero Spidey cake crafted with three distinct flavor layers: Belgian Chocolate, Vanilla Chiffon, and Berry."
+    "autoDescription": "Multi-tiered Superhero Spidey cake crafted with three distinct flavor layers: Rich Chocolate, Vanilla Chiffon, and Berry."
   },
   {
     "id": "item-26",
@@ -326,7 +326,7 @@
   },
   {
     "id": "item-30",
-    "title": "Belgian Chocolate Decadence Cake Pops",
+    "title": "Rich Chocolate Decadence Cake Pops",
     "visible": true,
     "category": [
       "Artisanal Cakes & Bakes"
@@ -646,7 +646,7 @@
     "createdAt": "2026-08-02T18:56:53.136Z",
     "imagePath": "/gallery/gallery_56.jpg",
     "isCustomEdited": true,
-    "autoDescription": "Custom two-tiered cake pairing Oreo cookies & cream filling on one tier with rich Belgian chocolate ganache on the second."
+    "autoDescription": "Custom two-tiered cake pairing Oreo cookies & cream filling on one tier with rich dark chocolate ganache on the second."
   },
   {
     "id": "item-57",

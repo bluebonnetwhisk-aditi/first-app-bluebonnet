@@ -56,7 +56,7 @@ export default function AboutPage() {
   ];
 
   return (
-    <div className="bg-brand-cream-light min-h-screen animate-fade-in font-sans selection:bg-secondary-brand/20">
+    <div className="royal-dark-page bg-[#050a1a] min-h-screen animate-fade-in font-sans selection:bg-secondary-brand/20">
       
       {/* ── OUR STORY SECTION (2-COLUMN) ── */}
       <section className="max-w-7xl mx-auto px-4 lg:px-8 py-20">
@@ -140,7 +140,7 @@ export default function AboutPage() {
                 </p>
               </div>
               <div className="flex gap-2 mt-4">
-                <span className="text-[9px] font-bold tracking-wider uppercase bg-brand-rose text-brand-rose-dark px-2 py-0.5 rounded-sm font-sans">NON-GMO</span>
+                <span className="text-[9px] font-bold tracking-wider uppercase bg-brand-rose text-brand-rose-dark px-2 py-0.5 rounded-sm font-sans">FARMERS MARKET</span>
                 <span className="text-[9px] font-bold tracking-wider uppercase bg-brand-pistachio text-brand-pistachio-dark px-2 py-0.5 rounded-sm font-sans">ORGANIC</span>
               </div>
             </div>

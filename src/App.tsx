@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
 import { 
-  Instagram, 
   X,
   ShoppingBag
 } from "lucide-react";
@@ -244,16 +243,16 @@ export default function App() {
   ];
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#fbfbfa]">
+    <div className="min-h-screen flex flex-col bg-[#050a1a] text-[#fbfbfa]">
       
       {/* Promotion Bar */}
-      <div className="bg-[#00346f] text-white text-center py-2.5 text-[11px] font-sans tracking-widest uppercase font-semibold border-b border-[#775a19]/25 z-40 relative">
-        ✨ Free consult & custom flavor matching in our physical workshop • 
-        <span className="text-[#ffdea5] font-bold"> Eggless options standard</span>
+      <div className="bg-[#0a1128] text-white text-center py-2.5 px-3 text-[11px] font-sans tracking-widest uppercase font-semibold border-b border-[#D4AF37]/25 z-40 relative">
+        ✨ Handcrafted in Little Elm &amp; Frisco, TX • Fresh Daily Tiffin, Pure Veg Catering &amp; Custom Cakes • 
+        <span className="text-[#ffdea5] font-bold"> Eggless options available (+$)</span>
       </div>
 
       {/* Header / Navbar */}
-      <nav ref={navRef} className="sticky top-0 z-45 bg-[#fbfbfa]/90 backdrop-blur-xl border-b border-[#D4AF37]/25 py-1 sm:py-2 shadow-xs">
+      <nav ref={navRef} className="sticky top-0 z-45 bg-[#050a1a]/90 backdrop-blur-xl border-b border-[#D4AF37]/25 py-1 sm:py-2 shadow-lg">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-14 sm:h-20 lg:h-24 gap-4 sm:gap-6">
             
@@ -265,7 +264,7 @@ export default function App() {
               <img 
                 src={brandLogo} 
                 alt="Bluebonnet Whisk" 
-                className="h-10 sm:h-16 lg:h-20 max-h-20 w-auto object-contain transition-transform duration-300 group-hover:scale-105 filter drop-shadow-sm"
+                className="h-10 sm:h-16 lg:h-20 max-h-20 w-auto object-contain transition-transform duration-300 group-hover:scale-105 filter drop-shadow-[0_2px_10px_rgba(212,175,55,0.25)]"
               />
             </div>
 
@@ -275,10 +274,10 @@ export default function App() {
                 <button
                   key={link.id}
                   onClick={() => handleNavigate(link.id, link.path)}
-                  className={`font-sans text-xs uppercase tracking-wider font-semibold pb-1 transition-all border-b-2 hover:text-[#00346f] hover:border-[#00346f] cursor-pointer whitespace-nowrap ${
+                  className={`font-sans text-xs uppercase tracking-wider font-semibold pb-1 transition-all border-b-2 hover:text-[#ffdea5] hover:border-[#ffdea5] cursor-pointer whitespace-nowrap ${
                     activeTab === link.id
-                      ? "text-[#00346f] border-[#00346f] font-bold"
-                      : "text-gray-500 border-transparent"
+                      ? "text-[#ffdea5] border-[#ffdea5] font-bold"
+                      : "text-gray-300 border-transparent"
                   }`}
                 >
                   {link.name}
@@ -287,7 +286,7 @@ export default function App() {
 
               <button
                 onClick={() => handleNavigate("Catering", "/catering/food")}
-                className="bg-[#00346f] hover:bg-[#00224d] text-white font-sans text-xs uppercase tracking-wider font-bold px-4 py-2 rounded-xl shadow-md transition-all cursor-pointer whitespace-nowrap border border-[#00346f] hover:scale-105 flex items-center gap-1.5 ml-2"
+                className="bg-[#775a19] hover:bg-[#5d4201] text-white font-sans text-xs uppercase tracking-wider font-bold px-4 py-2 rounded-xl shadow-md transition-all cursor-pointer whitespace-nowrap border border-[#D4AF37]/40 hover:scale-105 flex items-center gap-1.5 ml-2"
               >
                 <ShoppingBag className="w-3.5 h-3.5 text-[#ffdea5]" />
                 <span>Create Order</span>
@@ -298,7 +297,7 @@ export default function App() {
             <div className="lg:hidden flex items-center gap-2">
               <button
                 onClick={() => handleNavigate("Catering", "/catering/food")}
-                className="bg-[#00346f] hover:bg-[#00224d] text-white font-sans text-xs uppercase tracking-wider font-bold px-3 py-1.5 rounded-xl shadow-sm transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5"
+                className="bg-[#775a19] hover:bg-[#5d4201] text-white font-sans text-xs uppercase tracking-wider font-bold px-3 py-1.5 rounded-xl shadow-sm transition-all cursor-pointer whitespace-nowrap border border-[#D4AF37]/40 flex items-center gap-1.5"
               >
                 <ShoppingBag className="w-3.5 h-3.5 text-[#ffdea5]" />
                 <span>Order</span>
@@ -309,7 +308,7 @@ export default function App() {
         </div>
 
         {/* Secondary Mobile/Tablet Toolbar (under 1024px) */}
-        <div className="lg:hidden bg-[#fbfbfa]/95 border-t border-gray-150 py-1 overflow-x-auto scrollbar-none">
+        <div className="lg:hidden bg-[#0a1128]/95 border-t border-white/10 py-1 overflow-x-auto scrollbar-none">
           <div className="flex px-4 space-x-3 whitespace-nowrap min-w-max">
             {navLinks.map((link) => (
               <button
@@ -317,8 +316,8 @@ export default function App() {
                 onClick={() => handleNavigate(link.id, link.path)}
                 className={`font-sans text-[11px] sm:text-xs uppercase tracking-wider font-semibold min-h-[34px] px-2 py-0.5 flex items-center transition-all border-b-2 cursor-pointer ${
                   activeTab === link.id
-                    ? "text-[#00346f] border-[#00346f] font-bold"
-                    : "text-gray-500 border-transparent hover:text-gray-900"
+                    ? "text-[#ffdea5] border-[#ffdea5] font-bold"
+                    : "text-gray-300 border-transparent hover:text-white"
                 }`}
               >
                 {link.name}
@@ -331,9 +330,9 @@ export default function App() {
       {/* RENDER ACTIVE TAB */}
       <main className="flex-1">
         <React.Suspense fallback={
-          <div className="min-h-[50vh] flex flex-col items-center justify-center p-8 space-y-3">
-            <div className="w-10 h-10 border-4 border-[#00346f] border-t-transparent rounded-full animate-spin" />
-            <span className="text-xs font-bold uppercase tracking-wider text-[#00346f]">Loading Experience...</span>
+          <div className="min-h-[50vh] flex flex-col items-center justify-center p-8 space-y-3 bg-[#050a1a]">
+            <div className="w-10 h-10 border-4 border-[#ffdea5] border-t-transparent rounded-full animate-spin" />
+            <span className="text-xs font-bold uppercase tracking-wider text-[#ffdea5]">Loading Experience...</span>
           </div>
         }>
           {activeTab === "Home" && (
@@ -371,7 +370,7 @@ export default function App() {
       </main>
 
       {/* FOOTER */}
-      <footer className="bg-gray-100 border-t border-gray-250 py-12 text-[#1a1c20] font-sans mt-auto">
+      <footer className="bg-[#0a1128] border-t border-white/10 py-12 text-gray-300 font-sans mt-auto">
         <div className="max-w-7xl mx-auto px-4 lg:px-6 lg:px-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
           
           {/* Logo and brief summary */}
@@ -383,31 +382,34 @@ export default function App() {
               <img 
                 src={brandLogo} 
                 alt="Bluebonnet Whisk" 
-                className="h-16 sm:h-20 w-auto object-contain transition-transform duration-300 group-hover:scale-105"
+                className="h-16 sm:h-20 w-auto object-contain transition-transform duration-300 group-hover:scale-105 filter drop-shadow-[0_2px_10px_rgba(212,175,55,0.25)]"
               />
             </div>
-            <p className="text-gray-500 text-xs leading-relaxed max-w-xs font-sans">
+            <p className="text-gray-400 text-xs leading-relaxed max-w-xs font-sans">
               Crafting modern heritage through the lens of luxury patisserie and Indian fusion artistry. Handcrafted daily with 100% natural, premium spices.
             </p>
-            <div className="flex gap-4">
-              <a href="https://instagram.com" target="_blank" rel="noreferrer" className="text-gray-400 hover:text-primary-brand transition-colors p-2 min-h-[44px] min-w-[44px] flex items-center justify-center" aria-label="Instagram">
-                <Instagram className="h-5 w-5" />
+            <div className="flex flex-wrap gap-2.5 pt-1">
+              <a href="https://wa.me/19455274566" target="_blank" rel="noreferrer" className="text-xs font-bold text-[#ffdea5] hover:text-white border border-[#D4AF37]/35 bg-[#0f1938] px-3.5 py-2 rounded-lg transition-colors">
+                WhatsApp Us
               </a>
-              <a href="https://threads.net" target="_blank" rel="noreferrer" className="text-gray-400 hover:text-primary-brand transition-colors p-2 min-h-[44px] min-w-[44px] flex items-center justify-center" aria-label="Threads">
-                <span className="font-bold font-serif text-lg leading-none">@</span>
+              <a href="tel:+19455274566" className="text-xs font-bold text-[#ffdea5] hover:text-white border border-[#D4AF37]/35 bg-[#0f1938] px-3.5 py-2 rounded-lg transition-colors">
+                Call Kitchen
+              </a>
+              <a href="sms:+19455274566" className="text-xs font-bold text-[#ffdea5] hover:text-white border border-[#D4AF37]/35 bg-[#0f1938] px-3.5 py-2 rounded-lg transition-colors">
+                Text / SMS
               </a>
             </div>
           </div>
 
           {/* Quick Links Column */}
           <div>
-            <h4 className="text-[10px] font-bold tracking-widest uppercase text-gray-400 mb-4 font-sans">QUICK LINKS</h4>
-            <ul className="space-y-2.5 text-xs text-gray-600 font-sans">
+            <h4 className="text-[10px] font-bold tracking-widest uppercase text-[#ffdea5] mb-4 font-sans">QUICK LINKS</h4>
+            <ul className="space-y-2.5 text-xs text-gray-300 font-sans">
               {navLinks.map((link) => (
                 <li key={link.id}>
                   <button 
                     onClick={() => setActiveTab(link.id)}
-                    className="hover:text-[#00346f] transition-colors block text-left w-full cursor-pointer py-1"
+                    className="hover:text-[#ffdea5] transition-colors block text-left w-full cursor-pointer py-1"
                   >
                     {link.name}
                   </button>
@@ -418,10 +420,10 @@ export default function App() {
 
           {/* Support Column */}
           <div>
-            <h4 className="text-[10px] font-bold tracking-widest uppercase text-gray-400 mb-4 font-sans font-semibold">SUPPORT</h4>
-            <ul className="space-y-2.5 text-xs text-gray-600 font-sans font-medium">
+            <h4 className="text-[10px] font-bold tracking-widest uppercase text-[#ffdea5] mb-4 font-sans font-semibold">SUPPORT</h4>
+            <ul className="space-y-2.5 text-xs text-gray-300 font-sans font-medium">
               <li>
-                <button onClick={() => setActiveTab("About")} className="hover:text-primary-brand transition-colors block text-left w-full cursor-pointer py-1">Contact Us</button>
+                <button onClick={() => setActiveTab("About")} className="hover:text-[#ffdea5] transition-colors block text-left w-full cursor-pointer py-1">Contact Us</button>
               </li>
               <li>
                 <span className="text-gray-400 block cursor-default py-1">Shipping Info (Local DFW only)</span>
@@ -434,13 +436,13 @@ export default function App() {
 
           {/* Newsletter signup */}
           <div className="space-y-3">
-            <h4 className="text-[10px] font-bold tracking-widest uppercase text-gray-400 mb-4 font-sans">NEWSLETTER</h4>
-            <p className="text-[#1a1c20] text-xs font-sans leading-normal">
+            <h4 className="text-[10px] font-bold tracking-widest uppercase text-[#ffdea5] mb-4 font-sans">NEWSLETTER</h4>
+            <p className="text-gray-300 text-xs font-sans leading-normal">
               Join our list for seasonal collections, festival box releases, and custom sweet updates.
             </p>
             
             {newsletterAlert ? (
-              <div className="bg-emerald-50 border border-emerald-100 p-2.5 text-emerald-800 text-xs font-semibold rounded-xl font-sans">
+              <div className="bg-emerald-950/60 border border-emerald-500/40 p-2.5 text-emerald-300 text-xs font-semibold rounded-xl font-sans">
                 ✓ Joined successfully! Watch out for seasonal catalogs.
               </div>
             ) : (
@@ -451,11 +453,11 @@ export default function App() {
                   value={newsletterEmail}
                   onChange={(e) => setNewsletterEmail(e.target.value)}
                   placeholder="Email Address"
-                  className="flex-1 border border-gray-200 bg-white placeholder-gray-400 text-base sm:text-xs min-h-[44px] px-3 py-2.5 rounded-xl focus:outline-none focus:border-[#00346f]"
+                  className="flex-1 border border-[#D4AF37]/30 bg-[#0f1938] text-white placeholder-gray-400 text-base sm:text-xs min-h-[44px] px-3 py-2.5 rounded-xl focus:outline-none focus:border-[#ffdea5]"
                 />
                 <button
                   type="submit"
-                  className="bg-[#00346f] hover:bg-[#00346f]/95 text-white min-h-[44px] px-5 py-2.5 text-xs font-semibold uppercase tracking-wider rounded-xl transition-all cursor-pointer shrink-0 inline-flex items-center justify-center"
+                  className="bg-[#775a19] hover:bg-[#5d4201] text-white min-h-[44px] px-5 py-2.5 text-xs font-semibold uppercase tracking-wider rounded-xl border border-[#D4AF37]/40 transition-all cursor-pointer shrink-0 inline-flex items-center justify-center"
                 >
                   JOIN
                 </button>
@@ -465,11 +467,11 @@ export default function App() {
 
         </div>
 
-        <div className="max-w-7xl mx-auto px-4 lg:px-6 lg:px-8 border-t border-gray-200/50 mt-10 pt-6 text-center text-[11px] text-gray-400 font-sans space-y-2">
+        <div className="max-w-7xl mx-auto px-4 lg:px-6 lg:px-8 border-t border-white/10 mt-10 pt-6 text-center text-[11px] text-gray-400 font-sans space-y-2">
           <p className="italic max-w-3xl mx-auto leading-relaxed">
             “Prepared in a home kitchen that is not inspected by the Texas Department of State Health Services or local health departments. This product is made in a cottage food operation that is not subject to Texas food establishment regulations.”
           </p>
-          <p className="pt-2 border-t border-gray-200/30">
+          <p className="pt-2 border-t border-white/5">
             © 2026 Bluebonnet Whisk. All rights reserved. Modern Heritage Patisserie.
           </p>
         </div>
@@ -524,11 +526,10 @@ export default function App() {
               </div>
 
               <div className="border border-gray-150 rounded-xl bg-amber-50/40 p-3.5 text-[11px] leading-relaxed text-[#775a19] font-medium">
-                <strong>Surcharges:</strong>
+                <strong>Surcharges &amp; Customizations:</strong>
                 <ul className="mt-1 space-y-0.5 list-disc pl-3">
-                  <li>Indian Fusion Flavors: +$15.00</li>
-                  <li>Specialist dietary changes (Gluten-Free/Vegan): +$10.00</li>
-                  <li>Eggless selection: +$5.00</li>
+                  <li>Indian Fusion Flavors: +$10.00 – $15.00</li>
+                  <li>100% Eggless Recipe Option: +$5 (6&quot;) / +$10 (8&quot;) / +$15 (2-Tier) / +$25 (3-Tier)</li>
                 </ul>
               </div>
             </div>

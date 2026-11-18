@@ -110,8 +110,9 @@ export function TrayPricingHeader() {
             Freshly crafted in Frisco, TX &amp; DFW metroplex. Flat $50 delivery fee or free pickup. Strict 24h advance notice.
           </span>
           <div className="flex items-center gap-4 text-gray-700 font-medium">
-            <span className="inline-flex items-center gap-1"><Phone className="w-3 h-3 text-[#00346f]" /> 945-527-4566</span>
-            <span className="inline-flex items-center gap-1"><Mail className="w-3 h-3 text-[#00346f]" /> bluebonnetwhisk@gmail.com</span>
+            <a href="tel:+19455274566" className="inline-flex items-center gap-1 hover:underline"><Phone className="w-3 h-3 text-[#00346f]" /> Call Kitchen</a>
+            <a href="https://wa.me/19455274566" target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 hover:underline text-emerald-700 font-bold">WhatsApp Us</a>
+            <a href="mailto:bluebonnetwhisk@gmail.com" className="inline-flex items-center gap-1 hover:underline"><Mail className="w-3 h-3 text-[#00346f]" /> bluebonnetwhisk@gmail.com</a>
             <span className="inline-flex items-center gap-1"><Globe className="w-3 h-3 text-[#00346f]" /> www.bluebonnetwhisk.com</span>
           </div>
         </div>
@@ -223,9 +224,9 @@ export function CateringDifferentiators() {
               <Leaf className="w-4 h-4 sm:w-5 sm:h-5" />
             </div>
             <div>
-              <h3 className="font-serif font-bold text-xs sm:text-base text-emerald-900 leading-tight">Organic Produce</h3>
+              <h3 className="font-serif font-bold text-xs sm:text-base text-emerald-900 leading-tight">Organic &amp; Local Produce</h3>
               <p className="hidden sm:block text-xs text-gray-600 mt-1 leading-relaxed">
-                Fresh produce &amp; whole spices, sourced with utmost care.
+                Locally sourced, hand-picked organic produce, farmers market vegetables &amp; whole spices — top-quality ingredients you won&apos;t find in mass-market kitchens.
               </p>
             </div>
           </div>

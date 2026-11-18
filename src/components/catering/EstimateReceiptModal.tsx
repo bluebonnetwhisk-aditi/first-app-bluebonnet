@@ -171,7 +171,7 @@ export default function EstimateReceiptModal({ order, onClose }: EstimateReceipt
               * 100% Vegetarian Kitchen • All dishes prepared fresh to order in Little Elm / Frisco, Texas.
             </p>
             <p>
-              For inquiries or modifications, call or WhatsApp 945-527-4566 or email bluebonnetwhisk@gmail.com.
+              For inquiries or modifications, tap the WhatsApp button below or email bluebonnetwhisk@gmail.com.
             </p>
           </div>
 

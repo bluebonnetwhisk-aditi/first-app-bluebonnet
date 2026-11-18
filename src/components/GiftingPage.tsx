@@ -36,13 +36,13 @@ export default function GiftingPage({}: GiftingPageProps = {}) {
   const personalizationDetails = [
     { label: "Custom name & message cards", desc: "Add a warm, personal note to match the theme of your event." },
     { label: "Theme-based curation", desc: "Select from festive, elegant, playful, or luxury box motifs." },
-    { label: "Dietary preferences", desc: "100% eggless, nut-free, or gluten-free options are available upon request." },
+    { label: "Dietary preferences", desc: "Eggless (available for an extra charge), nut-free, or Satvik options available upon request." },
     { label: "Balanced sweet & savoury", desc: "Curated medleys of spiced nuts, cookies, and rich fusion sweets." },
     { label: "Premium gifting impact", desc: "Handcrafted boxes finished with silk ribbons and marigold motifs." }
   ];
 
   return (
-    <div className="bg-brand-cream-light min-h-screen animate-fade-in font-sans">
+    <div className="royal-dark-page bg-[#050a1a] min-h-screen animate-fade-in font-sans">
       
       {/* ── HERO SECTION ── */}
       <header className="relative py-24 lg:py-32 overflow-hidden bg-[#050a1a] text-white">

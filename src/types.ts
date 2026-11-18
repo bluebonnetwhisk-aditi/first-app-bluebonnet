@@ -90,7 +90,7 @@ export const flavorCategories: FlavorCategory[] = [
   {
     title: "Premium & Gourmet",
     icon: "Sparkles",
-    flavors: ["Belgian Chocolate", "Ferrero Rocher", "Lotus Biscoff", "Salted Caramel"],
+    flavors: ["Rich Dark Chocolate", "Ferrero Rocher", "Lotus Biscoff", "Salted Caramel"],
     bgStyle: "bg-white text-gray-900 border-l-4 border-secondary-brand"
   },
   {

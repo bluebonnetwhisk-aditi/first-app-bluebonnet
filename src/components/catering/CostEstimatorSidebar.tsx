@@ -74,51 +74,8 @@ export default function CostEstimatorSidebar({
   // Cutoff lead time requirement
   const noticeHours = getRequiredNoticeHours(cart);
 
-  const [emptyCartNotice, setEmptyCartNotice] = useState(false);
-
-  const handleEmptyCheckoutClick = () => {
-    setEmptyCartNotice(true);
-    setTimeout(() => setEmptyCartNotice(false), 3000);
-  };
-
   if (cart.length === 0) {
-    return (
-      <div className="hidden md:block fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur-md border-t border-gray-200 shadow-lg pt-2.5 pb-[max(0.625rem,env(safe-area-inset-bottom,0px))] px-3 sm:px-6 font-sans">
-        <div className="max-w-7xl mx-auto flex items-center justify-between gap-3 text-xs text-gray-500">
-          <div className="flex items-center gap-2 min-w-0">
-            <ShoppingBag className="w-4 h-4 text-gray-400 shrink-0" />
-            <span className="truncate">
-              {emptyCartNotice ? (
-                <strong className="text-amber-700">Please add dishes, cakes, or tiffin meals above to begin checkout!</strong>
-              ) : (
-                <>
-                  Your order selection is empty. Select{' '}
-                  {activeSubTab === 'tiffin'
-                    ? 'daily dabbas or weekly plan'
-                    : activeSubTab === 'cake'
-                    ? 'custom bakes'
-                    : 'catering trays & curries'}{' '}
-                  to order.
-                </>
-              )}
-            </span>
-          </div>
-
-          <div className="flex items-center gap-2 shrink-0">
-            <span className="text-[11px] text-gray-400 hidden sm:inline">
-              24h / 48h Notice
-            </span>
-            <button
-              type="button"
-              onClick={handleEmptyCheckoutClick}
-              className="min-h-[44px] px-3.5 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-600 text-xs font-bold uppercase tracking-wider transition-all cursor-pointer border border-gray-200 inline-flex items-center justify-center"
-            >
-              Checkout (0)
-            </button>
-          </div>
-        </div>
-      </div>
-    );
+    return null;
   }
 
   return (

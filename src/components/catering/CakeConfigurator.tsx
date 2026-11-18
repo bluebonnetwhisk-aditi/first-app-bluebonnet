@@ -83,7 +83,7 @@ export const CAKE_CATEGORIES: CakeCategoryTier[] = [
   {
     id: 'premium',
     name: 'Premium & Indulgent',
-    tagline: 'European chocolate ganache, praline crunches & artisan spreads',
+    tagline: 'Rich dark chocolate ganache, praline crunches & Lotus Biscoff / Nutella spreads',
     price6: 70,
     price8: 140,
     price2tier: 210,
@@ -445,7 +445,7 @@ export default function CakeConfigurator({
                 {selectedCategoryId === 'classic' && 'Pineapple & Strawberry are exclusive to Classic Favorites.'}
                 {selectedCategoryId === 'fusion' && 'Authentic Indian mithai flavors including Rasmalai, Gulab Jamun & Mango.'}
                 {selectedCategoryId === 'fruit' && 'Whole berry compotes, fresh curds & light fruit creams.'}
-                {selectedCategoryId === 'premium' && 'Decadent European ganache, Biscoff, Ferrero Rocher & chocolate hazelnut.'}
+                {selectedCategoryId === 'premium' && 'Rich dark chocolate ganache, Biscoff, Ferrero Rocher & chocolate hazelnut.'}
               </p>
             </div>
             <span className="text-[11px] sm:text-xs font-bold text-[#00346f] bg-white px-2 sm:px-2.5 py-1 rounded-lg border border-gray-200 shadow-2xs shrink-0">

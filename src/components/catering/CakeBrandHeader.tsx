@@ -30,7 +30,7 @@ export default function CakeBrandHeader() {
             <div>
               <h3 className="font-serif font-bold text-xs sm:text-base text-amber-800 leading-tight">Scratch-Baked</h3>
               <p className="hidden sm:block text-xs text-gray-600 mt-1 leading-relaxed">
-                Made with real European butter, fresh dairy cream, and pure Belgian chocolate. Zero commercial powder premixes, artificial stabilizers, or frozen bulk sponges.
+                Made with real unsalted butter, fresh dairy cream, organic flour, and rich dark chocolate — locally sourced, hand-picked ingredients you won&apos;t find in store-bought cakes. Zero commercial premixes, artificial stabilizers, or frozen sponges.
               </p>
             </div>
           </div>
@@ -41,9 +41,9 @@ export default function CakeBrandHeader() {
               <Leaf className="w-4 h-4 sm:w-5 sm:h-5" />
             </div>
             <div>
-              <h3 className="font-serif font-bold text-xs sm:text-base text-emerald-800 leading-tight">Eggless Options</h3>
+              <h3 className="font-serif font-bold text-xs sm:text-base text-emerald-800 leading-tight">Eggless Options (+$)</h3>
               <p className="hidden sm:block text-xs text-gray-600 mt-1 leading-relaxed">
-                Crafted in our dedicated home kitchen with the option for 100% eggless preparation on request. We bake with premium ingredients to ensure heavenly moisture, luscious texture, and rich taste tailored to your dietary preference.
+                Crafted in our home kitchen with 100% eggless preparation available on request for a small extra charge. Soft, moist sponge and balanced sweetness tailored to your family&apos;s preference.
               </p>
             </div>
           </div>

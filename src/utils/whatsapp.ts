@@ -12,7 +12,7 @@ export function getPaymentMethodLabel(method?: string): string {
       return 'Credit Card (+3.5% Processing Fee)';
     case 'zelle':
     default:
-      return 'Zelle Transfer (945-527-4566)';
+      return 'Zelle Transfer (Bluebonnet Whisk)';
   }
 }
 

@@ -460,14 +460,18 @@ export default function TiffinOrderView({
       const activeMenus = isWeekUploaded ? (settings.weekdayMenus || DEFAULT_WEEKDAY_MENUS) : {};
       const menu = activeMenus[dayName] || { dal: '', sabzi: '', description: '' };
 
-      const dalOrCurry = isWeekUploaded
-        ? (isSaturday ? (settings.saturdaySpecialTitle || menu.dal || '') : (menu.dal || ''))
+      const dalOrCurry = (isWeekUploaded && !isWeekend)
+        ? (menu.dal || '')
         : '';
-      const sabzi = isWeekUploaded
-        ? (isSaturday ? (settings.saturdaySpecialDescription || menu.sabzi || '') : (menu.sabzi || ''))
+      const sabzi = (isWeekUploaded && !isWeekend)
+        ? (menu.sabzi || '')
         : '';
 
-      const hasDabbaMenu = isDishAvailable(dalOrCurry) && isDishAvailable(sabzi);
+      const hasDabbaMenu = !isWeekend && isDishAvailable(dalOrCurry) && isDishAvailable(sabzi);
+
+      const hasSaturdayLegacySpecial = isWeekUploaded && isSaturday && (
+        isDishAvailable(settings.saturdaySpecialTitle) || isDishAvailable(menu.dal)
+      );
 
       const hasWeekdaySpecial = isWeekUploaded && !isWeekend && specialsList.some(s => {
         const activeDays = (s.availableDays && s.availableDays.length > 0)
@@ -476,9 +480,9 @@ export default function TiffinOrderView({
         return activeDays.includes(dayName);
       });
 
-      const hasAnyMenuForDay = hasDabbaMenu || hasWeekendSpecialMenu || hasWeekdaySpecial;
+      const hasAnyMenuForDay = hasDabbaMenu || hasWeekendSpecialMenu || hasSaturdayLegacySpecial || hasWeekdaySpecial;
       // If week menu has not been uploaded, or day is past/blackout/closed/empty, ordering is disabled
-      const isSelectable = isWeekUploaded && isTodayOrLater && !isWeekendClosed && !isBlackout && hasAnyMenuForDay;
+      const isSelectable = isWeekUploaded && isTodayOrLater && (!isWeekendClosed || hasSaturdayLegacySpecial) && !isBlackout && hasAnyMenuForDay;
 
       let statusLabel = 'Available to Order';
       if (isBlackout) {
@@ -487,11 +491,11 @@ export default function TiffinOrderView({
         statusLabel = 'Chef Deciding Delicacies • Dropping Soon';
       } else if (isSunday && isWeekendClosed) {
         statusLabel = 'Kitchen Closed (Sunday)';
-      } else if (isSaturday && isWeekendClosed) {
+      } else if (isSaturday && isWeekendClosed && !hasSaturdayLegacySpecial) {
         statusLabel = 'Tiffin Closed (Saturday)';
       } else if (isSunday && !isWeekendClosed) {
         statusLabel = 'Sunday Special Available';
-      } else if (isSaturday && !isWeekendClosed) {
+      } else if (isSaturday && (!isWeekendClosed || hasSaturdayLegacySpecial)) {
         statusLabel = 'Saturday Special Available';
       } else if (dateStr < todayStr) {
         statusLabel = 'Past Date';
@@ -506,7 +510,7 @@ export default function TiffinOrderView({
         dalOrCurry,
         sabzi,
         description: isWeekUploaded ? (menu.description || '') : '',
-        isSaturdaySpecial: isWeekend && isWeekUploaded && Boolean(hasWeekendSpecialMenu),
+        isSaturdaySpecial: isWeekend && isWeekUploaded && Boolean(hasWeekendSpecialMenu || hasSaturdayLegacySpecial),
         isSundayClosed: isSunday && isWeekendClosed,
         isSelectable,
         hasDabbaMenu,
@@ -567,13 +571,36 @@ export default function TiffinOrderView({
   // Active specials specifically enabled for the currently selected activeDay
   const activeSpecialsForDay = useMemo(() => {
     if (!activeDay || !isWeekMenuUploaded) return [];
-    return specialsList.filter(dish => {
+    const matched = specialsList.filter(dish => {
       const activeDays = dish.availableDays && dish.availableDays.length > 0
         ? dish.availableDays
         : ['Saturday', 'Sunday'];
       return activeDays.includes(activeDay.dayName);
     });
-  }, [activeDay, specialsList, isWeekMenuUploaded]);
+    if (matched.length > 0) return matched;
+
+    if (activeDay.dayName === 'Saturday') {
+      const satMenu = settings.weekdayMenus?.['Saturday'];
+      const fallbackTitle = isDishAvailable(satMenu?.dal)
+        ? satMenu!.dal
+        : (isDishAvailable(settings.saturdaySpecialTitle) ? settings.saturdaySpecialTitle! : '');
+      const fallbackDesc = isDishAvailable(satMenu?.sabzi)
+        ? satMenu!.sabzi
+        : (settings.saturdaySpecialDescription || 'Freshly prepared weekend special dish.');
+      if (fallbackTitle) {
+        return [{
+          id: 'saturday-featured-special',
+          title: fallbackTitle,
+          price: 13.99,
+          portionSize: 'Weekend Special',
+          description: fallbackDesc,
+          imageUrl: settings.saturdaySpecialImageUrl || '',
+          availableDays: ['Saturday']
+        }];
+      }
+    }
+    return [];
+  }, [activeDay, specialsList, isWeekMenuUploaded, settings]);
 
   // Helper to trigger alert
   const triggerAddedAlert = (msg: string) => {
@@ -1130,7 +1157,9 @@ export default function TiffinOrderView({
                 </button>
 
                 <a
-                  href="tel:9452830004"
+                  href="https://wa.me/19455274566?text=Hi%20Chef!%20I'd%20like%20to%20request%20a%20dish%20for%20the%20Tiffin%20menu."
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 bg-white hover:bg-gray-50 text-[#775a19] border border-[#e5b95f] px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-2xs"
                 >
                   <span>💬 Whisper Your Cravings to the Chef</span>

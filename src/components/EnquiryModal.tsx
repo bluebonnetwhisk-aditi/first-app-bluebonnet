@@ -205,7 +205,7 @@ export default function EnquiryModal({
                           name="phone"
                           value={formData.phone}
                           onChange={handleInputChange}
-                          placeholder="+1 (945) 527-4566"
+                          placeholder="(555) 123-4567"
                           className={`w-full pl-9 pr-3 py-2 border rounded-md min-h-[44px] text-base sm:text-sm font-sans focus:outline-none transition-all ${
                             errors.phone ? 'border-red-500 focus:border-red-500 bg-red-50/10' : 'border-[#c3c6d2] focus:border-[#00346f]'
                           }`}
