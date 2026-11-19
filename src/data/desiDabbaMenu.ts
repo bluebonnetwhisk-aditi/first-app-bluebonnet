@@ -1,10 +1,10 @@
 import type { MenuItem, TrayPricing, TrayTier } from '../types/catering';
 
 export const TIER_PRICING: Record<TrayTier, TrayPricing> = {
-  Khaas: { third: 35, half: 50, full: 70 },
-  Shahi: { third: 45, half: 60, full: 90 },
-  Darbari: { third: 55, half: 70, full: 110 },
-  Maharaja: { third: 65, half: 80, full: 130 }
+  Khaas: { third: 35, half: 50, full: 70, deepFull: 95 },
+  Shahi: { third: 45, half: 60, full: 90, deepFull: 120 },
+  Darbari: { third: 55, half: 70, full: 110, deepFull: 150 },
+  Maharaja: { third: 65, half: 80, full: 130, deepFull: 175 }
 };
 
 export const ALLERGEN_LABELS = {
@@ -643,7 +643,7 @@ export const DESI_DABBA_ITEMS: MenuItem[] = [
     description: 'Slow-roasted yellow moong lentils simmered in pure ghee, saffron & nuts.',
     allergens: ['D', 'N'],
     pricingType: 'tray',
-    trayPricing: { third: 90, half: 110, full: 180 },
+    trayPricing: { third: 90, half: 110, full: 180, deepFull: 245 },
     leadTimeHours: 24,
     isSatvikAvailable: true
   },
@@ -656,7 +656,7 @@ export const DESI_DABBA_ITEMS: MenuItem[] = [
     description: 'Rich, velvety badam halwa crafted with finely ground almonds, pure ghee & cardamom.',
     allergens: ['D', 'N'],
     pricingType: 'tray',
-    trayPricing: { third: 90, half: 110, full: 180 },
+    trayPricing: { third: 90, half: 110, full: 180, deepFull: 245 },
     leadTimeHours: 24,
     isSatvikAvailable: true
   },

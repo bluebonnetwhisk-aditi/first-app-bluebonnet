@@ -15,7 +15,10 @@ import {
   ChevronUp,
   Plus,
   Minus,
-  Trash2
+  Trash2,
+  ArrowRight,
+  ArrowLeft,
+  Check
 } from 'lucide-react';
 import type { CartItem, CateringOrder, OrderType, PaymentMethod } from '../../types/catering';
 import { 
@@ -75,6 +78,14 @@ export default function CheckoutModal({
   const [dietaryNotes, setDietaryNotes] = useState('');
   const [showOptionalNotes, setShowOptionalNotes] = useState(false);
   const [showItemizedBreakdown, setShowItemizedBreakdown] = useState(false);
+  const [checkoutStep, setCheckoutStep] = useState<1 | 2>(1);
+
+  // Reset to Step 1 when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      setCheckoutStep(1);
+    }
+  }, [isOpen]);
 
   // Load saved customer profile once on mount
   useEffect(() => {
@@ -541,24 +552,53 @@ export default function CheckoutModal({
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-xs p-0 sm:p-4 animate-fade-in font-sans">
       <div className="relative w-full max-w-2xl bg-white rounded-t-3xl sm:rounded-2xl shadow-2xl border border-gray-200 overflow-hidden max-h-[94vh] sm:max-h-[90vh] flex flex-col">
         
-        {/* ── Lean Express Header ── */}
-        <div className="bg-[#00346f] text-white px-4 py-3 sm:px-5 sm:py-4 shrink-0 flex items-center justify-between gap-3">
-          <div className="min-w-0">
-            <span className="text-[10px] font-bold uppercase tracking-widest text-[#ffdea5] block">
-              EXPRESS CHECKOUT • {totalItemQty} {totalItemQty === 1 ? 'ITEM' : 'ITEMS'}
-            </span>
-            <h2 className="font-serif text-base sm:text-xl font-bold truncate">
-              Complete Your Order (${totalAmount.toFixed(2)})
-            </h2>
+        {/* ── Lean 2-Step Express Header ── */}
+        <div className="bg-[#00346f] text-white px-4 py-3 sm:px-5 sm:py-3.5 shrink-0 space-y-2.5">
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-[#ffdea5] block">
+                2-STEP EXPRESS CHECKOUT • {totalItemQty} {totalItemQty === 1 ? 'ITEM' : 'ITEMS'}
+              </span>
+              <h2 className="font-serif text-base sm:text-xl font-bold truncate">
+                {checkoutStep === 1 ? '1. Schedule & Review Order' : `2. Contact & Payment ($${totalAmount.toFixed(2)})`}
+              </h2>
+            </div>
+            <button
+              type="button"
+              onClick={onClose}
+              className="p-1.5 rounded-full text-white/80 hover:text-white hover:bg-white/10 transition-colors cursor-pointer shrink-0"
+              aria-label="Close"
+            >
+              <X className="w-5 h-5" />
+            </button>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="p-1.5 rounded-full text-white/80 hover:text-white hover:bg-white/10 transition-colors cursor-pointer shrink-0"
-            aria-label="Close"
-          >
-            <X className="w-5 h-5" />
-          </button>
+
+          {/* 2-Step Pill Switcher */}
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              onClick={() => setCheckoutStep(1)}
+              className={`py-1.5 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                checkoutStep === 1
+                  ? 'bg-[#ffdea5] text-[#050a1a] shadow-xs'
+                  : 'bg-white/10 text-white/80 hover:bg-white/20'
+              }`}
+            >
+              <Check className={`w-3.5 h-3.5 ${checkoutStep === 2 ? 'text-emerald-300' : 'hidden'}`} />
+              <span>1. When &amp; How</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setCheckoutStep(2)}
+              className={`py-1.5 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                checkoutStep === 2
+                  ? 'bg-[#ffdea5] text-[#050a1a] shadow-xs'
+                  : 'bg-white/10 text-white/80 hover:bg-white/20'
+              }`}
+            >
+              <span>2. Details &amp; Confirm</span>
+            </button>
+          </div>
         </div>
 
         {/* ── Scrollable Express Body ── */}
@@ -571,8 +611,8 @@ export default function CheckoutModal({
             </div>
           )}
 
-          {/* ── 1. FULFILLMENT METHOD & SCHEDULE ── */}
-          <div className="bg-gray-50/90 rounded-2xl p-3.5 sm:p-4 border border-gray-200 space-y-3">
+          {/* ── STEP 1: FULFILLMENT METHOD & SCHEDULE ── */}
+          <div className={`${checkoutStep === 1 ? 'block' : 'hidden'} bg-gray-50/90 rounded-2xl p-3.5 sm:p-4 border border-gray-200 space-y-3`}>
             {/* Fulfillment Toggle: Pickup vs Delivery */}
             {hasTiffin ? (
               <div className="flex items-center justify-between gap-2 text-xs bg-amber-50/90 border border-amber-200 px-3 py-2 rounded-xl text-amber-950">
@@ -773,11 +813,22 @@ export default function CheckoutModal({
                   )}
                 </div>
 
-                {/* Horizontal Date Pills */}
+                {/* Horizontal Date Pills with Sold Out / Closed Badges */}
                 <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none">
                   {upcomingDateOptions.map(opt => {
+                    const isBlackout = blackouts.includes(opt.dateStr);
                     const check = isDateSelectable(opt.dateStr, blackouts, cart, effectiveSubTab);
                     const isSelected = fulfillmentDate === opt.dateStr;
+
+                    let badgeText = 'Open';
+                    let badgeStyle = 'bg-emerald-100 text-emerald-800 border border-emerald-200';
+                    if (isBlackout) {
+                      badgeText = 'Sold Out';
+                      badgeStyle = 'bg-amber-100 text-amber-900 border border-amber-300 font-bold';
+                    } else if (!check.selectable) {
+                      badgeText = 'Closed';
+                      badgeStyle = 'bg-rose-100 text-rose-800 border border-rose-200';
+                    }
 
                     return (
                       <button
@@ -785,16 +836,24 @@ export default function CheckoutModal({
                         type="button"
                         disabled={!check.selectable}
                         onClick={() => handleSelectDate(opt.dateStr)}
-                        className={`flex flex-col items-center justify-center min-w-[60px] py-1.5 px-2 rounded-xl border text-center transition-all cursor-pointer shrink-0 ${
-                          !check.selectable
-                            ? 'bg-gray-100 border-gray-200 text-gray-300 cursor-not-allowed opacity-60'
-                            : isSelected
-                            ? 'bg-[#00346f] text-white border-[#00346f] shadow-xs ring-2 ring-[#00346f]/20'
+                        title={!check.selectable ? check.reason : `Select ${opt.label}`}
+                        className={`flex flex-col items-center justify-center min-w-[68px] py-1.5 px-2 rounded-xl border text-center transition-all cursor-pointer shrink-0 ${
+                          isSelected
+                            ? 'bg-[#00346f] text-white border-[#00346f] shadow-xs ring-2 ring-[#D4AF37]'
+                            : isBlackout
+                            ? 'bg-amber-50/80 border-amber-200 text-gray-800 cursor-not-allowed opacity-85'
+                            : !check.selectable
+                            ? 'bg-gray-100 border-gray-200 text-gray-400 cursor-not-allowed opacity-60'
                             : 'bg-white hover:bg-gray-100 border-gray-200 text-gray-700'
                         }`}
                       >
                         <span className="text-[9px] uppercase font-bold tracking-wider">{opt.dayOfWeek}</span>
                         <span className="text-[11px] font-black mt-0.5 whitespace-nowrap">{opt.label}</span>
+                        <span className={`text-[9px] uppercase tracking-wider font-extrabold px-1.5 py-0.5 rounded-full mt-1 ${
+                          isSelected ? 'bg-[#D4AF37] text-[#050a1a]' : badgeStyle
+                        }`}>
+                          {badgeText}
+                        </span>
                       </button>
                     );
                   })}
@@ -847,8 +906,8 @@ export default function CheckoutModal({
             )}
           </div>
 
-          {/* ── 2. CUSTOMER CONTACT & ADDRESS ── */}
-          <div className="bg-white rounded-2xl p-3.5 sm:p-4 border border-gray-200 space-y-3">
+          {/* ── STEP 2: CUSTOMER CONTACT & ADDRESS ── */}
+          <div className={`${checkoutStep === 2 ? 'block' : 'hidden'} bg-white rounded-2xl p-3.5 sm:p-4 border border-gray-200 space-y-3`}>
             <h3 className="font-serif font-bold text-xs sm:text-sm text-[#00346f] flex items-center gap-1.5">
               <User className="w-4 h-4 text-[#775a19]" />
               <span>Your Contact Information</span>
@@ -964,8 +1023,9 @@ export default function CheckoutModal({
             )}
           </div>
 
-          {/* ── 3. PAYMENT METHOD & COMPACT SUMMARY ── */}
+          {/* ── PAYMENT METHOD (Step 2) & COMPACT ORDER SUMMARY (Always Visible) ── */}
           <div className="bg-white rounded-2xl p-3.5 sm:p-4 border border-gray-200 space-y-3">
+            <div className={`${checkoutStep === 2 ? 'space-y-3' : 'hidden'}`}>
             <div className="flex items-center justify-between">
               <h3 className="font-serif font-bold text-xs sm:text-sm text-[#00346f]">
                 Payment Method
@@ -1038,6 +1098,7 @@ export default function CheckoutModal({
                 <span className="font-semibold text-purple-700">0% Fee</span>
               </div>
             )}
+            </div>
 
             {/* Compact Order Total Box with Expandable Itemized Details & Edit Controls */}
             <div className="bg-gray-50 rounded-xl p-3 border border-gray-200 space-y-2 text-xs">
@@ -1131,29 +1192,51 @@ export default function CheckoutModal({
 
         </div>
 
-        {/* ── Sticky Express Submit Footer ── */}
+        {/* ── Sticky 2-Step Express Submit Footer ── */}
         <div className="p-3.5 sm:p-4 bg-gray-100 border-t border-gray-200 shrink-0 flex items-center gap-2.5">
-          <button
-            type="button"
-            disabled={isSubmitting}
-            onClick={() => handleSubmit('estimate')}
-            className="min-h-[46px] px-3.5 py-2.5 rounded-xl border border-[#00346f] text-[#00346f] hover:bg-[#00346f]/10 text-xs font-bold uppercase tracking-wider transition-all cursor-pointer inline-flex items-center justify-center gap-1.5 shrink-0"
-            title="Save a printable estimate without placing a live order"
-          >
-            <FileText className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Save Quote</span>
-            <span className="sm:hidden">Quote</span>
-          </button>
+          {checkoutStep === 1 ? (
+            <button
+              type="button"
+              onClick={() => setCheckoutStep(2)}
+              className="min-h-[46px] w-full inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#775a19] hover:bg-[#5d4201] text-white text-xs sm:text-sm font-bold uppercase tracking-wider transition-all shadow-md cursor-pointer"
+            >
+              <span>Continue to Contact &amp; Payment (${totalAmount.toFixed(2)})</span>
+              <ArrowRight className="w-4 h-4 text-[#ffdea5]" />
+            </button>
+          ) : (
+            <>
+              <button
+                type="button"
+                onClick={() => setCheckoutStep(1)}
+                className="min-h-[46px] px-3 py-2.5 rounded-xl border border-gray-300 text-gray-700 hover:bg-gray-200 text-xs font-bold uppercase tracking-wider transition-all cursor-pointer inline-flex items-center justify-center gap-1 shrink-0"
+              >
+                <ArrowLeft className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Back</span>
+              </button>
 
-          <button
-            type="button"
-            disabled={isSubmitting}
-            onClick={() => handleSubmit('order')}
-            className="min-h-[46px] flex-1 inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#00346f] hover:bg-[#00224d] text-white text-xs sm:text-sm font-bold uppercase tracking-wider transition-all shadow-md cursor-pointer active:scale-[0.99]"
-          >
-            <Send className="w-4 h-4 text-[#ffdea5]" />
-            <span>{isSubmitting ? 'Submitting Order...' : `Submit Order • $${totalAmount.toFixed(2)}`}</span>
-          </button>
+              <button
+                type="button"
+                disabled={isSubmitting}
+                onClick={() => handleSubmit('estimate')}
+                className="min-h-[46px] px-3.5 py-2.5 rounded-xl border border-[#00346f] text-[#00346f] hover:bg-[#00346f]/10 text-xs font-bold uppercase tracking-wider transition-all cursor-pointer inline-flex items-center justify-center gap-1.5 shrink-0"
+                title="Save a printable estimate without placing a live order"
+              >
+                <FileText className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Save Quote</span>
+                <span className="sm:hidden">Quote</span>
+              </button>
+
+              <button
+                type="button"
+                disabled={isSubmitting}
+                onClick={() => handleSubmit('order')}
+                className="min-h-[46px] flex-1 inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#775a19] hover:bg-[#5d4201] text-white text-xs sm:text-sm font-bold uppercase tracking-wider transition-all shadow-md cursor-pointer active:scale-[0.99]"
+              >
+                <Send className="w-4 h-4 text-[#ffdea5]" />
+                <span>{isSubmitting ? 'Submitting...' : `Place Order • $${totalAmount.toFixed(2)}`}</span>
+              </button>
+            </>
+          )}
         </div>
 
       </div>

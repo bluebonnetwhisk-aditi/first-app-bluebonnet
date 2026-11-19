@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { 
   Search, 
   Plus, 
@@ -18,6 +18,37 @@ import {
 } from 'lucide-react';
 import type { CartItem, Category, MenuItem, TraySize, Allergen } from '../../types/catering';
 import { DESI_DABBA_ITEMS } from '../../data/desiDabbaMenu';
+import { fetchOrders } from '../../services/supabase';
+
+// Baseline most-ordered dishes from historical Bluebonnet Whisk catering orders & customer reviews
+const BASELINE_POPULAR_DISH_IDS = new Set<string>([
+  'shahi-paneer',
+  'paneer-lababdar',
+  'kadhai-paneer',
+  'malai-kofta',
+  'dal-makhani',
+  'chole',
+  'kadhi-pakora',
+  'halwai-wale-aloo-bhaji',
+  'aloo-gobhi',
+  'bharwa-baingan',
+  'bhindi-sabzi',
+  'jeera-rice',
+  'veg-pulao',
+  'boondi-raita',
+  'veg-manchurian',
+  'hakka-noodles',
+  'railway-cutlet',
+  'samosa-chaat',
+  'dahi-bhalla',
+  'pani-puri',
+  'bread-poori',
+  'bread-bedmi-poori',
+  'kheer',
+  'gulab-jamun',
+  'moong-dal-halwa',
+  'beverage-mango-lassi'
+]);
 
 interface MenuOrderGridProps {
   cart: CartItem[];
@@ -115,7 +146,43 @@ export default function MenuOrderGrid({
   const [searchQuery, setSearchQuery] = useState('');
   const [allergenFilter, setAllergenFilter] = useState<Allergen[]>([]);
   const [satvikOnly, setSatvikOnly] = useState(false);
+  const [popularOnly, setPopularOnly] = useState(false);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
+  const [popularDishIds, setPopularDishIds] = useState<Set<string>>(() => new Set(BASELINE_POPULAR_DISH_IDS));
+
+  // Enrich popular dishes dynamically from past orders stored in Supabase / local order history
+  useEffect(() => {
+    let isMounted = true;
+    fetchOrders().then(orders => {
+      if (!isMounted || !Array.isArray(orders) || orders.length === 0) return;
+      const updated = new Set<string>(BASELINE_POPULAR_DISH_IDS);
+      const nameToId = new Map<string, string>();
+      DESI_DABBA_ITEMS.forEach(item => {
+        nameToId.set(item.name.toLowerCase(), item.id);
+      });
+
+      orders.forEach(order => {
+        if (!Array.isArray(order.items)) return;
+        order.items.forEach(it => {
+          if (it.menuItemId) {
+            const cleanId = it.menuItemId.replace(/^(mains|starter|rice|dessert)-/, '');
+            if (DESI_DABBA_ITEMS.some(d => d.id === it.menuItemId)) {
+              updated.add(it.menuItemId);
+            } else if (DESI_DABBA_ITEMS.some(d => d.id === cleanId)) {
+              updated.add(cleanId);
+            }
+          }
+          if (it.name) {
+            const matchedId = nameToId.get(it.name.toLowerCase());
+            if (matchedId) updated.add(matchedId);
+          }
+        });
+      });
+
+      setPopularDishIds(updated);
+    }).catch(() => {});
+    return () => { isMounted = false; };
+  }, []);
 
   // Accordion open/collapse state: on mobile (<768px), open first section by default to prevent a 3,500px scroll wall; on desktop, all open
   const [openSections, setOpenSections] = useState<Record<string, boolean>>(() => {
@@ -188,6 +255,11 @@ export default function MenuOrderGrid({
           return false;
         }
 
+        // Popular filter
+        if (popularOnly && !popularDishIds.has(item.id)) {
+          return false;
+        }
+
         return true;
       });
 
@@ -195,7 +267,7 @@ export default function MenuOrderGrid({
     });
 
     return map;
-  }, [searchQuery, allergenFilter, satvikOnly]);
+  }, [searchQuery, allergenFilter, satvikOnly, popularOnly, popularDishIds]);
 
   // Scroll to section helper
   const scrollToSection = (key: string) => {
@@ -206,7 +278,7 @@ export default function MenuOrderGrid({
     }
   };
 
-  const activeFilterCount = allergenFilter.length + (satvikOnly ? 1 : 0);
+  const activeFilterCount = allergenFilter.length + (satvikOnly ? 1 : 0) + (popularOnly ? 1 : 0);
 
   return (
     <div id="catering-menu-grid" className="w-full font-sans space-y-3 sm:space-y-6">
@@ -304,6 +376,17 @@ export default function MenuOrderGrid({
             })}
 
             <button
+              onClick={() => setPopularOnly(!popularOnly)}
+              className={`min-h-[34px] sm:min-h-[36px] inline-flex items-center justify-center px-3 py-1 rounded-lg text-xs font-bold tracking-wider transition-all cursor-pointer border ${
+                popularOnly
+                  ? 'bg-[#D4AF37] text-[#050a1a] border-[#D4AF37] shadow-xs'
+                  : 'bg-amber-50 hover:bg-amber-100 text-amber-900 border-amber-200'
+              }`}
+            >
+              {popularOnly ? '★ Popular Dishes' : '★ Popular Only'}
+            </button>
+
+            <button
               onClick={() => setSatvikOnly(!satvikOnly)}
               className={`min-h-[34px] sm:min-h-[36px] inline-flex items-center justify-center px-3 py-1 rounded-lg text-xs font-bold tracking-wider transition-all cursor-pointer border ${
                 satvikOnly
@@ -368,7 +451,7 @@ export default function MenuOrderGrid({
       {/* ── COLLAPSIBLE MENU SECTIONS ACCORDIONS ── */}
       <div className="space-y-3 sm:space-y-6">
         {MENU_SECTIONS.map(section => {
-          const isFilterActive = Boolean(searchQuery.trim() || allergenFilter.length > 0 || satvikOnly);
+          const isFilterActive = Boolean(searchQuery.trim() || allergenFilter.length > 0 || satvikOnly || popularOnly);
           const isOpen = isFilterActive ? true : (openSections[section.key] ?? true);
           const dishes = filteredDishesBySection[section.key] || [];
           const Icon = section.icon;
@@ -475,10 +558,15 @@ export default function MenuOrderGrid({
                               {/* Header info */}
                               <div className="flex items-start justify-between gap-3">
                                 <div>
-                                  <div className="flex items-center gap-2">
+                                  <div className="flex items-center gap-2 flex-wrap">
                                     <h4 className="font-serif font-bold text-base text-gray-900">
                                       {item.name}
                                     </h4>
+                                    {popularDishIds.has(item.id) && (
+                                      <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-[#D4AF37] text-[#050a1a] shrink-0">
+                                        ★ Popular
+                                      </span>
+                                    )}
                                     <span className="text-[11px] font-bold text-[#775a19] bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
                                       ${unitPrice.toFixed(2)} / pc
                                     </span>
@@ -650,8 +738,9 @@ export default function MenuOrderGrid({
                         const thirdQty = getItemQuantity(item.id, 'third');
                         const halfQty = getItemQuantity(item.id, 'half');
                         const fullQty = getItemQuantity(item.id, 'full');
+                        const deepFullQty = getItemQuantity(item.id, 'deep_full');
                         const gallonQty = getItemQuantity(item.id, 'gallon');
-                        const totalDishCount = thirdQty + halfQty + fullQty + gallonQty;
+                        const totalDishCount = thirdQty + halfQty + fullQty + deepFullQty + gallonQty;
                         const hasSelection = totalDishCount > 0;
 
                         return (
@@ -667,10 +756,15 @@ export default function MenuOrderGrid({
                               {/* Header info */}
                               <div className="flex items-start justify-between gap-2.5 sm:gap-3">
                                 <div className="min-w-0 flex-1">
-                                  <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap sm:flex-nowrap">
+                                  <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
                                     <h4 className="font-serif font-bold text-sm sm:text-base text-gray-900 truncate min-w-0">
                                       {item.name}
                                     </h4>
+                                    {popularDishIds.has(item.id) && (
+                                      <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-wider px-1.5 sm:px-2 py-0.5 rounded-full bg-[#D4AF37] text-[#050a1a] shrink-0">
+                                        ★ Popular
+                                      </span>
+                                    )}
                                     {item.tier && (
                                       <span className={`text-[9px] sm:text-[10px] font-bold uppercase tracking-wider px-1.5 sm:px-2 py-0.5 rounded-full shrink-0 ${
                                         item.tier === 'Maharaja' ? 'bg-amber-100 text-amber-900 border border-amber-200' :
@@ -723,36 +817,37 @@ export default function MenuOrderGrid({
                             {/* ── STEPPER CONTROLS ── */}
                             <div className="mt-2.5 sm:mt-4 pt-2.5 sm:pt-3 border-t border-gray-100">
                               {item.pricingType === 'tray' && item.trayPricing && (
-                                <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
+                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 sm:gap-2">
                                   
                                   {/* 1/3 Tray Stepper */}
                                   <div className={`rounded-xl p-2 sm:p-2.5 text-center flex flex-col justify-between transition-all duration-200 ${
                                     thirdQty > 0
-                                      ? 'bg-[#00346f] text-white border-2 border-[#00346f] shadow-md ring-2 ring-[#ffdea5]/50 scale-[1.02]'
+                                      ? 'bg-[#00346f] text-white border-2 border-[#D4AF37] shadow-md ring-1 ring-[#ffdea5]/40 scale-[1.02]'
                                       : 'bg-gray-50 border border-gray-200 hover:border-gray-300'
                                   }`}>
                                     <div>
-                                      <div className={`text-[11px] font-bold ${thirdQty > 0 ? 'text-white' : 'text-gray-800'}`}>
+                                      <div className={`text-[11px] font-bold leading-tight ${thirdQty > 0 ? 'text-white' : 'text-gray-800'}`}>
                                         1/3 Tray
                                       </div>
-                                      <div className={`text-xs font-black ${thirdQty > 0 ? 'text-[#ffdea5]' : 'text-[#00346f]'}`}>
+                                      <div className={`text-[9px] ${thirdQty > 0 ? 'text-gray-200' : 'text-gray-500'}`}>8–12 ppl</div>
+                                      <div className={`text-xs font-black mt-0.5 ${thirdQty > 0 ? 'text-[#ffdea5]' : 'text-[#00346f]'}`}>
                                         ${item.trayPricing.third}
                                       </div>
                                     </div>
-                                    <div className="flex items-center justify-center gap-1 sm:gap-1.5 mt-2">
+                                    <div className="flex items-center justify-center gap-1 mt-2">
                                       <button
                                         type="button"
-                                        onClick={() => onUpdateCartItem(item, 'third', Math.max(0, thirdQty - 1), '1/3 Tray', item.trayPricing!.third)}
-                                        className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center cursor-pointer transition-colors shrink-0 ${
+                                        onClick={() => onUpdateCartItem(item, 'third', Math.max(0, thirdQty - 1), '1/3 Tray (8–12)', item.trayPricing!.third)}
+                                        className={`w-7 h-7 rounded-lg flex items-center justify-center cursor-pointer transition-colors shrink-0 ${
                                           thirdQty > 0 
                                             ? 'bg-white/20 hover:bg-white/30 text-white' 
                                             : 'bg-white border border-gray-300 hover:bg-gray-100 text-gray-700'
                                         }`}
                                         aria-label={`Decrease 1/3 Tray of ${item.name}`}
                                       >
-                                        <Minus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                                        <Minus className="w-3.5 h-3.5" />
                                       </button>
-                                      <span className={`w-6 sm:w-7 text-center font-black text-xs ${
+                                      <span className={`w-5 text-center font-black text-xs ${
                                         thirdQty > 0 
                                           ? 'bg-white text-[#00346f] rounded px-1 py-0.5 shadow-xs' 
                                           : 'text-gray-900'
@@ -761,15 +856,15 @@ export default function MenuOrderGrid({
                                       </span>
                                       <button
                                         type="button"
-                                        onClick={() => onUpdateCartItem(item, 'third', thirdQty + 1, '1/3 Tray', item.trayPricing!.third)}
-                                        className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center cursor-pointer shadow-xs transition-colors shrink-0 ${
+                                        onClick={() => onUpdateCartItem(item, 'third', thirdQty + 1, '1/3 Tray (8–12)', item.trayPricing!.third)}
+                                        className={`w-7 h-7 rounded-lg flex items-center justify-center cursor-pointer shadow-xs transition-colors shrink-0 ${
                                           thirdQty > 0 
                                             ? 'bg-[#ffdea5] hover:bg-white text-[#00346f] font-black' 
                                             : 'bg-[#00346f] hover:bg-[#00224d] text-white'
                                         }`}
                                         aria-label={`Increase 1/3 Tray of ${item.name}`}
                                       >
-                                        <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                                        <Plus className="w-3.5 h-3.5" />
                                       </button>
                                     </div>
                                   </div>
@@ -777,31 +872,32 @@ export default function MenuOrderGrid({
                                   {/* Half Tray Stepper */}
                                   <div className={`rounded-xl p-2 sm:p-2.5 text-center flex flex-col justify-between transition-all duration-200 ${
                                     halfQty > 0
-                                      ? 'bg-[#00346f] text-white border-2 border-[#00346f] shadow-md ring-2 ring-[#ffdea5]/50 scale-[1.02]'
+                                      ? 'bg-[#00346f] text-white border-2 border-[#D4AF37] shadow-md ring-1 ring-[#ffdea5]/40 scale-[1.02]'
                                       : 'bg-gray-50 border border-gray-200 hover:border-gray-300'
                                   }`}>
                                     <div>
-                                      <div className={`text-[11px] font-bold ${halfQty > 0 ? 'text-white' : 'text-gray-800'}`}>
+                                      <div className={`text-[11px] font-bold leading-tight ${halfQty > 0 ? 'text-white' : 'text-gray-800'}`}>
                                         Half Tray
                                       </div>
-                                      <div className={`text-xs font-black ${halfQty > 0 ? 'text-[#ffdea5]' : 'text-[#00346f]'}`}>
+                                      <div className={`text-[9px] ${halfQty > 0 ? 'text-gray-200' : 'text-gray-500'}`}>15–20 ppl</div>
+                                      <div className={`text-xs font-black mt-0.5 ${halfQty > 0 ? 'text-[#ffdea5]' : 'text-[#00346f]'}`}>
                                         ${item.trayPricing.half}
                                       </div>
                                     </div>
-                                    <div className="flex items-center justify-center gap-1 sm:gap-1.5 mt-2">
+                                    <div className="flex items-center justify-center gap-1 mt-2">
                                       <button
                                         type="button"
-                                        onClick={() => onUpdateCartItem(item, 'half', Math.max(0, halfQty - 1), 'Half Tray', item.trayPricing!.half)}
-                                        className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center cursor-pointer transition-colors shrink-0 ${
+                                        onClick={() => onUpdateCartItem(item, 'half', Math.max(0, halfQty - 1), 'Half Tray (15–20)', item.trayPricing!.half)}
+                                        className={`w-7 h-7 rounded-lg flex items-center justify-center cursor-pointer transition-colors shrink-0 ${
                                           halfQty > 0 
                                             ? 'bg-white/20 hover:bg-white/30 text-white' 
                                             : 'bg-white border border-gray-300 hover:bg-gray-100 text-gray-700'
                                         }`}
                                         aria-label={`Decrease Half Tray of ${item.name}`}
                                       >
-                                        <Minus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                                        <Minus className="w-3.5 h-3.5" />
                                       </button>
-                                      <span className={`w-6 sm:w-7 text-center font-black text-xs ${
+                                      <span className={`w-5 text-center font-black text-xs ${
                                         halfQty > 0 
                                           ? 'bg-white text-[#00346f] rounded px-1 py-0.5 shadow-xs' 
                                           : 'text-gray-900'
@@ -810,47 +906,48 @@ export default function MenuOrderGrid({
                                       </span>
                                       <button
                                         type="button"
-                                        onClick={() => onUpdateCartItem(item, 'half', halfQty + 1, 'Half Tray', item.trayPricing!.half)}
-                                        className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center cursor-pointer shadow-xs transition-colors shrink-0 ${
+                                        onClick={() => onUpdateCartItem(item, 'half', halfQty + 1, 'Half Tray (15–20)', item.trayPricing!.half)}
+                                        className={`w-7 h-7 rounded-lg flex items-center justify-center cursor-pointer shadow-xs transition-colors shrink-0 ${
                                           halfQty > 0 
                                             ? 'bg-[#ffdea5] hover:bg-white text-[#00346f] font-black' 
                                             : 'bg-[#00346f] hover:bg-[#00224d] text-white'
                                         }`}
                                         aria-label={`Increase Half Tray of ${item.name}`}
                                       >
-                                        <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                                        <Plus className="w-3.5 h-3.5" />
                                       </button>
                                     </div>
                                   </div>
 
-                                  {/* Full Tray Stepper */}
+                                  {/* Standard Full Tray (2.4" Deep) Stepper */}
                                   <div className={`rounded-xl p-2 sm:p-2.5 text-center flex flex-col justify-between transition-all duration-200 ${
                                     fullQty > 0
-                                      ? 'bg-[#00346f] text-white border-2 border-[#00346f] shadow-md ring-2 ring-[#ffdea5]/50 scale-[1.02]'
+                                      ? 'bg-[#00346f] text-white border-2 border-[#D4AF37] shadow-md ring-1 ring-[#ffdea5]/40 scale-[1.02]'
                                       : 'bg-gray-50 border border-gray-200 hover:border-gray-300'
                                   }`}>
                                     <div>
-                                      <div className={`text-[11px] font-bold ${fullQty > 0 ? 'text-white' : 'text-gray-800'}`}>
-                                        Full Tray
+                                      <div className={`text-[11px] font-bold leading-tight ${fullQty > 0 ? 'text-white' : 'text-gray-800'}`}>
+                                        Full (2.4&quot;)
                                       </div>
-                                      <div className={`text-xs font-black ${fullQty > 0 ? 'text-[#ffdea5]' : 'text-[#00346f]'}`}>
+                                      <div className={`text-[9px] ${fullQty > 0 ? 'text-gray-200' : 'text-gray-500'}`}>25–35 ppl</div>
+                                      <div className={`text-xs font-black mt-0.5 ${fullQty > 0 ? 'text-[#ffdea5]' : 'text-[#00346f]'}`}>
                                         ${item.trayPricing.full}
                                       </div>
                                     </div>
-                                    <div className="flex items-center justify-center gap-1 sm:gap-1.5 mt-2">
+                                    <div className="flex items-center justify-center gap-1 mt-2">
                                       <button
                                         type="button"
-                                        onClick={() => onUpdateCartItem(item, 'full', Math.max(0, fullQty - 1), 'Full Tray', item.trayPricing!.full)}
-                                        className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center cursor-pointer transition-colors shrink-0 ${
+                                        onClick={() => onUpdateCartItem(item, 'full', Math.max(0, fullQty - 1), 'Full Tray (2.4" · 25–35 ppl)', item.trayPricing!.full)}
+                                        className={`w-7 h-7 rounded-lg flex items-center justify-center cursor-pointer transition-colors shrink-0 ${
                                           fullQty > 0 
                                             ? 'bg-white/20 hover:bg-white/30 text-white' 
                                             : 'bg-white border border-gray-300 hover:bg-gray-100 text-gray-700'
                                         }`}
-                                        aria-label={`Decrease Full Tray of ${item.name}`}
+                                        aria-label={`Decrease Standard 2.4-inch Full Tray of ${item.name}`}
                                       >
-                                        <Minus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                                        <Minus className="w-3.5 h-3.5" />
                                       </button>
-                                      <span className={`w-6 sm:w-7 text-center font-black text-xs ${
+                                      <span className={`w-5 text-center font-black text-xs ${
                                         fullQty > 0 
                                           ? 'bg-white text-[#00346f] rounded px-1 py-0.5 shadow-xs' 
                                           : 'text-gray-900'
@@ -859,15 +956,65 @@ export default function MenuOrderGrid({
                                       </span>
                                       <button
                                         type="button"
-                                        onClick={() => onUpdateCartItem(item, 'full', fullQty + 1, 'Full Tray', item.trayPricing!.full)}
-                                        className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center cursor-pointer shadow-xs transition-colors shrink-0 ${
+                                        onClick={() => onUpdateCartItem(item, 'full', fullQty + 1, 'Full Tray (2.4" · 25–35 ppl)', item.trayPricing!.full)}
+                                        className={`w-7 h-7 rounded-lg flex items-center justify-center cursor-pointer shadow-xs transition-colors shrink-0 ${
                                           fullQty > 0 
                                             ? 'bg-[#ffdea5] hover:bg-white text-[#00346f] font-black' 
                                             : 'bg-[#00346f] hover:bg-[#00224d] text-white'
                                         }`}
-                                        aria-label={`Increase Full Tray of ${item.name}`}
+                                        aria-label={`Increase Standard 2.4-inch Full Tray of ${item.name}`}
                                       >
-                                        <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                                        <Plus className="w-3.5 h-3.5" />
+                                      </button>
+                                    </div>
+                                  </div>
+
+                                  {/* XL Full Tray (3.4" Deep · +35% Bulk) Stepper — Clean Uniform Resting Style */}
+                                  <div className={`rounded-xl p-2 sm:p-2.5 text-center flex flex-col justify-between transition-all duration-200 ${
+                                    deepFullQty > 0
+                                      ? 'bg-[#00346f] text-white border-2 border-[#D4AF37] shadow-md ring-1 ring-[#ffdea5]/40 scale-[1.02]'
+                                      : 'bg-gray-50 border border-gray-200 hover:border-gray-300'
+                                  }`}>
+                                    <div>
+                                      <div className={`text-[11px] font-bold leading-tight ${deepFullQty > 0 ? 'text-white' : 'text-gray-800'}`}>
+                                        XL Full (3.4&quot;)
+                                      </div>
+                                      <div className={`text-[9px] ${deepFullQty > 0 ? 'text-gray-200' : 'text-gray-500'}`}>40–50 ppl</div>
+                                      <div className={`text-xs font-black mt-0.5 ${deepFullQty > 0 ? 'text-[#ffdea5]' : 'text-[#00346f]'}`}>
+                                        ${item.trayPricing.deepFull}
+                                      </div>
+                                    </div>
+                                    <div className="flex items-center justify-center gap-1 mt-2">
+                                      <button
+                                        type="button"
+                                        onClick={() => onUpdateCartItem(item, 'deep_full', Math.max(0, deepFullQty - 1), 'XL Full Tray (3.4" · 40–50 ppl)', item.trayPricing!.deepFull)}
+                                        className={`w-7 h-7 rounded-lg flex items-center justify-center cursor-pointer transition-colors shrink-0 ${
+                                          deepFullQty > 0 
+                                            ? 'bg-white/20 hover:bg-white/30 text-white' 
+                                            : 'bg-white border border-gray-300 hover:bg-gray-100 text-gray-700'
+                                        }`}
+                                        aria-label={`Decrease XL 3.4-inch Full Tray of ${item.name}`}
+                                      >
+                                        <Minus className="w-3.5 h-3.5" />
+                                      </button>
+                                      <span className={`w-5 text-center font-black text-xs ${
+                                        deepFullQty > 0 
+                                          ? 'bg-white text-[#00346f] rounded px-1 py-0.5 shadow-xs' 
+                                          : 'text-gray-900'
+                                      }`}>
+                                        {deepFullQty}
+                                      </span>
+                                      <button
+                                        type="button"
+                                        onClick={() => onUpdateCartItem(item, 'deep_full', deepFullQty + 1, 'XL Full Tray (3.4" · 40–50 ppl)', item.trayPricing!.deepFull)}
+                                        className={`w-7 h-7 rounded-lg flex items-center justify-center cursor-pointer shadow-xs transition-colors shrink-0 ${
+                                          deepFullQty > 0 
+                                            ? 'bg-[#ffdea5] hover:bg-white text-[#00346f] font-black' 
+                                            : 'bg-[#00346f] hover:bg-[#00224d] text-white'
+                                        }`}
+                                        aria-label={`Increase XL 3.4-inch Full Tray of ${item.name}`}
+                                      >
+                                        <Plus className="w-3.5 h-3.5" />
                                       </button>
                                     </div>
                                   </div>

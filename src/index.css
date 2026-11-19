@@ -157,6 +157,7 @@
 /* Royal Dark Theme Adaptation for Legacy Light Utility Surfaces */
 .royal-dark-page {
   background-color: #050a1a;
+  background-image: radial-gradient(ellipse 80% 35% at 50% 0%, rgba(212, 175, 55, 0.08), transparent 70%);
   color: #fbfbfa;
 }
 
@@ -291,7 +292,7 @@
   color: #ffffff !important;
 }
 
-/* Borders & Dividers */
+/* Borders & Dividers: Whisper-thin warm champagne hairlines */
 .royal-dark-page :is(
   .border-gray-100,
   .border-gray-150,
@@ -300,7 +301,15 @@
   .border-gray-250,
   .border-gray-300
 ) {
-  border-color: rgba(212, 175, 55, 0.22) !important;
+  border-color: rgba(243, 224, 181, 0.14) !important;
+  transition: border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.royal-dark-page :is(
+  .hover\:border-gray-300:hover,
+  .group:hover .border-gray-150
+) {
+  border-color: rgba(212, 175, 55, 0.45) !important;
 }
 
 .royal-dark-page .divide-gray-100 > :not([hidden]) ~ :not([hidden]),

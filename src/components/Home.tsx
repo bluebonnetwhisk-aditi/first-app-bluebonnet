@@ -158,7 +158,7 @@ export default function Home({ onOpenBaker: _onOpenBaker, onNavigate }: HomeProp
     },
     {
       q: "What are your tray portion sizes?",
-      a: "Our catering trays come in three sizes: a 1/3 Tray serves approximately 8-12 guests, a Half Tray serves 15-20 guests, and a Full Tray serves 30-40 guests. Servings vary depending on menu selection and event style."
+      a: "Our catering trays come in four sizes: a 1/3 Tray serves 8–12 guests, a Half Tray serves 15–20 guests, our Standard Full Tray (2.4\" deep) serves 25–35 guests, and our XL Full Tray (3.4\" deep, ~42% more volume at bulk-friendly +35% pricing) serves 40–50 guests."
     },
     {
       q: "Do you handle event setup, decoration, and table styling?",

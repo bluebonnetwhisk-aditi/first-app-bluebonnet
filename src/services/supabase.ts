@@ -1081,100 +1081,43 @@ export async function fetchQBOReconciliationSummary(dateStr: string): Promise<QB
   };
 }
 
-const LOCAL_STORAGE_TIFFIN_KEY = 'bbw_tiffin_menu_settings_v3';
+const LOCAL_STORAGE_TIFFIN_KEY = 'bbw_tiffin_menu_settings_v4';
 
 export const DEFAULT_WEEKDAY_MENUS: Record<string, WeekdayMenuEntry> = {
-  Monday: { dal: 'Palak Dal', sabzi: 'Cabbage Sabzi', description: 'Fresh spinach dal & tender cabbage sabzi' },
-  Tuesday: { dal: 'Lauki Kofta Curry', sabzi: 'Shimla Mirch Sabzi', description: 'Gourmet bottle gourd koftas in spiced gravy & bell pepper sabzi' },
-  Wednesday: { dal: 'Rajma Chawal', sabzi: 'Aloo Sabzi', description: 'Slow-simmered Punjabi rajma & homestyle spiced potato sabzi' },
-  Thursday: { dal: 'Dal Tadka', sabzi: 'Bhindi Sabzi', description: 'Golden garlic tempered dal & pan-roasted okra bhindi' },
-  Friday: { dal: 'Kala Chana Curry', sabzi: 'Beans Sabzi', description: 'Nutritious black chickpea curry & fresh green beans sabzi' },
-  Saturday: { dal: 'Chef’s Special Dish', sabzi: 'Weekend Surprise Recipe', description: 'You decide! What would you like to eat this Saturday? DM your requests!' },
+  Monday: { dal: 'No Service', sabzi: 'No Service', description: 'Regular dabba service is Tuesday-Thursday' },
+  Tuesday: { dal: 'Paneer Lababdar', sabzi: 'Jeera Aloo', description: '1 cup rice, 1 cup Paneer Lababdar, 1/2 cup Jeera Aloo, 2 Tawa Rotis' },
+  Wednesday: { dal: 'Rajma', sabzi: 'Khatta-Meetha Kaddu', description: '1 cup rice, 1 cup Rajma, 1/2 cup Khatta-Meetha Kaddu, 2 Tawa Rotis' },
+  Thursday: { dal: 'Dal Tadka', sabzi: 'Carrot-Peas Sabzi', description: '1 cup rice, 1 cup Dal Tadka, 1/2 cup Carrot-Peas Sabzi, 2 Tawa Rotis' },
+  Friday: { dal: 'No Service', sabzi: 'No Service', description: 'Regular dabba service is Tuesday-Thursday' },
+  Saturday: { dal: 'Paneer Lababdar', sabzi: 'N/A', description: '16 oz boxes available. Pre-book only. No regular tiffin. Catering day.' },
   Sunday: { dal: 'Kitchen Closed', sabzi: 'Rest & Clean Day', description: 'Weekly deep sanitation and market prep' }
 };
 
 export const DEFAULT_CONTAINER_ADDONS: ContainerAddonItem[] = [
-  { id: 'dal-reg', name: 'Dal / Curry (Regular)', price: 9.99, description: '16 oz tub of slow-simmered daily dal or homestyle curry' },
-  { id: 'dal-prem', name: 'Dal / Curry (Premium)', price: 11.49, description: '16 oz tub of rich specialty curry or premium dal' },
-  { id: 'paneer-16oz', name: 'Paneer Specialty', price: 14.99, description: '16 oz tub of fresh spiced cottage cheese main' },
-  { id: 'dry-sabzi-16oz', name: 'Dry Sabzi', price: 10.99, description: '16 oz tub of homestyle spiced seasonal dry sabzi' },
-  { id: 'rice-16oz', name: 'Steamed Rice', price: 4.99, description: '16 oz container of fragrant long-grain basmati rice' },
-  { id: 'raita-16oz', name: 'Cooling Raita', price: 4.99, description: '16 oz chilled seasoned spiced yogurt with boondi or veggies' }
+  { id: 'dal-reg', name: 'Dal / Curry (Regular)', price: 9.99, description: '16 oz container' },
+  { id: 'dal-prem', name: 'Dal / Curry (Premium)', price: 11.49, description: '16 oz container' },
+  { id: 'paneer-16oz', name: 'Paneer', price: 14.99, description: '16 oz container' },
+  { id: 'dry-sabzi-16oz', name: 'Dry Sabzi', price: 10.99, description: '16 oz container' },
+  { id: 'rice-16oz', name: 'Rice', price: 4.99, description: '16 oz container' },
+  { id: 'raita-16oz', name: 'Raita', price: 4.99, description: '16 oz container' }
 ];
 
 export const DEFAULT_DABBA_PRICING: DabbaPricing = {
   singlePrice: 11.99,
-  familyPrice: 34.99,
+  familyPrice: 40.99,
   weeklyPrice: 54.99
 };
 
 export const DEFAULT_WEEKEND_FLYER_SPECIALS: TiffinSpecialDish[] = [
   {
-    id: 'flyer-spec-dal-makhni-16oz',
-    title: 'Dal Makhni (16 oz)',
-    price: 9.99,
-    price16oz: 9.99,
-    portionSize: '16oz',
-    description: 'Special prices for this Saturday only! 16 oz freshly simmered black lentils and kidney beans with butter and cream.',
-    imageUrl: '',
-    availableDays: ['Saturday']
-  },
-  {
     id: 'flyer-spec-paneer-lababdar-16oz',
     title: 'Paneer Lababdar (16 oz)',
-    price: 13.99,
-    price16oz: 13.99,
+    price: 14.99,
+    price16oz: 14.99,
     portionSize: '16oz',
     description: 'Special prices for this Saturday only! 16 oz soft paneer cubes in luscious Mughlai tomato-cashew gravy.',
     imageUrl: '',
-    availableDays: ['Saturday']
-  },
-  {
-    id: 'flyer-spec-samosa-chaat',
-    title: 'Samosa Chaat',
-    price: 6.00,
-    portionSize: '2 samosas per box',
-    description: '2 crisp samosas per box layered with spiced chole, cooling yogurt, tangy tamarind & mint chutneys.',
-    imageUrl: '',
-    availableDays: ['Saturday']
-  },
-  {
-    id: 'flyer-spec-paani-puri',
-    title: 'Paani Puri for Two',
-    price: 9.99,
-    portionSize: '10 puris total (5 each)',
-    description: 'Crisp puris (10 total • 5 each) served with spiced potato-sprout filling, zesty teekha paani & meetha paani.',
-    imageUrl: '',
     availableDays: ['Saturday', 'Sunday']
-  },
-  {
-    id: 'flyer-spec-aaloo-bhaji-puri',
-    title: 'Halwai-Style Aaloo Bhaji + Puri',
-    price: 9.99,
-    portionSize: 'Plate / Meal',
-    description: 'Traditional Halwai-style spiced potato curry served with freshly fried fluffy puris.',
-    imageUrl: '',
-    availableDays: ['Sunday']
-  },
-  {
-    id: 'flyer-spec-kheer',
-    title: 'Slow-Cooked Kheer',
-    price: 20.00,
-    price16oz: 20.00,
-    price8oz: 13.00,
-    portionSize: '16oz / 8oz',
-    description: 'Traditional slow-cooked fragrant rice and milk pudding flavored with cardamom, saffron and dry fruits. Available in 16 oz ($20) and 8 oz ($13) tubs.',
-    imageUrl: '',
-    availableDays: ['Sunday']
-  },
-  {
-    id: 'flyer-spec-bhayankar-deal',
-    title: 'Bhayankar Tasty Deal!',
-    price: 20.00,
-    portionSize: '8 oz Aaloo Bhaji + 3 Pooris + 8 oz Kheer',
-    description: 'Special Sunday Feast Combo: 8 oz Aaloo Bhaji + 3 Pooris + 8 oz Slow-Cooked Kheer.',
-    imageUrl: '',
-    availableDays: ['Sunday']
   }
 ];
 
@@ -1217,8 +1160,8 @@ export const DEFAULT_TIFFIN_SETTINGS: TiffinMenuSettings = {
   containerAddons: DEFAULT_CONTAINER_ADDONS,
   dabbaPricing: DEFAULT_DABBA_PRICING,
   specialDishes: DEFAULT_WEEKEND_FLYER_SPECIALS,
-  saturdaySpecialTitle: 'Dal Makhni (16 oz)',
-  saturdaySpecialDescription: 'Special prices for this Saturday only! 16 oz freshly simmered black lentils and kidney beans with butter and cream.',
+  saturdaySpecialTitle: 'Paneer Lababdar (16 oz)',
+  saturdaySpecialDescription: 'Special prices for this Saturday only! 16 oz soft paneer cubes in luscious Mughlai tomato-cashew gravy.',
   saturdaySpecialImageUrl: ''
 };
 
@@ -1234,10 +1177,7 @@ export async function fetchTiffinMenuSettings(): Promise<TiffinMenuSettings> {
     try {
       localStorage.removeItem('bbw_tiffin_menu_settings_v1');
       localStorage.removeItem('bbw_tiffin_menu_settings_v2');
-      const raw = localStorage.getItem(LOCAL_STORAGE_TIFFIN_KEY);
-      if (raw && (raw.includes('2026-09-21') || raw.includes('September 21'))) {
-        localStorage.removeItem(LOCAL_STORAGE_TIFFIN_KEY);
-      }
+      localStorage.removeItem('bbw_tiffin_menu_settings_v3');
     } catch {}
   }
 
@@ -1268,9 +1208,12 @@ export async function fetchTiffinMenuSettings(): Promise<TiffinMenuSettings> {
 
       if (!error && data && data.value) {
         const val = { ...data.value };
-        if (!val.weekStartDate || val.weekStartDate < currentMondayStr || val.weekTitle?.includes('21')) {
+        if (!val.weekStartDate || val.weekStartDate < currentMondayStr || val.weekTitle?.includes('September 21') || val.weekTitle?.includes('November 9')) {
           val.weekStartDate = currentMondayStr;
           val.weekTitle = currentMondayTitle;
+        }
+        if (val.weekdayMenus?.Thursday?.sabzi?.includes('Sabzit')) {
+          val.weekdayMenus.Thursday.sabzi = 'Carrot-Peas Sabzi';
         }
         if (!val.specialFlyerUrl) {
           val.specialFlyerUrl = '/weekend-special-flyer.jpg';
@@ -1300,7 +1243,7 @@ export async function fetchTiffinMenuSettings(): Promise<TiffinMenuSettings> {
       const raw = localStorage.getItem(LOCAL_STORAGE_TIFFIN_KEY);
       if (raw) {
         const parsed = JSON.parse(raw);
-        if (!parsed.weekStartDate || parsed.weekStartDate < currentMondayStr || parsed.weekTitle?.includes('21')) {
+        if (!parsed.weekStartDate || parsed.weekStartDate < currentMondayStr || parsed.weekTitle?.includes('September 21') || parsed.weekTitle?.includes('November 9')) {
           parsed.weekStartDate = currentMondayStr;
           parsed.weekTitle = currentMondayTitle;
         }

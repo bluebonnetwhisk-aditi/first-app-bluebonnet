@@ -7,7 +7,6 @@ import {
   AlertTriangle, 
   Phone, 
   Mail, 
-  Globe, 
   Info,
   ChevronDown,
   ChevronUp,
@@ -22,8 +21,8 @@ export function TrayPricingHeader() {
   return (
     <div className="w-full font-sans mb-3 sm:mb-6">
       {/* ── TRAY PRICING TIERS OVERVIEW BANNER ── */}
-      <div className="bg-white rounded-2xl border border-[#775a19]/20 p-3.5 sm:p-6 shadow-sm">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-2.5 sm:gap-3 md:pb-4 md:border-b md:border-gray-100">
+      <div className="bg-white rounded-2xl border border-[#775a19]/20 p-3.5 sm:p-5 shadow-sm">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-2.5 sm:gap-3">
           <div className="flex items-center justify-between gap-2">
             <div>
               <div className="flex items-center gap-1.5 sm:gap-2 mb-0.5 sm:mb-1 flex-wrap">
@@ -34,86 +33,130 @@ export function TrayPricingHeader() {
                   <span>⏱️</span> 24h Notice
                 </div>
               </div>
-              <h2 className="font-serif font-bold text-sm sm:text-xl text-[#00346f] tracking-wide">
-                TRAY SIZES &amp; PRICING TIERS
+              <h2 className="font-serif font-bold text-sm sm:text-lg text-[#00346f] tracking-wide">
+                TRAY DEPTH GUIDE &amp; PRICING TIERS
               </h2>
-              <p className="hidden sm:block text-xs text-gray-500 mt-0.5">
-                Same generous portions &amp; straightforward pricing across all 4 of our culinary tiers.
+              <p className="text-[11px] sm:text-xs text-gray-500 mt-0.5">
+                Standard Full Trays are <strong className="text-[#ffdea5]">2.4&quot; deep</strong> (25–35 guests). Upgrade to our <strong className="text-[#ffdea5]">XL Full Tray (3.4&quot; deep)</strong> (~42% more food, 40–50 guests) at bulk-friendly +35% pricing.
               </p>
             </div>
 
-            {/* Mobile Accordion Toggle Button */}
+            {/* Accordion Toggle Button (Mobile & Desktop compact control) */}
             <button
               type="button"
               onClick={() => setMobileExpanded(!mobileExpanded)}
-              className="md:hidden inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-[#FAF8F5] border border-[#D4AF37]/40 text-[#00346f] text-[11px] font-bold shrink-0 cursor-pointer"
+              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-[#FAF8F5] border border-[#D4AF37]/40 text-[#00346f] text-[11px] font-bold shrink-0 cursor-pointer"
             >
-              <span>{mobileExpanded ? 'Hide Guide' : 'Pricing & Info'}</span>
+              <span>{mobileExpanded ? 'Hide Guide' : 'Tray Guide & Tiers'}</span>
               {mobileExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
             </button>
           </div>
 
-          <div className={`${mobileExpanded ? 'flex' : 'hidden md:flex'} flex-wrap items-center gap-2 pt-2 md:pt-0 border-t md:border-t-0 border-gray-100`}>
-            <div className="flex items-center gap-1.5 text-xs font-semibold text-gray-600 bg-gray-50 px-2.5 py-1.5 rounded-lg border border-gray-200 flex-wrap">
-              <span className="text-gray-400 text-[10px] uppercase font-bold">Allergens:</span>
-              <span className="px-1.5 py-0.5 bg-blue-50 text-blue-800 rounded font-mono text-[10px] font-bold">D: Dairy</span>
-              <span className="px-1.5 py-0.5 bg-amber-50 text-amber-800 rounded font-mono text-[10px] font-bold">G: Gluten</span>
-              <span className="px-1.5 py-0.5 bg-rose-50 text-rose-800 rounded font-mono text-[10px] font-bold">N: Nuts</span>
-              <span className="px-1.5 py-0.5 bg-purple-50 text-purple-800 rounded font-mono text-[10px] font-bold">S: Soy</span>
-            </div>
-
+          <div className="hidden lg:flex items-center gap-2 shrink-0">
             <button
               type="button"
               onClick={() => setShowAllergenModal(true)}
               className="inline-flex items-center gap-1.5 bg-[#00346f]/10 hover:bg-[#00346f]/20 text-[#00346f] px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer border border-[#00346f]/20"
             >
               <Info className="w-3.5 h-3.5 text-[#00346f]" />
-              <span>Allergen Notice</span>
+              <span>Allergen Guide</span>
             </button>
           </div>
         </div>
 
-        <div className={`${mobileExpanded ? 'grid' : 'hidden md:grid'} grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3 mt-3 sm:mt-4 text-center`}>
+        {/* Collapsible Visual Pan Depth Comparison + 4 Tiers */}
+        <div className={`${mobileExpanded ? 'block' : 'hidden'} mt-4 pt-4 border-t border-gray-100 space-y-4 animate-fade-in`}>
           
-          <div className="p-2.5 sm:p-3.5 rounded-xl bg-gray-50 border border-gray-200 hover:border-gray-300 transition-colors">
-            <span className="text-[9px] sm:text-[10px] uppercase font-bold tracking-widest text-gray-500 block">TIER 1</span>
-            <span className="font-serif text-base sm:text-lg font-bold text-[#00346f]">KHAAS</span>
-            <div className="text-xs font-bold text-[#775a19] mt-0.5 sm:mt-1">$70 <span className="text-[10px] font-medium text-gray-500">FULL</span></div>
-            <div className="text-[10px] sm:text-[11px] text-gray-600 font-medium">$50 Half · $35 1/3</div>
+          {/* Visual Pan Depth Silhouette Strip */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3">
+            <div className="p-3 rounded-xl bg-gray-50 border border-gray-200 flex flex-col justify-between items-center text-center">
+              <div className="h-12 flex items-end justify-center w-full mb-2">
+                <div className="w-12 h-5 rounded-b-md border-2 border-[#D4AF37]/60 bg-[#D4AF37]/15 flex items-center justify-center text-[9px] font-mono font-bold text-[#ffdea5]">1/3</div>
+              </div>
+              <div className="text-xs font-bold text-[#00346f]">1/3 Tray</div>
+              <div className="text-[10px] text-gray-500">8–12 guests</div>
+            </div>
+
+            <div className="p-3 rounded-xl bg-gray-50 border border-gray-200 flex flex-col justify-between items-center text-center">
+              <div className="h-12 flex items-end justify-center w-full mb-2">
+                <div className="w-16 h-6 rounded-b-md border-2 border-[#D4AF37]/70 bg-[#D4AF37]/20 flex items-center justify-center text-[9px] font-mono font-bold text-[#ffdea5]">1/2</div>
+              </div>
+              <div className="text-xs font-bold text-[#00346f]">Half Tray</div>
+              <div className="text-[10px] text-gray-500">15–20 guests</div>
+            </div>
+
+            <div className="p-3 rounded-xl bg-blue-50/50 border border-blue-200 flex flex-col justify-between items-center text-center">
+              <div className="h-12 flex items-end justify-center w-full mb-2">
+                <div className="w-24 h-7 rounded-b-md border-2 border-[#ffdea5] bg-[#00346f]/50 flex items-center justify-center text-[10px] font-mono font-bold text-white">2.4&quot; Std</div>
+              </div>
+              <div className="text-xs font-bold text-[#00346f]">Full Tray (2.4&quot; Std)</div>
+              <div className="text-[10px] text-gray-500">25–35 guests · ~1.8 gal</div>
+            </div>
+
+            <div className="p-3 rounded-xl bg-amber-50 border border-amber-300 flex flex-col justify-between items-center text-center relative">
+              <span className="absolute -top-2 right-2 bg-[#D4AF37] text-[#050a1a] text-[9px] font-black uppercase px-1.5 py-0.5 rounded-full">
+                +42% Vol · +35% Price
+              </span>
+              <div className="h-12 flex items-end justify-center w-full mb-2">
+                <div className="w-24 h-10 rounded-b-md border-2 border-[#D4AF37] bg-[#775a19]/40 flex items-center justify-center text-[10px] font-mono font-black text-[#ffdea5]">3.4&quot; XL</div>
+              </div>
+              <div className="text-xs font-bold text-amber-900">XL Full (3.4&quot;)</div>
+              <div className="text-[10px] text-gray-500">40–50 guests · ~2.6 gal</div>
+            </div>
           </div>
 
-          <div className="p-2.5 sm:p-3.5 rounded-xl bg-[#00346f]/5 border border-[#00346f]/15 hover:border-[#00346f]/30 transition-colors">
-            <span className="text-[9px] sm:text-[10px] uppercase font-bold tracking-widest text-[#00346f]/70 block">TIER 2</span>
-            <span className="font-serif text-base sm:text-lg font-bold text-[#00346f]">SHAHI</span>
-            <div className="text-xs font-bold text-[#775a19] mt-0.5 sm:mt-1">$90 <span className="text-[10px] font-medium text-gray-500">FULL</span></div>
-            <div className="text-[10px] sm:text-[11px] text-gray-600 font-medium">$60 Half · $45 1/3</div>
+          {/* 4 Culinary Tier Pricing Cards */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3 text-center">
+            <div className="p-2.5 sm:p-3.5 rounded-xl bg-gray-50 border border-gray-200">
+              <span className="text-[9px] sm:text-[10px] uppercase font-bold tracking-widest text-gray-500 block">TIER 1</span>
+              <span className="font-serif text-base sm:text-lg font-bold text-[#00346f]">KHAAS</span>
+              <div className="text-xs font-bold text-[#775a19] mt-1">$70 <span className="text-[10px] font-medium text-gray-500">2.4&quot; FULL</span> · <span className="text-[#ffdea5]">$95</span> <span className="text-[10px] font-medium text-gray-500">3.4&quot; XL</span></div>
+              <div className="text-[10px] sm:text-[11px] text-gray-600 font-medium mt-0.5">$50 Half · $35 1/3</div>
+            </div>
+
+            <div className="p-2.5 sm:p-3.5 rounded-xl bg-[#00346f]/5 border border-[#00346f]/15">
+              <span className="text-[9px] sm:text-[10px] uppercase font-bold tracking-widest text-[#00346f]/70 block">TIER 2</span>
+              <span className="font-serif text-base sm:text-lg font-bold text-[#00346f]">SHAHI</span>
+              <div className="text-xs font-bold text-[#775a19] mt-1">$90 <span className="text-[10px] font-medium text-gray-500">2.4&quot; FULL</span> · <span className="text-[#ffdea5]">$120</span> <span className="text-[10px] font-medium text-gray-500">3.4&quot; XL</span></div>
+              <div className="text-[10px] sm:text-[11px] text-gray-600 font-medium mt-0.5">$60 Half · $45 1/3</div>
+            </div>
+
+            <div className="p-2.5 sm:p-3.5 rounded-xl bg-[#775a19]/5 border border-[#775a19]/20">
+              <span className="text-[9px] sm:text-[10px] uppercase font-bold tracking-widest text-[#775a19] block">TIER 3</span>
+              <span className="font-serif text-base sm:text-lg font-bold text-[#775a19]">DARBARI</span>
+              <div className="text-xs font-bold text-[#775a19] mt-1">$110 <span className="text-[10px] font-medium text-gray-500">2.4&quot; FULL</span> · <span className="text-[#ffdea5]">$150</span> <span className="text-[10px] font-medium text-gray-500">3.4&quot; XL</span></div>
+              <div className="text-[10px] sm:text-[11px] text-gray-600 font-medium mt-0.5">$70 Half · $55 1/3</div>
+            </div>
+
+            <div className="p-2.5 sm:p-3.5 rounded-xl bg-amber-500/10 border border-amber-300">
+              <span className="text-[9px] sm:text-[10px] uppercase font-bold tracking-widest text-amber-900 block">TIER 4 (ROYAL)</span>
+              <span className="font-serif text-base sm:text-lg font-bold text-amber-950">MAHARAJA</span>
+              <div className="text-xs font-bold text-amber-900 mt-1">$130 <span className="text-[10px] font-medium text-gray-500">2.4&quot; FULL</span> · <span className="text-[#ffdea5]">$175</span> <span className="text-[10px] font-medium text-gray-500">3.4&quot; XL</span></div>
+              <div className="text-[10px] sm:text-[11px] text-gray-700 font-medium mt-0.5">$80 Half · $65 1/3</div>
+            </div>
           </div>
 
-          <div className="p-2.5 sm:p-3.5 rounded-xl bg-[#775a19]/5 border border-[#775a19]/20 hover:border-[#775a19]/40 transition-colors">
-            <span className="text-[9px] sm:text-[10px] uppercase font-bold tracking-widest text-[#775a19] block">TIER 3</span>
-            <span className="font-serif text-base sm:text-lg font-bold text-[#775a19]">DARBARI</span>
-            <div className="text-xs font-bold text-[#775a19] mt-0.5 sm:mt-1">$110 <span className="text-[10px] font-medium text-gray-500">FULL</span></div>
-            <div className="text-[10px] sm:text-[11px] text-gray-600 font-medium">$70 Half · $55 1/3</div>
-          </div>
-
-          <div className="p-2.5 sm:p-3.5 rounded-xl bg-amber-500/10 border border-amber-300 hover:border-amber-400 transition-colors">
-            <span className="text-[9px] sm:text-[10px] uppercase font-bold tracking-widest text-amber-900 block">TIER 4 (ROYAL)</span>
-            <span className="font-serif text-base sm:text-lg font-bold text-amber-950">MAHARAJA</span>
-            <div className="text-xs font-bold text-amber-900 mt-0.5 sm:mt-1">$130 <span className="text-[10px] font-medium text-gray-500">FULL</span></div>
-            <div className="text-[10px] sm:text-[11px] text-gray-700 font-medium">$80 Half · $65 1/3</div>
-          </div>
-
-        </div>
-
-        <div className="hidden md:flex mt-4 pt-3 border-t border-gray-100 flex-wrap items-center justify-between text-[11px] text-gray-500 gap-2">
-          <span className="font-medium text-gray-600">
-            Freshly crafted in Frisco, TX &amp; DFW metroplex. Flat $50 delivery fee or free pickup. Strict 24h advance notice.
-          </span>
-          <div className="flex items-center gap-4 text-gray-700 font-medium">
-            <a href="tel:+19455274566" className="inline-flex items-center gap-1 hover:underline"><Phone className="w-3 h-3 text-[#00346f]" /> Call Kitchen</a>
-            <a href="https://wa.me/19455274566" target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 hover:underline text-emerald-700 font-bold">WhatsApp Us</a>
-            <a href="mailto:bluebonnetwhisk@gmail.com" className="inline-flex items-center gap-1 hover:underline"><Mail className="w-3 h-3 text-[#00346f]" /> bluebonnetwhisk@gmail.com</a>
-            <span className="inline-flex items-center gap-1"><Globe className="w-3 h-3 text-[#00346f]" /> www.bluebonnetwhisk.com</span>
+          {/* Allergen Legend & Quick Contact Row */}
+          <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-gray-100 text-[11px]">
+            <div className="flex items-center gap-1.5 text-xs font-semibold text-gray-600 flex-wrap">
+              <span className="text-gray-400 text-[10px] uppercase font-bold">Allergens:</span>
+              <span className="px-1.5 py-0.5 bg-blue-50 text-blue-800 rounded font-mono text-[10px] font-bold">D: Dairy</span>
+              <span className="px-1.5 py-0.5 bg-amber-50 text-amber-800 rounded font-mono text-[10px] font-bold">G: Gluten</span>
+              <span className="px-1.5 py-0.5 bg-rose-50 text-rose-800 rounded font-mono text-[10px] font-bold">N: Nuts</span>
+              <span className="px-1.5 py-0.5 bg-purple-50 text-purple-800 rounded font-mono text-[10px] font-bold">S: Soy</span>
+              <button
+                type="button"
+                onClick={() => setShowAllergenModal(true)}
+                className="lg:hidden underline text-[#ffdea5] font-bold text-[11px] ml-1 cursor-pointer"
+              >
+                Full Notice
+              </button>
+            </div>
+            <div className="flex items-center gap-4 text-gray-700 font-medium">
+              <a href="tel:+19455274566" className="inline-flex items-center gap-1 hover:underline"><Phone className="w-3 h-3 text-[#00346f]" /> Call Kitchen</a>
+              <a href="https://wa.me/19455274566" target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 hover:underline text-emerald-700 font-bold">WhatsApp Us</a>
+              <a href="mailto:bluebonnetwhisk@gmail.com" className="inline-flex items-center gap-1 hover:underline"><Mail className="w-3 h-3 text-[#00346f]" /> bluebonnetwhisk@gmail.com</a>
+            </div>
           </div>
         </div>
       </div>

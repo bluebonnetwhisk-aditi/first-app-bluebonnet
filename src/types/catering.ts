@@ -2,7 +2,7 @@ export type Allergen = 'D' | 'G' | 'N' | 'S';
 
 export type TrayTier = 'Khaas' | 'Shahi' | 'Darbari' | 'Maharaja';
 
-export type TraySize = 'third' | 'half' | 'full';
+export type TraySize = 'third' | 'half' | 'full' | 'deep_full';
 
 export type Category = 
   | 'mains'
@@ -18,9 +18,10 @@ export type Category =
   | 'tiffin';
 
 export interface TrayPricing {
-  third: number; // 1/3 Tray
-  half: number;  // Half Tray
-  full: number;  // Full Tray
+  third: number;    // 1/3 Tray (8–12 guests)
+  half: number;     // Half Tray (15–20 guests)
+  full: number;     // Standard Full Tray 2.4" Deep (25–35 guests)
+  deepFull: number; // Deep Full Tray 3.4" Deep (40–50 guests, +35% bulk-friendly)
 }
 
 export interface MenuItem {

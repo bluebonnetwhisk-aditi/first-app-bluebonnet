@@ -221,27 +221,36 @@ export default function TiffinOrderView({
 
     fetchCalendarBlackouts().then(dates => setBlackoutDates(dates));
 
-    fetchTiffinMenuSettings().then(data => {
-      const curMon = getCurrentMondayStr();
-      if (!data.weekStartDate || data.weekStartDate < curMon || data.weekTitle?.includes('21')) {
-        data.weekStartDate = curMon;
-        data.weekTitle = getCurrentMondayTitle(curMon);
-      }
-      setSettings(data);
-    });
-
-    const handleSettingsUpdate = () => {
+    const loadAndApplySettings = () => {
       fetchTiffinMenuSettings().then(data => {
         const curMon = getCurrentMondayStr();
-        if (!data.weekStartDate || data.weekStartDate < curMon || data.weekTitle?.includes('21')) {
+        if (!data.weekStartDate || data.weekStartDate < curMon || data.weekTitle?.includes('September 21') || data.weekTitle?.includes('November 9')) {
           data.weekStartDate = curMon;
           data.weekTitle = getCurrentMondayTitle(curMon);
         }
         setSettings(data);
       });
     };
-    window.addEventListener('bbw_tiffin_settings_updated', handleSettingsUpdate);
-    return () => window.removeEventListener('bbw_tiffin_settings_updated', handleSettingsUpdate);
+
+    loadAndApplySettings();
+
+    const handleVisibilityOrFocus = () => {
+      if (document.visibilityState === 'visible') {
+        loadAndApplySettings();
+      }
+    };
+
+    window.addEventListener('bbw_tiffin_settings_updated', loadAndApplySettings);
+    window.addEventListener('focus', handleVisibilityOrFocus);
+    document.addEventListener('visibilitychange', handleVisibilityOrFocus);
+    const pollInterval = window.setInterval(loadAndApplySettings, 15000);
+
+    return () => {
+      window.removeEventListener('bbw_tiffin_settings_updated', loadAndApplySettings);
+      window.removeEventListener('focus', handleVisibilityOrFocus);
+      document.removeEventListener('visibilitychange', handleVisibilityOrFocus);
+      window.clearInterval(pollInterval);
+    };
   }, []);
 
   // Lock body scroll and close lightbox on Escape key

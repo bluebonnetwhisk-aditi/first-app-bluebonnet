@@ -390,21 +390,21 @@ export default function CateringContainer() {
             </div>
 
             <div className="hidden lg:flex items-center gap-2 shrink-0">
-              <span className="text-xs text-gray-600 font-medium bg-[#D4AF37]/15 px-3 py-1.5 rounded-full border border-[#D4AF37]/30">
-                Frisco &amp; Little Elm, TX • Fresh Daily Cooking
+              <span className="text-xs text-[#ffdea5] font-medium bg-[#D4AF37]/15 px-3 py-1.5 rounded-full border border-[#D4AF37]/30">
+                1. Pick Your Event Date Below • 2. Select Dishes
               </span>
             </div>
 
           </div>
         </div>
 
-        {/* ── UNIFIED DAY & SCHEDULE RAIL (For Party Catering & Custom Cakes; Tiffin uses native Active Day Menu selector) ── */}
+        {/* ── UNIFIED DAY & SCHEDULE RAIL (Select Date FIRST before ordering; shows Sold Out & Closed badges) ── */}
         {subTab !== 'tiffin' && (
           <div className="w-full bg-[#FAF8F5] border-t border-b border-[#D4AF37]/30 py-2 sm:py-2.5 px-3 sm:px-4 shadow-2xs">
             <div className="max-w-7xl mx-auto flex items-center gap-2 sm:gap-3">
               <div className="hidden md:flex flex-col shrink-0 pr-3 border-r border-[#D4AF37]/30">
                 <span className="text-[11px] font-extrabold uppercase tracking-widest text-[#0B192C]">
-                  SCHEDULE RAIL
+                  1. SELECT DATE
                 </span>
                 <span className="text-xs font-medium text-gray-600">
                   Target Fulfillment Date
