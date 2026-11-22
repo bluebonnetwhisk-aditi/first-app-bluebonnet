@@ -29,428 +29,38 @@ export const supabase: SupabaseClient | null = isSupabaseConfigured
 const LOCAL_STORAGE_ORDERS_KEY = 'bbw_catering_orders_cache';
 const LOCAL_STORAGE_BLACKOUTS_KEY = 'bbw_catering_blackouts_cache';
 
-// Initial Mock Seed for Testing & Immediate Demo
-function getInitialMockOrders(): CateringOrder[] {
-  return [
-  {
-    "id": "3942d890-a463-4783-8603-7756b9443879",
-    "customer_name": "Siddharth Joshi [Weekly Lunch Dabba Plan]",
-    "phone_number": "(945) 555-4081",
-    "email": "sid.joshi@example.com",
-    "is_delivery": false,
-    "delivery_address": null,
-    "delivery_fee": 0,
-    "food_subtotal": 75,
-    "tax_amount": 6.19,
-    "total_amount": 81.19,
-    "fulfillment_date": "2026-09-28",
-    "fulfillment_time": "12:00 PM",
-    "dietary_notes": "Homestyle vegetarian lunch dabba (Dal, Sabzi, 4 soft Phulkas, Rice). Medium spice, freshly packed.",
-    "order_type": "order",
-    "status": "new",
-    "items": [
-      {
-        "id": "item-1790433895786-501",
-        "name": "Weekly Homestyle Dabba Meal Plan",
-        "notes": "Freshly packed daily lunch tiffin • Pickup at Deerwood Dr, Little Elm",
-        "category": "tiffin",
-        "quantity": 1,
-        "allergens": [
-          "D",
-          "G"
-        ],
-        "unitPrice": 75,
-        "menuItemId": "tiffin-weekly-plan",
-        "totalPrice": 75,
-        "categoryLabel": "Homestyle Dabba Subscriptions",
-        "leadTimeHours": 24,
-        "selectionType": "tiffin_weekly",
-        "selectionLabel": "5-Day Subscription (Mon–Fri)"
-      }
-    ],
-    "created_at": "2026-09-26T09:44:56.138295+00:00",
-    "payment_method": "zelle",
-    "processing_fee": 0,
-    "order_description": "Weekly Homestyle Dabba Meal Plan (5-Day Lunch Subscription (Mon–Fri) × 1) [$75.00]",
-    "discount_amount": 0,
-    "discount_reason": null,
-    "rebate_amount": 0,
-    "rebate_reason": null
-  },
-  {
-    "id": "0b208604-621e-47af-a068-2f677ec13541",
-    "customer_name": "Neha & Amit Agarwal [Weekly Dinner Dabba Plan - 2 Pax]",
-    "phone_number": "(214) 555-7793",
-    "email": "neha.agarwal@example.com",
-    "is_delivery": false,
-    "delivery_address": null,
-    "delivery_fee": 0,
-    "food_subtotal": 150,
-    "tax_amount": 12.38,
-    "total_amount": 162.38,
-    "fulfillment_date": "2026-09-28",
-    "fulfillment_time": "6:00 PM",
-    "dietary_notes": "Weekly dinner dabba for couple. Extra soft phulkas requested. Satvik / No onion no garlic on Tuesdays.",
-    "order_type": "order",
-    "status": "new",
-    "items": [
-      {
-        "id": "item-1790433895786-601",
-        "name": "Weekly Homestyle Dabba Meal Plan",
-        "notes": "Freshly packed evening dinner dabba • Pickup at Deerwood Dr, Little Elm",
-        "category": "tiffin",
-        "quantity": 2,
-        "allergens": [
-          "D",
-          "G"
-        ],
-        "unitPrice": 75,
-        "menuItemId": "tiffin-weekly-plan",
-        "totalPrice": 150,
-        "categoryLabel": "Homestyle Dabba Subscriptions",
-        "leadTimeHours": 24,
-        "selectionType": "tiffin_weekly",
-        "selectionLabel": "5-Day Subscription for 2 (Mon–Fri)"
-      }
-    ],
-    "created_at": "2026-09-26T09:44:56.199367+00:00",
-    "payment_method": "zelle",
-    "processing_fee": 0,
-    "order_description": "Weekly Homestyle Dabba Meal Plan (5-Day Dinner Subscription for 2 (Mon–Fri) × 2) [$150.00]",
-    "discount_amount": 0,
-    "discount_reason": null,
-    "rebate_amount": 0,
-    "rebate_reason": null
-  },
-  {
-    "id": "247b89eb-87c4-41db-bc77-99e9946b546c",
-    "customer_name": "Aarav Mehta [Food Catering - Delivery]",
-    "phone_number": "(469) 555-2311",
-    "email": "aarav.mehta@example.com",
-    "is_delivery": true,
-    "delivery_address": "5521 Legacy Dr, Ste 240, Plano, TX 75024",
-    "delivery_fee": 50,
-    "food_subtotal": 247,
-    "tax_amount": 24.5,
-    "total_amount": 321.5,
-    "fulfillment_date": "2026-09-29",
-    "fulfillment_time": "1:00 PM",
-    "dietary_notes": "SATVIK / JAIN-FRIENDLY REQUESTED (No Onion, No Garlic) | Corporate Luncheon setup at 2nd floor conference room",
-    "order_type": "order",
-    "status": "new",
-    "items": [
-      {
-        "id": "item-1790433895786-101",
-        "name": "Shahi Paneer",
-        "tier": "Maharaja",
-        "category": "mains",
-        "quantity": 1,
-        "allergens": [
-          "D"
-        ],
-        "unitPrice": 80,
-        "menuItemId": "mains-shahi-paneer",
-        "totalPrice": 80,
-        "categoryLabel": "Paneer & Premium Mains",
-        "leadTimeHours": 24,
-        "selectionType": "half",
-        "selectionLabel": "Half Tray ($80)"
-      },
-      {
-        "id": "item-1790433895786-102",
-        "name": "Dal Makhani",
-        "tier": "Darbari",
-        "category": "mains",
-        "quantity": 1,
-        "allergens": [
-          "D"
-        ],
-        "unitPrice": 65,
-        "menuItemId": "mains-dal-makhani",
-        "totalPrice": 65,
-        "categoryLabel": "Paneer & Premium Mains",
-        "leadTimeHours": 24,
-        "selectionType": "half",
-        "selectionLabel": "Half Tray ($65)"
-      },
-      {
-        "id": "item-1790433895786-103",
-        "name": "Jeera Rice",
-        "tier": "Shahi",
-        "category": "rice",
-        "quantity": 1,
-        "allergens": ["D"],
-        "unitPrice": 45,
-        "menuItemId": "rice-jeera",
-        "totalPrice": 45,
-        "categoryLabel": "Rice & Biryani",
-        "leadTimeHours": 24,
-        "selectionType": "half",
-        "selectionLabel": "Half Tray ($45)"
-      },
-      {
-        "id": "item-1790433895786-104",
-        "name": "Poori",
-        "category": "breads",
-        "quantity": 1,
-        "allergens": [
-          "G"
-        ],
-        "unitPrice": 27,
-        "menuItemId": "bread-poori",
-        "totalPrice": 27,
-        "categoryLabel": "Breads (Min. 30 pieces)",
-        "leadTimeHours": 24,
-        "selectionType": "pack_30",
-        "selectionLabel": "30 pcs ($27)"
-      },
-      {
-        "id": "item-1790433895786-105",
-        "name": "Gulab Jamun",
-        "category": "desserts",
-        "quantity": 1,
-        "allergens": [
-          "D",
-          "G"
-        ],
-        "unitPrice": 30,
-        "menuItemId": "dessert-gulab-jamun",
-        "totalPrice": 30,
-        "categoryLabel": "Mithai & Sweets",
-        "leadTimeHours": 24,
-        "selectionType": "pack_30",
-        "selectionLabel": "30 pcs ($30)"
-      }
-    ],
-    "created_at": "2026-09-26T09:44:55.772422+00:00",
-    "payment_method": "zelle",
-    "processing_fee": 0,
-    "order_description": "Shahi Paneer (Half Tray × 1) [$80.00]; Dal Makhani (Half Tray × 1) [$65.00]; Jeera Rice (Half Tray × 1) [$45.00]; Poori (30 pcs × 1) [$27.00]; Gulab Jamun (30 pcs × 1) [$30.00]",
-    "discount_amount": 0,
-    "discount_reason": null,
-    "rebate_amount": 0,
-    "rebate_reason": null
-  },
-  {
-    "id": "54538d20-dbf8-49f2-9b18-0973cca6825c",
-    "customer_name": "Divya Swaminathan [Custom Cake - Pickup]",
-    "phone_number": "(214) 555-6672",
-    "email": "divya.swami@example.com",
-    "is_delivery": false,
-    "delivery_address": null,
-    "delivery_fee": 0,
-    "food_subtotal": 65,
-    "tax_amount": 0,
-    "total_amount": 65,
-    "fulfillment_date": "2026-09-30",
-    "fulfillment_time": "4:00 PM",
-    "dietary_notes": "100% Eggless pure vegetarian cake. Inscription: \"Happy 5th Birthday Anvi!\" • Less sweet cardamom cream.",
-    "order_type": "order",
-    "status": "new",
-    "items": [
-      {
-        "id": "item-1790433895786-301",
-        "name": "8\" Rasmalai Pistachio Fusion Cake",
-        "notes": "Inscription: \"Happy 5th Birthday Anvi!\" • 100% Eggless",
-        "category": "cakes",
-        "quantity": 1,
-        "allergens": [
-          "D",
-          "N",
-          "G"
-        ],
-        "unitPrice": 65,
-        "menuItemId": "cake-rasmalai-fusion",
-        "totalPrice": 65,
-        "categoryLabel": "Signature Eggless Fusion Cakes",
-        "leadTimeHours": 48,
-        "selectionType": "cake_custom",
-        "selectionLabel": "8\" Round (12–16 Servings)"
-      }
-    ],
-    "created_at": "2026-09-26T09:44:55.999153+00:00",
-    "payment_method": "cash",
-    "processing_fee": 0,
-    "order_description": "8\" Rasmalai Pistachio Fusion Cake (8\" Round (12–16 Servings) × 1) [$65.00] [Msg: Happy 5th Birthday Anvi!]",
-    "discount_amount": 0,
-    "discount_reason": null,
-    "rebate_amount": 0,
-    "rebate_reason": null
-  },
-  {
-    "id": "51badabe-cff4-4428-a737-17f52c507782",
-    "customer_name": "Rohan & Meera Verma [Food Catering - Pickup]",
-    "phone_number": "(972) 555-8834",
-    "email": "verma.family.events@example.com",
-    "is_delivery": false,
-    "delivery_address": null,
-    "delivery_fee": 0,
-    "food_subtotal": 385,
-    "tax_amount": 31.76,
-    "total_amount": 431.35,
-    "fulfillment_date": "2026-10-02",
-    "fulfillment_time": "6:30 PM",
-    "dietary_notes": "Family gathering. Medium spice. Extra green chutney with samosa chaat.",
-    "order_type": "order",
-    "status": "new",
-    "items": [
-      {
-        "id": "item-1790433895786-201",
-        "name": "Kadhai Paneer",
-        "tier": "Maharaja",
-        "category": "mains",
-        "quantity": 1,
-        "allergens": [
-          "D"
-        ],
-        "unitPrice": 150,
-        "menuItemId": "mains-kadhai-paneer",
-        "totalPrice": 150,
-        "categoryLabel": "Paneer & Premium Mains",
-        "leadTimeHours": 24,
-        "selectionType": "full",
-        "selectionLabel": "Full Tray ($150)"
-      },
-      {
-        "id": "item-1790433895786-202",
-        "name": "Veg Dum Biryani",
-        "tier": "Maharaja",
-        "category": "rice",
-        "quantity": 1,
-        "allergens": [
-          "D"
-        ],
-        "unitPrice": 75,
-        "menuItemId": "rice-veg-biryani",
-        "totalPrice": 75,
-        "categoryLabel": "Rice & Biryani",
-        "leadTimeHours": 24,
-        "selectionType": "half",
-        "selectionLabel": "Half Tray ($75)"
-      },
-      {
-        "id": "item-1790433895786-203",
-        "name": "Samosa Chaat",
-        "tier": "Darbari",
-        "category": "starters",
-        "quantity": 1,
-        "allergens": [
-          "D",
-          "G"
-        ],
-        "unitPrice": 70,
-        "menuItemId": "starter-samosa-chaat",
-        "totalPrice": 70,
-        "categoryLabel": "Starters & Indo-Chinese",
-        "leadTimeHours": 24,
-        "selectionType": "half",
-        "selectionLabel": "Half Tray ($70)"
-      },
-      {
-        "id": "item-1790433895786-204",
-        "name": "Mango Lassi",
-        "category": "beverages",
-        "quantity": 2,
-        "allergens": [
-          "D"
-        ],
-        "unitPrice": 45,
-        "menuItemId": "beverage-mango-lassi",
-        "totalPrice": 90,
-        "categoryLabel": "Beverages (Per Gallon)",
-        "leadTimeHours": 24,
-        "selectionType": "gallon",
-        "selectionLabel": "1 Gallon ($45)"
-      }
-    ],
-    "created_at": "2026-09-26T09:44:55.931617+00:00",
-    "payment_method": "credit_card",
-    "processing_fee": 14.59,
-    "order_description": "Kadhai Paneer (Full Tray × 1) [$150.00]; Veg Dum Biryani (Half Tray × 1) [$75.00]; Samosa Chaat (Half Tray × 1) [$70.00]; Mango Lassi (1 Gallon × 2) [$90.00]",
-    "discount_amount": 0,
-    "discount_reason": null,
-    "rebate_amount": 0,
-    "rebate_reason": null
-  },
-  {
-    "id": "c3109676-d615-476d-afe6-9e07e61b1753",
-    "customer_name": "Kavita Krishnamurthy [Anniversary Cake - Delivery]",
-    "phone_number": "(469) 555-9120",
-    "email": "kavita.k@example.com",
-    "is_delivery": true,
-    "delivery_address": "6801 Warren Pkwy, Frisco, TX 75034",
-    "delivery_fee": 50,
-    "food_subtotal": 167,
-    "tax_amount": 4.13,
-    "total_amount": 221.13,
-    "fulfillment_date": "2026-10-03",
-    "fulfillment_time": "3:00 PM",
-    "dietary_notes": "100% Eggless wedding anniversary party. Inscription: \"Happy 25th Silver Jubilee Mom & Dad!\"",
-    "order_type": "order",
-    "status": "new",
-    "items": [
-      {
-        "id": "item-1790433895786-401",
-        "name": "10\" Gulab Jamun Tres Leches Fusion Cake",
-        "notes": "Inscription: \"Happy 25th Silver Jubilee Mom & Dad!\" • 100% Eggless",
-        "category": "cakes",
-        "quantity": 1,
-        "allergens": [
-          "D",
-          "G"
-        ],
-        "unitPrice": 95,
-        "menuItemId": "cake-gulab-jamun-tres-leches",
-        "totalPrice": 95,
-        "categoryLabel": "Signature Eggless Fusion Cakes",
-        "leadTimeHours": 48,
-        "selectionType": "cake_custom",
-        "selectionLabel": "10\" Round (20–25 Servings)"
-      },
-      {
-        "id": "item-1790433895786-402",
-        "name": "Motichoor Cheesecake Parfait Cups",
-        "notes": "Single-serve festive dessert cups",
-        "category": "cakes",
-        "quantity": 1,
-        "allergens": [
-          "D",
-          "G"
-        ],
-        "unitPrice": 72,
-        "menuItemId": "dessert-motichoor-cups",
-        "totalPrice": 72,
-        "categoryLabel": "Fusion Dessert Cups",
-        "leadTimeHours": 48,
-        "selectionType": "pieces",
-        "selectionLabel": "24 Cups ($72)"
-      }
-    ],
-    "created_at": "2026-09-26T09:44:56.069309+00:00",
-    "payment_method": "zelle",
-    "processing_fee": 0,
-    "order_description": "10\" Gulab Jamun Tres Leches Fusion Cake (10\" Round (20–25 Servings) × 1) [$95.00] [Msg: Happy 25th Silver Jubilee Mom & Dad!]; Motichoor Cheesecake Cups (24 Cups × 1) [$72.00]",
-    "discount_amount": 0,
-    "discount_reason": null,
-    "rebate_amount": 0,
-    "rebate_reason": null
-  }
-];
+// Legacy dummy order IDs to purge from any browser localStorage cache
+const LEGACY_DUMMY_ORDER_IDS = new Set<string>([
+  '3942d890-a463-4783-8603-7756b9443879',
+  '0b208604-621e-47af-a068-2f677ec13541',
+  '247b89eb-87c4-41db-bc77-99e9946b546c',
+  '54538d20-dbf8-49f2-9b18-0973cca6825c',
+  '51badabe-cff4-4428-a737-17f52c507782',
+  'c3109676-d615-476d-afe6-9e07e61b1753'
+]);
+
+function isDummyOrder(o: Partial<CateringOrder> | null | undefined): boolean {
+  if (!o || !o.id) return false;
+  if (LEGACY_DUMMY_ORDER_IDS.has(o.id)) return true;
+  if (o.email && o.email.toLowerCase().endsWith('@example.com')) return true;
+  return false;
 }
 
 function getStoredOrders(): CateringOrder[] {
   try {
     const raw = localStorage.getItem(LOCAL_STORAGE_ORDERS_KEY);
     if (!raw) {
-      const initial = getInitialMockOrders();
-      localStorage.setItem(LOCAL_STORAGE_ORDERS_KEY, JSON.stringify(initial));
-      return initial;
+      return [];
     }
     const parsed = JSON.parse(raw);
     if (!Array.isArray(parsed)) {
       return [];
     }
-    return parsed;
+    const cleaned = parsed.filter((o: CateringOrder) => !isDummyOrder(o));
+    if (cleaned.length !== parsed.length) {
+      localStorage.setItem(LOCAL_STORAGE_ORDERS_KEY, JSON.stringify(cleaned));
+    }
+    return cleaned;
   } catch {
     return [];
   }
@@ -711,9 +321,24 @@ function saveLocalOrderEdit(orderId: string, updates: Partial<CateringOrder>): v
   }
 }
 
+function clearLocalOrderEdit(orderId: string): void {
+  try {
+    const current = getLocalOrderEdits();
+    if (current[orderId]) {
+      delete current[orderId];
+      localStorage.setItem(LOCAL_EDITED_ORDERS_KEY, JSON.stringify(current));
+    }
+  } catch {
+    // ignore
+  }
+}
+
 function normalizeFetchedOrder(rawOrder: CateringOrder): CateringOrder {
   const localEdits = getLocalOrderEdits()[rawOrder.id];
-  const merged: CateringOrder = localEdits ? { ...rawOrder, ...localEdits } : { ...rawOrder };
+  // Supabase is the authoritative cross-device source of truth for status, order_description, and core fields.
+  // Only apply localEdits as a temporary fallback if localEdits was written within the last 10 seconds (optimistic UI during in-flight request).
+  const isFreshOptimisticEdit = Boolean(localEdits && localEdits.updatedAt && (Date.now() - localEdits.updatedAt < 10000));
+  const merged: CateringOrder = isFreshOptimisticEdit ? { ...rawOrder, ...localEdits } : { ...rawOrder };
 
   let desc = merged.order_description || '';
 
@@ -749,20 +374,23 @@ export async function fetchOrders(fulfillmentDate?: string): Promise<CateringOrd
       const { data, error } = await query;
       if (!error && data) {
         const parsed = (data as CateringOrder[])
+          .filter(o => !isDummyOrder(o))
           .map(normalizeFetchedOrder)
           .filter(o => o.status !== 'cancelled');
 
-        // Merge any purely local orders that haven't synced yet
+        // Only keep purely offline orders (created with 'ord-' prefix when offline), never resurrect deleted/cancelled Supabase UUIDs or dummy orders
         const localStored = getStoredOrders();
         const remoteIds = new Set(parsed.map(o => o.id));
-        const localOnly = localStored
-          .filter(o => !remoteIds.has(o.id) && o.status !== 'cancelled')
+        const localOfflineOnly = localStored
+          .filter(o => !remoteIds.has(o.id) && o.id.startsWith('ord-') && o.status !== 'cancelled' && !isDummyOrder(o))
           .map(normalizeFetchedOrder);
 
-        const combined = [...parsed, ...localOnly];
+        const combined = [...parsed, ...localOfflineOnly];
 
         try {
-          localStorage.setItem(LOCAL_STORAGE_ORDERS_KEY, JSON.stringify(combined));
+          if (!fulfillmentDate) {
+            localStorage.setItem(LOCAL_STORAGE_ORDERS_KEY, JSON.stringify(combined));
+          }
         } catch {}
 
         if (fulfillmentDate) {
@@ -819,7 +447,10 @@ export async function updateOrderStatus(orderId: string, status: OrderStatus): P
           })
           .eq('id', orderId);
         
-        if (!error) updatedSuccessfully = true;
+        if (!error) {
+          updatedSuccessfully = true;
+          clearLocalOrderEdit(orderId);
+        }
       } else {
         const { data: currentOrder } = await supabase
           .from('orders')
@@ -838,7 +469,10 @@ export async function updateOrderStatus(orderId: string, status: OrderStatus): P
           })
           .eq('id', orderId);
 
-        if (!error) updatedSuccessfully = true;
+        if (!error) {
+          updatedSuccessfully = true;
+          clearLocalOrderEdit(orderId);
+        }
       }
     } catch (err) {
       console.warn('Supabase update failed, updating local cache', err);
@@ -984,6 +618,8 @@ export async function updateOrderDetails(orderId: string, updates: Partial<Cater
 
       if (error) {
         console.warn('Supabase updateOrderDetails warning (saved locally):', error);
+      } else {
+        clearLocalOrderEdit(orderId);
       }
     } catch (err) {
       console.warn('Supabase updateOrderDetails connection warning (saved locally):', err);
@@ -1025,6 +661,7 @@ export async function deleteOrderFromSupabase(orderId: string): Promise<boolean>
 
   // Always update local cache and dispatch event
   try {
+    clearLocalOrderEdit(orderId);
     const all = getStoredOrders();
     const filtered = all.filter(o => o.id !== orderId);
     saveStoredOrders(filtered);
