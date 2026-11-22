@@ -29,7 +29,7 @@ const INITIAL_REVIEWS: ReviewItem[] = [
     occasion: "Daughter's 5th Birthday (Frisco, TX)",
     itemsOrdered: "2-Tier Eggless Rasmalai Cake, Live Pani Puri & Cutlets",
     rating: 5,
-    reviewText: "Ordered a 2-tier eggless Rasmalai cake and live pani puri counter for my daughter's 5th birthday in Frisco. Honestly the cake was super soft and not overly sweet like store bought cakes, everyone went for a second slice. Even the pani puri and cutlets got over so fast! Aditi was very patient with all my small changes. Will definitely order again.",
+    reviewText: "Ordered a 2-tier eggless Rasmalai cake and live pani puri counter for my daughter's 5th birthday in Frisco. Honestly the cake was super soft and not overly sweet like store bought cakes, everyone went for a second slice. Even the pani puri and cutlets got over so fast! They were very patient with all my small changes. Will definitely order again.",
     date: "September 24, 2026"
   },
   {
@@ -83,7 +83,7 @@ const INITIAL_REVIEWS: ReviewItem[] = [
     occasion: "1st Birthday Party (Southlake, TX)",
     itemsOrdered: "Eggless Jungle Theme 2-Tier Cake & Mango Cups",
     rating: 5,
-    reviewText: "Shared a reference picture for my son's 1st birthday jungle theme cake and Aditi made it look even better in person. We opted for eggless mango cream flavor and it was so moist and light. Pricing was very reasonable compared to other custom bakers around DFW.",
+    reviewText: "Shared a reference picture for my son's 1st birthday jungle theme cake and they made it look even better in person. We opted for eggless mango cream flavor and it was so moist and light. Pricing was very reasonable compared to other custom bakers around DFW.",
     date: "July 18, 2026"
   },
   {

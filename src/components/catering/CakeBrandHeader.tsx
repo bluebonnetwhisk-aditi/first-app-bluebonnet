@@ -69,7 +69,7 @@ export default function CakeBrandHeader() {
             <div>
               <h3 className="font-serif font-bold text-xs sm:text-base text-purple-800 leading-tight">Direct Baker Care</h3>
               <p className="hidden sm:block text-xs text-gray-600 mt-1 leading-relaxed">
-                Work directly with master baker Aditi. Your cake is freshly baked and finished just hours prior to your pickup for peak flavor, tenderness, and presentation.
+                Work directly with our master baker. Your cake is freshly baked and finished just hours prior to your pickup for peak flavor, tenderness, and presentation.
               </p>
             </div>
           </div>

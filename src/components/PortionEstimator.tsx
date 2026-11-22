@@ -475,7 +475,7 @@ export default function PortionEstimator({
               Turn Your Estimate into a Pure Vegetarian Feast
             </h3>
             <p className="text-xs text-gray-300 font-light">
-              Select these exact trays on our Catering Order Portal or reach out directly to head chef Aditi.
+              Select these exact trays on our Catering Order Portal or reach out directly to our kitchen.
             </p>
           </div>
 

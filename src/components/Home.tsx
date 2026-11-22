@@ -531,7 +531,7 @@ export default function Home({ onOpenBaker: _onOpenBaker, onNavigate }: HomeProp
                 name: "Ankita S.",
                 occasion: "Daughter's 5th Birthday • Frisco, TX",
                 itemsOrdered: "2-Tier Eggless Rasmalai Cake, Live Pani Puri & Cutlets",
-                quote: "Ordered a 2-tier eggless Rasmalai cake and live pani puri counter for my daughter's 5th birthday in Frisco. Honestly the cake was super soft and not overly sweet like store bought cakes, everyone went for a second slice. Aditi was very patient with all my small changes. Will definitely order again.",
+                quote: "Ordered a 2-tier eggless Rasmalai cake and live pani puri counter for my daughter's 5th birthday in Frisco. Honestly the cake was super soft and not overly sweet like store bought cakes, everyone went for a second slice. The team was very patient with all my small changes. Will definitely order again.",
                 rating: 5,
                 date: "September 24, 2026"
               },
@@ -634,7 +634,7 @@ export default function Home({ onOpenBaker: _onOpenBaker, onNavigate }: HomeProp
           </div>
 
           <div className="text-center pt-6 space-y-4">
-            <p className="text-xs text-gray-400 font-sans">Still have queries or customized requirements? Reach out directly to chef Aditi:</p>
+            <p className="text-xs text-gray-400 font-sans">Still have queries or customized requirements? Reach out directly to our kitchen:</p>
             <div className="flex flex-col sm:flex-row flex-wrap items-center justify-center gap-3">
               <a
                 href="tel:+19455274566"
