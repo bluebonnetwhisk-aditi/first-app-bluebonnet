@@ -14,7 +14,6 @@ const CakesPage = React.lazy(() => import("./components/CakesPage"));
 const CateringContainer = React.lazy(() => import("./components/catering/CateringContainer"));
 const KitchenKDS = React.lazy(() => import("./components/catering/KitchenKDS"));
 const LiveCountersPage = React.lazy(() => import("./components/LiveCountersPage"));
-const GiftingPage = React.lazy(() => import("./components/GiftingPage"));
 const AboutPage = React.lazy(() => import("./components/AboutPage"));
 const GalleryPage = React.lazy(() => import("./components/GalleryPage"));
 const ReviewsPage = React.lazy(() => import("./components/ReviewsPage"));
@@ -81,8 +80,7 @@ export default function App() {
       }
       if (path.startsWith("/catering") || path.startsWith("/menu")) return "Catering";
       if (path.startsWith("/cakes") || path.startsWith("/cake")) return "Cakes";
-      if (path.startsWith("/party-packages") || path.startsWith("/party-package") || path.startsWith("/live-counters") || path.startsWith("/party")) return "Live Counters";
-      if (path.startsWith("/lux-gifting") || path.startsWith("/gifting")) return "Gifting";
+      if (path.startsWith("/party-packages") || path.startsWith("/party-package") || path.startsWith("/live-counters") || path.startsWith("/party") || path.startsWith("/lux-gifting") || path.startsWith("/gifting")) return "Live Counters";
       if (path.startsWith("/gallery")) return "Gallery";
       if (path.startsWith("/reviews")) return "Reviews";
       if (path.startsWith("/about")) return "About";
@@ -170,10 +168,8 @@ export default function App() {
         window.history.pushState(null, "", "/catering/food");
       } else if (activeTab === "Cakes" && !currentPath.startsWith("/cakes") && !currentPath.startsWith("/cake")) {
         window.history.pushState(null, "", "/cakes");
-      } else if (activeTab === "Live Counters" && !currentPath.startsWith("/party-packages") && !currentPath.startsWith("/party-package") && !currentPath.startsWith("/live-counters") && !currentPath.startsWith("/party")) {
+      } else if (activeTab === "Live Counters" && !currentPath.startsWith("/party-packages") && !currentPath.startsWith("/party-package") && !currentPath.startsWith("/live-counters") && !currentPath.startsWith("/party") && !currentPath.startsWith("/lux-gifting") && !currentPath.startsWith("/gifting")) {
         window.history.pushState(null, "", "/party-packages");
-      } else if (activeTab === "Gifting" && !currentPath.startsWith("/lux-gifting") && !currentPath.startsWith("/gifting")) {
-        window.history.pushState(null, "", "/lux-gifting");
       } else if (activeTab === "Gallery" && !currentPath.startsWith("/gallery")) {
         window.history.pushState(null, "", "/gallery");
       } else if (activeTab === "Reviews" && !currentPath.startsWith("/reviews")) {
@@ -197,8 +193,7 @@ export default function App() {
       setIsKitchenMode(false);
       if (path.startsWith("/catering") || path.startsWith("/menu")) setActiveTab("Catering");
       else if (path.startsWith("/cakes") || path.startsWith("/cake")) setActiveTab("Cakes");
-      else if (path.startsWith("/party-packages") || path.startsWith("/party-package") || path.startsWith("/live-counters") || path.startsWith("/party")) setActiveTab("Live Counters");
-      else if (path.startsWith("/lux-gifting") || path.startsWith("/gifting")) setActiveTab("Gifting");
+      else if (path.startsWith("/party-packages") || path.startsWith("/party-package") || path.startsWith("/live-counters") || path.startsWith("/party") || path.startsWith("/lux-gifting") || path.startsWith("/gifting")) setActiveTab("Live Counters");
       else if (path.startsWith("/gallery")) setActiveTab("Gallery");
       else if (path.startsWith("/reviews")) setActiveTab("Reviews");
       else if (path.startsWith("/about")) setActiveTab("About");
@@ -235,8 +230,7 @@ export default function App() {
     { name: "Home", id: "Home", path: "/" },
     { name: "Cakes", id: "Cakes", path: "/cakes" },
     { name: "Ordering", id: "Catering", path: "/catering/food" },
-    { name: "Party Packages", id: "Live Counters", path: "/party-packages" },
-    { name: "Lux Gifting", id: "Gifting", path: "/lux-gifting" },
+    { name: "Packages & Gifting", id: "Live Counters", path: "/party-packages" },
     { name: "Gallery", id: "Gallery", path: "/gallery" },
     { name: "Reviews", id: "Reviews", path: "/reviews" },
     { name: "About Us", id: "About", path: "/about" }
@@ -351,11 +345,8 @@ export default function App() {
           {activeTab === "Catering" && (
             <CateringContainer />
           )}
-          {activeTab === "Live Counters" && (
+          {(activeTab === "Live Counters" || activeTab === "Gifting") && (
             <LiveCountersPage />
-          )}
-          {activeTab === "Gifting" && (
-            <GiftingPage />
           )}
           {activeTab === "Gallery" && (
             <GalleryPage />

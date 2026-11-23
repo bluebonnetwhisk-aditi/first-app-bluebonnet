@@ -37,7 +37,7 @@ export function TrayPricingHeader() {
                 TRAY DEPTH GUIDE &amp; PRICING TIERS
               </h2>
               <p className="text-[11px] sm:text-xs text-gray-500 mt-0.5">
-                Standard Full Trays are <strong className="text-[#ffdea5]">2.4&quot; deep</strong> (25–35 guests). Upgrade to our <strong className="text-[#ffdea5]">XL Full Tray (3.4&quot; deep)</strong> (~42% more food, 40–50 guests) at bulk-friendly +35% pricing.
+                Standard Full Trays are <strong className="text-[#ffdea5]">2.4&quot; deep</strong> (25–35 guests). Upgrade to our <strong className="text-[#ffdea5]">XL Full Tray (3.4&quot; deep)</strong> for larger gatherings (40–50 guests).
               </p>
             </div>
 
@@ -94,9 +94,6 @@ export function TrayPricingHeader() {
             </div>
 
             <div className="p-3 rounded-xl bg-amber-50 border border-amber-300 flex flex-col justify-between items-center text-center relative">
-              <span className="absolute -top-2 right-2 bg-[#D4AF37] text-[#050a1a] text-[9px] font-black uppercase px-1.5 py-0.5 rounded-full">
-                +42% Vol · +35% Price
-              </span>
               <div className="h-12 flex items-end justify-center w-full mb-2">
                 <div className="w-24 h-10 rounded-b-md border-2 border-[#D4AF37] bg-[#775a19]/40 flex items-center justify-center text-[10px] font-mono font-black text-[#ffdea5]">3.4&quot; XL</div>
               </div>
