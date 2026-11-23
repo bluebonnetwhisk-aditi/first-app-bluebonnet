@@ -4,7 +4,6 @@
  * and auto-populate the weekly catering schedule, 16 oz sides, and pricing.
  */
 
-import { supabase } from './supabase';
 import type { 
   WeekdayMenuEntry, 
   ContainerAddonItem, 
@@ -22,73 +21,17 @@ export interface ScannedTiffinData {
   specialDishes?: TiffinSpecialDish[];
 }
 
-const LOCAL_STORAGE_GEMINI_KEY = 'bbw_gemini_api_key';
-
 /**
- * Retrieves the stored Gemini API key from environment, localStorage, or Supabase
+ * SECURITY: The Gemini API key lives ONLY on the server (GEMINI_API_KEY env var, used by
+ * /api/kds/scan-menu). It is never bundled into the browser, localStorage or the database.
+ * These shims keep the existing UI working: scanning is "ready" whenever the server proxy is.
  */
 export async function getGeminiApiKey(): Promise<string> {
-  // 1. Check environment variable first
-  const envKey = (import.meta as any).env?.VITE_GEMINI_API_KEY;
-  if (envKey && typeof envKey === 'string' && envKey.trim().length > 10) {
-    return envKey.trim();
-  }
-
-  // 2. Check localStorage
-  try {
-    const localKey = localStorage.getItem(LOCAL_STORAGE_GEMINI_KEY);
-    if (localKey && localKey.trim().length > 10) {
-      return localKey.trim();
-    }
-  } catch {}
-
-  // 3. Check Supabase app_settings
-  if (supabase) {
-    try {
-      const { data } = await supabase
-        .from('app_settings')
-        .select('value')
-        .eq('key', 'gemini_api_key')
-        .maybeSingle();
-
-      if (data && data.value) {
-        const key = typeof data.value === 'string' ? data.value : data.value.key;
-        if (key && key.trim().length > 10) {
-          localStorage.setItem(LOCAL_STORAGE_GEMINI_KEY, key.trim());
-          return key.trim();
-        }
-      }
-    } catch (err) {
-      console.warn('Failed to retrieve Gemini key from Supabase', err);
-    }
-  }
-
-  return '';
+  return 'server-managed';
 }
 
-/**
- * Saves Gemini API key to localStorage and Supabase app_settings
- */
-export async function saveGeminiApiKey(key: string): Promise<boolean> {
-  const cleanKey = key.trim();
-  try {
-    localStorage.setItem(LOCAL_STORAGE_GEMINI_KEY, cleanKey);
-  } catch {}
-
-  if (supabase) {
-    try {
-      await supabase
-        .from('app_settings')
-        .upsert({
-          key: 'gemini_api_key',
-          value: { key: cleanKey },
-          updated_at: new Date().toISOString()
-        });
-    } catch (err) {
-      console.warn('Failed to persist Gemini API key to Supabase', err);
-    }
-  }
-
+/** No-op: the key is configured server-side in Vercel and can no longer be set from the browser. */
+export async function saveGeminiApiKey(_key: string): Promise<boolean> {
   return true;
 }
 
@@ -119,16 +62,6 @@ export async function urlToBase64(url: string): Promise<{ mimeType: string; base
     reader.readAsDataURL(blob);
   });
 }
-
-const GEMINI_MODELS = [
-  'gemini-3.8-flash',
-  'gemini-3.5-flash',
-  'gemini-3-flash-preview',
-  'gemini-flash-latest',
-  'gemini-2.5-flash',
-  'gemini-2.0-flash',
-  'gemini-1.5-flash'
-];
 
 const SCAN_PROMPT = `
 You are an expert OCR and menu extraction AI for an Indian homestyle tiffin catering service called "Desi Dabba" by BlueBonnet Whisk.
@@ -275,89 +208,32 @@ Return ONLY valid raw JSON with NO markdown code blocks, backticks, or other tex
 async function executeGeminiScan(
   promptText: string,
   imageUrlOrData: string,
-  providedKey?: string
+  _providedKey?: string
 ): Promise<ScannedTiffinData> {
-  const apiKey = providedKey || await getGeminiApiKey();
-
-  if (!apiKey || apiKey.trim().length === 0) {
-    throw new Error('Google Gemini API Key is missing. Please provide an API key to scan the flyer.');
-  }
-
   const { mimeType, base64 } = await urlToBase64(imageUrlOrData);
 
-  let lastError: Error | null = null;
+  const response = await fetch('/api/kds/scan-menu', {
+    method: 'POST',
+    credentials: 'same-origin',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ prompt: promptText, mimeType, base64 })
+  });
 
-  // Try available Gemini models in priority order
-  for (const model of GEMINI_MODELS) {
-    try {
-      const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey.trim()}`;
-
-      const requestBody = {
-        contents: [
-          {
-            parts: [
-              { text: promptText },
-              {
-                inlineData: {
-                  mimeType: mimeType.includes('png') ? 'image/png' : 'image/jpeg',
-                  data: base64
-                }
-              }
-            ]
-          }
-        ],
-        generationConfig: {
-          responseMimeType: 'application/json',
-          temperature: 0.1
-        }
-      };
-
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(requestBody)
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        const msg = errorData.error?.message || `HTTP ${response.status} from ${model}`;
-        // If 404, 503, 500 or model not found, try the next model
-        if (response.status === 404 || response.status === 503 || response.status === 500 || (response.status === 400 && msg.includes('models/'))) {
-          lastError = new Error(msg);
-          continue;
-        }
-        throw new Error(`Gemini API Error (${model}): ${msg}`);
-      }
-
-      const data = await response.json();
-      const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
-
-      if (!rawText) {
-        throw new Error('No text generated by Google Gemini model.');
-      }
-
-      // Clean markdown code fence if returned
-      const cleanJson = rawText
-        .replace(/^```json\s*/i, '')
-        .replace(/^```\s*/i, '')
-        .replace(/\s*```$/i, '')
-        .trim();
-
-      const parsed: ScannedTiffinData = JSON.parse(cleanJson);
-      return sanitizeParsedTiffinData(parsed);
-
-    } catch (err: any) {
-      lastError = err;
-      // If error is about API key invalid, stop trying other models
-      if (err.message && (err.message.includes('API_KEY_INVALID') || err.message.includes('expired'))) {
-        throw new Error('Invalid Gemini API Key. Please verify your key at https://aistudio.google.com/app/apikey');
-      }
-    }
+  if (response.status === 401) {
+    throw new Error('Session expired. Please unlock the Kitchen Display again and retry.');
+  }
+  const payload = await response.json().catch(() => ({} as any));
+  if (!response.ok || !payload.text) {
+    throw new Error(payload.error || 'Failed to scan flyer with Google Gemini. Please try again.');
   }
 
-  throw lastError || new Error('Failed to scan flyer with Google Gemini. Please try again.');
+  const cleanJson = String(payload.text)
+    .replace(/^```json\s*/i, '')
+    .replace(/^```\s*/i, '')
+    .replace(/\s*```$/i, '')
+    .trim();
+
+  return sanitizeParsedTiffinData(JSON.parse(cleanJson));
 }
 
 /**

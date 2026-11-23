@@ -18,7 +18,6 @@ import {
 } from 'lucide-react';
 import type { CartItem, Category, MenuItem, TraySize, Allergen } from '../../types/catering';
 import { DESI_DABBA_ITEMS } from '../../data/desiDabbaMenu';
-import { fetchOrders } from '../../services/supabase';
 
 // Baseline most-ordered dishes from historical Bluebonnet Whisk catering orders & customer reviews
 const BASELINE_POPULAR_DISH_IDS = new Set<string>([
@@ -153,30 +152,26 @@ export default function MenuOrderGrid({
   // Enrich popular dishes dynamically from past orders stored in Supabase / local order history
   useEffect(() => {
     let isMounted = true;
-    fetchOrders().then(orders => {
-      if (!isMounted || !Array.isArray(orders) || orders.length === 0) return;
+    // PII-free aggregate endpoint: returns only dish ids/names, never customer data
+    fetch('/api/popular-items').then(r => (r.ok ? r.json() : null)).then((payload: { ids?: string[]; names?: string[] } | null) => {
+      if (!isMounted || !payload) return;
       const updated = new Set<string>(BASELINE_POPULAR_DISH_IDS);
       const nameToId = new Map<string, string>();
       DESI_DABBA_ITEMS.forEach(item => {
         nameToId.set(item.name.toLowerCase(), item.id);
       });
 
-      orders.forEach(order => {
-        if (!Array.isArray(order.items)) return;
-        order.items.forEach(it => {
-          if (it.menuItemId) {
-            const cleanId = it.menuItemId.replace(/^(mains|starter|rice|dessert)-/, '');
-            if (DESI_DABBA_ITEMS.some(d => d.id === it.menuItemId)) {
-              updated.add(it.menuItemId);
-            } else if (DESI_DABBA_ITEMS.some(d => d.id === cleanId)) {
-              updated.add(cleanId);
-            }
-          }
-          if (it.name) {
-            const matchedId = nameToId.get(it.name.toLowerCase());
-            if (matchedId) updated.add(matchedId);
-          }
-        });
+      (payload.ids || []).forEach(menuItemId => {
+        const cleanId = menuItemId.replace(/^(mains|starter|rice|dessert)-/, '');
+        if (DESI_DABBA_ITEMS.some(d => d.id === menuItemId)) {
+          updated.add(menuItemId);
+        } else if (DESI_DABBA_ITEMS.some(d => d.id === cleanId)) {
+          updated.add(cleanId);
+        }
+      });
+      (payload.names || []).forEach(name => {
+        const matchedId = nameToId.get(name.toLowerCase());
+        if (matchedId) updated.add(matchedId);
       });
 
       setPopularDishIds(updated);

@@ -1,5 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
+import { isAuthenticated as isKdsAuthenticated } from '../_lib/kds.js';
 
 // Environment Variables
 const DEFAULT_SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5qcHVmY3B6cGNqZ2ZzbGxhZWRvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAzNjU5MTgsImV4cCI6MjEwNTk0MTkxOH0.dzGN0MmyLxvUHAKkPl2m1lmhh9DX8v81qcFkxdtPEVY';
@@ -169,18 +170,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   // 1. Verify Vercel Cron Security or allow manual execution from KDS UI
-  if (CRON_SECRET) {
+  // SECURITY: only Vercel Cron (Bearer CRON_SECRET) or a logged-in KDS session may trigger this.
+  {
     const authHeader = req.headers.authorization || req.headers['authorization'];
-    const isCron = authHeader === `Bearer ${CRON_SECRET}`;
-    const isManualCall = Boolean(
-      req.headers['user-agent'] || 
-      req.headers['origin'] || 
-      req.query?.date || 
-      req.body?.date ||
-      req.headers['accept']?.includes('application/json')
-    );
-    if (!isCron && !isManualCall) {
-      return res.status(401).json({ error: 'Unauthorized: Invalid CRON_SECRET token' });
+    const isCron = Boolean(CRON_SECRET) && authHeader === `Bearer ${CRON_SECRET}`;
+    if (!isCron && !isKdsAuthenticated(req)) {
+      return res.status(401).json({ error: 'Unauthorized' });
     }
   }
 

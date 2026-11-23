@@ -25,11 +25,35 @@ export const supabase: SupabaseClient | null = isSupabaseConfigured
   ? createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
   : null;
 
-// LocalStorage Keys for Mock / Offline Fallback
-const LOCAL_STORAGE_ORDERS_KEY = 'bbw_catering_orders_cache';
+// SECURITY: Order / customer data (names, phones, emails, addresses, totals) is NEVER
+// persisted in browser storage. Orders are read and modified only through the
+// authenticated /api/kds/* serverless endpoints (HttpOnly signed session cookie).
 const LOCAL_STORAGE_BLACKOUTS_KEY = 'bbw_catering_blackouts_cache';
 
-// Legacy dummy order IDs to purge from any browser localStorage cache
+// Legacy keys that once held PII / secrets. Purged from every visitor's browser on load.
+const SENSITIVE_LEGACY_LOCAL_KEYS = [
+  'bbw_catering_orders_cache',
+  'bbw_kds_order_edits_v1',
+  'bbw_kds_master_pin_v1',
+  'bbw_gemini_api_key'
+];
+const SENSITIVE_LEGACY_SESSION_KEYS = ['bbw_kds_unlocked_session'];
+
+export function purgeSensitiveLocalStorage(): void {
+  try {
+    if (typeof localStorage !== 'undefined') {
+      SENSITIVE_LEGACY_LOCAL_KEYS.forEach(k => localStorage.removeItem(k));
+    }
+    if (typeof sessionStorage !== 'undefined') {
+      SENSITIVE_LEGACY_SESSION_KEYS.forEach(k => sessionStorage.removeItem(k));
+    }
+  } catch {
+    // ignore
+  }
+}
+purgeSensitiveLocalStorage();
+
+// Legacy dummy order IDs to filter from results
 const LEGACY_DUMMY_ORDER_IDS = new Set<string>([
   '3942d890-a463-4783-8603-7756b9443879',
   '0b208604-621e-47af-a068-2f677ec13541',
@@ -46,39 +70,29 @@ function isDummyOrder(o: Partial<CateringOrder> | null | undefined): boolean {
   return false;
 }
 
-function getStoredOrders(): CateringOrder[] {
+function notifyOrdersUpdated(detail: Record<string, unknown> = { eventType: 'UPDATE' }): void {
   try {
-    const raw = localStorage.getItem(LOCAL_STORAGE_ORDERS_KEY);
-    if (!raw) {
-      return [];
-    }
-    const parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed)) {
-      return [];
-    }
-    const cleaned = parsed.filter((o: CateringOrder) => !isDummyOrder(o));
-    if (cleaned.length !== parsed.length) {
-      localStorage.setItem(LOCAL_STORAGE_ORDERS_KEY, JSON.stringify(cleaned));
-    }
-    return cleaned;
-  } catch {
-    return [];
-  }
-}
-
-function saveStoredOrders(orders: CateringOrder[], newOrder?: CateringOrder): void {
-  try {
-    localStorage.setItem(LOCAL_STORAGE_ORDERS_KEY, JSON.stringify(orders));
-    // Trigger storage event across components / tabs with payload details
-    window.dispatchEvent(new CustomEvent('bbw_orders_updated', { 
-      detail: { 
-        order: newOrder, 
-        eventType: newOrder ? 'INSERT' : 'UPDATE' 
-      } 
-    }));
+    window.dispatchEvent(new CustomEvent('bbw_orders_updated', { detail }));
   } catch {
     // ignore
   }
+}
+
+/** Authenticated call to a KDS serverless endpoint. Emits `bbw_kds_unauthorized` on 401. */
+export async function kdsApi(path: string, init: RequestInit = {}): Promise<Response> {
+  const res = await fetch(path, {
+    credentials: 'same-origin',
+    ...init,
+    headers: { 'Content-Type': 'application/json', ...(init.headers || {}) }
+  });
+  if (res.status === 401) {
+    try {
+      window.dispatchEvent(new CustomEvent('bbw_kds_unauthorized'));
+    } catch {
+      // ignore
+    }
+  }
+  return res;
 }
 
 function getInitialMockBlackouts(): CalendarBlackout[] {
@@ -123,74 +137,42 @@ export async function fetchCalendarBlackoutRules(): Promise<CalendarBlackout[]> 
 }
 
 /**
- * Add a new calendar blackout rule to Supabase (and local storage)
+ * Add a new calendar blackout rule (KDS-authenticated server call)
  */
 export async function addCalendarBlackoutRule(
   rule: Omit<CalendarBlackout, 'id' | 'created_at'>
 ): Promise<CalendarBlackout | null> {
-  const newRule: CalendarBlackout = {
-    ...rule,
-    id: Date.now(),
-    created_at: new Date().toISOString()
-  };
-
-  if (supabase) {
-    try {
-      const { data, error } = await supabase
-        .from('calendar_blackouts')
-        .insert([{
-          closed_date: newRule.closed_date || null,
-          day_of_week: newRule.day_of_week !== undefined ? newRule.day_of_week : null,
-          month_of_year: newRule.month_of_year !== undefined ? newRule.month_of_year : null,
-          rule_type: newRule.rule_type || 'single',
-          reason: newRule.reason || null
-        }])
-        .select()
-        .single();
-
-      if (!error && data) {
+  try {
+    const res = await kdsApi('/api/kds/blackouts', { method: 'POST', body: JSON.stringify(rule) });
+    if (res.ok) {
+      const { rule: data } = await res.json();
+      if (data) {
         const current = await fetchCalendarBlackoutRules();
         localStorage.setItem(LOCAL_STORAGE_BLACKOUTS_KEY, JSON.stringify([data, ...current.filter(r => r.id !== data.id)]));
         return data as CalendarBlackout;
       }
-    } catch (err) {
-      console.warn('Supabase add blackout rule failed, saving locally', err);
     }
+  } catch (err) {
+    console.warn('Add blackout rule failed', err);
   }
-
-  // Local fallback
-  const current = await fetchCalendarBlackoutRules();
-  const updated = [newRule, ...current];
-  localStorage.setItem(LOCAL_STORAGE_BLACKOUTS_KEY, JSON.stringify(updated));
-  return newRule;
+  return null;
 }
 
 /**
- * Delete a calendar blackout rule
+ * Delete a calendar blackout rule (KDS-authenticated server call)
  */
 export async function deleteCalendarBlackoutRule(id: number): Promise<boolean> {
-  if (supabase) {
-    try {
-      const { error } = await supabase
-        .from('calendar_blackouts')
-        .delete()
-        .eq('id', id);
-
-      if (!error) {
-        const current = await fetchCalendarBlackoutRules();
-        localStorage.setItem(LOCAL_STORAGE_BLACKOUTS_KEY, JSON.stringify(current.filter(r => r.id !== id)));
-        return true;
-      }
-    } catch (err) {
-      console.warn('Supabase delete blackout rule failed, updating local', err);
+  try {
+    const res = await kdsApi(`/api/kds/blackouts?id=${encodeURIComponent(String(id))}`, { method: 'DELETE' });
+    if (res.ok) {
+      const current = await fetchCalendarBlackoutRules();
+      localStorage.setItem(LOCAL_STORAGE_BLACKOUTS_KEY, JSON.stringify(current.filter(r => r.id !== id)));
+      return true;
     }
+  } catch (err) {
+    console.warn('Delete blackout rule failed', err);
   }
-
-  // Local fallback
-  const current = await fetchCalendarBlackoutRules();
-  const updated = current.filter(r => r.id !== id);
-  localStorage.setItem(LOCAL_STORAGE_BLACKOUTS_KEY, JSON.stringify(updated));
-  return true;
+  return false;
 }
 
 /**
@@ -230,10 +212,10 @@ export async function fetchCalendarBlackouts(): Promise<string[]> {
 }
 
 /**
- * Inserts a new order or estimate into Supabase public.orders with complete granular details
+ * Inserts a new order into Supabase public.orders (customer checkout).
+ * Anonymous visitors have INSERT-only access: they can place an order but can never read it back.
  */
 export async function createOrder(orderPayload: Omit<CateringOrder, 'id' | 'created_at'>): Promise<{ data: CateringOrder | null; error: Error | null }> {
-  // Build a clean, itemized order description
   const orderDescription = orderPayload.order_description || orderPayload.items
     .map(i => `${i.name} (${i.selectionLabel} × ${i.quantity}) [${i.totalPrice.toFixed(2)}]`)
     .join('; ');
@@ -247,100 +229,50 @@ export async function createOrder(orderPayload: Omit<CateringOrder, 'id' | 'crea
     created_at: new Date().toISOString()
   };
 
-  if (supabase) {
-    try {
-      const { data, error } = await supabase
-        .from('orders')
-        .insert([{
-          customer_name: newOrder.customer_name,
-          phone_number: newOrder.phone_number,
-          email: newOrder.email,
-          is_delivery: newOrder.is_delivery,
-          delivery_address: newOrder.delivery_address,
-          delivery_fee: newOrder.delivery_fee,
-          food_subtotal: newOrder.food_subtotal,
-          tax_amount: newOrder.tax_amount,
-          payment_method: newOrder.payment_method,
-          processing_fee: newOrder.processing_fee,
-          total_amount: newOrder.total_amount,
-          order_description: newOrder.order_description,
-          fulfillment_date: newOrder.fulfillment_date,
-          fulfillment_time: newOrder.fulfillment_time,
-          dietary_notes: newOrder.dietary_notes,
-          order_type: newOrder.order_type,
-          status: newOrder.status,
-          items: newOrder.items
-        }])
-        .select()
-        .single();
+  if (!supabase) {
+    return { data: null, error: new Error('Ordering is temporarily unavailable. Please try again shortly.') };
+  }
 
-      if (!error && data) {
-        // Also update local cache
-        const current = getStoredOrders();
-        saveStoredOrders([data as CateringOrder, ...current.filter(o => o.id !== data.id)], data as CateringOrder);
-        return { data: data as CateringOrder, error: null };
-      } else if (error) {
-        console.error('Supabase order insert error:', error);
-        return { data: null, error: new Error(error.message || 'Supabase database insert error') };
-      }
-    } catch (err: any) {
-      console.error('Supabase connection error on order insert:', err);
-      return { data: null, error: err instanceof Error ? err : new Error(String(err)) };
+  try {
+    const { error } = await supabase
+      .from('orders')
+      .insert([{
+        id: newOrder.id,
+        customer_name: newOrder.customer_name,
+        phone_number: newOrder.phone_number,
+        email: newOrder.email,
+        is_delivery: newOrder.is_delivery,
+        delivery_address: newOrder.delivery_address,
+        delivery_fee: newOrder.delivery_fee,
+        food_subtotal: newOrder.food_subtotal,
+        tax_amount: newOrder.tax_amount,
+        payment_method: newOrder.payment_method,
+        processing_fee: newOrder.processing_fee,
+        total_amount: newOrder.total_amount,
+        order_description: newOrder.order_description,
+        fulfillment_date: newOrder.fulfillment_date,
+        fulfillment_time: newOrder.fulfillment_time,
+        dietary_notes: newOrder.dietary_notes,
+        order_type: newOrder.order_type,
+        status: newOrder.status,
+        items: newOrder.items
+      }]);
+
+    if (error) {
+      console.error('Supabase order insert error:', error);
+      return { data: null, error: new Error(error.message || 'Supabase database insert error') };
     }
-  }
-
-  // Local fallback (offline only)
-  const current = getStoredOrders();
-  const updated = [newOrder, ...current];
-  saveStoredOrders(updated, newOrder);
-  return { data: newOrder, error: null };
-}
-
-const LOCAL_EDITED_ORDERS_KEY = 'bbw_kds_order_edits_v1';
-
-function getLocalOrderEdits(): Record<string, Partial<CateringOrder> & { updatedAt: number }> {
-  try {
-    const raw = localStorage.getItem(LOCAL_EDITED_ORDERS_KEY);
-    return raw ? JSON.parse(raw) : {};
-  } catch {
-    return {};
-  }
-}
-
-function saveLocalOrderEdit(orderId: string, updates: Partial<CateringOrder>): void {
-  try {
-    const current = getLocalOrderEdits();
-    current[orderId] = {
-      ...(current[orderId] || {}),
-      ...updates,
-      updatedAt: Date.now()
-    };
-    localStorage.setItem(LOCAL_EDITED_ORDERS_KEY, JSON.stringify(current));
-  } catch {
-    // ignore
-  }
-}
-
-function clearLocalOrderEdit(orderId: string): void {
-  try {
-    const current = getLocalOrderEdits();
-    if (current[orderId]) {
-      delete current[orderId];
-      localStorage.setItem(LOCAL_EDITED_ORDERS_KEY, JSON.stringify(current));
-    }
-  } catch {
-    // ignore
+    notifyOrdersUpdated({ order: newOrder, eventType: 'INSERT' });
+    return { data: newOrder, error: null };
+  } catch (err: any) {
+    console.error('Supabase connection error on order insert:', err);
+    return { data: null, error: err instanceof Error ? err : new Error(String(err)) };
   }
 }
 
 function normalizeFetchedOrder(rawOrder: CateringOrder): CateringOrder {
-  const localEdits = getLocalOrderEdits()[rawOrder.id];
-  // Supabase is the authoritative cross-device source of truth for status, order_description, and core fields.
-  // Only apply localEdits as a temporary fallback if localEdits was written within the last 10 seconds (optimistic UI during in-flight request).
-  const isFreshOptimisticEdit = Boolean(localEdits && localEdits.updatedAt && (Date.now() - localEdits.updatedAt < 10000));
-  const merged: CateringOrder = isFreshOptimisticEdit ? { ...rawOrder, ...localEdits } : { ...rawOrder };
-
-  let desc = merged.order_description || '';
+  const merged: CateringOrder = { ...rawOrder };
+  const desc = merged.order_description || '';
 
   // Map [ACCEPTED] flag in order_description to 'accepted' status when DB status is 'new'
   if (merged.status === 'new' && desc.includes('[ACCEPTED]')) {
@@ -362,141 +294,41 @@ function normalizeFetchedOrder(rawOrder: CateringOrder): CateringOrder {
 }
 
 /**
- * Fetch orders for a specific fulfillment date (or all active if date not provided)
+ * Fetch orders (KDS only; requires the authenticated session cookie). Held in memory only.
  */
 export async function fetchOrders(fulfillmentDate?: string): Promise<CateringOrder[]> {
-  if (supabase) {
-    try {
-      let query = supabase.from('orders').select('*').neq('status', 'cancelled').order('created_at', { ascending: false });
-      if (fulfillmentDate) {
-        query = query.eq('fulfillment_date', fulfillmentDate);
-      }
-      const { data, error } = await query;
-      if (!error && data) {
-        const parsed = (data as CateringOrder[])
-          .filter(o => !isDummyOrder(o))
-          .map(normalizeFetchedOrder)
-          .filter(o => o.status !== 'cancelled');
-
-        // Only keep purely offline orders (created with 'ord-' prefix when offline), never resurrect deleted/cancelled Supabase UUIDs or dummy orders
-        const localStored = getStoredOrders();
-        const remoteIds = new Set(parsed.map(o => o.id));
-        const localOfflineOnly = localStored
-          .filter(o => !remoteIds.has(o.id) && o.id.startsWith('ord-') && o.status !== 'cancelled' && !isDummyOrder(o))
-          .map(normalizeFetchedOrder);
-
-        const combined = [...parsed, ...localOfflineOnly];
-
-        try {
-          if (!fulfillmentDate) {
-            localStorage.setItem(LOCAL_STORAGE_ORDERS_KEY, JSON.stringify(combined));
-          }
-        } catch {}
-
-        if (fulfillmentDate) {
-          return combined.filter(o => o.fulfillment_date === fulfillmentDate);
-        }
-        return combined;
-      }
-      if (error) {
-        console.error('Supabase fetchOrders error:', error);
-      }
-    } catch (err) {
-      console.warn('Supabase fetchOrders failed, using local cache', err);
-    }
+  try {
+    const qs = fulfillmentDate ? `?date=${encodeURIComponent(fulfillmentDate)}` : '';
+    const res = await kdsApi(`/api/kds/orders${qs}`);
+    if (!res.ok) return [];
+    const { orders } = await res.json();
+    return (orders as CateringOrder[])
+      .filter(o => !isDummyOrder(o))
+      .map(normalizeFetchedOrder)
+      .filter(o => o.status !== 'cancelled');
+  } catch (err) {
+    console.warn('fetchOrders failed', err);
+    return [];
   }
-
-  // Local fallback
-  const all = getStoredOrders();
-  const parsed = all
-    .map(normalizeFetchedOrder)
-    .filter(o => o.status !== 'cancelled');
-
-  if (fulfillmentDate) {
-    return parsed.filter(o => o.fulfillment_date === fulfillmentDate);
-  }
-  return parsed;
 }
 
 /**
  * Update an order's status (new -> accepted -> preparing -> ready -> completed / cancelled)
  */
 export async function updateOrderStatus(orderId: string, status: OrderStatus): Promise<boolean> {
-  let updatedSuccessfully = false;
-
-  // Save status in local edits map immediately so any subsequent fetch preserves it
-  saveLocalOrderEdit(orderId, { status });
-
-  if (supabase) {
-    try {
-      if (status === 'accepted') {
-        const { data: currentOrder } = await supabase
-          .from('orders')
-          .select('order_description')
-          .eq('id', orderId)
-          .maybeSingle();
-        
-        const curDesc = currentOrder?.order_description || '';
-        const newDesc = curDesc.includes('[ACCEPTED]') ? curDesc : `[ACCEPTED] ${curDesc}`;
-        
-        const { error } = await supabase
-          .from('orders')
-          .update({ 
-            status: 'new',
-            order_description: newDesc
-          })
-          .eq('id', orderId);
-        
-        if (!error) {
-          updatedSuccessfully = true;
-          clearLocalOrderEdit(orderId);
-        }
-      } else {
-        const { data: currentOrder } = await supabase
-          .from('orders')
-          .select('order_description')
-          .eq('id', orderId)
-          .maybeSingle();
-        
-        const curDesc = currentOrder?.order_description || '';
-        const cleanDesc = curDesc.replace(/\[ACCEPTED\]\s*/g, '').trim();
-
-        const { error } = await supabase
-          .from('orders')
-          .update({ 
-            status,
-            order_description: cleanDesc || curDesc
-          })
-          .eq('id', orderId);
-
-        if (!error) {
-          updatedSuccessfully = true;
-          clearLocalOrderEdit(orderId);
-        }
-      }
-    } catch (err) {
-      console.warn('Supabase update failed, updating local cache', err);
+  try {
+    const res = await kdsApi('/api/kds/orders', {
+      method: 'PATCH',
+      body: JSON.stringify({ id: orderId, status })
+    });
+    if (res.ok) {
+      notifyOrdersUpdated({ eventType: 'UPDATE' });
+      return true;
     }
+  } catch (err) {
+    console.warn('updateOrderStatus failed', err);
   }
-
-  // Always update local cache
-  const all = getStoredOrders();
-  const index = all.findIndex(o => o.id === orderId);
-  if (index !== -1) {
-    all[index].status = status;
-    const curDesc = all[index].order_description || '';
-    if (status === 'accepted') {
-      if (!curDesc.includes('[ACCEPTED]')) {
-        all[index].order_description = `[ACCEPTED] ${curDesc}`;
-      }
-    } else {
-      all[index].order_description = curDesc.replace(/\[ACCEPTED\]\s*/g, '').trim();
-    }
-    saveStoredOrders(all);
-    updatedSuccessfully = true;
-  }
-
-  return updatedSuccessfully;
+  return false;
 }
 
 export interface OrderEventInfo {
@@ -505,7 +337,8 @@ export interface OrderEventInfo {
 }
 
 /**
- * Subscribe to realtime orders updates.
+ * Subscribe to same-tab order change notifications. Cross-device freshness comes from
+ * the KDS polling /api/kds/orders (anonymous realtime access to orders is disabled).
  */
 export function subscribeToOrders(onUpdate: (eventInfo?: OrderEventInfo) => void): () => void {
   const handleLocalUpdate = (e: Event) => {
@@ -513,48 +346,16 @@ export function subscribeToOrders(onUpdate: (eventInfo?: OrderEventInfo) => void
     onUpdate(customEvt.detail);
   };
   window.addEventListener('bbw_orders_updated', handleLocalUpdate);
-
-  const handleStorageUpdate = (e: StorageEvent) => {
-    if (e.key === LOCAL_STORAGE_ORDERS_KEY || e.key === LOCAL_EDITED_ORDERS_KEY) {
-      onUpdate({ eventType: 'STORAGE' });
-    }
-  };
-  window.addEventListener('storage', handleStorageUpdate);
-
-  if (supabase) {
-    const channel = supabase
-      .channel('realtime:public:orders')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'orders' },
-        (payload) => {
-          onUpdate({
-            eventType: payload.eventType,
-            order: (payload.new as CateringOrder) || undefined
-          });
-        }
-      )
-      .subscribe();
-
-    return () => {
-      window.removeEventListener('bbw_orders_updated', handleLocalUpdate);
-      window.removeEventListener('storage', handleStorageUpdate);
-      supabase.removeChannel(channel);
-    };
-  }
-
   return () => {
     window.removeEventListener('bbw_orders_updated', handleLocalUpdate);
-    window.removeEventListener('storage', handleStorageUpdate);
   };
 }
 
 /**
  * Updates full order details (items, subtotal, tax, discounts, rebates, totals, date, time, status)
- * and synchronizes with Supabase public.orders and local storage.
  */
 export async function updateOrderDetails(orderId: string, updates: Partial<CateringOrder>): Promise<boolean> {
-  // 1. Encode [ACCEPTED] and [DISC:amount|reason] into order_description so Supabase persists them reliably
+  // Encode [ACCEPTED] and [DISC:amount|reason] into order_description so they persist reliably
   let cleanDesc = (updates.order_description || '')
     .replace(/\[ACCEPTED\]\s*/g, '')
     .replace(/\s*\[DISC:[^\]]*\]/g, '')
@@ -568,110 +369,39 @@ export async function updateOrderDetails(orderId: string, updates: Partial<Cater
     cleanDesc = `[ACCEPTED] ${cleanDesc}`.trim();
   }
 
-  const normalizedUpdates: Partial<CateringOrder> = {
-    ...updates,
-    order_description: cleanDesc
-  };
+  const payload: Partial<CateringOrder> = { ...updates };
+  if (cleanDesc) payload.order_description = cleanDesc;
+  else delete payload.order_description;
 
-  // 2. Always persist in local edits override cache & stored orders cache first
-  saveLocalOrderEdit(orderId, normalizedUpdates);
-
-  const all = getStoredOrders();
-  const index = all.findIndex(o => o.id === orderId);
-  if (index !== -1) {
-    all[index] = { ...all[index], ...normalizedUpdates };
-    saveStoredOrders(all);
-  } else {
-    window.dispatchEvent(new CustomEvent('bbw_orders_updated', { detail: { eventType: 'UPDATE' } }));
-  }
-
-  // 3. Persist valid schema columns to Supabase public.orders
-  if (supabase) {
-    try {
-      const dbStatus = updates.status === 'accepted' ? 'new' : updates.status;
-
-      // Only include columns that exist on public.orders in Supabase
-      const allowedColumns: Record<string, any> = {};
-      if (updates.customer_name !== undefined) allowedColumns.customer_name = updates.customer_name;
-      if (updates.phone_number !== undefined) allowedColumns.phone_number = updates.phone_number;
-      if (updates.email !== undefined) allowedColumns.email = updates.email;
-      if (updates.is_delivery !== undefined) allowedColumns.is_delivery = updates.is_delivery;
-      if (updates.delivery_address !== undefined) allowedColumns.delivery_address = updates.delivery_address;
-      if (updates.delivery_fee !== undefined) allowedColumns.delivery_fee = updates.delivery_fee;
-      if (updates.food_subtotal !== undefined) allowedColumns.food_subtotal = updates.food_subtotal;
-      if (updates.tax_amount !== undefined) allowedColumns.tax_amount = updates.tax_amount;
-      if (updates.payment_method !== undefined) allowedColumns.payment_method = updates.payment_method;
-      if (updates.processing_fee !== undefined) allowedColumns.processing_fee = updates.processing_fee;
-      if (updates.total_amount !== undefined) allowedColumns.total_amount = updates.total_amount;
-      if (cleanDesc) allowedColumns.order_description = cleanDesc;
-      if (updates.fulfillment_date !== undefined) allowedColumns.fulfillment_date = updates.fulfillment_date;
-      if (updates.fulfillment_time !== undefined) allowedColumns.fulfillment_time = updates.fulfillment_time;
-      if (updates.dietary_notes !== undefined) allowedColumns.dietary_notes = updates.dietary_notes;
-      if (updates.order_type !== undefined) allowedColumns.order_type = updates.order_type;
-      if (dbStatus !== undefined) allowedColumns.status = dbStatus;
-      if (updates.items !== undefined) allowedColumns.items = updates.items;
-
-      const { error } = await supabase
-        .from('orders')
-        .update(allowedColumns)
-        .eq('id', orderId);
-
-      if (error) {
-        console.warn('Supabase updateOrderDetails warning (saved locally):', error);
-      } else {
-        clearLocalOrderEdit(orderId);
-      }
-    } catch (err) {
-      console.warn('Supabase updateOrderDetails connection warning (saved locally):', err);
+  try {
+    const res = await kdsApi('/api/kds/orders', {
+      method: 'PATCH',
+      body: JSON.stringify({ id: orderId, updates: payload })
+    });
+    if (res.ok) {
+      notifyOrdersUpdated({ eventType: 'UPDATE' });
+      return true;
     }
+  } catch (err) {
+    console.warn('updateOrderDetails failed', err);
   }
-
-  return true;
+  return false;
 }
 
 /**
- * Permanently deletes an order from Supabase public.orders database and local storage caches
+ * Permanently deletes an order (KDS-authenticated server call)
  */
 export async function deleteOrderFromSupabase(orderId: string): Promise<boolean> {
-  let deletedSuccessfully = false;
-
-  if (supabase) {
-    try {
-      // 1. Mark status as 'cancelled' first in Supabase so queries hide it immediately even if RLS restricts hard DELETE
-      await supabase
-        .from('orders')
-        .update({ status: 'cancelled' })
-        .eq('id', orderId);
-
-      // 2. Attempt hard DELETE from Supabase database table
-      const { error } = await supabase
-        .from('orders')
-        .delete()
-        .eq('id', orderId);
-
-      if (!error) {
-        deletedSuccessfully = true;
-      } else {
-        console.warn('Supabase deleteOrder query warning:', error);
-      }
-    } catch (err) {
-      console.warn('Supabase deleteOrder connection failed:', err);
-    }
-  }
-
-  // Always update local cache and dispatch event
   try {
-    clearLocalOrderEdit(orderId);
-    const all = getStoredOrders();
-    const filtered = all.filter(o => o.id !== orderId);
-    saveStoredOrders(filtered);
-    window.dispatchEvent(new CustomEvent('bbw_orders_updated', { detail: { orderId, action: 'delete' } }));
-    deletedSuccessfully = true;
+    const res = await kdsApi(`/api/kds/orders?id=${encodeURIComponent(orderId)}`, { method: 'DELETE' });
+    if (res.ok) {
+      notifyOrdersUpdated({ orderId, action: 'delete' });
+      return true;
+    }
   } catch (err) {
-    console.warn('localStorage deleteOrder warning:', err);
+    console.warn('deleteOrder failed', err);
   }
-
-  return deletedSuccessfully;
+  return false;
 }
 
 export interface QBOReconciliationSummary {
@@ -905,6 +635,20 @@ export async function fetchTiffinMenuSettings(): Promise<TiffinMenuSettings> {
   };
 }
 
+async function saveSettingViaKds(key: string, value: unknown): Promise<boolean> {
+  try {
+    const res = await fetch('/api/kds/settings', {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ key, value })
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
 /**
  * Save Tiffin Weekly flyer and specials settings to Supabase & local cache
  */
@@ -919,27 +663,7 @@ export async function saveTiffinMenuSettings(settings: TiffinMenuSettings): Prom
     window.dispatchEvent(new CustomEvent('bbw_tiffin_settings_updated'));
   } catch {}
 
-  if (supabase) {
-    try {
-      const { error } = await supabase
-        .from('app_settings')
-        .upsert(
-          {
-            key: 'tiffin_menu_settings',
-            value: updatedSettings,
-            updated_at: new Date().toISOString()
-          },
-          { onConflict: 'key' }
-        );
-
-      if (!error) return true;
-      console.warn('Supabase saveTiffinMenuSettings warning:', error);
-    } catch (err) {
-      console.warn('Supabase saveTiffinMenuSettings failed', err);
-    }
-  }
-
-  return true;
+  return saveSettingViaKds('tiffin_menu_settings', updatedSettings);
 }
 
 export const LOCAL_STORAGE_GALLERY_KEY = 'bbw_gallery_data_v2';
@@ -983,23 +707,12 @@ export function recordDeletedGalleryId(id: string) {
   } catch {}
 
   if (supabase) {
-    try {
-      supabase.from('app_settings').select('value').eq('key', 'deleted_gallery_ids').maybeSingle().then(({ data }) => {
-        const remoteList: string[] = Array.isArray(data?.value) ? data.value : [];
-        if (!remoteList.includes(id)) {
-          supabase.from('app_settings').upsert(
-            {
-              key: 'deleted_gallery_ids',
-              value: [...remoteList, id],
-              updated_at: new Date().toISOString()
-            },
-            { onConflict: 'key' }
-          );
-        }
-      });
-    } catch (err) {
-      console.warn('Supabase recordDeletedGalleryId warning:', err);
-    }
+    supabase.from('app_settings').select('value').eq('key', 'deleted_gallery_ids').maybeSingle().then(({ data }) => {
+      const remoteList: string[] = Array.isArray(data?.value) ? data.value : [];
+      if (!remoteList.includes(id)) {
+        saveSettingViaKds('deleted_gallery_ids', [...remoteList, id]);
+      }
+    });
   }
 }
 
@@ -1008,18 +721,7 @@ export function clearDeletedGalleryIds() {
   try {
     localStorage.removeItem(LOCAL_STORAGE_DELETED_GALLERY_KEY);
   } catch {}
-  if (supabase) {
-    try {
-      supabase.from('app_settings').upsert(
-        {
-          key: 'deleted_gallery_ids',
-          value: [],
-          updated_at: new Date().toISOString()
-        },
-        { onConflict: 'key' }
-      );
-    } catch {}
-  }
+  saveSettingViaKds('deleted_gallery_ids', []);
 }
 
 /**
@@ -1091,28 +793,7 @@ export async function saveGalleryItemsToSupabase(items: any[]): Promise<boolean>
     } catch {}
   }
 
-  if (supabase) {
-    try {
-      const { error } = await supabase
-        .from('app_settings')
-        .upsert(
-          {
-            key: 'gallery_items',
-            value: cleanItems,
-            updated_at: new Date().toISOString()
-          },
-          { onConflict: 'key' }
-        );
-
-      if (!error) return true;
-      console.warn('Supabase saveGalleryItems warning:', error?.message || error);
-      return false;
-    } catch (err) {
-      console.warn('Supabase saveGalleryItems failed:', err);
-      return false;
-    }
-  }
-  return true;
+  return saveSettingViaKds('gallery_items', cleanItems);
 }
 
 

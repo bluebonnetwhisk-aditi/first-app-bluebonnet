@@ -70,68 +70,15 @@ ALTER TABLE public.orders ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.calendar_blackouts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.app_settings ENABLE ROW LEVEL SECURITY;
 
--- Allow public anonymous/authenticated read & insert on orders
-CREATE POLICY "Allow public insert on orders"
-    ON public.orders
-    FOR INSERT
-    TO anon, authenticated
-    WITH CHECK (true);
+-- NOTE: Authoritative, hardened RLS policies live in supabase/security_hardening_rls.sql.
+-- Anonymous visitors may ONLY insert orders, read blackouts, and read whitelisted public settings.
+-- All other access goes through /api/kds/* serverless endpoints using the service_role key.
+CREATE POLICY "anon can only insert orders" ON public.orders FOR INSERT TO anon WITH CHECK (status = 'new');
+CREATE POLICY "anon can read blackouts" ON public.calendar_blackouts FOR SELECT TO anon USING (true);
+CREATE POLICY "anon can read whitelisted public settings" ON public.app_settings FOR SELECT TO anon
+    USING (key IN ('tiffin_menu_settings', 'gallery_items', 'deleted_gallery_ids'));
 
-CREATE POLICY "Allow public select on orders"
-    ON public.orders
-    FOR SELECT
-    TO anon, authenticated
-    USING (true);
-
-CREATE POLICY "Allow update on orders status"
-    ON public.orders
-    FOR UPDATE
-    TO anon, authenticated
-    USING (true)
-    WITH CHECK (true);
-
--- Allow public read & management on calendar_blackouts
-CREATE POLICY "Allow public select on calendar_blackouts"
-    ON public.calendar_blackouts
-    FOR SELECT
-    TO anon, authenticated
-    USING (true);
-
-CREATE POLICY "Allow public insert on calendar_blackouts"
-    ON public.calendar_blackouts
-    FOR INSERT
-    TO anon, authenticated
-    WITH CHECK (true);
-
-CREATE POLICY "Allow public delete on calendar_blackouts"
-    ON public.calendar_blackouts
-    FOR DELETE
-    TO anon, authenticated
-    USING (true);
-
-CREATE POLICY "Allow public update on calendar_blackouts"
-    ON public.calendar_blackouts
-    FOR UPDATE
-    TO anon, authenticated
-    USING (true)
-    WITH CHECK (true);
-
--- Settings RLS: Service Role full access, Anonymous read-only for public settings
-CREATE POLICY "Allow public select on app_settings"
-    ON public.app_settings
-    FOR SELECT
-    TO anon, authenticated
-    USING (true);
-
-CREATE POLICY "Allow authenticated upsert on app_settings"
-    ON public.app_settings
-    FOR ALL
-    TO authenticated, service_role
-    USING (true)
-    WITH CHECK (true);
-
--- 7. Enable Realtime Replication for Live Kitchen KDS Cards
-ALTER PUBLICATION supabase_realtime ADD TABLE public.orders;
+-- 7. (Realtime on public.orders intentionally NOT enabled: rows contain customer PII.)
 
 -- 8. Seed Sample Blackout Dates (e.g. Major Holidays)
 INSERT INTO public.calendar_blackouts (closed_date, reason)

@@ -95,7 +95,6 @@ export const hasCategory = (item: GalleryItem, cat: string): boolean => {
   return cats.includes(cat as CategoryType);
 };
 
-const DEFAULT_PIN = "031686"; // KDS master pin default
 
 interface GalleryPageProps {
   onNavigateToAdmin?: () => void;
@@ -224,9 +223,6 @@ export default function GalleryPage({ onNavigateToAdmin: _onNavigateToAdmin }: G
         if (remoteItems && Array.isArray(remoteItems) && remoteItems.length > 0) {
           const merged = mergeWithInitialData(remoteItems);
           setItems(merged);
-          saveGalleryItemsToSupabase(merged);
-        } else {
-          saveGalleryItemsToSupabase(initialGalleryData as GalleryItem[]);
         }
       }
     });
@@ -249,18 +245,29 @@ export default function GalleryPage({ onNavigateToAdmin: _onNavigateToAdmin }: G
   }, []);
 
   // Handle PIN verification
-  const handlePinSubmit = (e: React.FormEvent) => {
+  const handlePinSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const storedPin = localStorage.getItem("bbw_kds_master_pin_v1") || DEFAULT_PIN;
-    if (pinInput === storedPin || pinInput === "1234" || pinInput === "0000" || pinInput === "031686") {
-      setIsAdminMode(true);
-      setShowPinModal(false);
-      setPinInput("");
-      setPinError(false);
-    } else {
-      setPinError(true);
-      setPinInput("");
+    try {
+      // Verified server-side; sets a signed HttpOnly session cookie required for any gallery write.
+      const res = await fetch("/api/kds/auth", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ pin: pinInput.trim() })
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.success) {
+        setIsAdminMode(true);
+        setShowPinModal(false);
+        setPinInput("");
+        setPinError(false);
+        return;
+      }
+    } catch {
+      // treated as failed login
     }
+    setPinError(true);
+    setPinInput("");
   };
 
   // Toggle Visibility

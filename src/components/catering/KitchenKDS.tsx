@@ -42,9 +42,6 @@ interface KitchenKDSProps {
   onBackToOrder?: () => void;
 }
 
-const MASTER_PIN_STORAGE_KEY = 'bbw_kds_master_pin_v1';
-const DEFAULT_INITIAL_PIN = '031686';
-const PIN_STORAGE_KEY = 'bbw_kds_unlocked_session';
 
 /**
  * High-clarity Web Audio API restaurant chime.
@@ -236,22 +233,25 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
   // Primary KDS Tab: 'orders' (Live Queue), 'planner' (Next Week Menu & Specials Planner), 'analytics' (Monthly Trends & Top Dishes)
   const [activeKdsTab, setActiveKdsTab] = useState<'orders' | 'planner' | 'analytics'>('orders');
 
-  // Authentication PIN state
-  const [masterPin, setMasterPin] = useState<string>(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem(MASTER_PIN_STORAGE_KEY);
-      if (saved) return saved;
-      localStorage.setItem(MASTER_PIN_STORAGE_KEY, DEFAULT_INITIAL_PIN);
-      return DEFAULT_INITIAL_PIN;
-    }
-    return DEFAULT_INITIAL_PIN;
-  });
-
-  const [isUnlocked, setIsUnlocked] = useState<boolean>(() => {
-    return sessionStorage.getItem(PIN_STORAGE_KEY) === 'true';
-  });
+  // Authentication: verified server-side via a signed HttpOnly session cookie.
+  // No PIN or session flag is ever stored in browser storage.
+  const [isUnlocked, setIsUnlocked] = useState<boolean>(false);
   const [pinInput, setPinInput] = useState('');
   const [pinError, setPinError] = useState(false);
+
+  useEffect(() => {
+    let alive = true;
+    fetch('/api/kds/auth', { credentials: 'same-origin' })
+      .then(r => r.json())
+      .then(d => { if (alive && d?.authenticated) setIsUnlocked(true); })
+      .catch(() => {});
+    const onUnauthorized = () => setIsUnlocked(false);
+    window.addEventListener('bbw_kds_unauthorized', onUnauthorized);
+    return () => {
+      alive = false;
+      window.removeEventListener('bbw_kds_unauthorized', onUnauthorized);
+    };
+  }, []);
 
   // Change PIN modal state
   const [showChangePinModal, setShowChangePinModal] = useState(false);
@@ -417,72 +417,34 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
     try {
       const res = await fetch('/api/kds/auth', {
         method: 'POST',
+        credentials: 'same-origin',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ pin: clean })
       });
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
       if (res.ok && data.success) {
         setIsUnlocked(true);
-        sessionStorage.setItem(PIN_STORAGE_KEY, 'true');
         setPinError(false);
         setPinInput('');
         if (soundEnabled) playKitchenChime();
         return;
       }
     } catch {
-      // Fallback for local dev
+      // network error -> treated as failed login
     }
-
-    if (clean === masterPin) {
-      setIsUnlocked(true);
-      sessionStorage.setItem(PIN_STORAGE_KEY, 'true');
-      setPinError(false);
-      setPinInput('');
-      if (soundEnabled) playKitchenChime();
-    } else {
-      setPinError(true);
-      setPinInput('');
-    }
+    setPinError(true);
+    setPinInput('');
   };
 
+  // The PIN is managed server-side (KDS_PIN env var in Vercel); it cannot be changed from the browser.
   const handleChangePin = (e: React.FormEvent) => {
     e.preventDefault();
-    setPinChangeError('');
-
-    if (currentPinInput.trim() !== masterPin) {
-      setPinChangeError('Current PIN is incorrect.');
-      return;
-    }
-
-    const cleanNew = newPinInput.trim();
-    if (cleanNew.length < 4 || cleanNew.length > 8) {
-      setPinChangeError('New PIN must be between 4 and 8 digits.');
-      return;
-    }
-
-    if (cleanNew !== confirmPinInput.trim()) {
-      setPinChangeError('New PIN and Confirmation do not match.');
-      return;
-    }
-
-    setMasterPin(cleanNew);
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(MASTER_PIN_STORAGE_KEY, cleanNew);
-    }
-
-    setPinChangeSuccess(true);
-    setCurrentPinInput('');
-    setNewPinInput('');
-    setConfirmPinInput('');
-    setTimeout(() => {
-      setShowChangePinModal(false);
-      setPinChangeSuccess(false);
-    }, 1500);
+    setPinChangeError('The Kitchen PIN is managed securely on the server. Update the KDS_PIN environment variable in Vercel to change it.');
   };
 
   const handleLock = () => {
+    fetch('/api/kds/auth', { method: 'DELETE', credentials: 'same-origin' }).catch(() => {});
     setIsUnlocked(false);
-    sessionStorage.removeItem(PIN_STORAGE_KEY);
   };
 
   const openWhatsAppForOrder = (order: CateringOrder, eventType: 'accepted' | 'ready' | 'rejected') => {
