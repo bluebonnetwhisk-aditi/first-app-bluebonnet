@@ -237,7 +237,7 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
   // No PIN or session flag is ever stored in browser storage.
   const [isUnlocked, setIsUnlocked] = useState<boolean>(false);
   const [pinInput, setPinInput] = useState('');
-  const [pinError, setPinError] = useState(false);
+  const [pinError, setPinError] = useState<string | false>(false);
 
   useEffect(() => {
     let alive = true;
@@ -429,10 +429,13 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
         if (soundEnabled) playKitchenChime();
         return;
       }
+      setPinError(data.error || 'Incorrect PIN. Please try again.');
+      setPinInput('');
+      return;
     } catch {
       // network error -> treated as failed login
     }
-    setPinError(true);
+    setPinError('Could not reach authentication server. Please try again.');
     setPinInput('');
   };
 
@@ -753,15 +756,15 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
             <div>
               <input
                 type="password"
-                maxLength={8}
+                maxLength={64}
                 autoFocus
                 placeholder="••••••"
                 value={pinInput}
                 onChange={(e) => {
-                  setPinInput(e.target.value.replace(/\D/g, ''));
+                  setPinInput(e.target.value);
                   setPinError(false);
                 }}
-                className={`w-48 text-center text-2xl font-mono tracking-widest py-2.5 border rounded-xl focus:outline-none focus:ring-2 ${
+                className={`w-56 text-center text-2xl font-mono tracking-widest py-2.5 border rounded-xl focus:outline-none focus:ring-2 ${
                   pinError 
                     ? 'border-rose-500 focus:ring-rose-200 bg-rose-50' 
                     : 'border-gray-300 focus:ring-[#00346f]/20 focus:border-[#00346f]'
@@ -769,7 +772,7 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
               />
               {pinError && (
                 <p className="text-xs text-rose-600 mt-1.5 font-semibold">
-                  Incorrect PIN. Please try again.
+                  {pinError}
                 </p>
               )}
             </div>
@@ -783,7 +786,7 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
                     if (val === 'Clear') setPinInput('');
                     else if (val === 'Enter') handlePinSubmit();
                     else if (typeof val === 'number') {
-                      if (pinInput.length < 8) setPinInput(prev => prev + val);
+                      if (pinInput.length < 16) setPinInput(prev => prev + val);
                     }
                   }}
                   className="py-2 rounded-lg bg-gray-50 hover:bg-gray-150 border border-gray-200 text-sm font-bold text-gray-800 transition-colors cursor-pointer"

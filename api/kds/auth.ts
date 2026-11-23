@@ -36,7 +36,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
 
-  const expectedPin = process.env.KDS_PIN;
+  const expectedPin = (process.env.KDS_PIN || '').trim();
   const secret = getSessionSecret();
   if (!expectedPin || !secret) {
     console.error('KDS_PIN / KDS_SESSION_SECRET are not configured.');
