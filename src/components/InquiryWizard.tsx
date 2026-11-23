@@ -328,40 +328,7 @@ export default function InquiryWizard({
 
     const totalStr = `$${grandTotal.toFixed(2)}`;
 
-    // 1. Submit to Web3Forms to send email to bluebonnetwhisk@gmail.com
-    try {
-      await fetch("https://api.web3forms.com/submit", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Accept": "application/json"
-        },
-        body: JSON.stringify({
-          access_key: "7ef4d494-f03c-4a26-9966-8d6077024735",
-          subject: `New Inquiry (${serviceType}) - ${formData.name}`,
-          from_name: "Bluebonnet Whisk Website",
-          to: "bluebonnetwhisk@gmail.com",
-          name: formData.name,
-          email: formData.email,
-          phone: formData.phone,
-          date: formData.date,
-          occasion: formData.occasion,
-          serviceType: serviceType,
-          category: isCakeService ? formData.category : "N/A",
-          flavor: isCakeService ? formData.flavor : "N/A",
-          size: isCakeService ? formData.size : "N/A",
-          dietary: formData.dietary,
-          customWishes: formData.customWishes,
-          selectedItems: selectedItemsText,
-          selectedAddons: selectedAddonsText,
-          estimatedTotal: totalStr
-        })
-      });
-    } catch (err) {
-      console.error("Web3Forms submission error:", err);
-    }
-    
-    // 2. Submit to Google Sheets (if configured)
+    // 1. Submit to Google Sheets (if configured)
     await submitToGoogleSheets(serviceType.includes("Cakes") ? "Cake Inquiries" : "Catering Inquiries", {
       Name: formData.name,
       Email: formData.email,
