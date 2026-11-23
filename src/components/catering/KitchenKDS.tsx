@@ -458,7 +458,7 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
     }
     const text = buildWhatsAppMessage(order, eventType);
     const url = `https://wa.me/${phone}?text=${encodeURIComponent(text)}`;
-    window.open(url, '_blank');
+    window.open(url, '_blank', 'noopener,noreferrer');
   };
 
   // Extract real Supabase UUID if an order is a virtual daily slice (e.g. "uuid::2026-10-20")
@@ -670,6 +670,7 @@ export default function KitchenKDS({ onBackToOrder }: KitchenKDSProps) {
     try {
       const res = await fetch(`/api/cron/reconcile-qbo`, {
         method: 'POST',
+        credentials: 'same-origin',
         headers: { 
           'Content-Type': 'application/json',
           'Accept': 'application/json'

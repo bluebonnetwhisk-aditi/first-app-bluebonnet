@@ -212,61 +212,39 @@ export async function fetchCalendarBlackouts(): Promise<string[]> {
 }
 
 /**
- * Inserts a new order into Supabase public.orders (customer checkout).
- * Anonymous visitors have INSERT-only access: they can place an order but can never read it back.
+ * Submits a new order via the validated, rate-limited server endpoint (POST /api/orders).
+ * Customers no longer write directly to public.orders from the browser.
  */
 export async function createOrder(orderPayload: Omit<CateringOrder, 'id' | 'created_at'>): Promise<{ data: CateringOrder | null; error: Error | null }> {
   const orderDescription = orderPayload.order_description || orderPayload.items
     .map(i => `${i.name} (${i.selectionLabel} × ${i.quantity}) [${i.totalPrice.toFixed(2)}]`)
     .join('; ');
 
-  const newOrder: CateringOrder = {
-    ...orderPayload,
-    id: typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `ord-${Date.now()}`,
-    payment_method: orderPayload.payment_method || 'zelle',
-    processing_fee: orderPayload.processing_fee || 0.00,
-    order_description: orderDescription,
-    created_at: new Date().toISOString()
-  };
-
-  if (!supabase) {
-    return { data: null, error: new Error('Ordering is temporarily unavailable. Please try again shortly.') };
-  }
-
   try {
-    const { error } = await supabase
-      .from('orders')
-      .insert([{
-        id: newOrder.id,
-        customer_name: newOrder.customer_name,
-        phone_number: newOrder.phone_number,
-        email: newOrder.email,
-        is_delivery: newOrder.is_delivery,
-        delivery_address: newOrder.delivery_address,
-        delivery_fee: newOrder.delivery_fee,
-        food_subtotal: newOrder.food_subtotal,
-        tax_amount: newOrder.tax_amount,
-        payment_method: newOrder.payment_method,
-        processing_fee: newOrder.processing_fee,
-        total_amount: newOrder.total_amount,
-        order_description: newOrder.order_description,
-        fulfillment_date: newOrder.fulfillment_date,
-        fulfillment_time: newOrder.fulfillment_time,
-        dietary_notes: newOrder.dietary_notes,
-        order_type: newOrder.order_type,
-        status: newOrder.status,
-        items: newOrder.items
-      }]);
+    const res = await fetch('/api/orders', {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        ...orderPayload,
+        payment_method: orderPayload.payment_method || 'zelle',
+        processing_fee: orderPayload.processing_fee || 0.00,
+        order_description: orderDescription,
+        status: 'new'
+      })
+    });
 
-    if (error) {
-      console.error('Supabase order insert error:', error);
-      return { data: null, error: new Error(error.message || 'Supabase database insert error') };
+    const body = await res.json().catch(() => ({} as any));
+    if (!res.ok || !body.order) {
+      return { data: null, error: new Error(body.error || 'Could not submit order. Please try again.') };
     }
-    notifyOrdersUpdated({ order: newOrder, eventType: 'INSERT' });
-    return { data: newOrder, error: null };
+
+    const savedOrder = body.order as CateringOrder;
+    notifyOrdersUpdated({ order: savedOrder, eventType: 'INSERT' });
+    return { data: savedOrder, error: null };
   } catch (err: any) {
-    console.error('Supabase connection error on order insert:', err);
-    return { data: null, error: err instanceof Error ? err : new Error(String(err)) };
+    console.error('Order submission network error:', err);
+    return { data: null, error: err instanceof Error ? err : new Error('Network error while submitting order.') };
   }
 }
 

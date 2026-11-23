@@ -14,7 +14,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const { error } = await db
       .from('app_settings')
       .upsert({ key, value, updated_at: new Date().toISOString() }, { onConflict: 'key' });
-    if (error) return res.status(500).json({ error: error.message });
+    if (error) { console.error('KDS settings DB error:', error); return res.status(500).json({ error: 'Database operation failed' }); }
     return res.status(200).json({ success: true });
   } catch (err: any) {
     console.error('KDS settings error:', err);

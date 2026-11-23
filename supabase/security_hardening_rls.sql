@@ -32,14 +32,8 @@ REVOKE ALL ON public.orders             FROM anon, authenticated;
 REVOKE ALL ON public.calendar_blackouts FROM anon, authenticated;
 REVOKE ALL ON public.app_settings       FROM anon, authenticated;
 
--- orders: customers may ONLY place an order (INSERT). No read / update / delete.
-GRANT INSERT ON public.orders TO anon;
-CREATE POLICY "anon can only insert orders"
-  ON public.orders FOR INSERT TO anon
-  WITH CHECK (
-    status = 'new'
-    AND coalesce(char_length(customer_name), 0) BETWEEN 1 AND 200
-  );
+-- orders: zero anonymous access (all customer orders go through rate-limited POST /api/orders
+-- using service_role; KDS reads/edits go through authenticated /api/kds/orders).
 
 -- calendar_blackouts: public read-only (checkout calendar needs closed dates)
 GRANT SELECT ON public.calendar_blackouts TO anon;

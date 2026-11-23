@@ -23,7 +23,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         }])
         .select()
         .single();
-      if (error) return res.status(500).json({ error: error.message });
+      if (error) { console.error('KDS blackouts DB error:', error); return res.status(500).json({ error: 'Database operation failed' }); }
       return res.status(200).json({ rule: data });
     }
 
@@ -31,7 +31,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const id = Number(req.query.id);
       if (!Number.isFinite(id)) return res.status(400).json({ error: 'id required' });
       const { error } = await db.from('calendar_blackouts').delete().eq('id', id);
-      if (error) return res.status(500).json({ error: error.message });
+      if (error) { console.error('KDS blackouts DB error:', error); return res.status(500).json({ error: 'Database operation failed' }); }
       return res.status(200).json({ success: true });
     }
 

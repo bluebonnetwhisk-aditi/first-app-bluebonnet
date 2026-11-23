@@ -393,7 +393,7 @@ export default function InquiryWizard({
         customWishes: formData.customWishes,
         estimatedTotal: totalStr
       });
-      window.open(waUrl, '_blank');
+      window.open(waUrl, '_blank', 'noopener,noreferrer');
     } catch (e) {
       console.warn('Auto WhatsApp opening prevented', e);
     }

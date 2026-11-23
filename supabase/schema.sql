@@ -71,9 +71,9 @@ ALTER TABLE public.calendar_blackouts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.app_settings ENABLE ROW LEVEL SECURITY;
 
 -- NOTE: Authoritative, hardened RLS policies live in supabase/security_hardening_rls.sql.
--- Anonymous visitors may ONLY insert orders, read blackouts, and read whitelisted public settings.
--- All other access goes through /api/kds/* serverless endpoints using the service_role key.
-CREATE POLICY "anon can only insert orders" ON public.orders FOR INSERT TO anon WITH CHECK (status = 'new');
+-- Anonymous visitors have ZERO direct access to public.orders (checkout uses POST /api/orders).
+-- Anonymous visitors may ONLY read blackouts and whitelisted public settings.
+-- All other access goes through /api/* serverless endpoints using the service_role key.
 CREATE POLICY "anon can read blackouts" ON public.calendar_blackouts FOR SELECT TO anon USING (true);
 CREATE POLICY "anon can read whitelisted public settings" ON public.app_settings FOR SELECT TO anon
     USING (key IN ('tiffin_menu_settings', 'gallery_items', 'deleted_gallery_ids'));

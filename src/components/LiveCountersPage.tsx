@@ -85,13 +85,13 @@ export default function LiveCountersPage() {
   const handleWhatsAppQuote = (customTopic?: string) => {
     if (customTopic) {
       const text = `Hi Bluebonnet Whisk! I'd like to inquire about ${customTopic} for around ${guestCount} guests/boxes.`;
-      window.open(`https://wa.me/19455274566?text=${encodeURIComponent(text)}`, "_blank");
+      window.open(`https://wa.me/19455274566?text=${encodeURIComponent(text)}`, "_blank", "noopener,noreferrer");
       return;
     }
     const stationPart = selectedStations.length > 0 ? `Live Stations: ${selectedStations.join(", ")}` : "Custom Party Package";
     const giftingPart = selectedGiftingAddon !== "None" ? ` + Gifting Add-On: ${selectedGiftingAddon}` : "";
     const text = `Hi Bluebonnet Whisk! I'd like a custom proposal for ${guestCount} guests (${stationPart}${giftingPart}).`;
-    window.open(`https://wa.me/19455274566?text=${encodeURIComponent(text)}`, "_blank");
+    window.open(`https://wa.me/19455274566?text=${encodeURIComponent(text)}`, "_blank", "noopener,noreferrer");
   };
 
   const scrollToSection = (id: string) => {

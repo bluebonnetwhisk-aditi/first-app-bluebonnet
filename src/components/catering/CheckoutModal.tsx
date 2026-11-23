@@ -87,10 +87,11 @@ export default function CheckoutModal({
     }
   }, [isOpen]);
 
-  // Load saved customer profile once on mount
+  // Load saved customer profile from sessionStorage (clears when tab closes) & purge any legacy localStorage PII
   useEffect(() => {
     try {
-      const raw = localStorage.getItem(SAVED_CUSTOMER_KEY);
+      localStorage.removeItem(SAVED_CUSTOMER_KEY);
+      const raw = sessionStorage.getItem(SAVED_CUSTOMER_KEY);
       if (raw) {
         const parsed = JSON.parse(raw);
         if (parsed.customerName) setCustomerName(parsed.customerName);
@@ -339,9 +340,9 @@ export default function CheckoutModal({
     setIsSubmitting(true);
     setSubmissionError(null);
     try {
-      // Save customer details in localStorage for 1-click repeat orders
+      // Save customer details in sessionStorage only (auto-clears when tab closes)
       try {
-        localStorage.setItem(SAVED_CUSTOMER_KEY, JSON.stringify({
+        sessionStorage.setItem(SAVED_CUSTOMER_KEY, JSON.stringify({
           customerName: customerName.trim(),
           countryCode,
           phoneNumber: phoneNumber.trim(),
@@ -496,7 +497,7 @@ export default function CheckoutModal({
 
         try {
           const waUrl = buildOrderWhatsAppUrl(combinedSummaryOrder);
-          window.open(waUrl, '_blank');
+          window.open(waUrl, '_blank', 'noopener,noreferrer');
         } catch (e) {
           console.warn('Auto notification popup prevented by browser', e);
         }
@@ -530,7 +531,7 @@ export default function CheckoutModal({
       if (result.data) {
         try {
           const waUrl = buildOrderWhatsAppUrl(result.data);
-          window.open(waUrl, '_blank');
+          window.open(waUrl, '_blank', 'noopener,noreferrer');
         } catch (e) {
           console.warn('Auto notification popup prevented by browser', e);
         }

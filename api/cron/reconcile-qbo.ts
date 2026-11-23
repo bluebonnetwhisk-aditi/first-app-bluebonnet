@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
-import { isAuthenticated as isKdsAuthenticated } from '../_lib/kds.js';
+import { isAuthenticated as isKdsAuthenticated, safeEqual } from '../_lib/kds.js';
 
 // Environment Variables
 const DEFAULT_SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5qcHVmY3B6cGNqZ2ZzbGxhZWRvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAzNjU5MTgsImV4cCI6MjEwNTk0MTkxOH0.dzGN0MmyLxvUHAKkPl2m1lmhh9DX8v81qcFkxdtPEVY';
@@ -157,14 +157,8 @@ async function getOrCreateDailySalesCustomer(accessToken: string, qboHost: strin
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  // CORS & Security headers
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.setHeader('Cache-Control', 'no-store');
 
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
   if (req.method !== 'GET' && req.method !== 'POST') {
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
@@ -172,8 +166,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   // 1. Verify Vercel Cron Security or allow manual execution from KDS UI
   // SECURITY: only Vercel Cron (Bearer CRON_SECRET) or a logged-in KDS session may trigger this.
   {
-    const authHeader = req.headers.authorization || req.headers['authorization'];
-    const isCron = Boolean(CRON_SECRET) && authHeader === `Bearer ${CRON_SECRET}`;
+    const rawAuth = req.headers.authorization || req.headers['authorization'];
+    const authHeader = Array.isArray(rawAuth) ? rawAuth[0] : (rawAuth || '');
+    const isCron = Boolean(CRON_SECRET) && safeEqual(authHeader, `Bearer ${CRON_SECRET}`);
     if (!isCron && !isKdsAuthenticated(req)) {
       return res.status(401).json({ error: 'Unauthorized' });
     }

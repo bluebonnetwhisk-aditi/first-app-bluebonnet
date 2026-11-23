@@ -14,7 +14,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const date = typeof req.query.date === 'string' ? req.query.date : '';
       if (/^\d{4}-\d{2}-\d{2}$/.test(date)) q = q.eq('fulfillment_date', date);
       const { data, error } = await q;
-      if (error) return res.status(500).json({ error: error.message });
+      if (error) { console.error('KDS orders DB error:', error); return res.status(500).json({ error: 'Database operation failed' }); }
       return res.status(200).json({ orders: data || [] });
     }
 
@@ -35,7 +35,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           patch = { status, order_description: clean || curDesc };
         }
         const { error } = await db.from('orders').update(patch).eq('id', id);
-        if (error) return res.status(500).json({ error: error.message });
+        if (error) { console.error('KDS orders DB error:', error); return res.status(500).json({ error: 'Database operation failed' }); }
         return res.status(200).json({ success: true });
       }
 
@@ -48,7 +48,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         if (patch.status === 'accepted') patch.status = 'new';
         if (Object.keys(patch).length === 0) return res.status(400).json({ error: 'no valid columns' });
         const { error } = await db.from('orders').update(patch).eq('id', id);
-        if (error) return res.status(500).json({ error: error.message });
+        if (error) { console.error('KDS orders DB error:', error); return res.status(500).json({ error: 'Database operation failed' }); }
         return res.status(200).json({ success: true });
       }
 
@@ -59,7 +59,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const id = typeof req.query.id === 'string' ? req.query.id : '';
       if (!id) return res.status(400).json({ error: 'id required' });
       const { error } = await db.from('orders').delete().eq('id', id);
-      if (error) return res.status(500).json({ error: error.message });
+      if (error) { console.error('KDS orders DB error:', error); return res.status(500).json({ error: 'Database operation failed' }); }
       return res.status(200).json({ success: true });
     }
 
