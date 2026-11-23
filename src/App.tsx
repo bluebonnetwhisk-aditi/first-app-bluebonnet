@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef } from "react";
 import { 
   X,
-  ShoppingBag
+  ShoppingBag,
+  MessageCircle,
+  Check
 } from "lucide-react";
-import { submitToGoogleSheets } from "./services/googleSheets";
 
 // Assets
 import brandLogo from "./assets/images/brand_logo_transparent.png";
@@ -91,8 +92,6 @@ export default function App() {
   
   // Interactive UI states
   const [showPriceList, setShowPriceList] = useState(false);
-  const [newsletterEmail, setNewsletterEmail] = useState("");
-  const [newsletterAlert, setNewsletterAlert] = useState(false);
 
   // Dynamically measure navbar height and expose to CSS as --header-nav-bottom
   useEffect(() => {
@@ -142,20 +141,6 @@ export default function App() {
     }
     setActiveTab(id);
     window.scrollTo({ top: 0, behavior: "smooth" });
-  };
-
-  const handleNewsletterSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (newsletterEmail.trim()) {
-      // Submit to Google Sheets
-      await submitToGoogleSheets("Newsletter Signups", {
-        Email: newsletterEmail.trim()
-      });
-
-      setNewsletterAlert(true);
-      setNewsletterEmail("");
-      setTimeout(() => setNewsletterAlert(false), 4000);
-    }
   };
 
   // Scroll to top and sync URL when active tab changes
@@ -425,35 +410,37 @@ export default function App() {
             </ul>
           </div>
 
-          {/* Newsletter signup */}
+          {/* WhatsApp Community */}
           <div className="space-y-3">
-            <h4 className="text-[10px] font-bold tracking-widest uppercase text-[#ffdea5] mb-4 font-sans">NEWSLETTER</h4>
+            <h4 className="text-[10px] font-bold tracking-widest uppercase text-[#ffdea5] mb-3 font-sans">WHATSAPP COMMUNITY</h4>
             <p className="text-gray-300 text-xs font-sans leading-normal">
-              Join our list for seasonal collections, festival box releases, and custom sweet updates.
+              Join our kitchen group for first access to:
             </p>
-            
-            {newsletterAlert ? (
-              <div className="bg-emerald-950/60 border border-emerald-500/40 p-2.5 text-emerald-300 text-xs font-semibold rounded-xl font-sans">
-                ✓ Joined successfully! Watch out for seasonal catalogs.
-              </div>
-            ) : (
-              <form onSubmit={handleNewsletterSubmit} className="flex flex-col sm:flex-row gap-2 rounded">
-                <input
-                  type="email"
-                  required
-                  value={newsletterEmail}
-                  onChange={(e) => setNewsletterEmail(e.target.value)}
-                  placeholder="Email Address"
-                  className="flex-1 border border-[#D4AF37]/30 bg-[#0f1938] text-white placeholder-gray-400 text-base sm:text-xs min-h-[44px] px-3 py-2.5 rounded-xl focus:outline-none focus:border-[#ffdea5]"
-                />
-                <button
-                  type="submit"
-                  className="bg-[#775a19] hover:bg-[#5d4201] text-white min-h-[44px] px-5 py-2.5 text-xs font-semibold uppercase tracking-wider rounded-xl border border-[#D4AF37]/40 transition-all cursor-pointer shrink-0 inline-flex items-center justify-center"
-                >
-                  JOIN
-                </button>
-              </form>
-            )}
+            <ul className="space-y-1.5 text-xs text-gray-300 font-sans">
+              <li className="flex items-start gap-2">
+                <Check className="w-3.5 h-3.5 text-[#ffdea5] shrink-0 mt-0.5" />
+                <span>Weekly Desi Dabba menus &amp; weekend specials</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <Check className="w-3.5 h-3.5 text-[#ffdea5] shrink-0 mt-0.5" />
+                <span>Festive mithai &amp; seasonal gift box drops</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <Check className="w-3.5 h-3.5 text-[#ffdea5] shrink-0 mt-0.5" />
+                <span>Early pre-order alerts &amp; custom cake slots</span>
+              </li>
+            </ul>
+            <div className="pt-1">
+              <a
+                href="/api/whatsapp-group"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-[#1f7a4c] hover:bg-[#19633e] text-white min-h-[44px] px-5 py-2.5 text-xs font-semibold uppercase tracking-wider rounded-xl border border-emerald-400/30 transition-all shadow-sm"
+              >
+                <MessageCircle className="w-4 h-4 shrink-0" />
+                <span>Join WhatsApp Group</span>
+              </a>
+            </div>
           </div>
 
         </div>
