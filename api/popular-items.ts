@@ -23,8 +23,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     for (const row of data || []) {
       if (!Array.isArray(row.items)) continue;
       for (const it of row.items as any[]) {
-        if (it?.menuItemId) ids.add(String(it.menuItemId));
-        if (it?.name) names.add(String(it.name));
+        // Never expose free-text / custom (customer-authored) entries
+        const id = it?.menuItemId ? String(it.menuItemId) : '';
+        if (id && !id.startsWith('custom-') && id.length <= 80) ids.add(id);
+        const name = it?.name ? String(it.name) : '';
+        if (name && !id.startsWith('custom-') && name.length <= 60) names.add(name);
       }
     }
     res.setHeader('Cache-Control', 's-maxage=300, stale-while-revalidate=600');
